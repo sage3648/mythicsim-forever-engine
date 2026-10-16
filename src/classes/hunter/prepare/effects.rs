@@ -549,12 +549,26 @@ impl Hunter {
             let aura = sim
                 .get_aura(unit, "Resourcefulness")
                 .expect("Resourcefulness");
+            let special = ProcTrigger {
+                proc_mask: ProcMask::MELEE_SPECIAL | ProcMask::RANGED_SPECIAL,
+                ..ProcTrigger::default()
+            };
+            let special_spells: Vec<usize> = sim
+                .unit(unit)
+                .spellbook
+                .iter()
+                .enumerate()
+                .filter(|(_, spell)| special.matches_spell(sim.spell(**spell)))
+                .map(|(position, _)| position)
+                .collect();
             effects.push(json!({
                 "kind": "resourcefulness", "trigger_aura": sim.aura(trigger).label,
                 "aura": sim.aura(aura).label,
                 "proc_chance": 0.5 * f64::from(self.t("resourcefulness")),
                 "regen": buff.effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0)
                     .average(CHARACTER_LEVEL) / 100.0,
+                // 16 October 2026 beta notes: only melee and ranged ability crits.
+                "spells": special_spells,
             }));
         }
         if let Some(trigger) = sim.get_aura(unit, "Expose Prey") {

@@ -266,6 +266,12 @@ impl ShieldSpecialization {
 pub(crate) struct Reckoning {
     pub(crate) block_chance: f64,
     pub(crate) crit_chance: f64,
+    /// The charges (16 October 2026 beta notes), spent by the next main-hand auto.
+    pub(crate) charges: AuraRef,
+    /// The main-hand swing each charge casts.
+    pub(crate) extra: SpellId,
+    /// The spells that spend the charges, by spellbook position.
+    pub(crate) spends: Vec<bool>,
 }
 
 impl Reckoning {
@@ -289,6 +295,31 @@ impl Reckoning {
         }
         // The swing that was taken is not a player spell; the handler reads none.
         fight.schedule_delayed_proc(trigger, 0, *result);
+    }
+
+    /// The trigger's handler: a charge more, up to the aura's maximum.
+    pub(crate) fn add_charge(&self, fight: &mut Fight<PaladinAgent>) {
+        fight.activate_aura(self.charges);
+        fight.add_stack(self.charges);
+    }
+
+    /// The spender's OnSpellHitDealt: any main-hand auto, landed or not, spends every charge on
+    /// one extra attack each. The charges are gone before the extra attacks swing, so those
+    /// spend nothing.
+    pub(crate) fn spend(
+        &self,
+        fight: &mut Fight<PaladinAgent>,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if !fight.aura(self.charges).active || !self.spends[spell] {
+            return;
+        }
+        let charges = fight.aura(self.charges).stacks;
+        fight.deactivate_aura(self.charges);
+        for _ in 0..charges {
+            fight.cast(self.extra, result.target);
+        }
     }
 }
 

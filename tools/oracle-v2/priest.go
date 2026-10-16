@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
@@ -360,18 +361,17 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 		effects = append(effects, map[string]any{"kind": "penance", "ranks": ranks})
 	}
 	if talents.PowerInLight > 0 { // talents_discipline.go applyPowerInLight
-		holyFire := []int{}
+		// Holy Fire, and since the 16 October 2026 beta notes Shadow Word: Pain.
+		dots := []int{}
 		for i, spell := range character.Spellbook {
-			for _, known := range p.HolyFire {
-				if spell == known {
-					holyFire = append(holyFire, i)
-				}
+			if slices.Contains(p.HolyFire, spell) || slices.Contains(p.ShadowWordPain, spell) {
+				dots = append(dots, i)
 			}
 		}
 		effects = append(effects, map[string]any{
 			"kind": "power_in_light", "multiplier": priestPowerInLight.MultiplierAt(talents.PowerInLight),
-			"spells":           spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
-			"holy_fire_spells": holyFire,
+			"spells":     spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
+			"dot_spells": dots,
 		})
 	}
 	if aura := p.SearingLightAura; aura != nil { // talents_holy.go applySearingLight

@@ -752,6 +752,7 @@ impl WarriorAgent {
                     proc_chance,
                     extra_attack_tag,
                     sword_hands,
+                    excluded_class_spells,
                 } => {
                     let extra_attack = fight
                         .spells
@@ -775,11 +776,18 @@ impl WarriorAgent {
                                         "ProcMaskMeleeOHAuto" | "ProcMaskMeleeOHSpecial"
                                     ))
                         };
+                        // The trigger's ExtraCondition leaves the excluded class spells out.
                         prepared
                             .player
                             .spells
                             .iter()
-                            .map(|spell| spell.proc_mask.iter().any(|mask| hand_bits(mask)))
+                            .map(|spell| {
+                                spell.proc_mask.iter().any(|mask| hand_bits(mask))
+                                    && !spell
+                                        .class_spell
+                                        .as_ref()
+                                        .is_some_and(|class| excluded_class_spells.contains(class))
+                            })
                             .collect()
                     };
                     fight.agent.sword_mask = mask_of(sword_hands);

@@ -149,7 +149,8 @@ fn blood_fury_is_percent_based_and_reports_its_temporary_stats() {
     assert_eq!(env.sim.spell(spell_id).related_self_buff, Some(blood_fury));
     let icd = env.sim.aura(blood_fury).icd.expect("an ICD");
     assert_eq!(icd, env.sim.spell(spell_id).cd);
-    assert_eq!(icd.duration, 2 * MINUTE);
+    // 16 October beta notes: three minutes (was two).
+    assert_eq!(icd.duration, 3 * MINUTE);
 }
 
 #[test]
@@ -229,7 +230,8 @@ fn shatter_curse_is_a_survival_cooldown_on_the_six_magic_schools() {
         SchoolIndex::Nature,
         SchoolIndex::Shadow,
     ] {
-        assert_eq!(taken[school_array_index(index)], 0.85);
+        // 16 October beta notes: 5% less magic damage taken (was 15%).
+        assert_eq!(taken[school_array_index(index)], 0.95);
     }
     assert_eq!(taken[school_array_index(SchoolIndex::Physical)], 1.0);
     let survival = env
@@ -243,17 +245,30 @@ fn shatter_curse_is_a_survival_cooldown_on_the_six_magic_schools() {
 }
 
 #[test]
-fn tauren_endurance_grants_one_percent_hit() {
+fn tauren_endurance_and_dwarf_earth_fury_grant_two_percent_crit_damage() {
+    // 16 October beta notes: Endurance grants 2% increased critical damage (was 1% hit) and
+    // Earth Fury replaces Mace Specialization with the same.
     let human = warrior("RaceHuman", "");
-    let tauren = warrior("RaceTauren", "");
-    assert_eq!(
-        stat(&tauren, Stat::PhysicalHitPercent),
-        stat(&human, Stat::PhysicalHitPercent) + 1.0
-    );
-    assert_eq!(
-        stat(&tauren, Stat::SpellHitPercent),
-        stat(&human, Stat::SpellHitPercent) + 1.0
-    );
+    for race in ["RaceTauren", "RaceDwarf"] {
+        let env = warrior(race, "");
+        assert_eq!(
+            stat(&env, Stat::PhysicalHitPercent),
+            stat(&human, Stat::PhysicalHitPercent)
+        );
+        assert_eq!(
+            env.sim.unit(env.player).pseudo_stats.crit_damage_multiplier,
+            human
+                .sim
+                .unit(human.player)
+                .pseudo_stats
+                .crit_damage_multiplier
+                * 1.02
+        );
+    }
+    let dwarf = warrior("RaceDwarf", &weapon(36));
+    let id = aura(&dwarf, "Earth Fury").expect("Earth Fury");
+    assert!(dwarf.sim.aura(id).active);
+    assert_eq!(dwarf.sim.aura(id).duration, NEVER_EXPIRES);
 }
 
 #[test]
@@ -266,7 +281,8 @@ fn touch_of_the_grave_uses_the_melee_variant() {
         Some(1260189)
     );
     assert!(aura.events.on_spell_hit_dealt);
-    assert_eq!(aura.icd.map(|icd| icd.duration), Some(SECOND));
+    // 16 October beta notes: a 25 second internal cooldown (was 1 sec).
+    assert_eq!(aura.icd.map(|icd| icd.duration), Some(25 * SECOND));
     assert!(aura.icd.and_then(|icd| icd.timer).is_some());
     assert_eq!(aura.duration, NEVER_EXPIRES);
     assert!(aura.active);
@@ -281,13 +297,14 @@ fn skyborne_racials_speed_up_swings_and_hit_elementals_harder() {
         let env = warrior(race, "");
         let unit = env.player;
         let pseudo = &env.sim.unit(unit).pseudo_stats;
+        // 16 October beta notes: Wind Blessed's haste is 3% (was 1%).
         assert_eq!(
             pseudo.attack_speed_multiplier,
-            human_pseudo.attack_speed_multiplier * 1.01
+            human_pseudo.attack_speed_multiplier * 1.03
         );
         assert_eq!(
             pseudo.cast_speed_multiplier,
-            human_pseudo.cast_speed_multiplier * 1.01
+            human_pseudo.cast_speed_multiplier * 1.03
         );
         let table = env.attack_table(unit, env.encounter.targets[0]);
         assert_eq!(table.damage_dealt_multiplier, 1.05);
@@ -355,57 +372,48 @@ fn expansive_mind_and_eureka_for_a_gnome_warrior() {
     let unit = env.player;
     assert_eq!(env.sim.unit(unit).rage_bar.max_rage, 105.0);
 
+    // 16 October beta notes: an 8 second buff with no charges.
     let eureka = aura(&env, "Eureka!").expect("Eureka!");
+    assert_eq!(env.sim.aura(eureka).duration, 8 * SECOND);
     env.sim.activate(eureka);
     assert!(env.sim.aura(eureka).active);
-    assert_eq!(env.sim.aura(eureka).stacks, 3);
+    assert_eq!(env.sim.aura(eureka).stacks, 0);
 
     let ability = spell(&env, 1).expect("the class ability");
     let item_spell = spell(&env, 2).expect("the item spell");
     assert_eq!(env.sim.spell(item_spell).damage_multiplier, 1.0);
     assert!((env.sim.spell(ability).damage_multiplier - 1.1).abs() < 1e-4);
 
-    env.sim.set_stacks(eureka, 0);
+    env.sim.deactivate(eureka);
     assert!(!env.sim.aura(eureka).active);
     assert!((env.sim.spell(ability).damage_multiplier - 1.0).abs() < 1e-4);
-    assert!(env.sim.aura(eureka).events.on_cast_complete);
+    assert!(!env.sim.aura(eureka).events.on_cast_complete);
 }
 
 #[test]
-fn weapon_specialization_follows_the_weapons_and_the_override() {
+fn crit_racials_need_no_weapon() {
+    // 16 October beta notes: Human Ruthless (2%) and Orc Savage (1%) replace the sword and axe
+    // specializations and raise both crits with any weapon or none.
     let crit = |env: &Environment| stat(env, Stat::PhysicalCritPercent);
     let spell_crit = |env: &Environment| stat(env, Stat::SpellCritPercent);
-    let naked = warrior("RaceHuman", "");
-
-    // A sword raises both crits by the racial's 2%.
-    let swordsman = warrior("RaceHuman", &weapon(25));
-    assert_eq!(crit(&swordsman) - crit(&naked), 2.0);
-    assert_eq!(spell_crit(&swordsman) - spell_crit(&naked), 2.0);
-    // No sword, no crit.
-    let mace = warrior("RaceHuman", &weapon(36));
-    assert_eq!(crit(&mace), crit(&naked));
-
-    // Withholding the specialization drops the crit even with the weapon equipped.
-    let withheld = warrior(
-        "RaceHuman",
-        &format!("{},\"disableWeaponSpecialization\":true", weapon(25)),
-    );
-    assert_eq!(crit(&withheld), crit(&naked));
-
-    // The orc's axe and the dwarf's mace give 1%.
-    let orc = warrior("RaceOrc", "");
-    let orc_axe = warrior("RaceOrc", &weapon(37));
-    assert_eq!(crit(&orc_axe) - crit(&orc), 1.0);
-    let dwarf = warrior("RaceDwarf", "");
-    let dwarf_mace = warrior("RaceDwarf", &weapon(36));
-    assert_eq!(crit(&dwarf_mace) - crit(&dwarf), 1.0);
-
-    // The aura is permanent, active only with the weapon, and listed either way.
-    let id = aura(&naked, "Sword Specialization").expect("Sword Specialization");
-    assert!(!naked.sim.aura(id).active);
-    let id = aura(&swordsman, "Sword Specialization").expect("Sword Specialization");
-    assert!(swordsman.sim.aura(id).active);
-    assert_eq!(swordsman.sim.aura(id).duration, NEVER_EXPIRES);
+    for (race, label, percent) in [("RaceHuman", "Ruthless", 2.0), ("RaceOrc", "Savage", 1.0)] {
+        for gear in [String::new(), weapon(25), weapon(36), weapon(37)] {
+            let env = warrior(race, &gear);
+            let without = warrior(race, &format!(r#"{gear},"disableRacials":true"#));
+            assert!((crit(&env) - crit(&without) - percent).abs() < 1e-9);
+            assert!((spell_crit(&env) - spell_crit(&without) - percent).abs() < 1e-9);
+            let id = aura(&env, label).expect("the crit racial");
+            assert!(env.sim.aura(id).active);
+            assert_eq!(env.sim.aura(id).duration, NEVER_EXPIRES);
+            // Withholding the old specialization no longer changes anything.
+            let withheld = warrior(
+                race,
+                &format!(r#"{gear},"disableWeaponSpecialization":true"#),
+            );
+            assert_eq!(crit(&withheld), crit(&env));
+        }
+    }
+    assert!(aura(&warrior("RaceDwarf", &weapon(36)), "Mace Specialization").is_none());
 }
 
 /// A warrior that registers a survival on-use cooldown with no GCD, as an item trinket does.

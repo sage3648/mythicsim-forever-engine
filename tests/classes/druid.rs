@@ -111,9 +111,9 @@ fn innervate_clears_the_form_and_cat_spells_then_fail_with_a_log() {
         .expect("the first fight casts Innervate");
     let before = &log[..innervate];
     assert!(before.ends_with(
-        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[87.22] [feral-druid (#1)] "
+        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[86.72] [feral-druid (#1)] "
     ));
-    assert!(log[innervate..].contains("[87.22] Failed cast to spell {SpellID: 9830}, wrong form"));
+    assert!(log[innervate..].contains("[86.72] Failed cast to spell {SpellID: 9830}, wrong form"));
 }
 
 #[test]

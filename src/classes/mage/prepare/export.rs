@@ -18,8 +18,9 @@ use crate::prepare::spelldata::{Ladder, Spell as Row};
 
 use super::spell_data::spell_data;
 
-/// Go `IceLanceFrozenMultiplier`.
-const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 4.0;
+/// Go `IceLanceFrozenMultiplier`: the 16 October 2026 beta notes cut it to +200% (was +300%),
+/// so a frozen hit deals 3 times an unfrozen one.
+const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 3.0;
 
 /// `mageDamageRows`: the rows by spell ID.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {

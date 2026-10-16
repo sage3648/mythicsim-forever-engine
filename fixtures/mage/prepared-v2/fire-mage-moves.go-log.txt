@@ -527,7 +527,6 @@
 [45.50] [fire-mage (#1)] Casting {SpellID: 1259817} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [45.50] [fire-mage (#1)] Completed cast {SpellID: 1259817}
 [45.50] [fire-mage (#1)] Aura gained: {SpellID: 1259817}
-[45.50] [fire-mage (#1)] {SpellID: 1259817} stacks: 0 --> 3
 [45.50] [fire-mage (#1)] Major cooldown used: {SpellID: 1259817}
 [45.50] [fire-mage (#1)] Casting {ItemID: 14152} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [45.50] [fire-mage (#1)] Completed cast {ItemID: 14152}
@@ -541,14 +540,12 @@
 [47.00] [fire-mage (#1)] Aura faded: {SpellID: 400625}
 [47.00] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
 [47.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[47.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 3 --> 2
 [47.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 306.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [47.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
 [47.00] [fire-mage (#1)] Spent 306.000 mana from {SpellID: 10199} (5843.598 --> 5537.598) of 6886 total.
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:640.4, AfterAttackerMods:891.2, AfterResistances:891.2, AfterTargetMods:980.3, AfterOutcome:980.3, AfterPostOutcome:980.3
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 980.268 damage (SpellSchool: 4). (Threat: 980.268)
 [47.00] [fire-mage (#1)] {SpellID: 11129} stacks: 1 --> 2
-[47.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 2 --> 1
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1648.685 damage (SpellSchool: 4). (Threat: 1648.685)
 [47.00] [fire-mage (#1)] {SpellID: 11129} stacks: 2 --> 3
 [47.00] [Target 1] Aura gained: {SpellID: 18809}
@@ -566,8 +563,6 @@
 [51.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
 [51.50] [fire-mage (#1)] Spent 369.000 mana from {SpellID: 25306} (5727.448 --> 5358.448) of 6886 total.
 [51.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1007.8, AfterAttackerMods:1402.3, AfterResistances:1402.3, AfterTargetMods:1542.6, AfterOutcome:2313.9, AfterPostOutcome:2313.9
-[51.50] [fire-mage (#1)] {SpellID: 1259817} stacks: 1 --> 0
-[51.50] [fire-mage (#1)] Aura faded: {SpellID: 1259817}
 [51.50] [fire-mage (#1)] [DEBUG] Moving to 35.0 yards
 [51.50] [fire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [51.50] [fire-mage (#1)] Completed cast {OtherID: 20}
@@ -661,6 +656,7 @@
 [53.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 51.500000001s.
 [53.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [53.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[53.50] [fire-mage (#1)] Aura faded: {SpellID: 1259817}
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:462.8, AfterAttackerMods:462.8, AfterResistances:462.8, AfterTargetMods:462.8, AfterOutcome:462.8, AfterPostOutcome:462.8
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 462.770 damage (SpellSchool: 4). (Threat: 462.770)
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
@@ -690,7 +686,7 @@
 [54.00] [Target 1] Aura faded: {SpellID: 412538}
 [54.00] [Target 1] Aura gained: {SpellID: 412538}
 [54.00] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[54.00] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
+[54.00] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 3
 [54.00] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (6406.873 --> 6508.873) of 6886 total.
 [54.00] [fire-mage (#1)] {SpellID: 11129} stacks: 4 --> 5
 [54.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6508.873 --> 6567.873) of 6886 total.
@@ -698,46 +694,46 @@
 [55.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
 [55.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
 [55.50] [fire-mage (#1)] {OtherID: 20} stacks: 17 --> 28
-[55.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[55.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [55.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[55.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[55.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[55.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[55.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [55.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[55.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[55.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [55.70] [fire-mage (#1)] {OtherID: 20} stacks: 28 --> 29
-[55.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[55.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [55.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[55.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[55.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [55.80] [fire-mage (#1)] {OtherID: 20} stacks: 29 --> 30
-[55.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[55.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [55.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[55.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[55.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[55.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[55.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [55.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[55.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[55.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [56.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:265.0, AfterPostOutcome:265.0
 [56.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 264.976 damage (SpellSchool: 4). (Threat: 264.976)
 [56.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:514.5, AfterAttackerMods:514.5, AfterResistances:514.5, AfterTargetMods:514.5, AfterOutcome:514.5, AfterPostOutcome:514.5
 [56.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 514.451 damage (SpellSchool: 4). (Threat: 514.451)
 [56.00] [fire-mage (#1)] {OtherID: 20} stacks: 30 --> 31
-[56.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[56.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [56.10] [fire-mage (#1)] {OtherID: 20} stacks: 31 --> 32
-[56.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[56.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[56.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[56.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [56.30] [fire-mage (#1)] {OtherID: 20} stacks: 32 --> 33
-[56.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[56.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [56.40] [fire-mage (#1)] {OtherID: 20} stacks: 33 --> 34
-[56.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[56.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [56.50] [fire-mage (#1)] {OtherID: 20} stacks: 34 --> 35
 [56.50] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [56.50] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
@@ -745,54 +741,54 @@
 [56.50] [fire-mage (#1)] Completed cast {OtherID: 20}
 [56.50] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [56.50] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[56.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[56.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[56.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[56.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[56.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[56.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[56.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[56.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[56.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[56.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [56.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[56.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[56.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [57.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6633.298 --> 6698.723) of 6886 total.
-[57.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[57.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [57.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
 [57.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[57.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[57.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[57.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[57.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [57.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[57.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[57.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [58.00] [Target 1] Aura faded: {SpellID: 412538}
 [58.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:514.5, AfterAttackerMods:514.5, AfterResistances:514.5, AfterTargetMods:514.5, AfterOutcome:514.5, AfterPostOutcome:514.5
 [58.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 514.451 damage (SpellSchool: 4). (Threat: 514.451)
@@ -802,55 +798,55 @@
 [58.00] [fire-mage (#1)] Completed cast {OtherID: 20}
 [58.00] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [58.00] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[58.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[58.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[58.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[58.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [58.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[58.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [59.00] [Target 1] Aura faded: {SpellID: 18809}
 [59.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:265.0, AfterPostOutcome:265.0
 [59.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 264.976 damage (SpellSchool: 4). (Threat: 264.976)
 [59.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6698.723 --> 6798.773) of 6886 total.
-[59.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[59.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [59.50] [Target 1] Aura faded: {SpellID: 25306}
 [59.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
 [59.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
@@ -860,51 +856,51 @@
 [59.50] [fire-mage (#1)] Completed cast {OtherID: 20}
 [59.50] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [59.50] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[59.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[59.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[59.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [59.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[59.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[59.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[60.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[60.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[60.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [60.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[60.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[60.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [61.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6798.773 --> 6885.900) of 6886 total.
 [61.00] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [61.00] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
@@ -912,206 +908,206 @@
 [61.00] [fire-mage (#1)] Completed cast {OtherID: 20}
 [61.00] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [61.00] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[61.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[61.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[61.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [61.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[61.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[61.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[62.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [62.50] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [62.50] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
 [62.50] [fire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [62.50] [fire-mage (#1)] Completed cast {OtherID: 20}
 [62.50] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [62.50] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[62.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[62.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[62.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[62.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [62.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[62.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[62.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [63.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
-[63.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[63.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[63.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[63.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [63.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[63.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[63.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [64.00] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [64.00] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
 [64.00] [fire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [64.00] [fire-mage (#1)] Completed cast {OtherID: 20}
 [64.00] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [64.00] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[64.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[64.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[64.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[64.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [64.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[64.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[64.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [65.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
-[65.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[65.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [65.50] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [65.50] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
 [65.50] [fire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [65.50] [fire-mage (#1)] Completed cast {OtherID: 20}
 [65.50] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [65.50] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[65.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[65.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[65.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [65.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[65.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[65.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[66.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[66.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[66.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [66.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[66.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[66.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
 [67.00] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [67.00] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 0
@@ -1120,486 +1116,527 @@
 [67.00] [fire-mage (#1)] Completed cast {OtherID: 20}
 [67.00] [fire-mage (#1)] Aura gained: {OtherID: 20}
 [67.00] [fire-mage (#1)] {OtherID: 20} stacks: 0 --> 35
-[67.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.10] [fire-mage (#1)] {OtherID: 20} stacks: 35 --> 34
-[67.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.20] [fire-mage (#1)] {OtherID: 20} stacks: 34 --> 33
-[67.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.30] [fire-mage (#1)] {OtherID: 20} stacks: 33 --> 32
-[67.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[67.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[67.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.50] [fire-mage (#1)] {OtherID: 20} stacks: 32 --> 31
-[67.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.60] [fire-mage (#1)] {OtherID: 20} stacks: 31 --> 30
-[67.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[67.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[67.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.80] [fire-mage (#1)] {OtherID: 20} stacks: 30 --> 29
-[67.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[67.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [67.90] [fire-mage (#1)] {OtherID: 20} stacks: 29 --> 28
-[67.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [67.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[68.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[67.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[68.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.10] [fire-mage (#1)] {OtherID: 20} stacks: 28 --> 27
-[68.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.20] [fire-mage (#1)] {OtherID: 20} stacks: 27 --> 26
-[68.20] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.20] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.30] [fire-mage (#1)] {OtherID: 20} stacks: 26 --> 25
-[68.30] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.30] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[68.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[68.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.50] [fire-mage (#1)] {OtherID: 20} stacks: 25 --> 24
-[68.50] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.50] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.60] [fire-mage (#1)] {OtherID: 20} stacks: 24 --> 23
-[68.60] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.60] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
-[68.70] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[68.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.70] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.80] [fire-mage (#1)] {OtherID: 20} stacks: 23 --> 22
-[68.80] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.80] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [68.90] [fire-mage (#1)] {OtherID: 20} stacks: 22 --> 21
-[68.90] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[68.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [68.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[68.90] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[68.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [69.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
-[69.00] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[69.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [69.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[69.00] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[69.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [69.10] [fire-mage (#1)] {OtherID: 20} stacks: 21 --> 20
-[69.10] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 55.500000001s.
+[69.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [69.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
-[69.10] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[69.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [69.20] [fire-mage (#1)] {OtherID: 20} stacks: 20 --> 19
-[69.20] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[69.20] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[69.20] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6885.900 --> 6545.900) of 6886 total.
-[69.20] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:627.0, AfterAttackerMods:793.1, AfterResistances:793.1, AfterTargetMods:872.4, AfterOutcome:1308.6, AfterPostOutcome:1308.6
-[69.20] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1308.636 damage (SpellSchool: 4). (Threat: 1308.636)
-[69.20] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[69.20] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[69.20] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[69.20] [Target 1] Aura gained: {SpellID: 412538}
-[69.20] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[69.20] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[69.20] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (6545.900 --> 6647.900) of 6886 total.
-[69.20] [fire-mage (#1)] {SpellID: 11129} stacks: 5 --> 6
-[69.20] [fire-mage (#1)] Aura faded: {SpellID: 11129}
-[69.20] [fire-mage (#1)] {SpellID: 11129} stacks: 6 --> 0
-[70.70] [fire-mage (#1)] {OtherID: 20} stacks: 19 --> 9
-[70.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[69.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.30] [fire-mage (#1)] {OtherID: 20} stacks: 19 --> 18
+[69.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.50] [fire-mage (#1)] {OtherID: 20} stacks: 18 --> 17
+[69.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.60] [fire-mage (#1)] {OtherID: 20} stacks: 17 --> 16
+[69.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.80] [fire-mage (#1)] {OtherID: 20} stacks: 16 --> 15
+[69.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[69.90] [fire-mage (#1)] {OtherID: 20} stacks: 15 --> 14
+[69.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[69.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[69.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.10] [fire-mage (#1)] {OtherID: 20} stacks: 14 --> 13
+[70.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.20] [fire-mage (#1)] {OtherID: 20} stacks: 13 --> 12
+[70.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.30] [fire-mage (#1)] {OtherID: 20} stacks: 12 --> 11
+[70.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.50] [fire-mage (#1)] {OtherID: 20} stacks: 11 --> 10
+[70.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.60] [fire-mage (#1)] {OtherID: 20} stacks: 10 --> 9
+[70.60] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
+[70.60] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
+[70.60] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
+[70.70] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [70.70] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [70.70] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [70.80] [fire-mage (#1)] {OtherID: 20} stacks: 9 --> 8
-[70.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[70.80] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [70.80] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [70.80] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [70.90] [fire-mage (#1)] {OtherID: 20} stacks: 8 --> 7
-[70.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[70.90] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [70.90] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [70.90] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
-[71.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6647.900 --> 6713.325) of 6886 total.
-[71.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
+[71.00] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.00] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.00] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [71.10] [fire-mage (#1)] {OtherID: 20} stacks: 7 --> 6
-[71.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.10] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.10] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.10] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
-[71.20] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:261.7, AfterAttackerMods:261.7, AfterResistances:261.7, AfterTargetMods:261.7, AfterOutcome:261.7, AfterPostOutcome:261.7
-[71.20] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 261.727 damage (SpellSchool: 4). (Threat: 261.727)
 [71.20] [fire-mage (#1)] {OtherID: 20} stacks: 6 --> 5
-[71.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.20] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.20] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.20] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [71.30] [fire-mage (#1)] {OtherID: 20} stacks: 5 --> 4
-[71.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.30] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.30] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.30] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
-[71.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.40] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.40] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [71.50] [fire-mage (#1)] {OtherID: 20} stacks: 4 --> 3
-[71.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 1m10.700000001s.
+[71.50] [fire-mage (#1)] Queueing up {SpellID: 18809} to cast at 55.500000001s.
 [71.50] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.50] [fire-mage (#1)] {SpellID: 18809} failed to cast: casting/channeling while moving not allowed!
 [71.57] [fire-mage (#1)] Aura faded: {OtherID: 20}
 [71.57] [fire-mage (#1)] {OtherID: 20} stacks: 3 --> 0
-[71.60] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 0.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[73.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6713.325 --> 6778.750) of 6886 total.
+[71.60] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[73.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.900 --> 6885.900) of 6886 total.
 [73.10] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[73.10] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1025.9, AfterAttackerMods:1297.7, AfterResistances:1297.7, AfterTargetMods:1427.5, AfterOutcome:1427.5, AfterPostOutcome:1427.5
+[73.10] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (6885.900 --> 6445.900) of 6886 total.
+[73.10] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1012.9, AfterAttackerMods:1281.4, AfterResistances:1281.4, AfterTargetMods:1409.5, AfterOutcome:2114.2, AfterPostOutcome:2114.2
 [73.10] [fire-mage (#1)] Aura faded: {SpellID: 400625}
 [73.10] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[73.10] [fire-mage (#1)] Aura faded: {SpellID: 12536}
 [73.10] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[73.20] [Target 1] Aura faded: {SpellID: 412538}
-[73.20] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:261.7, AfterAttackerMods:261.7, AfterResistances:261.7, AfterTargetMods:261.7, AfterOutcome:261.7, AfterPostOutcome:261.7
-[73.20] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 261.727 damage (SpellSchool: 4). (Threat: 261.727)
-[73.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1427.495 damage (SpellSchool: 4). (Threat: 1427.495)
+[73.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} Crit for 2114.248 damage (SpellSchool: 4). (Threat: 2114.248)
+[73.22] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[73.22] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[73.22] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[73.22] [Target 1] Aura gained: {SpellID: 412538}
+[73.22] [fire-mage (#1)] Gained 132.000 mana from {SpellID: 29074} (6445.900 --> 6577.900) of 6886 total.
+[73.22] [fire-mage (#1)] {SpellID: 11129} stacks: 5 --> 6
+[73.22] [fire-mage (#1)] Aura faded: {SpellID: 11129}
+[73.22] [fire-mage (#1)] {SpellID: 11129} stacks: 6 --> 0
 [73.22] [Target 1] Aura gained: {SpellID: 18809}
-[73.23] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6778.750 --> 6837.750) of 6886 total.
 [74.60] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[74.60] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (6837.750 --> 6687.750) of 6886 total.
-[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:406.6, AfterAttackerMods:514.4, AfterResistances:385.8, AfterTargetMods:424.4, AfterOutcome:636.6, AfterPostOutcome:636.6
-[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit (25% Resist) for 636.551 damage (SpellSchool: 4). (Threat: 636.551)
+[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:380.6, AfterAttackerMods:481.5, AfterResistances:481.5, AfterTargetMods:529.6, AfterOutcome:529.6, AfterPostOutcome:529.6
+[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 529.633 damage (SpellSchool: 4). (Threat: 529.633)
+[74.60] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[74.60] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[74.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[74.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[74.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6577.900 --> 6237.900) of 6886 total.
+[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:700.0, AfterAttackerMods:885.5, AfterResistances:664.1, AfterTargetMods:730.5, AfterOutcome:1095.8, AfterPostOutcome:1095.8
+[74.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit (25% Resist) for 1095.795 damage (SpellSchool: 4). (Threat: 1095.795)
 [74.60] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [74.60] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[74.60] [Target 1] Aura faded: {SpellID: 412538}
 [74.60] [Target 1] Aura gained: {SpellID: 412538}
 [74.60] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[74.60] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[74.60] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (6687.750 --> 6732.750) of 6886 total.
-[74.60] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[74.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[75.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6732.750 --> 6798.175) of 6886 total.
+[74.60] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 2
+[74.60] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (6237.900 --> 6339.900) of 6886 total.
+[74.61] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6339.900 --> 6398.900) of 6886 total.
+[75.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6398.900 --> 6464.325) of 6886 total.
+[76.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
 [76.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:120.4, AfterTargetMods:132.5, AfterOutcome:132.5, AfterPostOutcome:132.5
 [76.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 132.488 damage (SpellSchool: 4). (Threat: 132.488)
-[76.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.3, AfterAttackerMods:127.3, AfterResistances:127.3, AfterTargetMods:127.3, AfterOutcome:127.3, AfterPostOutcome:127.3
-[76.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 127.310 damage (SpellSchool: 4). (Threat: 127.310)
-[77.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6798.175 --> 6863.600) of 6886 total.
-[77.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[77.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6863.600 --> 6453.600) of 6886 total.
-[77.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:976.2, AfterAttackerMods:1234.9, AfterResistances:1234.9, AfterTargetMods:1358.4, AfterOutcome:1358.4, AfterPostOutcome:1358.4
-[77.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[77.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[77.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6453.600 --> 6113.600) of 6886 total.
-[77.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:649.1, AfterAttackerMods:821.1, AfterResistances:821.1, AfterTargetMods:903.2, AfterOutcome:903.2, AfterPostOutcome:903.2
-[77.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 903.180 damage (SpellSchool: 4). (Threat: 903.180)
-[77.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1358.367 damage (SpellSchool: 4). (Threat: 1358.367)
-[77.72] [Target 1] Aura gained: {SpellID: 25306}
+[76.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:642.0, AfterAttackerMods:642.0, AfterResistances:642.0, AfterTargetMods:642.0, AfterOutcome:642.0, AfterPostOutcome:642.0
+[76.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 642.009 damage (SpellSchool: 4). (Threat: 642.009)
+[77.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6464.325 --> 6529.750) of 6886 total.
 [78.60] [Target 1] Aura faded: {SpellID: 412538}
-[78.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.3, AfterAttackerMods:127.3, AfterResistances:127.3, AfterTargetMods:127.3, AfterOutcome:127.3, AfterPostOutcome:127.3
-[78.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 127.310 damage (SpellSchool: 4). (Threat: 127.310)
-[79.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6113.600 --> 6179.025) of 6886 total.
+[78.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:642.0, AfterAttackerMods:642.0, AfterResistances:642.0, AfterTargetMods:642.0, AfterOutcome:642.0, AfterPostOutcome:642.0
+[78.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 642.009 damage (SpellSchool: 4). (Threat: 642.009)
+[79.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6529.750 --> 6595.175) of 6886 total.
+[79.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[79.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6595.175 --> 6185.175) of 6886 total.
+[79.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:976.2, AfterAttackerMods:1234.9, AfterResistances:1234.9, AfterTargetMods:1358.4, AfterOutcome:1358.4, AfterPostOutcome:1358.4
 [79.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
 [79.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
 [79.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
-[79.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[79.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[81.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6179.025 --> 6244.450) of 6886 total.
-[81.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[81.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[79.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1358.367 damage (SpellSchool: 4). (Threat: 1358.367)
+[79.22] [Target 1] Aura gained: {SpellID: 25306}
+[81.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6185.175 --> 6250.600) of 6886 total.
+[81.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[81.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
 [82.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[82.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6244.450 --> 5834.450) of 6886 total.
-[82.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:975.3, AfterAttackerMods:1233.8, AfterResistances:1233.8, AfterTargetMods:1357.2, AfterOutcome:1357.2, AfterPostOutcome:1357.2
-[82.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[82.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:120.4, AfterTargetMods:132.5, AfterOutcome:198.7, AfterPostOutcome:198.7
-[82.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit (25% Resist) for 198.732 damage (SpellSchool: 4). (Threat: 198.732)
-[82.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1357.189 damage (SpellSchool: 4). (Threat: 1357.189)
-[82.22] [fire-mage (#1)] Aura gained: {SpellID: 44404}
-[82.22] [Target 1] Aura faded: {SpellID: 25306}
-[82.22] [Target 1] Aura gained: {SpellID: 25306}
-[82.23] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5834.450 --> 5893.450) of 6886 total.
-[83.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5893.450 --> 5958.875) of 6886 total.
-[84.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[84.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[85.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5958.875 --> 6024.300) of 6886 total.
-[85.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[85.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6024.300 --> 5614.300) of 6886 total.
-[85.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1021.1, AfterAttackerMods:1291.7, AfterResistances:1291.7, AfterTargetMods:1420.9, AfterOutcome:2131.3, AfterPostOutcome:2131.3
-[85.10] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[85.10] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[85.10] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5614.300 --> 5274.300) of 6886 total.
-[85.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:674.6, AfterAttackerMods:853.3, AfterResistances:853.3, AfterTargetMods:938.7, AfterOutcome:938.7, AfterPostOutcome:938.7
-[85.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 938.661 damage (SpellSchool: 4). (Threat: 938.661)
-[85.11] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5274.300 --> 5333.300) of 6886 total.
+[82.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6250.600 --> 5840.600) of 6886 total.
+[82.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:981.2, AfterAttackerMods:1241.2, AfterResistances:1241.2, AfterTargetMods:1365.3, AfterOutcome:0.0, AfterPostOutcome:0.0
+[82.10] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[82.10] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[82.10] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5840.600 --> 5500.600) of 6886 total.
+[82.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:696.0, AfterAttackerMods:880.4, AfterResistances:660.3, AfterTargetMods:726.3, AfterOutcome:726.3, AfterPostOutcome:726.3
+[82.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit (25% Resist) for 726.343 damage (SpellSchool: 4). (Threat: 726.343)
+[82.11] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5500.600 --> 5559.600) of 6886 total.
+[82.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
+[82.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
+[82.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
+[83.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5559.600 --> 5625.025) of 6886 total.
+[83.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:23.5, AfterPostOutcome:23.5
+[83.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit (25% Resist) for 23.482 damage (SpellSchool: 4). (Threat: 23.482)
+[83.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[85.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5625.025 --> 5690.450) of 6886 total.
 [85.22] [Target 1] Aura faded: {SpellID: 18809}
 [85.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:265.0, AfterPostOutcome:265.0
 [85.22] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 264.976 damage (SpellSchool: 4). (Threat: 264.976)
-[85.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2131.331 damage (SpellSchool: 4). (Threat: 2131.331)
-[85.22] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[85.22] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[85.22] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[85.22] [Target 1] Aura gained: {SpellID: 412538}
-[85.22] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[85.22] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[85.22] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5333.300 --> 5456.300) of 6886 total.
-[85.22] [Target 1] Aura faded: {SpellID: 25306}
-[85.22] [Target 1] Aura gained: {SpellID: 25306}
-[86.60] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[86.60] [fire-mage (#1)] Completed cast {SpellID: 25345}
-[86.60] [Target 1] Aura gained: {SpellID: 25345}
-[86.60] [fire-mage (#1)] Aura faded: {SpellID: 44404}
-[86.60] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[87.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5456.300 --> 5521.725) of 6886 total.
-[87.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[87.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[87.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:266.8, AfterPostOutcome:266.8
-[87.22] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:426.3, AfterAttackerMods:426.3, AfterResistances:426.3, AfterTargetMods:426.3, AfterOutcome:426.3, AfterPostOutcome:426.3
-[87.22] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 426.266 damage (SpellSchool: 4). (Threat: 426.266)
-[87.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[87.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[87.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit (25% Resist) for 266.805 damage (SpellSchool: 64). (Threat: 186.764)
-[87.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[87.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[87.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[87.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[88.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[88.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[88.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[88.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[88.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[88.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[88.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:266.8, AfterPostOutcome:266.8
-[88.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit (25% Resist) for 266.805 damage (SpellSchool: 64). (Threat: 186.764)
-[89.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5521.725 --> 5587.150) of 6886 total.
-[89.10] [Target 1] Aura faded: {SpellID: 25345}
-[89.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[89.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[89.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[89.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[89.22] [Target 1] Aura faded: {SpellID: 412538}
-[89.22] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:426.3, AfterAttackerMods:426.3, AfterResistances:426.3, AfterTargetMods:426.3, AfterOutcome:426.3, AfterPostOutcome:426.3
-[89.22] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 426.266 damage (SpellSchool: 4). (Threat: 426.266)
-[89.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:10.4, AfterPostOutcome:10.4
-[89.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (50% Resist) for 10.436 damage (SpellSchool: 4). (Threat: 10.436)
-[89.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[89.26] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5587.150 --> 5646.150) of 6886 total.
-[91.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5646.150 --> 5746.200) of 6886 total.
-[91.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[91.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[92.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[92.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5746.200 --> 5336.200) of 6886 total.
-[92.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:938.8, AfterAttackerMods:1187.6, AfterResistances:1187.6, AfterTargetMods:1306.3, AfterOutcome:1306.3, AfterPostOutcome:1306.3
-[92.10] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[92.10] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[92.10] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5336.200 --> 4996.200) of 6886 total.
-[92.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:638.2, AfterAttackerMods:807.3, AfterResistances:807.3, AfterTargetMods:888.0, AfterOutcome:888.0, AfterPostOutcome:888.0
-[92.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 887.988 damage (SpellSchool: 4). (Threat: 887.988)
-[92.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1306.342 damage (SpellSchool: 4). (Threat: 1306.342)
-[92.22] [Target 1] Aura faded: {SpellID: 25306}
-[92.22] [Target 1] Aura gained: {SpellID: 25306}
-[93.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4996.200 --> 5061.625) of 6886 total.
-[93.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[94.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[94.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[95.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5061.625 --> 5127.050) of 6886 total.
-[96.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[96.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[96.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[96.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5127.050 --> 4717.050) of 6886 total.
-[96.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1032.2, AfterAttackerMods:1305.7, AfterResistances:979.3, AfterTargetMods:1077.2, AfterOutcome:1077.2, AfterPostOutcome:1077.2
-[96.60] [fire-mage (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[96.60] [fire-mage (#1)] Completed cast {ItemID: 13444}
-[96.60] [fire-mage (#1)] Gained 1800.000 mana from {ItemID: 13444} (4717.050 --> 6517.050) of 6886 total.
-[96.60] [fire-mage (#1)] Major cooldown used: {ItemID: 13444}
-[96.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[96.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (25% Resist) for 1077.192 damage (SpellSchool: 4). (Threat: 1077.192)
-[96.72] [Target 1] Aura faded: {SpellID: 25306}
-[96.72] [Target 1] Aura gained: {SpellID: 25306}
-[97.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6517.050 --> 6582.475) of 6886 total.
-[98.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[98.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[99.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6582.475 --> 6647.900) of 6886 total.
-[99.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[99.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6647.900 --> 6237.900) of 6886 total.
-[99.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:966.2, AfterAttackerMods:1222.2, AfterResistances:1222.2, AfterTargetMods:1344.4, AfterOutcome:1344.4, AfterPostOutcome:1344.4
-[99.60] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[99.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1344.431 damage (SpellSchool: 4). (Threat: 1344.431)
-[99.72] [Target 1] Aura faded: {SpellID: 25306}
-[99.72] [Target 1] Aura gained: {SpellID: 25306}
-[99.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6237.900 --> 6296.900) of 6886 total.
-[101.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6296.900 --> 6362.325) of 6886 total.
-[101.10] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[101.10] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (6362.325 --> 6212.325) of 6886 total.
-[101.10] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:389.4, AfterAttackerMods:492.5, AfterResistances:492.5, AfterTargetMods:541.8, AfterOutcome:812.7, AfterPostOutcome:812.7
-[101.10] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit for 812.673 damage (SpellSchool: 4). (Threat: 812.673)
-[101.10] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[101.10] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[101.10] [Target 1] Aura gained: {SpellID: 412538}
-[101.10] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[101.10] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[101.10] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (6212.325 --> 6257.325) of 6886 total.
-[101.10] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[101.10] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[101.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[101.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[102.60] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[102.60] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (6257.325 --> 5817.325) of 6886 total.
-[102.60] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1092.7, AfterAttackerMods:1382.3, AfterResistances:1382.3, AfterTargetMods:1520.5, AfterOutcome:1520.5, AfterPostOutcome:1520.5
-[102.60] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[102.60] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[102.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[102.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[102.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5817.325 --> 5477.325) of 6886 total.
-[102.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:676.6, AfterAttackerMods:855.9, AfterResistances:855.9, AfterTargetMods:941.5, AfterOutcome:1412.2, AfterPostOutcome:1412.2
-[102.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1412.204 damage (SpellSchool: 4). (Threat: 1412.204)
-[102.60] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[102.60] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[102.60] [Target 1] Aura faded: {SpellID: 412538}
-[102.60] [Target 1] Aura gained: {SpellID: 412538}
-[102.60] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[102.60] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[102.60] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (5477.325 --> 5579.325) of 6886 total.
-[102.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1520.498 damage (SpellSchool: 4). (Threat: 1520.498)
-[102.72] [Target 1] Aura gained: {SpellID: 18809}
-[102.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5579.325 --> 5638.325) of 6886 total.
-[103.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5638.325 --> 5703.750) of 6886 total.
-[103.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[103.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[104.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[104.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:445.0, AfterAttackerMods:445.0, AfterResistances:445.0, AfterTargetMods:445.0, AfterOutcome:445.0, AfterPostOutcome:445.0
-[104.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 444.975 damage (SpellSchool: 4). (Threat: 444.975)
-[105.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5703.750 --> 5769.175) of 6886 total.
-[105.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
-[105.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
-[105.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[105.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[106.60] [Target 1] Aura faded: {SpellID: 412538}
-[106.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:445.0, AfterAttackerMods:445.0, AfterResistances:445.0, AfterTargetMods:445.0, AfterOutcome:445.0, AfterPostOutcome:445.0
-[106.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 444.975 damage (SpellSchool: 4). (Threat: 444.975)
-[107.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5769.175 --> 5834.600) of 6886 total.
-[107.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[107.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5834.600 --> 5424.600) of 6886 total.
-[107.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:966.5, AfterAttackerMods:1222.6, AfterResistances:1222.6, AfterTargetMods:1344.9, AfterOutcome:1344.9, AfterPostOutcome:1344.9
-[107.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[107.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1344.880 damage (SpellSchool: 4). (Threat: 1344.880)
-[107.22] [Target 1] Aura faded: {SpellID: 25306}
-[107.22] [Target 1] Aura gained: {SpellID: 25306}
-[107.23] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5424.600 --> 5483.600) of 6886 total.
-[108.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
-[108.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
-[109.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5483.600 --> 5549.025) of 6886 total.
-[109.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[109.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[110.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[110.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5549.025 --> 5139.025) of 6886 total.
-[110.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:968.3, AfterAttackerMods:1224.9, AfterResistances:1224.9, AfterTargetMods:1347.4, AfterOutcome:1347.4, AfterPostOutcome:1347.4
-[110.10] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[110.10] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[110.10] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5139.025 --> 4799.025) of 6886 total.
-[110.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:700.4, AfterAttackerMods:886.0, AfterResistances:886.0, AfterTargetMods:974.6, AfterOutcome:974.6, AfterPostOutcome:974.6
-[110.10] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 974.600 damage (SpellSchool: 4). (Threat: 974.600)
-[110.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1347.414 damage (SpellSchool: 4). (Threat: 1347.414)
-[110.22] [Target 1] Aura faded: {SpellID: 25306}
-[110.22] [Target 1] Aura gained: {SpellID: 25306}
-[111.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4799.025 --> 4864.450) of 6886 total.
+[85.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[85.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[86.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[86.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5690.450 --> 5280.450) of 6886 total.
+[86.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1006.8, AfterAttackerMods:1273.6, AfterResistances:1273.6, AfterTargetMods:1401.0, AfterOutcome:0.0, AfterPostOutcome:0.0
+[86.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[86.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
+[87.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5280.450 --> 5345.875) of 6886 total.
+[87.22] [Target 1] Aura faded: {SpellID: 25306}
+[87.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[87.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[89.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5345.875 --> 5411.300) of 6886 total.
+[89.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[89.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5411.300 --> 5001.300) of 6886 total.
+[89.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1002.4, AfterAttackerMods:1268.0, AfterResistances:1268.0, AfterTargetMods:1394.8, AfterOutcome:0.0, AfterPostOutcome:0.0
+[89.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[89.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[89.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5001.300 --> 4661.300) of 6886 total.
+[89.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:694.2, AfterAttackerMods:878.2, AfterResistances:878.2, AfterTargetMods:966.0, AfterOutcome:1449.0, AfterPostOutcome:1449.0
+[89.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1449.013 damage (SpellSchool: 4). (Threat: 1449.013)
+[89.60] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[89.60] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[89.60] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[89.60] [Target 1] Aura gained: {SpellID: 412538}
+[89.60] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
+[89.60] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
+[89.60] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (4661.300 --> 4763.300) of 6886 total.
+[89.61] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4763.300 --> 4822.300) of 6886 total.
+[89.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
+[91.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4822.300 --> 4887.725) of 6886 total.
+[91.10] [fire-mage (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[91.10] [fire-mage (#1)] Completed cast {ItemID: 13444}
+[91.10] [fire-mage (#1)] Gained 1800.000 mana from {ItemID: 13444} (4887.725 --> 6687.725) of 6886 total.
+[91.10] [fire-mage (#1)] Major cooldown used: {ItemID: 13444}
+[91.10] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 0.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[91.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:289.8, AfterAttackerMods:289.8, AfterResistances:289.8, AfterTargetMods:289.8, AfterOutcome:289.8, AfterPostOutcome:289.8
+[91.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 289.803 damage (SpellSchool: 4). (Threat: 289.803)
+[92.60] [fire-mage (#1)] Completed cast {SpellID: 18809}
+[92.60] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1055.5, AfterAttackerMods:1335.2, AfterResistances:1335.2, AfterTargetMods:1468.7, AfterOutcome:2203.1, AfterPostOutcome:2203.1
+[92.60] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[92.60] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
+[92.60] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[92.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[92.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} Crit for 2203.100 damage (SpellSchool: 4). (Threat: 2203.100)
+[92.72] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[92.72] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[92.72] [Target 1] Aura faded: {SpellID: 412538}
+[92.72] [Target 1] Aura gained: {SpellID: 412538}
+[92.72] [fire-mage (#1)] Gained 132.000 mana from {SpellID: 29074} (6687.725 --> 6819.725) of 6886 total.
+[92.72] [Target 1] Aura gained: {SpellID: 18809}
+[93.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6819.725 --> 6885.150) of 6886 total.
+[94.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:585.5, AfterAttackerMods:585.5, AfterResistances:585.5, AfterTargetMods:585.5, AfterOutcome:585.5, AfterPostOutcome:585.5
+[94.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 585.521 damage (SpellSchool: 4). (Threat: 585.521)
+[95.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (6885.150 --> 6885.900) of 6886 total.
+[95.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[95.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6885.900 --> 6475.900) of 6886 total.
+[95.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1008.0, AfterAttackerMods:1275.1, AfterResistances:1275.1, AfterTargetMods:1402.6, AfterOutcome:1402.6, AfterPostOutcome:1402.6
+[95.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[95.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
+[95.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
+[95.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1402.623 damage (SpellSchool: 4). (Threat: 1402.623)
+[95.72] [fire-mage (#1)] Aura gained: {SpellID: 44404}
+[95.72] [Target 1] Aura gained: {SpellID: 25306}
+[95.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6475.900 --> 6534.900) of 6886 total.
+[96.72] [Target 1] Aura faded: {SpellID: 412538}
+[96.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:585.5, AfterAttackerMods:585.5, AfterResistances:585.5, AfterTargetMods:585.5, AfterOutcome:585.5, AfterPostOutcome:585.5
+[96.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 585.521 damage (SpellSchool: 4). (Threat: 585.521)
+[97.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6534.900 --> 6600.325) of 6886 total.
+[97.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[97.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[98.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[98.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6600.325 --> 6190.325) of 6886 total.
+[98.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:995.5, AfterAttackerMods:1259.3, AfterResistances:1259.3, AfterTargetMods:1385.2, AfterOutcome:2077.9, AfterPostOutcome:2077.9
+[98.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[98.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[98.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6190.325 --> 5850.325) of 6886 total.
+[98.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:690.3, AfterAttackerMods:873.2, AfterResistances:873.2, AfterTargetMods:960.5, AfterOutcome:960.5, AfterPostOutcome:960.5
+[98.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 960.520 damage (SpellSchool: 4). (Threat: 960.520)
+[98.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:120.4, AfterTargetMods:132.5, AfterOutcome:132.5, AfterPostOutcome:132.5
+[98.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 132.488 damage (SpellSchool: 4). (Threat: 132.488)
+[98.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2077.871 damage (SpellSchool: 4). (Threat: 2077.871)
+[98.72] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[98.72] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[98.72] [Target 1] Aura gained: {SpellID: 412538}
+[98.72] [fire-mage (#1)] Aura gained: {SpellID: 400625}
+[98.72] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
+[98.72] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5850.325 --> 5973.325) of 6886 total.
+[98.72] [Target 1] Aura faded: {SpellID: 25306}
+[98.72] [Target 1] Aura gained: {SpellID: 25306}
+[98.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5973.325 --> 6032.325) of 6886 total.
+[99.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6032.325 --> 6097.750) of 6886 total.
+[100.10] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[100.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:415.6, AfterAttackerMods:415.6, AfterResistances:415.6, AfterTargetMods:415.6, AfterOutcome:415.6, AfterPostOutcome:415.6
+[100.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 415.574 damage (SpellSchool: 4). (Threat: 415.574)
+[100.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[100.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[101.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6097.750 --> 6163.175) of 6886 total.
+[101.60] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[101.60] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (6163.175 --> 6013.175) of 6886 total.
+[101.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:406.6, AfterAttackerMods:514.3, AfterResistances:514.3, AfterTargetMods:565.7, AfterOutcome:0.0, AfterPostOutcome:0.0
+[101.60] [fire-mage (#1)] [Target 1] {SpellID: 10207} Miss (SpellSchool: 4). (Threat: 0.000)
+[101.60] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[101.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
+[101.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
+[102.72] [Target 1] Aura faded: {SpellID: 412538}
+[102.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:415.6, AfterAttackerMods:415.6, AfterResistances:415.6, AfterTargetMods:415.6, AfterOutcome:415.6, AfterPostOutcome:415.6
+[102.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 415.574 damage (SpellSchool: 4). (Threat: 415.574)
+[102.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[102.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[103.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6013.175 --> 6078.600) of 6886 total.
+[103.10] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[103.10] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (6078.600 --> 5928.600) of 6886 total.
+[103.10] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:406.9, AfterAttackerMods:514.7, AfterResistances:386.0, AfterTargetMods:424.6, AfterOutcome:424.6, AfterPostOutcome:424.6
+[103.10] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit (25% Resist) for 424.635 damage (SpellSchool: 4). (Threat: 424.635)
+[103.10] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[103.10] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[103.10] [fire-mage (#1)] Completed cast {SpellID: 25345}
+[103.10] [Target 1] Aura gained: {SpellID: 25345}
+[103.10] [fire-mage (#1)] Aura faded: {SpellID: 44404}
+[103.11] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5928.600 --> 5987.600) of 6886 total.
+[103.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[103.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[103.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[103.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[104.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[104.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[104.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[104.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[104.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[104.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[104.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:400.2, AfterPostOutcome:400.2
+[104.72] [Target 1] Aura faded: {SpellID: 18809}
+[104.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
+[104.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
+[104.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[104.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[104.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit (25% Resist) for 400.208 damage (SpellSchool: 64). (Threat: 280.145)
+[105.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5987.600 --> 6053.025) of 6886 total.
+[105.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[105.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[105.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:533.6, AfterPostOutcome:533.6
+[105.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit for 533.610 damage (SpellSchool: 64). (Threat: 373.527)
+[105.60] [Target 1] Aura faded: {SpellID: 25345}
+[105.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[105.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[105.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[105.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[105.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[105.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6053.025 --> 5713.025) of 6886 total.
+[105.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:676.6, AfterAttackerMods:855.9, AfterResistances:855.9, AfterTargetMods:941.5, AfterOutcome:1412.2, AfterPostOutcome:1412.2
+[105.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1412.204 damage (SpellSchool: 4). (Threat: 1412.204)
+[105.60] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[105.60] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[105.60] [Target 1] Aura gained: {SpellID: 412538}
+[105.60] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
+[105.60] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 3
+[105.60] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (5713.025 --> 5815.025) of 6886 total.
+[105.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[105.76] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5815.025 --> 5874.025) of 6886 total.
+[106.72] [Target 1] Aura faded: {SpellID: 25306}
+[106.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:4.7, AfterTargetMods:5.2, AfterOutcome:5.2, AfterPostOutcome:5.2
+[106.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (75% Resist) for 5.218 damage (SpellSchool: 4). (Threat: 5.218)
+[107.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5874.025 --> 5939.450) of 6886 total.
+[107.10] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[107.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:282.4, AfterAttackerMods:282.4, AfterResistances:282.4, AfterTargetMods:282.4, AfterOutcome:282.4, AfterPostOutcome:282.4
+[107.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 282.441 damage (SpellSchool: 4). (Threat: 282.441)
+[108.60] [fire-mage (#1)] Completed cast {SpellID: 18809}
+[108.60] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (5939.450 --> 5499.450) of 6886 total.
+[108.60] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1039.8, AfterAttackerMods:1315.3, AfterResistances:1315.3, AfterTargetMods:1446.9, AfterOutcome:0.0, AfterPostOutcome:0.0
+[108.60] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[108.60] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
+[108.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[108.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} Miss (SpellSchool: 4). (Threat: 0.000)
+[109.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5499.450 --> 5564.875) of 6886 total.
+[109.60] [Target 1] Aura faded: {SpellID: 412538}
+[109.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:282.4, AfterAttackerMods:282.4, AfterResistances:282.4, AfterTargetMods:282.4, AfterOutcome:282.4, AfterPostOutcome:282.4
+[109.60] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 282.441 damage (SpellSchool: 4). (Threat: 282.441)
+[111.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5564.875 --> 5630.300) of 6886 total.
+[111.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[111.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5630.300 --> 5220.300) of 6886 total.
+[111.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:990.7, AfterAttackerMods:1253.3, AfterResistances:1253.3, AfterTargetMods:1378.6, AfterOutcome:1378.6, AfterPostOutcome:1378.6
 [111.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[111.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:120.4, AfterTargetMods:132.5, AfterOutcome:132.5, AfterPostOutcome:132.5
-[111.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 132.488 damage (SpellSchool: 4). (Threat: 132.488)
-[112.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[112.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[113.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4864.450 --> 4929.875) of 6886 total.
-[114.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[114.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[111.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1378.592 damage (SpellSchool: 4). (Threat: 1378.592)
+[111.72] [fire-mage (#1)] Aura gained: {SpellID: 44404}
+[111.72] [Target 1] Aura gained: {SpellID: 25306}
+[111.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5220.300 --> 5279.300) of 6886 total.
+[113.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5279.300 --> 5344.725) of 6886 total.
+[113.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[113.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
 [114.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[114.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (4929.875 --> 4519.875) of 6886 total.
-[114.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:960.8, AfterAttackerMods:1215.4, AfterResistances:1215.4, AfterTargetMods:1337.0, AfterOutcome:2005.5, AfterPostOutcome:2005.5
-[114.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[114.72] [Target 1] Aura faded: {SpellID: 18809}
-[114.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
-[114.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
-[114.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2005.465 damage (SpellSchool: 4). (Threat: 2005.465)
-[114.72] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[114.72] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[114.72] [Target 1] Aura gained: {SpellID: 412538}
-[114.72] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[114.72] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[114.72] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (4519.875 --> 4642.875) of 6886 total.
+[114.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5344.725 --> 4934.725) of 6886 total.
+[114.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1005.8, AfterAttackerMods:1272.3, AfterResistances:1272.3, AfterTargetMods:1399.6, AfterOutcome:1399.6, AfterPostOutcome:1399.6
+[114.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[114.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[114.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4934.725 --> 4594.725) of 6886 total.
+[114.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:683.0, AfterAttackerMods:864.0, AfterResistances:864.0, AfterTargetMods:950.4, AfterOutcome:950.4, AfterPostOutcome:950.4
+[114.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 950.431 damage (SpellSchool: 4). (Threat: 950.431)
+[114.61] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4594.725 --> 4653.725) of 6886 total.
+[114.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1399.578 damage (SpellSchool: 4). (Threat: 1399.578)
 [114.72] [Target 1] Aura faded: {SpellID: 25306}
 [114.72] [Target 1] Aura gained: {SpellID: 25306}
-[115.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4642.875 --> 4708.300) of 6886 total.
-[116.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:401.1, AfterAttackerMods:401.1, AfterResistances:401.1, AfterTargetMods:401.1, AfterOutcome:401.1, AfterPostOutcome:401.1
-[116.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 401.093 damage (SpellSchool: 4). (Threat: 401.093)
-[116.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[116.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[117.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4708.300 --> 4773.725) of 6886 total.
-[117.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[117.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (4773.725 --> 4363.725) of 6886 total.
-[117.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:988.7, AfterAttackerMods:1250.7, AfterResistances:625.4, AfterTargetMods:687.9, AfterOutcome:1031.8, AfterPostOutcome:1031.8
-[117.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[117.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[117.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4363.725 --> 4023.725) of 6886 total.
-[117.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:683.0, AfterAttackerMods:864.0, AfterResistances:648.0, AfterTargetMods:712.8, AfterOutcome:0.0, AfterPostOutcome:0.0
-[117.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Miss (SpellSchool: 4). (Threat: 0.000)
-[117.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit (50% Resist) for 1031.840 damage (SpellSchool: 4). (Threat: 1031.840)
-[117.72] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[117.72] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[117.72] [Target 1] Aura faded: {SpellID: 412538}
-[117.72] [Target 1] Aura gained: {SpellID: 412538}
-[117.72] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[117.72] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[117.72] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (4023.725 --> 4146.725) of 6886 total.
-[117.72] [Target 1] Aura faded: {SpellID: 25306}
-[117.72] [Target 1] Aura gained: {SpellID: 25306}
-[119.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4146.725 --> 4212.150) of 6886 total.
-[119.10] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[119.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:406.9, AfterAttackerMods:406.9, AfterResistances:406.9, AfterTargetMods:406.9, AfterOutcome:406.9, AfterPostOutcome:406.9
-[119.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 406.914 damage (SpellSchool: 4). (Threat: 406.914)
-[119.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[119.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[120.60] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[120.60] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (4212.150 --> 3772.150) of 6886 total.
-[120.60] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1125.1, AfterAttackerMods:1423.3, AfterResistances:1423.3, AfterTargetMods:1565.6, AfterOutcome:1565.6, AfterPostOutcome:1565.6
-[120.60] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[120.60] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[120.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[120.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1565.618 damage (SpellSchool: 4). (Threat: 1565.618)
-[120.72] [Target 1] Aura gained: {SpellID: 18809}
-[120.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3772.150 --> 3831.150) of 6886 total.
-[121.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3831.150 --> 3896.575) of 6886 total.
-[121.72] [Target 1] Aura faded: {SpellID: 412538}
-[121.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:406.9, AfterAttackerMods:406.9, AfterResistances:406.9, AfterTargetMods:406.9, AfterOutcome:406.9, AfterPostOutcome:406.9
-[121.72] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 406.914 damage (SpellSchool: 4). (Threat: 406.914)
-[121.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[121.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[123.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3896.575 --> 3962.000) of 6886 total.
-[123.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[123.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3962.000 --> 3552.000) of 6886 total.
-[123.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1014.9, AfterAttackerMods:1283.9, AfterResistances:1283.9, AfterTargetMods:1412.3, AfterOutcome:1412.3, AfterPostOutcome:1412.3
-[123.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[123.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:120.4, AfterTargetMods:132.5, AfterOutcome:132.5, AfterPostOutcome:132.5
-[123.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 132.488 damage (SpellSchool: 4). (Threat: 132.488)
+[115.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4653.725 --> 4719.150) of 6886 total.
+[116.10] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[116.10] [fire-mage (#1)] Completed cast {SpellID: 25345}
+[116.10] [Target 1] Aura gained: {SpellID: 25345}
+[116.10] [fire-mage (#1)] Aura faded: {SpellID: 44404}
+[116.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[116.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[116.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[116.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[116.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[116.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[117.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4719.150 --> 4784.575) of 6886 total.
+[117.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[117.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[117.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:400.2, AfterPostOutcome:400.2
+[117.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit (25% Resist) for 400.208 damage (SpellSchool: 64). (Threat: 280.145)
+[117.26] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4784.575 --> 4843.575) of 6886 total.
+[117.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[117.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[117.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:533.6, AfterPostOutcome:533.6
+[117.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit for 533.610 damage (SpellSchool: 64). (Threat: 373.527)
+[117.76] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4843.575 --> 4902.575) of 6886 total.
+[118.10] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[118.10] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[118.10] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[118.25] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[118.60] [Target 1] Aura faded: {SpellID: 25345}
+[118.60] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[118.60] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[118.60] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[118.60] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[118.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:10.4, AfterPostOutcome:10.4
+[118.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (50% Resist) for 10.436 damage (SpellSchool: 4). (Threat: 10.436)
+[118.75] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[118.76] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4902.575 --> 4961.575) of 6886 total.
+[119.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4961.575 --> 5027.000) of 6886 total.
+[120.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[120.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[121.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5027.000 --> 5127.050) of 6886 total.
+[121.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[121.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5127.050 --> 4717.050) of 6886 total.
+[121.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1029.0, AfterAttackerMods:1301.7, AfterResistances:1301.7, AfterTargetMods:1431.9, AfterOutcome:1431.9, AfterPostOutcome:1431.9
+[121.60] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[121.60] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[121.60] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4717.050 --> 4377.050) of 6886 total.
+[121.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:668.9, AfterAttackerMods:846.2, AfterResistances:846.2, AfterTargetMods:930.8, AfterOutcome:930.8, AfterPostOutcome:930.8
+[121.60] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 930.767 damage (SpellSchool: 4). (Threat: 930.767)
+[121.61] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4377.050 --> 4436.050) of 6886 total.
+[121.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1431.914 damage (SpellSchool: 4). (Threat: 1431.914)
+[121.72] [Target 1] Aura faded: {SpellID: 25306}
+[121.72] [Target 1] Aura gained: {SpellID: 25306}
+[121.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4436.050 --> 4495.050) of 6886 total.
+[123.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4495.050 --> 4560.475) of 6886 total.
+[123.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
 [123.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
 [123.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[123.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1412.254 damage (SpellSchool: 4). (Threat: 1412.254)
-[123.72] [fire-mage (#1)] Aura gained: {SpellID: 44404}
-[123.72] [Target 1] Aura faded: {SpellID: 25306}
-[123.72] [Target 1] Aura gained: {SpellID: 25306}
-[123.73] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3552.000 --> 3611.000) of 6886 total.
-[125.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3611.000 --> 3676.425) of 6886 total.
+[125.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4560.475 --> 4625.900) of 6886 total.
 [125.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
 [125.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[126.60] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[126.60] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3676.425 --> 3266.425) of 6886 total.
-[126.60] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:983.6, AfterAttackerMods:1244.3, AfterResistances:933.2, AfterTargetMods:1026.6, AfterOutcome:0.0, AfterPostOutcome:0.0
-[126.60] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[126.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:127.0, AfterAttackerMods:160.6, AfterResistances:160.6, AfterTargetMods:176.7, AfterOutcome:176.7, AfterPostOutcome:176.7
-[126.72] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 176.651 damage (SpellSchool: 4). (Threat: 176.651)
-[126.72] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
-[127.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3266.425 --> 3331.850) of 6886 total.
+[126.10] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[126.10] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (4625.900 --> 4215.900) of 6886 total.
+[126.10] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1014.0, AfterAttackerMods:1282.7, AfterResistances:1282.7, AfterTargetMods:1411.0, AfterOutcome:1411.0, AfterPostOutcome:1411.0
+[126.10] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[126.22] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1410.986 damage (SpellSchool: 4). (Threat: 1410.986)
+[126.22] [fire-mage (#1)] Aura gained: {SpellID: 44404}
+[126.22] [Target 1] Aura faded: {SpellID: 25306}
+[126.22] [Target 1] Aura gained: {SpellID: 25306}
+[127.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4215.900 --> 4281.325) of 6886 total.
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 44404}
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 10494, Tag: -1}
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 24907, Tag: -1}
@@ -1614,4 +1651,3 @@
 [127.25] [Target 1] Aura faded: {SpellID: 20355, Tag: -1}
 [127.25] [Target 1] Aura faded: {SpellID: 1311680, Tag: -1}
 [127.25] [Target 1] Aura faded: {SpellID: 25306}
-[127.25] [Target 1] Aura faded: {SpellID: 18809}

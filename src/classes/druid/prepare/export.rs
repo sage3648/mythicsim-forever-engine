@@ -282,6 +282,9 @@ impl Druid {
                 1.0 + moonkin.effect(A_ADD_PCT_MODIFIER, SPELLMOD_PROC_COOLDOWN).percent(),
             "cost_spells": spells_matching(sim, unit, masks::CLEARCASTING_SPELLS),
             "cost_percent_add": clearcasting.effect(A_ADD_PCT_MODIFIER, SPELLMOD_COST).percent(),
+            // 16 October 2026 beta notes: Faerie Fire no longer triggers it in Cat or Bear Form.
+            "form_excluded_spells":
+                spells_matching(sim, unit, masks::FAERIE_FIRE | masks::FAERIE_FIRE_FERAL),
         }));
         if self.tal.natures_grace {
             // talents_balance.go applyNaturesGrace

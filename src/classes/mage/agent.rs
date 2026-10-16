@@ -88,6 +88,9 @@ pub(crate) struct MageAgent {
     improved_scorch: Option<Rc<scorch::ImprovedScorch>>,
     master_of_elements: Option<Rc<master_of_elements::MasterOfElements>>,
     heating_up: Option<Rc<heating_up::HeatingUp>>,
+    /// Go `pyroblastUnderPresenceOfMind`: whether Presence of Mind was up when the current
+    /// Pyroblast cast began.
+    pyroblast_under_presence_of_mind: bool,
     combustion: Option<Rc<combustion::Combustion>>,
     ignite: Option<Rc<ignite::Ignite>>,
     ice_lance_frozen_multiplier: f64,
@@ -596,6 +599,18 @@ impl Agent for MageAgent {
     type Spell = MageSpell;
     type Aura = MageAura;
 
+    /// pyroblast.go ModifyCast: whether Presence of Mind is up when a Pyroblast cast begins, which
+    /// Heating Up reads once Presence of Mind has dropped for that cast.
+    fn modify_cast(fight: &mut Fight<Self>, _spell: SpellId, behavior: MageSpell) {
+        if matches!(behavior, MageSpell::Pyroblast) {
+            fight.agent.pyroblast_under_presence_of_mind = fight
+                .agent
+                .presence_of_mind
+                .as_ref()
+                .is_some_and(|pom| fight.aura(pom.aura).active);
+        }
+    }
+
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: MageSpell) {
         match behavior {
             MageSpell::Frostbolt => frostbolt::apply(fight, spell, target),
@@ -888,7 +903,10 @@ impl Agent for MageAgent {
             }
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
-            MageAura::HeatingUp => Self::heating_up(fight).on_cast_complete(fight, spell),
+            MageAura::HeatingUp => {
+                let under = fight.agent.pyroblast_under_presence_of_mind;
+                Self::heating_up(fight).on_cast_complete(fight, spell, under)
+            }
             MageAura::PresenceOfMind => {
                 Self::presence_of_mind(fight).on_cast_complete(fight, spell)
             }

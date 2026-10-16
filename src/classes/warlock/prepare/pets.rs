@@ -75,7 +75,7 @@ impl Summon {
 }
 
 /// Go `petStatInheritance`: linear in the owner's stats, which the dynamic inheritance needs.
-fn pet_stat_inheritance(owner: &Stats) -> Stats {
+fn pet_stat_inheritance(_sim: &mut Sim, owner: &Stats) -> Stats {
     let mut inherited = Stats::default();
     inherited[Stat::SpellHitPercent] = owner[Stat::SpellHitPercent];
     inherited[Stat::PhysicalHitPercent] = owner[Stat::SpellHitPercent];

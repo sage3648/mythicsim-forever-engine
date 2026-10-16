@@ -238,7 +238,7 @@ impl Meta {
         aura
     }
 
-    fn buff(
+    pub(crate) fn buff(
         &self,
         sim: &mut Sim,
         unit: UnitId,

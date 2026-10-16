@@ -305,8 +305,8 @@ impl PriestAgent {
                 Effect::PowerInLight {
                     multiplier,
                     spells,
-                    holy_fire_spells,
-                } => power_in_light::bind(&mut fight, *multiplier, spells, holy_fire_spells)?,
+                    dot_spells,
+                } => power_in_light::bind(&mut fight, *multiplier, spells, dot_spells)?,
                 Effect::SearingLight {
                     trigger_aura,
                     aura,

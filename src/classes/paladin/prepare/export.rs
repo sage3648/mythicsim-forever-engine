@@ -411,7 +411,9 @@ impl Paladin {
             consecrations.push(json!({
                 "spell_id": rank.id, "tick": tick.average(CHARACTER_LEVEL),
                 "bonus": bonus.average(CHARACTER_LEVEL),
-                "bonus_coefficient": bonus.coeff(),
+                // consecration.go consecrationTickCoefficient: the 16 October 2026 beta notes cut
+                // it to 0.042; the rows still carry 0.095.
+                "bonus_coefficient": 0.042,
                 "bonus_targets": dummy.average(CHARACTER_LEVEL) as i32,
             }));
         });

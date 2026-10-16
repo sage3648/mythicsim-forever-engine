@@ -114,6 +114,8 @@ pub(crate) struct RogueAgent {
     rupture_snapshot: rupture::Snapshot,
     mutilate: Option<Mutilate>,
     cold_blood: Option<Rc<ColdBlood>>,
+    /// Whether this Mutilate's main-hand strike crit, for the off-hand strike after it.
+    cold_blood_mutilate_crit: bool,
     premeditation: Option<Premeditation>,
     preparation: Option<Rc<Preparation>>,
     thousand_cuts: Option<Rc<ThousandCuts>>,
@@ -1050,12 +1052,15 @@ impl Agent for RogueAgent {
                 fight.agent.kidney_shot_pause = kidney_shot.pause_target(fight);
                 kidney_shot.on_stun_change(fight, true);
             }
-            RogueAura::ColdBlood => fight
-                .agent
-                .cold_blood
-                .clone()
-                .expect("bound")
-                .on_gain(fight),
+            RogueAura::ColdBlood => {
+                fight.agent.cold_blood_mutilate_crit = false;
+                fight
+                    .agent
+                    .cold_blood
+                    .clone()
+                    .expect("bound")
+                    .on_gain(fight)
+            }
             RogueAura::ThousandCuts => fight
                 .agent
                 .thousand_cuts
@@ -1198,6 +1203,20 @@ impl Agent for RogueAgent {
             RogueAura::ColdBlood => {
                 let cold_blood = fight.agent.cold_blood.clone().expect("bound");
                 cold_blood.on_spell_hit_dealt(fight, spell);
+                // 16 October 2026 beta notes: "Cold Blood is now consumed when Mutilate crits".
+                // The off-hand strike lands after the main hand, so both keep the crit and the
+                // charge goes with the second, once per Mutilate, if either hand crit.
+                if let Some(mutilate) = fight.agent.mutilate.as_ref() {
+                    if spell == mutilate.main_hand {
+                        fight.agent.cold_blood_mutilate_crit = result.crit();
+                    } else if spell == mutilate.off_hand {
+                        let crit = fight.agent.cold_blood_mutilate_crit || result.crit();
+                        fight.agent.cold_blood_mutilate_crit = false;
+                        if crit {
+                            fight.deactivate_aura(cold_blood.aura);
+                        }
+                    }
+                }
                 None
             }
             RogueAura::Proc(index) => {

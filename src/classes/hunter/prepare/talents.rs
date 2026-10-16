@@ -674,7 +674,9 @@ impl Hunter {
             unit,
             class_mod(
                 SpellModType::PowerCostPctAdd,
-                masks::TRAPS | (masks::MELEE & !masks::STRIDER_KICK),
+                // 440529's cost mask leaves out Strider Kick; the 16 October 2026 beta notes put
+                // it in ("Resourcefulness now reduces the mana cost of Strider Kick").
+                masks::TRAPS | masks::MELEE,
                 spell_data()
                     .resourcefulness
                     .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
@@ -708,6 +710,9 @@ impl Hunter {
             &ProcTrigger {
                 name: "Resourcefulness Trigger".to_string(),
                 callback: CallbackMask::ON_SPELL_HIT_DEALT,
+                // 16 October 2026 beta notes: only crits of melee and ranged abilities, not traps
+                // or auto attacks.
+                proc_mask: ProcMask::MELEE_SPECIAL | ProcMask::RANGED_SPECIAL,
                 outcome: HitOutcome::CRIT,
                 proc_chance: 0.5 * f64::from(rank),
                 ..ProcTrigger::default()

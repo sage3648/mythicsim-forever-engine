@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
+    "engine_revision": "d0bd691f087689c4b154d67f4bf284e1fa820ac5",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -754,7 +754,7 @@
         ],
         "icd": {
           "timer": "timer-17",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -978,6 +978,34 @@
         "exclusive_effects": 0
       },
       {
+        "label": "Reckoningprotection-paladin (#1)",
+        "action_id": {
+          "spell_id": 20178
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 4,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Reckoning Charges Spenderprotection-paladin (#1)",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_init",
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
         "label": "Reckoning - Blockprotection-paladin (#1)",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -1123,14 +1151,8 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 3,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 2,
-            "position": 0
-          },
           {
             "category": "FlametongueTotem",
             "single_aura": false,
@@ -3204,6 +3226,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -12689,6 +12712,59 @@
       {
         "action_id": {
           "other_id": "OtherActionAttack",
+          "tag": 20178
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHAuto"
+        ],
+        "flags": [
+          "SpellFlagIncludeTargetBonusDamage",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1.1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
           "tag": 25584
         },
         "rank": 0,
@@ -15275,7 +15351,8 @@
     {
       "auto_spells": [
         168,
-        170
+        170,
+        171
       ],
       "kind": "seal_of_the_crusader",
       "ranks": [
@@ -15422,35 +15499,35 @@
       "ranks": [
         {
           "bonus": 4,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 26573,
           "tick": 2
         },
         {
           "bonus": 7,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20116,
           "tick": 3
         },
         {
           "bonus": 11,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20922,
           "tick": 6
         },
         {
           "bonus": 20,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20923,
           "tick": 8
         },
         {
           "bonus": 27,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20924,
           "tick": 12
@@ -15461,7 +15538,7 @@
       "aura": "Righteous Fury",
       "kind": "righteous_fury",
       "spell_id": 25780,
-      "threat_percent": 0.6
+      "threat_percent": 0.9
     },
     {
       "aura": "Swift Judgementprotection-paladin (#1)",
@@ -15483,7 +15560,7 @@
     },
     {
       "kind": "shield_specialization",
-      "mana_share": 0.06,
+      "mana_share": 0.04,
       "metrics_action_id": {
         "spell_id": 1310925
       },
@@ -15493,9 +15570,17 @@
     {
       "block_aura": "Reckoning - Blockprotection-paladin (#1)",
       "block_chance": 0.4,
+      "charges_aura": "Reckoningprotection-paladin (#1)",
       "crit_aura": "Reckoning - Critprotection-paladin (#1)",
       "crit_chance": 1,
-      "kind": "reckoning"
+      "extra_spell": 170,
+      "kind": "reckoning",
+      "spender_aura": "Reckoning Charges Spenderprotection-paladin (#1)",
+      "spender_spells": [
+        168,
+        170,
+        171
+      ]
     },
     {
       "aura": "Iron Creedprotection-paladin (#1)",
@@ -15724,7 +15809,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.05,
+      "proc_chance": 0.2,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",
@@ -15954,6 +16039,10 @@
         {
           "spell": 170,
           "chance": 0.04
+        },
+        {
+          "spell": 171,
+          "chance": 0.04
         }
       ],
       "heal_max": 125,
@@ -16011,11 +16100,12 @@
         132,
         168,
         169,
-        170
+        170,
+        171
       ]
     },
     {
-      "extra_attack_spell": 170,
+      "extra_attack_spell": 171,
       "kind": "windfury_totem",
       "period_ns": 5000000000,
       "proc_aura": "Windfury Totem (External)",
@@ -16030,7 +16120,8 @@
       "spend_spells": [
         168,
         169,
-        170
+        170,
+        171
       ],
       "totem_aura": "Windfury Totem",
       "trigger_aura": "Windfury Totem Trigger",
@@ -16069,7 +16160,8 @@
         131,
         132,
         168,
-        170
+        170,
+        171
       ]
     },
     {

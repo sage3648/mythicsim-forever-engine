@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
+    "engine_revision": "d0bd691f087689c4b154d67f4bf284e1fa820ac5",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -651,7 +651,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.3354,
+      "PhysicalCritPercent": 11.3354,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -673,7 +673,7 @@
     },
     "pseudo_stats": {
       "spell_cost_percent_modifier": 100,
-      "cast_speed_multiplier": 1.01,
+      "cast_speed_multiplier": 1.03,
       "spirit_regen_rate_casting": 0.5,
       "force_full_spirit_regen": false,
       "spirit_regen_multiplier": 1,
@@ -915,7 +915,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -933,7 +933,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1210,7 +1210,7 @@
     "reaction_ns": 100000000,
     "channel_clip_delay_ns": 0,
     "distance_yards": 20,
-    "cast_speed": 0.9900990099009901,
+    "cast_speed": 0.970873786407767,
     "mana": {
       "max": 6468,
       "base": 1213,
@@ -5827,7 +5827,7 @@
     "ignore_armor": false,
     "armor_ignore_factor": 0,
     "in_front_of_target": false,
-    "attack_speed_multiplier": 1.01,
+    "attack_speed_multiplier": 1.03,
     "melee_speed_multiplier": 1,
     "dodge_reduction": 0,
     "disable_dw_miss_penalty": false,
@@ -5882,7 +5882,7 @@
       "trigger_aura": "Winters Chill Talent"
     },
     {
-      "frozen_multiplier": 4,
+      "frozen_multiplier": 3,
       "kind": "ice_lance",
       "spell_id": 1240047
     },

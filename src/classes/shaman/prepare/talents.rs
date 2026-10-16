@@ -106,6 +106,24 @@ impl Shaman {
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
                 .fraction_at(points),
         );
+        // "Call of Flame now also increases the duration of Flame Shock by 3/6/9 sec" (16 October
+        // 2026 beta notes). The row has no duration modifier yet, so the time is added as ticks of
+        // the dot's own period: 3 sec a rank.
+        const CALL_OF_FLAME_FLAME_SHOCK_SECONDS: i64 = 3 * SECOND;
+        let period = spell_data()
+            .flame_shock
+            .highest()
+            .periodic_effect()
+            .period();
+        sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                kind: SpellModType::DotNumberOfTicksFlat,
+                int_value: (CALL_OF_FLAME_FLAME_SHOCK_SECONDS * i64::from(points) / period) as i32,
+                class_mask: masks::FLAME_SHOCK_DOT,
+                ..SpellModConfig::default()
+            },
+        );
     }
 
     fn apply_call_of_thunder(&self, sim: &mut Sim, unit: UnitId) {

@@ -162,7 +162,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `righteous_fury` | sim/paladin/righteous_fury.go, talents_retribution.go | The aura's Holy threat mod and, with Instrument of Law, the threat reduction that holds only while the aura is down; Improved Righteous Fury's damage taken is a `pseudo_stat_auras` entry tracked live |
 | `swift_judgement` | sim/paladin/swift_judgement.go | The major cooldown that finishes Judgement's cooldown when a seal is up, and its free Judgement |
 | `templars_bulwark` | sim/paladin/templars_bulwark.go, core/aura_helpers.go | The survival cooldown's absorb shield aura and the share of maximum health it absorbs: its strength sets its stacks and spends itself on the target's swings after their outcome, logging each absorb, and Forbearance holds the next cast off. It fires below the player's defensive health threshold, the player config's `hp_percent_for_defensives`, from timings, or from the rotation |
-| `redoubt`, `shield_specialization`, `reckoning` | sim/paladin/talents_protection.go | Listeners of the target's swings: Redoubt's chance and its block chance aura, whose blocks spend stacks; the mana a block restores behind its cooldown; the extra attack a block or crit taken grants a batch window later |
+| `redoubt`, `shield_specialization`, `reckoning` | sim/paladin/talents_protection.go | Listeners of the target's swings: Redoubt's chance and its block chance aura, whose blocks spend stacks; the mana a block restores behind its cooldown; Reckoning's charges, which a block or crit taken adds a batch window later, up to 4, and its always-up spender, whose next main hand auto spends them all on one extra attack each (16 October 2026 beta notes) |
 | `iron_creed` | sim/paladin/talents_protection.go | The aura a landed Holy Strike under Righteous Fury activates a batch window later; its damage taken is a `pseudo_stat_auras` entry tracked live |
 | `holy_shield` | sim/paladin/holy_shield.go | Every rank: its block chance aura, charges and the Holy damage each block casts, and whether the paladin carries a shield; the block chance auras of the ranks the rotation names join `stat_auras` |
 | `illumination` | sim/paladin/talents_holy.go | A heal crit's chance, keyed by the trigger's name, to return the talent's share of the heal's base cost a batch window later, with its mana metrics |
@@ -193,7 +193,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `moonfire` | sim/druid/moonfire.go | The dot base and tick crit; the hit applies the tagged dot spell's dot when it lands, without casting it |
 | `insect_swarm` | sim/druid/insect_swarm.go | The dot base, tick crit and the target debuff the dot holds |
 | `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to; the cast needs no active aura with the Innervate tag, the druid's own or an external one, as Go's cast condition reads it |
-| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers and Clearcasting's cost modifier |
+| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers, Clearcasting's cost modifier and the Faerie Fire spells that set off nothing in Cat or Bear Form |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
 | `cat_form` | sim/druid/forms.go, druid.go | The aura's threat, spirit regeneration and movement speed changes with the unit's values before any aura, the threat with every permanent aura the reset activates, such as the Threat or Subtlety enchant, the paw and the equipped weapon, Faerie Fire's free and faster cast in the form, Furor's carry over cap, and the potions, conjured items and explosives that drop the form |
@@ -248,8 +248,8 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `magma_totem` | sim/shaman/fire_totems.go | The pulse's fixed base and the totem's lifetime; each pulse calculates periodic area damage on every target before dealing any |
 | `flametongue_totem` | sim/shaman/fire_totems.go | The totem aura, its trigger and the spells it hears, the attack spell and its base, and whether a party Flametongue Totem shares the benefit |
 | `lightning_shield` | sim/shaman/shields.go | The cast, its aura and charges |
-| `grace_of_air_totem`, `mana_spring_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura, the totem's lifetime and whether a party air totem holds the slot, which an exported `AirTotem` exclusive category then resolves |
-| `windfury_totem_self` | sim/shaman/totems.go | The totem aura, its lifetime and refresh period, the tracking and dummy auras, the trigger's chance and spells, the attack power charges with their log lines, the spenders, the extra main hand attack, and whether a party air totem or a main hand Windfury Weapon contests it |
+| `grace_of_air_totem`, `mana_spring_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura and the totem's lifetime; since the 16 October 2026 beta notes no air totem slot joins it to the party's totems |
+| `windfury_totem_self` | sim/shaman/totems.go | The totem aura, its lifetime and refresh period, the tracking and dummy auras, the trigger's chance and spells, the attack power charges with their log lines, the spenders, the extra main hand attack, and whether the party's Windfury Totem or a main hand Windfury Weapon contests it |
 | `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
 | `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
 | `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
@@ -286,7 +286,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `shadowfiend` | sim/priest/shadowfiend.go, shadowfiend_pet.go | The summon's timeline aura and duration, the pet, its attack power from spell and shadow damage at each summon with the dependency terms and the stats its lines print, `fight_end_stats` those stats once the fight's end has expired its permanent auras where a party aura on the pet changes them (fork patch 131; the line at its timeout keeps them), and its mana restore aura's share of maximum mana, a Go literal |
 | `smite`, `holy_fire` | sim/priest/smite.go, holy_fire.go | Damage rolls on every rank; Holy Fire's dot base and Periodic Can Crit, the dot applied before the hit is dealt |
 | `penance` | sim/priest/penance.go | Every rank with its own bolt's base and crit, on one category cooldown; a channel that ticks on application and each second |
-| `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
+| `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the dots it waits for, Holy Fire's and Shadow Word: Pain's |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
 | `pushback_trigger` | sim/core/character.go | A tanking player's "Pushback trigger" aura and the player's pushback chance, which each spell's resist reduces; a damaging hit during a hardcast with the pushback flag pushes the cast back a spell batch window later, by at most half a second and never past the time the cast has run |
 | `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player, a parry pulling that unit's next main hand swing in; for a target nobody tanks, its swing speed and melee haste, since its reset still rolls a swing timer that a parry pulls in and logs |
@@ -301,7 +301,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `ambush` | sim/rogue/ambush.go | The base, the main hand dagger and Cutthroat's aura |
 | `rupture` | sim/rogue/rupture.go | The tick, its step a combo point and the attack power share a point, Go literals, the tick outcome, and the multiplier Hemorrhage's debuff gives every tick while it is up, read from the damage taken from caster effect of its client row |
 | `mutilate` | sim/rogue/talents_assassination.go | The flat damage, weapon share, combo points and poisoned bonus, and whether both hands hold daggers |
-| `cold_blood` | sim/rogue/talents_assassination.go | The crit bonus and the spells it names, and the spells whose hit spends it, which leave Mutilate's hand strikes out |
+| `cold_blood` | sim/rogue/talents_assassination.go | The crit bonus and the spells it names, and the spells whose hit spends it, which leave Mutilate's hand strikes out: a Mutilate spends it once both hands struck if either crit, read off the `mutilate` effect's hands |
 | `premeditation`, `preparation` | sim/rogue/talents_subtlety.go | Premeditation's combo points; the spellbook positions of every other Rogue spell with a cooldown, which Preparation finishes |
 | `rogue_proc` | sim/rogue/talents_assassination.go, talents_subtlety.go | Seal Fate, Initiative, Cutthroat and Thousand Cuts: the spells each trigger hears, its outcome, chance and handler |
 | `thousand_cuts` | sim/rogue/talents_subtlety.go | The flat cost cut a stack and the spells that take and spend it |
@@ -329,7 +329,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `pseudo_stat_auras` | sim/warrior/stances.go, sim/paladin/talents_protection.go | The auras that multiply the player's threat, damage taken or damage dealt while up, and each multiplier from client data; Defiance follows Defensive Stance's own with a shield |
 | `battle_shout` | sim/warrior/battle_shout.go | The warrior's own shout: its aura, value and refresh threshold; the cast waits while the party's stronger shout or its own long one holds the category |
 | `rend`, `overpower`, `mortal_strike`, `slam`, `spearing_strike` | sim/warrior/rend.go, overpower.go, talents_arms.go, slam.go | Rend's tick base and attack power share, a Go literal, with its tick outcome; Overpower's and Mortal Strike's bases on normalized main hand damage; Slam's base on main hand damage, and without Improved Slam a cast that stops the swings until a full swing after it; Spearing Strike's weapon share and mob multiplier |
-| `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits and the extra attack it grants |
+| `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits, the class spells that never trigger it (Shield Bash and Shield Slam) and the extra attack it grants |
 | `revenge`, `shield_slam` | sim/warrior/revenge.go, talents_protection.go | Revenge's trigger on blocked, dodged and parried hits taken, its roll and attack power share, a Go literal; Shield Slam's roll plus the block value, which the target's rolls carry for each stat aura combination |
 | `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it holds the attack speed category, alone or with Thunderfury's Cyclone; against several targets it hits up to four and debuffs each one it lands on |
 | `taunt` | sim/warrior/taunt.go | The spell: an always hit with no damage on the target, with no taunt, as the fork's Taunt is, so it changes no target's aim, swing or threat. It needs Defensive Stance, has no rage cost or global cooldown, and goes on its own cooldown within its range; its hit chance bonuses change nothing |
@@ -373,7 +373,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `immolation_trap` | sim/hunter/traps.go | The tick base from client data and whether the effect row lets a tick crit; a magic hit roll without a hit count, then the dot when it landed |
 | `explosive_trap` | sim/hunter/traps.go | The hit range, a Go literal, the hit count, one for each active target, the AoE cap and the tick base from client data, and whether the effect row lets a tick crit: a magic hit on each target from the cast target on, each on its own roll, then the area dot on the hunter, which ticks its snapshot on every target that Immolation Trap is not burning |
 | `volley` | sim/hunter/volley.go | The rank's tick, a Go literal, and the ranged swing delay, the rank's duration, which also stops the melee swing until the channel ends: the channel's area dot on the hunter ticks its snapshot on every target |
-| `resourcefulness`, `expose_prey` | sim/hunter/talents_survival.go | Resourcefulness's crit trigger, chance and casting regeneration from client data; Expose Prey's chance and whether a lasting Hunter's Mark holds the target |
+| `resourcefulness`, `expose_prey` | sim/hunter/talents_survival.go | Resourcefulness's crit trigger, the melee and ranged abilities it hears, chance and casting regeneration from client data; Expose Prey's chance and whether a lasting Hunter's Mark holds the target |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -496,10 +496,14 @@ the pull, and its rotation runs once per timestep after the player's. Its damage
 of the target's damage taken and its owner's DPS, and Go's OOM events leave its metrics
 alone. A dynamic pet takes its owner's stat changes in batches at Go's heartbeat, every
 5.25 s from the offset the environment rolls at reset: `inheritance` gives its linear
-terms, and `stats_without_deps` and `stat_dependencies` what Go recomputes the pet's stats
-from; the exporter checks both against Go bit for bit. For a dynamic pet the reset enables,
-`inherited_stats` is what its dismissal takes away, `aura_stats` what each permanent aura's
-expiry adds to its stats before dependencies, read exactly by the exporter, and
+terms, several of which may feed one pet stat (a hunter pet's crit is its owner's physical
+and ranged-only crit, fork patch 136), and `stats_without_deps` and `stat_dependencies` what
+Go recomputes the pet's stats from; the exporter checks both against Go bit for bit. For a
+dynamic pet the reset enables, `inherited_stats` is what its dismissal takes away,
+`disable_stats` what its `OnPetDisable` then adds, for a pet whose class states that its
+enable and disable callbacks only move stats (the hunter pet's Auto Shot crit modifiers),
+`aura_stats` what each permanent aura's expiry adds to its stats before dependencies, both
+read exactly by the exporter, and
 `dismiss_stats` its dismissal line's stats in Go's order, a stat a permanent aura changes
 included. Rust replays those additions in Go's order, so the line keeps the float residue the
 fight leaves, such as a spell damage of -0.000 after the owner's procs. Any other pet logs
@@ -810,11 +814,11 @@ procs they carry. `production-protection-paladin`, `production-ret-protection-pa
 target with Dense Dynamite; the `*-paladin-no-dynamite` cases are the same requests without
 it.
 `enhancement-shaman-preset-grace-of-air` runs the upstream Enhancement preset, whose own Grace of
-Air Totem outbids the party Windfury Totem in the air totem slot, and `protection-paladin-sulfuras`
+Air Totem stands beside the party Windfury Totem, and `protection-paladin-sulfuras`
 wields Sulfuras, Hand of Ragnaros as a tank, its Immolation hitting the target back.
 `balance-druid-party-windfury-totem` gives a caster the party Windfury Totem, and
-`warrior-party-grace-of-air-and-windfury` sets both party air totems, of which Windfury
-Totem displaces Grace of Air during the reset.
+`warrior-party-grace-of-air-and-windfury` sets both party air totems, which stand together
+since the 16 October 2026 beta notes.
 `production-warrior` is the production Fury Warrior request, the first with a rage bar;
 `warrior-heroic-strike` and `warrior-cleave` queue those strikes onto main hand swings,
 `warrior-troll-berserking` is its race board's Troll request and

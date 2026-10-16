@@ -2,13 +2,12 @@
 
 use super::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult};
 
-/// Go racials.go `applyEureka`: its aura and modifiers, and the casts that spend a stack.
+/// Go racials.go `applyEureka`: its aura and modifiers.
 #[derive(Clone, Debug)]
 pub(crate) struct Eureka {
     pub(crate) aura: AuraRef,
     /// Cost, damage and the tick cancel, in Go's registration and activation order.
     mods: Vec<ModId>,
-    spends: Vec<bool>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -70,14 +69,12 @@ impl<A: Agent> Fight<A> {
         aura: &str,
         values: [f64; 3],
         spells: [&Vec<usize>; 3],
-        spending: &[usize],
     ) -> Result<Eureka, String> {
         let aura = self.player_aura(aura)?;
         let count = self.spells.len();
         if spells
             .iter()
             .flat_map(|list| list.iter())
-            .chain(spending)
             .any(|&spell| spell >= count)
         {
             return Err("Eureka! names a spell position outside the spellbook".into());
@@ -93,17 +90,12 @@ impl<A: Agent> Fight<A> {
             .zip(spells)
             .map(|((kind, value), spells)| self.register_mod(kind, value, 0, spells.clone()))
             .collect();
-        let mut spends = vec![false; count];
-        for &spell in spending {
-            spends[spell] = true;
-        }
-        Ok(Eureka { aura, mods, spends })
+        Ok(Eureka { aura, mods })
     }
 
-    /// Eureka!'s OnGain: three stacks, then its modifiers.
+    /// Eureka!'s OnGain: its modifiers.
     pub(crate) fn eureka_gain(&mut self) {
         let eureka = self.eureka.clone().expect("Eureka! is bound");
-        self.set_stacks(eureka.aura, 3);
         for modifier in eureka.mods {
             self.activate_mod(modifier);
         }
@@ -113,15 +105,6 @@ impl<A: Agent> Fight<A> {
         let eureka = self.eureka.clone().expect("Eureka! is bound");
         for modifier in eureka.mods {
             self.deactivate_mod(modifier);
-        }
-    }
-
-    /// Eureka!'s OnCastComplete: a named spell spends a stack.
-    pub(crate) fn eureka_cast_complete(&mut self, spell: SpellId) {
-        let eureka = self.eureka.as_ref().expect("Eureka! is bound");
-        if eureka.spends[spell] {
-            let aura = eureka.aura;
-            self.remove_stack(aura);
         }
     }
 

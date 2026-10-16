@@ -167,19 +167,21 @@ fn production_retribution_request_is_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// Leader of the Pack activates at the reset and Moonkin Aura, later in the same exclusive
-/// category, displaces it before the pull.
+/// Leader of the Pack and Moonkin Aura no longer share a category since the 16 October 2026 beta
+/// notes: both stay up from the reset.
 #[test]
-fn leader_of_the_pack_is_displaced_by_moonkin_aura() {
+fn leader_of_the_pack_and_moonkin_aura_stack() {
     let value = retribution_json();
-    let leader = value["player"]["auras"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|aura| aura["label"] == "Leader of the Pack (External)")
-        .unwrap();
-    assert_eq!(leader["active"], false);
-    assert_eq!(leader["displaced_by"], "Moonkin Aura (External)");
+    for label in ["Leader of the Pack (External)", "Moonkin Aura (External)"] {
+        let aura = value["player"]["auras"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|aura| aura["label"] == label)
+            .unwrap();
+        assert_eq!(aura["active"], true, "{label}");
+        assert_eq!(aura["displaced_by"], Value::Null, "{label}");
+    }
 }
 
 #[test]

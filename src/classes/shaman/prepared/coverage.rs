@@ -142,17 +142,12 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 }
 
 /// Basic totems other than Strength of Earth, Grace of Air, Mana Spring and Windfury have no
-/// behavior; a Grace of Air cast contests a party air totem's slot unless the air totem
-/// category resolves it, a Windfury cast would contest a party air totem or a main hand
-/// Windfury Weapon, and a Flametongue Totem would share the party totem's benefit, which the
-/// runtime does not model.
+/// behavior; a Windfury cast would contest the party's Windfury Totem or a main hand Windfury
+/// Weapon, and a Flametongue Totem would share the party totem's benefit, which the runtime does
+/// not model. Since the 16 October 2026 beta notes nothing contests a Grace of Air cast.
 fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
     let mut known = Vec::new();
-    // buffs/air_totem.go: with the slot exported as a category, the runtime resolves it.
-    let air_totem_slot = prepared.effects.iter().any(|effect| {
-        matches!(effect, Effect::ExclusiveCategory { category, .. } if category == "AirTotem")
-    });
     for effect in &prepared.effects {
         match effect {
             Effect::StrengthOfEarthTotem { spell_id, .. } => known.push(*spell_id),
@@ -175,19 +170,12 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         }
         for effect in &prepared.effects {
             match effect {
-                Effect::GraceOfAirTotem {
-                    spell_id,
-                    party_air_totem: true,
-                    ..
-                } if *spell_id == id.spell_id && id.tag == 0 && !air_totem_slot => reasons.push(format!(
-                    "rotation reaches {id}, a Grace of Air Totem that contests a party air totem"
-                )),
                 Effect::WindfuryTotemSelf {
                     spell_id,
                     contested: true,
                     ..
                 } if *spell_id == id.spell_id && id.tag == 0 => reasons.push(format!(
-                    "rotation reaches {id}, a Windfury Totem that contests a party air totem or Windfury Weapon"
+                    "rotation reaches {id}, a Windfury Totem that contests the party's or Windfury Weapon"
                 )),
                 Effect::FlametongueTotem {
                     spell_id,

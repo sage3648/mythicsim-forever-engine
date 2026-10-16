@@ -24,6 +24,9 @@ const MAX_MELEE_RANGE: f64 = 5.0;
 /// Go `RangedAutoRetryInterval`: how often a ranged auto that cannot fire while its unit moves
 /// looks again.
 const RANGED_AUTO_RETRY_INTERVAL: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
+/// Go `RangedAutoStandStill`: how long a unit stands still before its ranged auto can fire (16
+/// October 2026 beta notes: "Auto Shot now requires 0.5 seconds of standing still").
+const RANGED_AUTO_STAND_STILL: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
 
 /// Go `heldSwingLag`: a held swing lands this long after the moment it waits for.
 const HELD_SWING_LAG: i64 = 1;
@@ -609,11 +612,22 @@ impl<A: Agent> Fight<A> {
             return self.autos_of_mut(side).attack(hand).swing_at;
         }
         // A ranged auto cannot fire while moving. The hidden retry timer looks again every
-        // 500ms, and the shot goes off at the first look after the move ends.
+        // 500ms. Casts never hold it.
         if hand == Hand::Ranged && self.unit(side).moving {
             let attack = self.autos_of_mut(side).attack(hand);
             attack.swing_at = now + RANGED_AUTO_RETRY_INTERVAL;
             return attack.swing_at;
+        }
+        // The 16 October 2026 beta notes: a shot that comes due (or is retried) less than 0.5 s
+        // after the last move ended waits until it has passed. A shot with no move before it
+        // keeps its timing.
+        if hand == Hand::Ranged {
+            let ready_at = self.unit(side).movement_ended_at + RANGED_AUTO_STAND_STILL;
+            if now < ready_at {
+                let attack = self.autos_of_mut(side).attack(hand);
+                attack.swing_at = ready_at;
+                return attack.swing_at;
+            }
         }
         if hand == Hand::Enemy {
             let attack = self.autos.enemy_attack(side);

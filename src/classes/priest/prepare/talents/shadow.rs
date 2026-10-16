@@ -6,7 +6,9 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES};
+use crate::prepare::sim::{
+    AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES, SECOND,
+};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, ProcMask, SpellConfig, SpellFlag,
     GCD_DEFAULT,
@@ -16,7 +18,7 @@ use crate::prepare::stats::SchoolIndex;
 
 use super::super::masks;
 use super::super::spell_data::spell_data;
-use super::super::spells::{flat_cost, longest_cooldown};
+use super::super::spells::flat_cost;
 use super::super::Priest;
 use super::millis;
 
@@ -250,9 +252,11 @@ impl Priest {
                         gcd: GCD_DEFAULT,
                         ..Cast::default()
                     },
+                    // The 16 October 2026 beta notes cut the cooldown to 30 sec; the client row
+                    // still states 60.
                     cd: Cooldown {
                         timer: Some(timer),
-                        duration: longest_cooldown(rank),
+                        duration: 30 * SECOND,
                     },
                     ..CastConfig::default()
                 },

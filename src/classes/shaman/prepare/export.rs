@@ -9,7 +9,6 @@ use std::sync::OnceLock;
 use serde_json::{json, Value};
 
 use crate::prepare::aura_helpers::ProcTrigger;
-use crate::prepare::buffs::drivers::AIR_TOTEM_CATEGORY;
 use crate::prepare::buffs::flametongue::{
     flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
 };
@@ -98,43 +97,6 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
         return None;
     }
     Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
-}
-
-/// The exporter's `exclusiveCategoryEffect`: a single aura category of the unit, with each
-/// member's aura, bid and spell in registration order. `None` when the category does not
-/// exist.
-fn exclusive_category_effect(
-    sim: &Sim,
-    unit: crate::prepare::sim::UnitId,
-    side: &str,
-    name: &str,
-    notes: &mut Vec<String>,
-) -> Option<Value> {
-    let category = sim
-        .unit(unit)
-        .categories
-        .iter()
-        .copied()
-        .find(|id| sim.categories[id.0].name == name)?;
-    let category = &sim.categories[category.0];
-    if !category.single_aura {
-        notes.push(format!("exclusive category {name} holds several auras"));
-        return None;
-    }
-    let members: Vec<Value> = category
-        .effects
-        .iter()
-        .map(|effect| {
-            let effect = &sim.effects[effect.0];
-            let aura = sim.aura(effect.aura);
-            json!({"aura": aura.label, "priority": effect.priority,
-                "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id)})
-        })
-        .collect();
-    Some(
-        json!({"kind": "exclusive_category", "unit": side, "category": name,
-        "members": members}),
-    )
 }
 
 /// The positions of the spellbook entries with this exact action.
@@ -386,24 +348,10 @@ impl Shaman {
                 "charges": i32::from(row.proc_charges),
             }));
         }
-        // buffs/air_totem.go: the party holds one air totem, and a totem the shaman casts
-        // outbids the one a party assumption supplies. With both, the slot is a single aura
-        // exclusive category the runtime resolves as Go does.
-        let own_air_totem = sim.get_aura(player, "Grace Of Air Totem (Self)").is_some()
-            || sim.get_aura(player, "Windfury Totem (Self)").is_some();
-        let party_air_totem = sim.get_aura(player, "Windfury Totem").is_some()
-            || sim
-                .get_aura(player, "Grace of Air Totem (External)")
-                .is_some();
-        let mut air_slot = false;
-        if own_air_totem && party_air_totem {
-            if let Some(category) =
-                exclusive_category_effect(sim, player, "player", AIR_TOTEM_CATEGORY, notes)
-            {
-                effects.push(category);
-                air_slot = true;
-            }
-        }
+        // Since the 16 October 2026 beta notes no air totem category stands between the
+        // shaman's own totems and the party's: only the party's Windfury Totem still contests
+        // the shaman's own, through the Windfury Totem category.
+        let party_windfury = sim.get_aura(player, "Windfury Totem").is_some();
         // registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat
         // aura.
         if let Some(aura) = sim.get_aura(player, "Grace Of Air Totem (Self)") {
@@ -411,13 +359,11 @@ impl Shaman {
             effects.push(json!({
                 "kind": "grace_of_air_totem", "spell_id": row.id, "aura": sim.aura(aura).label,
                 "duration_ns": nanos(row.duration()),
-                "party_air_totem": sim.get_aura(player, "Windfury Totem").is_some()
-                    || sim.get_aura(player, "Grace of Air Totem (External)").is_some(),
             }));
         }
         // registerWindfuryTotemSpell: the totem's aura refreshes two auras every 5 seconds, Go
         // literals; the second's exclusive effect turns the trigger on, which grants charges of
-        // attack power and an extra main hand attack. A party air totem or a main hand
+        // attack power and an extra main hand attack. The party's Windfury Totem or a main hand
         // Windfury Weapon would contest it.
         if let Some(totem) = sim.get_aura(player, "Windfury Totem (Self)") {
             let trigger = sim.get_aura(player, "Windfury Totem Trigger (Self)");
@@ -484,7 +430,7 @@ impl Shaman {
                         "white_spells": proc_trigger_spells(env, &white),
                         "proc_gain_log": format!("Gained {} from {}.", flat_string(&bonus), action_id_string(&proc_id)),
                         "proc_expire_log": format!("Lost {} from fading {}.", flat_string(&bonus), action_id_string(&proc_id)),
-                        "contested": party_air_totem && !air_slot || imbue_on_main_hand,
+                        "contested": party_windfury || imbue_on_main_hand,
                     }));
                 }
                 _ => notes.push(

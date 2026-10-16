@@ -77,7 +77,12 @@ impl Priest {
                     | masks::DIVINE_GRACE
                     | masks::CONTINGENCY_PLAN
                     | masks::SHADOW_WORD_PAIN
-                    | masks::DEVOURING_PLAGUE,
+                    | masks::DEVOURING_PLAGUE
+                    // The 16 October 2026 beta notes add these beyond what 1225132's masks name.
+                    | masks::SHADOW_WORD_DEATH
+                    | masks::MIND_FLAY
+                    | masks::STARSHARDS
+                    | masks::PENANCE,
                 float_value: spell_data()
                     .twin_disciplines
                     .effect_at(1)

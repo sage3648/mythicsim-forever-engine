@@ -272,7 +272,8 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 		dummy := rank.Effect(dbcenums.A_PERIODIC_DUMMY, 0)
 		consecrations = append(consecrations, map[string]any{
 			"spell_id": rank.ID, "tick": tick.Average(core.CharacterLevel), "bonus": bonus.Average(core.CharacterLevel),
-			"bonus_coefficient": bonus.Coeff(), "bonus_targets": int32(dummy.Average(core.CharacterLevel)),
+			// consecration.go consecrationTickCoefficient: 0.042 since the 16 October 2026 beta notes.
+			"bonus_coefficient": 0.042, "bonus_targets": int32(dummy.Average(core.CharacterLevel)),
 		})
 	})
 	consecration := map[string]any{"kind": "consecration", "ranks": consecrations}
@@ -461,7 +462,7 @@ func paladinTankEffects(p *paladin.Paladin, character *core.Character) []map[str
 	fury := spelldata.Ranked(25780).Highest()
 	rf := map[string]any{
 		"kind": "righteous_fury", "spell_id": fury.ID, "aura": "Righteous Fury",
-		"threat_percent": fury.Effect(dbcenums.A_MOD_THREAT, 2).Percent(),
+		"threat_percent": paladin.RighteousFuryHolyThreat,
 	}
 	if talents.InstrumentOfLaw > 0 {
 		law := spelldata.Talent(1311085, 2)
@@ -496,15 +497,32 @@ func paladinTankEffects(p *paladin.Paladin, character *core.Character) []map[str
 		effects = append(effects, map[string]any{
 			"kind": "shield_specialization", "trigger_aura": "Shield Specialization" + p.Label,
 			"proc_chance":       spelldata.Talent(20150, 3).EffectAt(2).FractionAt(talents.ShieldSpecialization),
-			"mana_share":        share.EffectN(1).Percent(),
+			"mana_share":        0.04, // talents_protection.go shieldSpecializationManaShare
 			"metrics_action_id": actionID(core.ActionID{SpellID: share.ID}),
 		})
 	}
 	if talents.Reckoning > 0 { // talents_protection.go applyReckoning
+		// Since the 16 October 2026 beta notes each trigger banks a charge, up to 4, and the next
+		// main-hand auto, landed or not, spends them all on one extra attack each: main-hand swings
+		// booked under Reckoning's id.
 		block := spelldata.Talent(20177, 5).FractionAt(talents.Reckoning)
+		extra, spenders := -1, []int{}
+		for i, spell := range character.Spellbook {
+			if spell.ActionID == (core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 20178}) {
+				extra = i
+			}
+			if spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto) {
+				spenders = append(spenders, i)
+			}
+		}
+		if extra < 0 {
+			fail(fmt.Errorf("Reckoning registered no extra attack"))
+		}
 		effects = append(effects, map[string]any{
 			"kind": "reckoning", "block_aura": "Reckoning - Block" + p.Label, "crit_aura": "Reckoning - Crit" + p.Label,
 			"block_chance": block, "crit_chance": block * 2.5,
+			"charges_aura": "Reckoning" + p.Label, "spender_aura": "Reckoning Charges Spender" + p.Label,
+			"extra_spell": extra, "spender_spells": spenders,
 		})
 	}
 	if talents.IronCreed > 0 { // talents_protection.go applyIronCreed

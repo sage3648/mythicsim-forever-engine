@@ -1,5 +1,6 @@
 [0.00] [Target 1] Aura gained: {SpellID: 11717, Tag: -1}
 [0.00] [Target 1] Aura gained: {SpellID: 9907, Tag: -1}
+[0.00] [combat-rogue (#1)] Aura gained: {SpellID: 20574}
 [0.00] [combat-rogue (#1)] Aura gained: {SpellID: 24932, Tag: -1}
 [0.00] [combat-rogue (#1)] Aura gained: {SpellID: 20905, Tag: -1}
 [0.00] [combat-rogue (#1)] Aura gained: {SpellID: 25362, Tag: -1}
@@ -113,9 +114,9 @@
 [3.06] [combat-rogue (#1)] Completed cast {ItemID: 10646}
 [3.06] [combat-rogue (#1)] [Target 1] {ItemID: 10646} [DEBUG] MAP: 1377.2, RAP: 218.9, SP: 203.5, BaseDamage:457.8, AfterAttackerMods:457.8, AfterResistances:457.8, AfterTargetMods:457.8, AfterOutcome:457.8, AfterPostOutcome:457.8
 [3.06] [combat-rogue (#1)] [Target 1] {ItemID: 10646} Hit for 457.823 damage (SpellSchool: 4). (Threat: 325.055)
-[3.06] [combat-rogue (#1)] [combat-rogue (#1)] {ItemID: 10646, Tag: 1} [DEBUG] MAP: 1377.2, RAP: 218.9, SP: 203.5, BaseDamage:712.5, AfterAttackerMods:712.5, AfterResistances:356.3, AfterTargetMods:302.8, AfterOutcome:302.8, AfterPostOutcome:302.8
-[3.06] [combat-rogue (#1)] [combat-rogue (#1)] {ItemID: 10646, Tag: 1} Hit (50% Resist) for 302.830 damage (SpellSchool: 4). (Threat: 215.010)
-[3.06] [combat-rogue (#1)] Spent 302.830 health from {OtherID: 9} (3353.000 --> 3050.170) of 3353 total.
+[3.06] [combat-rogue (#1)] [combat-rogue (#1)] {ItemID: 10646, Tag: 1} [DEBUG] MAP: 1377.2, RAP: 218.9, SP: 203.5, BaseDamage:712.5, AfterAttackerMods:712.5, AfterResistances:356.3, AfterTargetMods:338.5, AfterOutcome:338.5, AfterPostOutcome:338.5
+[3.06] [combat-rogue (#1)] [combat-rogue (#1)] {ItemID: 10646, Tag: 1} Hit (50% Resist) for 338.457 damage (SpellSchool: 4). (Threat: 240.305)
+[3.06] [combat-rogue (#1)] Spent 338.457 health from {OtherID: 9} (3353.000 --> 3014.543) of 3353 total.
 [3.06] [combat-rogue (#1)] Major cooldown used: {ItemID: 10646}
 [3.16] [combat-rogue (#1)] Gained 2.000 energy from {OtherID: 5} (56.279 --> 58.279) of 100 total.
 [3.16] [combat-rogue (#1)] No available actions!
@@ -497,7 +498,7 @@
 [13.61] [combat-rogue (#1)] Gained 1 combo points from {SpellID: 1310710} (5 --> 5) of %!f(int32=5) total.
 [13.62] [combat-rogue (#1)] Aura gained: {SpellID: 20007, Tag: 1}
 [13.62] [combat-rogue (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 1}.
-[13.62] [combat-rogue (#1)] Gained 106.698 health from {SpellID: 20007} (3050.170 --> 3156.868) of 3353 total.
+[13.62] [combat-rogue (#1)] Gained 106.698 health from {SpellID: 20007} (3014.543 --> 3121.241) of 3353 total.
 [13.66] [combat-rogue (#1)] Gained 2.000 energy from {OtherID: 5} (1.279 --> 3.279) of 100 total.
 [13.76] [combat-rogue (#1)] Gained 2.000 energy from {OtherID: 5} (3.279 --> 5.279) of 100 total.
 [13.86] [combat-rogue (#1)] Gained 2.000 energy from {OtherID: 5} (5.279 --> 7.279) of 100 total.
@@ -700,7 +701,7 @@
 [19.54] [Target 1] {SpellID: 25347, Tag: 100} stacks: 0 --> 1
 [19.55] [combat-rogue (#1)] Aura gained: {SpellID: 20007, Tag: 2}
 [19.55] [combat-rogue (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 2}.
-[19.55] [combat-rogue (#1)] Gained 89.553 health from {SpellID: 20007} (3156.868 --> 3246.421) of 3353 total.
+[19.55] [combat-rogue (#1)] Gained 89.553 health from {SpellID: 20007} (3121.241 --> 3210.794) of 3353 total.
 [19.56] [combat-rogue (#1)] Aura faded: {SpellID: 13877}
 [19.56] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (35.279 --> 36.279) of 100 total.
 [19.59] [combat-rogue (#1)] No available actions!
@@ -1119,8 +1120,8 @@
 [30.15] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Crit for 399.857 damage (SpellSchool: 1). (Threat: 283.898)
 [30.15] [combat-rogue (#1)] Casting {SpellID: 11340} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [30.15] [combat-rogue (#1)] Completed cast {SpellID: 11340}
-[30.15] [combat-rogue (#1)] [Target 1] {SpellID: 11340} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:90.3, AfterAttackerMods:90.3, AfterResistances:90.3, AfterTargetMods:90.3, AfterOutcome:135.5, AfterPostOutcome:135.5
-[30.15] [combat-rogue (#1)] [Target 1] {SpellID: 11340} Crit for 135.521 damage (SpellSchool: 8). (Threat: 96.220)
+[30.15] [combat-rogue (#1)] [Target 1] {SpellID: 11340} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:90.3, AfterAttackerMods:90.3, AfterResistances:90.3, AfterTargetMods:90.3, AfterOutcome:90.3, AfterPostOutcome:90.3
+[30.15] [combat-rogue (#1)] [Target 1] {SpellID: 11340} Hit for 90.347 damage (SpellSchool: 8). (Threat: 64.147)
 [30.15] [combat-rogue (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [30.15] [combat-rogue (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 1
 [30.15] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 25584} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2884,7 +2885,7 @@
 [76.17] [combat-rogue (#1)] Aura faded: {SpellID: 10610, Tag: -1}
 [76.18] [combat-rogue (#1)] Aura gained: {SpellID: 20007, Tag: 1}
 [76.18] [combat-rogue (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 1}.
-[76.18] [combat-rogue (#1)] Gained 94.987 health from {SpellID: 20007} (3246.421 --> 3341.408) of 3353 total.
+[76.18] [combat-rogue (#1)] Gained 94.987 health from {SpellID: 20007} (3210.794 --> 3305.781) of 3353 total.
 [76.19] [combat-rogue (#1)] No available actions!
 [76.19] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [76.26] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (57.000 --> 58.000) of 100 total.
@@ -3731,7 +3732,7 @@
 [98.49] [combat-rogue (#1)] Gained 1 combo points from {SpellID: 1310710} (2 --> 3) of %!f(int32=5) total.
 [98.50] [combat-rogue (#1)] Aura gained: {SpellID: 20007, Tag: 1}
 [98.50] [combat-rogue (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 1}.
-[98.50] [combat-rogue (#1)] Gained 101.721 health from {SpellID: 20007} (3341.408 --> 3353.000) of 3353 total.
+[98.50] [combat-rogue (#1)] Gained 101.721 health from {SpellID: 20007} (3305.781 --> 3353.000) of 3353 total.
 [98.56] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (0.000 --> 1.000) of 100 total.
 [98.66] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (1.000 --> 2.000) of 100 total.
 [98.76] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (2.000 --> 3.000) of 100 total.
@@ -4648,10 +4649,7 @@
 [123.27] [combat-rogue (#1)] Pausing rotation for 253.846165ms due to resources / CDs.
 [123.36] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (8.000 --> 9.000) of 100 total.
 [123.46] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (9.000 --> 10.000) of 100 total.
-[123.52] [combat-rogue (#1)] Casting {SpellID: 20572} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[123.52] [combat-rogue (#1)] Completed cast {SpellID: 20572}
-[123.52] [combat-rogue (#1)] Aura gained: {SpellID: 20572}
-[123.52] [combat-rogue (#1)] Major cooldown used: {SpellID: 20572}
+[123.52] [combat-rogue (#1)] No available actions!
 [123.52] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [123.56] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (10.000 --> 11.000) of 100 total.
 [123.62] [combat-rogue (#1)] No available actions!
@@ -4676,7 +4674,7 @@
 [124.22] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [124.25] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 2} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [124.25] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 2}
-[124.25] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:104.5, AfterAttackerMods:130.6, AfterResistances:110.9, AfterTargetMods:110.9, AfterOutcome:0.0, AfterPostOutcome:0.0
+[124.25] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:97.6, AfterAttackerMods:122.1, AfterResistances:103.7, AfterTargetMods:103.7, AfterOutcome:0.0, AfterPostOutcome:0.0
 [124.25] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Dodge (SpellSchool: 1). (Threat: 0.000)
 [124.26] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (17.000 --> 18.000) of 100 total.
 [124.32] [combat-rogue (#1)] No available actions!
@@ -4689,8 +4687,8 @@
 [124.52] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [124.56] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [124.56] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 1}
-[124.56] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:271.0, AfterAttackerMods:271.0, AfterResistances:230.1, AfterTargetMods:230.1, AfterOutcome:140.8, AfterPostOutcome:140.8
-[124.56] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 140.779 damage (SpellSchool: 1). (Threat: 99.953)
+[124.56] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:254.5, AfterAttackerMods:254.5, AfterResistances:216.1, AfterTargetMods:216.1, AfterOutcome:132.2, AfterPostOutcome:132.2
+[124.56] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 132.187 damage (SpellSchool: 1). (Threat: 93.853)
 [124.56] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (20.000 --> 21.000) of 100 total.
 [124.62] [combat-rogue (#1)] No available actions!
 [124.62] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -4701,7 +4699,7 @@
 [124.82] [combat-rogue (#1)] No available actions!
 [124.82] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [124.86] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (23.000 --> 24.000) of 100 total.
-[124.86] [combat-rogue (#1)] [Target 1] {SpellID: 25347, Tag: 100} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:46.0, AfterAttackerMods:46.0, AfterResistances:46.0, AfterTargetMods:46.0, AfterOutcome:46.0, AfterPostOutcome:46.0
+[124.86] [combat-rogue (#1)] [Target 1] {SpellID: 25347, Tag: 100} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:46.0, AfterAttackerMods:46.0, AfterResistances:46.0, AfterTargetMods:46.0, AfterOutcome:46.0, AfterPostOutcome:46.0
 [124.86] [combat-rogue (#1)] [Target 1] {SpellID: 25347, Tag: 100} tick Hit for 46.000 damage (SpellSchool: 8). (Threat: 32.660)
 [124.92] [combat-rogue (#1)] No available actions!
 [124.92] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -4717,8 +4715,8 @@
 [125.26] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (2.000 --> 3.000) of 100 total.
 [125.27] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 2} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [125.27] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 2}
-[125.27] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:103.5, AfterAttackerMods:129.4, AfterResistances:109.9, AfterTargetMods:109.9, AfterOutcome:219.7, AfterPostOutcome:219.7
-[125.27] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Crit for 219.712 damage (SpellSchool: 1). (Threat: 155.995)
+[125.27] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:96.7, AfterAttackerMods:120.8, AfterResistances:102.6, AfterTargetMods:102.6, AfterOutcome:205.3, AfterPostOutcome:205.3
+[125.27] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Crit for 205.252 damage (SpellSchool: 1). (Threat: 145.729)
 [125.36] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (3.000 --> 4.000) of 100 total.
 [125.37] [combat-rogue (#1)] No available actions!
 [125.37] [combat-rogue (#1)] Pausing rotation for 650.000011ms due to resources / CDs.
@@ -4727,8 +4725,8 @@
 [125.66] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (6.000 --> 7.000) of 100 total.
 [125.72] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [125.72] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 1}
-[125.72] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:260.2, AfterAttackerMods:260.2, AfterResistances:221.0, AfterTargetMods:221.0, AfterOutcome:140.6, AfterPostOutcome:140.6
-[125.72] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 140.618 damage (SpellSchool: 1). (Threat: 99.839)
+[125.72] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:243.6, AfterAttackerMods:243.6, AfterResistances:206.9, AfterTargetMods:206.9, AfterOutcome:131.7, AfterPostOutcome:131.7
+[125.72] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 131.680 damage (SpellSchool: 1). (Threat: 93.493)
 [125.76] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (7.000 --> 8.000) of 100 total.
 [125.82] [combat-rogue (#1)] No available actions!
 [125.82] [combat-rogue (#1)] Pausing rotation for 201.282038ms due to resources / CDs.
@@ -4742,8 +4740,8 @@
 [126.16] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (11.000 --> 12.000) of 100 total.
 [126.17] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 2} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [126.17] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 2}
-[126.17] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:104.0, AfterAttackerMods:130.0, AfterResistances:110.4, AfterTargetMods:110.4, AfterOutcome:110.4, AfterPostOutcome:110.4
-[126.17] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Hit for 110.393 damage (SpellSchool: 1). (Threat: 78.379)
+[126.17] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:97.2, AfterAttackerMods:121.5, AfterResistances:103.2, AfterTargetMods:103.2, AfterOutcome:206.3, AfterPostOutcome:206.3
+[126.17] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Crit for 206.327 damage (SpellSchool: 1). (Threat: 146.492)
 [126.22] [combat-rogue (#1)] No available actions!
 [126.22] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [126.26] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (12.000 --> 13.000) of 100 total.
@@ -4764,7 +4762,7 @@
 [126.76] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (17.000 --> 18.000) of 100 total.
 [126.81] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [126.81] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 1}
-[126.81] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:243.4, AfterAttackerMods:243.4, AfterResistances:206.7, AfterTargetMods:206.7, AfterOutcome:0.0, AfterPostOutcome:0.0
+[126.81] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:226.9, AfterAttackerMods:226.9, AfterResistances:192.7, AfterTargetMods:192.7, AfterOutcome:0.0, AfterPostOutcome:0.0
 [126.81] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)
 [126.82] [combat-rogue (#1)] No available actions!
 [126.82] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -4777,14 +4775,14 @@
 [127.06] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (20.000 --> 21.000) of 100 total.
 [127.07] [combat-rogue (#1)] Casting {OtherID: 3, Tag: 2} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [127.07] [combat-rogue (#1)] Completed cast {OtherID: 3, Tag: 2}
-[127.07] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1498.2, RAP: 218.9, SP: 203.5, BaseDamage:111.1, AfterAttackerMods:138.9, AfterResistances:118.0, AfterTargetMods:118.0, AfterOutcome:236.0, AfterPostOutcome:236.0
-[127.07] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Crit for 235.989 damage (SpellSchool: 1). (Threat: 167.553)
+[127.07] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} [DEBUG] MAP: 1362.0, RAP: 199.0, SP: 185.0, BaseDamage:104.3, AfterAttackerMods:130.4, AfterResistances:110.8, AfterTargetMods:110.8, AfterOutcome:221.5, AfterPostOutcome:221.5
+[127.07] [combat-rogue (#1)] [Target 1] {OtherID: 3, Tag: 2} Crit for 221.530 damage (SpellSchool: 1). (Threat: 157.287)
 [127.12] [combat-rogue (#1)] No available actions!
 [127.12] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
 [127.16] [combat-rogue (#1)] Gained 1.000 energy from {OtherID: 5} (21.000 --> 22.000) of 100 total.
 [127.22] [combat-rogue (#1)] No available actions!
 [127.22] [combat-rogue (#1)] Pausing rotation for 100ms due to resources / CDs.
-[127.25] [combat-rogue (#1)] Aura faded: {SpellID: 20572}
+[127.25] [combat-rogue (#1)] Aura faded: {SpellID: 20574}
 [127.25] [combat-rogue (#1)] Aura faded: {SpellID: 20007, Tag: 2}
 [127.25] [combat-rogue (#1)] Lost {"Strength": 100.000,} from fading {SpellID: 20007, Tag: 2}.
 [127.25] [combat-rogue (#1)] Aura faded: {SpellID: 13877}

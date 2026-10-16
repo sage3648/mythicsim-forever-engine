@@ -1,6 +1,8 @@
 //! Heating Up (talent 400624, buff 400625), from Go sim/mage/talents_fire.go
 //! `registerHotStreak`: crits of Fireball, Frostfire Bolt, Fire Blast and Scorch stack
-//! a buff that cuts Pyroblast's cast time per stack; the next Pyroblast spends them all.
+//! a buff that cuts Pyroblast's cast time per stack; the next Pyroblast spends them all. Since
+//! the 16 October 2026 beta notes a Fire Blast crit adds 2 stacks, and a Pyroblast cast under
+//! Presence of Mind leaves them in place.
 
 use crate::{
     classes::mage::masks::is_class,
@@ -48,9 +50,18 @@ impl HeatingUp {
         );
     }
 
-    /// The buff's OnCastComplete: Pyroblast spends every stack.
-    pub(crate) fn on_cast_complete<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId) {
-        if fight.spells[spell].class_spell.as_deref() == Some("pyroblast") {
+    /// The buff's OnCastComplete: Pyroblast spends every stack, unless it was cast under
+    /// Presence of Mind, which drops its own aura in the same callback round, so the cast's start
+    /// recorded it.
+    pub(crate) fn on_cast_complete<A: Agent>(
+        &self,
+        fight: &mut Fight<A>,
+        spell: SpellId,
+        under_presence_of_mind: bool,
+    ) {
+        if fight.spells[spell].class_spell.as_deref() == Some("pyroblast")
+            && !under_presence_of_mind
+        {
             fight.deactivate_aura(self.aura);
         }
     }
@@ -66,7 +77,14 @@ impl HeatingUp {
         if state.flags.proc || !is_class(state.class_spell.as_deref(), STACKERS) || !result.crit() {
             return;
         }
+        let fire_blast = state.class_spell.as_deref() == Some("fire_blast");
         fight.activate_aura(self.aura);
-        fight.add_stack(self.aura);
+        // A Fire Blast crit grants 2 charges in one change, every other crit 1 (cap 3).
+        if fire_blast {
+            let stacks = fight.aura(self.aura).stacks;
+            fight.set_stacks(self.aura, stacks + 2);
+        } else {
+            fight.add_stack(self.aura);
+        }
     }
 }

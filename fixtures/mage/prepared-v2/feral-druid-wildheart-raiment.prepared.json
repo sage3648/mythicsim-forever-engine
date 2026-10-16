@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
+    "engine_revision": "d0bd691f087689c4b154d67f4bf284e1fa820ac5",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -402,7 +402,7 @@
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
       "ShadowResistance": 35,
-      "SpellCritPercent": 16.2275,
+      "SpellCritPercent": 13.2275,
       "SpellCritRating": 0,
       "SpellDamage": 57,
       "SpellHasteRating": 0,
@@ -763,7 +763,7 @@
       },
       {
         "label": "Leader of the Pack (External)",
-        "tag": "DruidCritAura",
+        "tag": "LeaderOfThePack",
         "action_id": {
           "spell_id": 24932,
           "tag": -1
@@ -781,7 +781,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "LeaderOfThePack",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -903,14 +903,8 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 3,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 2,
-            "position": 0
-          },
           {
             "category": "FlametongueTotem",
             "single_aura": false,
@@ -3937,6 +3931,9 @@
         22,
         23
       ],
+      "form_excluded_spells": [
+        16
+      ],
       "gcd_ns": 1500000000,
       "icd_ns": 10000000000,
       "kind": "omen_of_clarity",
@@ -4179,7 +4176,7 @@
     {
       "active_stats": {
         "PhysicalCritPercent": 30.099999999999998,
-        "SpellCritPercent": 26.2275
+        "SpellCritPercent": 23.2275
       },
       "aura": "Elune's Light",
       "expire_log": "Lost {\"PhysicalCritPercent\": 10.000,\"SpellCritPercent\": 10.000,} from fading {SpellID: 1259799}.",
@@ -4332,7 +4329,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 14.100000000000001,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 10.227500000000001,
+          "SpellCritPercent": 7.2275,
           "SpellDamage": 57
         },
         {
@@ -4340,7 +4337,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 24.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 20.2275,
+          "SpellCritPercent": 17.2275,
           "SpellDamage": 57
         },
         {
@@ -4348,7 +4345,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 14.100000000000001,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 10.227500000000001,
+          "SpellCritPercent": 7.2275,
           "SpellDamage": 57
         },
         {
@@ -4356,7 +4353,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 24.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 20.2275,
+          "SpellCritPercent": 17.2275,
           "SpellDamage": 57
         },
         {
@@ -4364,7 +4361,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 14.100000000000001,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 10.227500000000001,
+          "SpellCritPercent": 7.2275,
           "SpellDamage": 57
         },
         {
@@ -4372,7 +4369,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 24.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 20.2275,
+          "SpellCritPercent": 17.2275,
           "SpellDamage": 57
         },
         {
@@ -4380,7 +4377,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 14.100000000000001,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 10.227500000000001,
+          "SpellCritPercent": 7.2275,
           "SpellDamage": 57
         },
         {
@@ -4388,7 +4385,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 24.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 20.2275,
+          "SpellCritPercent": 17.2275,
           "SpellDamage": 57
         },
         {
@@ -4396,7 +4393,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 20.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 16.2275,
+          "SpellCritPercent": 13.2275,
           "SpellDamage": 57
         },
         {
@@ -4404,7 +4401,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 30.099999999999998,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 26.2275,
+          "SpellCritPercent": 23.2275,
           "SpellDamage": 57
         },
         {
@@ -4412,7 +4409,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 20.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 16.2275,
+          "SpellCritPercent": 13.2275,
           "SpellDamage": 57
         },
         {
@@ -4420,7 +4417,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 30.099999999999998,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 26.2275,
+          "SpellCritPercent": 23.2275,
           "SpellDamage": 57
         },
         {
@@ -4428,7 +4425,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 20.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 16.2275,
+          "SpellCritPercent": 13.2275,
           "SpellDamage": 57
         },
         {
@@ -4436,7 +4433,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 30.099999999999998,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 26.2275,
+          "SpellCritPercent": 23.2275,
           "SpellDamage": 57
         },
         {
@@ -4444,7 +4441,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 20.1,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 16.2275,
+          "SpellCritPercent": 13.2275,
           "SpellDamage": 57
         },
         {
@@ -4452,7 +4449,7 @@
           "MP5": 73,
           "PhysicalCritPercent": 30.099999999999998,
           "RangedAttackPower": 70,
-          "SpellCritPercent": 26.2275,
+          "SpellCritPercent": 23.2275,
           "SpellDamage": 57
         }
       ],

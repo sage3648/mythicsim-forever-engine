@@ -262,29 +262,21 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"charges": int32(shamanLightningShield.Highest().ProcCharges),
 		})
 	}
-	// buffs/air_totem.go: the party holds one air totem, and a totem the shaman casts outbids the
-	// one a party assumption supplies. With both, the slot is a single aura exclusive category the
-	// runtime resolves as Go does.
-	ownAirTotem := character.GetAura("Grace Of Air Totem (Self)") != nil || character.GetAura("Windfury Totem (Self)") != nil
-	partyAirTotem := character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil
-	airSlot := false
-	if ownAirTotem && partyAirTotem {
-		if category := exclusiveCategoryEffect(&character.Unit, "player", buffs.AirTotemCategory); category != nil {
-			effects = append(effects, category)
-			airSlot = true
-		}
-	}
+	// Since the 16 October 2026 beta notes no air totem category stands between the shaman's own
+	// totems and the party's: only the party's Windfury Totem still contests the shaman's own,
+	// through the Windfury Totem category.
+	partyWindfury := character.GetAura("Windfury Totem") != nil
 	// registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat aura.
 	if aura := character.GetAura("Grace Of Air Totem (Self)"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "grace_of_air_totem", "spell_id": shamanGraceOfAir.Highest().ID, "aura": aura.Label,
-			"duration_ns":     nanos(shamanGraceOfAir.Highest().Duration()),
-			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
+			"duration_ns": nanos(shamanGraceOfAir.Highest().Duration()),
 		})
 	}
 	// registerWindfuryTotemSpell: the totem's aura refreshes two auras every 5 seconds, Go literals;
 	// the second's exclusive effect turns the trigger on, which grants charges of attack power and
-	// an extra main hand attack. A party air totem or a main hand Windfury Weapon would contest it.
+	// an extra main hand attack. The party's Windfury Totem or a main hand Windfury Weapon would
+	// contest it.
 	if totem := character.GetAura("Windfury Totem (Self)"); totem != nil {
 		trigger := character.GetAura("Windfury Totem Trigger (Self)")
 		procAura := character.GetAura("Windfury Totem Proc (Self)")
@@ -315,7 +307,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"white_spells":    procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeWhiteHit, CanProcFromProcs: true}),
 			"proc_gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), procAura.ActionID),
 			"proc_expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), procAura.ActionID),
-			"contested": partyAirTotem && !airSlot ||
+			"contested": partyWindfury ||
 				character.GetAura("Windfury Imbue") != nil && character.MainHand().TempEnchant == 283,
 		})
 	}

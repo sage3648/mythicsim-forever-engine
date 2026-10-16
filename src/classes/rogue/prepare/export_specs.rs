@@ -131,7 +131,8 @@ impl Rogue {
         }
         // talents_assassination.go registerColdBlood: a crit bonus on the masked spells until
         // one of them hits, except Mutilate's hand strikes, which take the crit without spending
-        // it.
+        // it; the Mutilate spends it if either hand crit (16 October 2026 beta notes), which the
+        // runtime reads off the mutilate effect's hands.
         if self.spells.cold_blood.is_some() {
             let row = data.cold_blood.highest();
             effects.push(json!({

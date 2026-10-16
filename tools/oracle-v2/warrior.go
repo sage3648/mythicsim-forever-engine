@@ -512,6 +512,8 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"kind": "weaponmaster_sword", "trigger_aura": "Weaponmaster (Sword)",
 			"proc_chance":      warriorWeaponmaster.EffectAt(3).FractionAt(talents.Weaponmaster),
 			"extra_attack_tag": int32(1290261), "sword_hands": hands,
+			// 16 October 2026 beta notes: Shield Bash and Shield Slam no longer trigger it.
+			"excluded_class_spells": []string{"shield_bash", "shield_slam"},
 		})
 	}
 	// heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the base

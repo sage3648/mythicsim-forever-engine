@@ -513,7 +513,9 @@ impl Warrior {
             effects.push(json!({"kind": "weaponmaster_sword",
                 "trigger_aura": "Weaponmaster (Sword)",
                 "proc_chance": data.weaponmaster.effect_at(3).fraction_at(talent("weaponmaster")),
-                "extra_attack_tag": 1290261, "sword_hands": hands}));
+                "extra_attack_tag": 1290261, "sword_hands": hands,
+                // 16 October 2026 beta notes: Shield Bash and Shield Slam no longer trigger it.
+                "excluded_class_spells": ["shield_bash", "shield_slam"]}));
         }
         // heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the
         // base damage the strike adds to a main hand weapon swing.
