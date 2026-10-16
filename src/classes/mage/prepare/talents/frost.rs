@@ -314,7 +314,9 @@ impl Mage {
             &ProcTrigger {
                 name: "Fingers of Frost Trigger".to_string(),
                 callback: CallbackMask::ON_SPELL_HIT_DEALT,
-                class_spell_mask: masks::CHILL,
+                // Frostbolt and Frostfire Bolt roll at launch (community #776); the trigger
+                // hears the chills that land at once.
+                class_spell_mask: masks::CONE_OF_COLD | masks::IMPROVED_BLIZZARD,
                 outcome: HitOutcome::LANDED,
                 proc_chance,
                 trigger_immediately: true,

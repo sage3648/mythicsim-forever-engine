@@ -1,5 +1,6 @@
 //! Siphon Life (18881), from Go sim/warlock/siphon_life.go: Corruption's shape, a binary
-//! shadow dot whose every tick heals the warlock for the damage it dealt.
+//! shadow dot whose every tick heals the warlock for the damage it dealt. Its ticks crit,
+//! though the client row lacks periodic-can-crit (community #782).
 
 use crate::core::fight::{Agent, DotId, Fight};
 

@@ -161,7 +161,7 @@ impl Shaman {
         let mut spell_config = electric_spell_config(&ElectricConfig {
             action_id: spell_action(config.id),
             rank,
-            base_flat_cost: config.cost() as i32,
+            base_flat_cost: Self::chain_lightning_cost(config),
             base_cast_time: config.cast_time(),
             is_elemental_overload,
             bonus_coefficient: damage.coeff(),
@@ -454,7 +454,6 @@ impl Shaman {
     pub(super) fn register_fire_nova_spell(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
         let rank = data.fire_nova.highest();
-        let damage = data.fire_nova_triggered.by_id(408428);
         let timer = sim.new_timer(unit);
         sim.register_spell(
             unit,
@@ -475,10 +474,18 @@ impl Shaman {
                 },
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                bonus_coefficient: damage.damage_effect().coeff(),
+                // The 16 October 2026 beta notes cut it to 0.143 (the row still says 0.214); the
+                // "significantly reduced" base damage and cost have no numbers yet.
+                bonus_coefficient: 0.143,
                 ..SpellConfig::default()
             },
         );
+    }
+
+    /// Go `chainLightningCost`: "Chain Lightning mana cost reduced by approximately 35%" on every rank
+    /// (16 October 2026 beta notes). The client data still carries the old costs.
+    fn chain_lightning_cost(config: &Row) -> i32 {
+        (config.cost() * 0.65).round() as i32
     }
 
     /// Go `registerStormstrikeSpell`: the two hits, the debuff on every enemy, then the cast.
@@ -545,7 +552,11 @@ impl Shaman {
                 proc_mask: ProcMask::EMPTY,
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 class_spell_mask: masks::STORMSTRIKE_CAST,
-                cost: flat_cost(rank.cost() as i32),
+                // 8% of base mana, not the client's flat 125 (16 October 2026 beta notes).
+                cost: CostOptions {
+                    mana_base_cost_percent: 8.0,
+                    ..CostOptions::default()
+                },
                 cast: CastConfig {
                     ignore_haste: true,
                     cd: Cooldown {

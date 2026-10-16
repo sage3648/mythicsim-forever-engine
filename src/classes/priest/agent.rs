@@ -39,7 +39,6 @@ pub(crate) enum PriestSpell {
 pub(crate) enum PriestAura {
     Shadowform,
     InnerFocus,
-    ShadowWeaving,
     ShadowWeavingTrigger,
     SearingLight,
     SearingLightTrigger,
@@ -98,10 +97,7 @@ fn player_auras(prepared: &PreparedV2) -> Vec<(String, PriestAura)> {
         match effect {
             Effect::Shadowform { aura, .. } => auras.push((aura.clone(), PriestAura::Shadowform)),
             Effect::InnerFocus { aura, .. } => auras.push((aura.clone(), PriestAura::InnerFocus)),
-            Effect::ShadowWeaving {
-                aura, trigger_aura, ..
-            } => {
-                auras.push((aura.clone(), PriestAura::ShadowWeaving));
+            Effect::ShadowWeaving { trigger_aura, .. } => {
                 auras.push((trigger_aura.clone(), PriestAura::ShadowWeavingTrigger));
             }
             Effect::SearingLight {
@@ -305,8 +301,8 @@ impl PriestAgent {
                 Effect::PowerInLight {
                     multiplier,
                     spells,
-                    holy_fire_spells,
-                } => power_in_light::bind(&mut fight, *multiplier, spells, holy_fire_spells)?,
+                    dot_spells,
+                } => power_in_light::bind(&mut fight, *multiplier, spells, dot_spells)?,
                 Effect::SearingLight {
                     trigger_aura,
                     aura,
@@ -394,7 +390,6 @@ impl PriestAgent {
                     proc_chance,
                     trigger_spells,
                     damage_per_stack,
-                    damage_spells,
                     ..
                 } => {
                     let bound = shadow_weaving::bind(
@@ -405,7 +400,6 @@ impl PriestAgent {
                         *trigger_immediately,
                         trigger_spells,
                         *damage_per_stack,
-                        damage_spells,
                     )?;
                     fight.agent.shadow_weaving = Some(Rc::new(bound));
                 }
@@ -593,7 +587,6 @@ impl Agent for PriestAgent {
         match kind {
             PriestAura::Shadowform => Self::shadowform(fight).on_gain(fight),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_gain(fight),
-            PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_gain(fight),
             PriestAura::SearingLight => Self::searing_light(fight).on_gain(fight),
             PriestAura::ShadowWeavingTrigger
             | PriestAura::SearingLightTrigger
@@ -605,7 +598,6 @@ impl Agent for PriestAgent {
         match kind {
             PriestAura::Shadowform => Self::shadowform(fight).on_expire(fight),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_expire(fight),
-            PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_expire(fight),
             PriestAura::SearingLight => Self::searing_light(fight).on_expire(fight),
             PriestAura::ShadowWeavingTrigger
             | PriestAura::SearingLightTrigger
@@ -620,9 +612,7 @@ impl Agent for PriestAgent {
         _old: i32,
         new: i32,
     ) {
-        if kind == PriestAura::ShadowWeaving {
-            Self::shadow_weaving(fight).on_stacks_change(fight, new);
-        }
+        let _ = (fight, kind, new);
     }
 
     fn on_cast_complete(fight: &mut Fight<Self>, _aura: AuraRef, kind: PriestAura, spell: SpellId) {
@@ -680,7 +670,9 @@ impl Agent for PriestAgent {
                     .expect("Shadowfiend is bound");
                 shadowfiend::restore(fight, &bound, &result);
             }
-            PriestAura::ShadowWeavingTrigger => Self::shadow_weaving(fight).handler(fight),
+            PriestAura::ShadowWeavingTrigger => {
+                Self::shadow_weaving(fight).handler(fight, result.target)
+            }
             PriestAura::SearingLightTrigger => {
                 let aura = Self::searing_light(fight).aura;
                 fight.activate_aura(aura);

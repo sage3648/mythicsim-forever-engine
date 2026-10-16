@@ -87,9 +87,6 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::MissileBarrage {
             trigger_aura, aura, ..
         }
-        | Effect::HeatingUp {
-            trigger_aura, aura, ..
-        }
         | Effect::FingersOfFrost {
             trigger_aura, aura, ..
         }
@@ -98,6 +95,16 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", trigger_aura), ("player", aura)]
         }
+        Effect::HeatingUp {
+            trigger_aura,
+            aura,
+            fire_blast_trigger_aura,
+            ..
+        } => vec![
+            ("player", trigger_aura),
+            ("player", aura),
+            ("player", fire_blast_trigger_aura),
+        ],
         Effect::Evocation {
             regen_aura,
             channel_aura,

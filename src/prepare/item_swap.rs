@@ -56,8 +56,6 @@ pub(crate) enum ManagerChance {
 /// A callback Go registers for item swap slots, as what it does.
 #[derive(Clone, Debug)]
 pub(crate) enum SwapCallback {
-    /// racials.go applyWeaponSpecialization: Activate while a weapon of the type is in a hand.
-    Racial { aura: AuraId, weapon_type: String },
     /// item_swaps.go RegisterActive: the item's use.
     ItemUse { item_id: i32, slots: Vec<usize> },
     /// item_swaps.go registerProcInternal: the trigger aura is up while the item or enchant is.
@@ -487,13 +485,6 @@ impl super::env::Environment {
             }
         };
         match callback {
-            SwapCallback::Racial { aura, weapon_type } => {
-                let types = [weapon_type.as_str()];
-                let on = !sim.character(unit).disable_weapon_spec
-                    && (weapon_type_in_hand(&equipment[slot::MAIN_HAND], &types)
-                        || weapon_type_in_hand(&equipment[slot::OFF_HAND], &types));
-                set_aura(sim, *aura, on, true);
-            }
             SwapCallback::ItemUse { item_id, slots } => {
                 let action = ActionId::item(*item_id);
                 let Some(spell) = sim.get_spell(unit, &action) else {
@@ -772,17 +763,6 @@ fn export_callbacks(env: &Environment) -> Result<Vec<Value>, Refusal> {
             let both = |state: &dyn Fn(&Equipment) -> String| (state(&main), state(&swapped));
             match callback {
                 SwapCallback::DruidPaw => {}
-                SwapCallback::Racial { aura, weapon_type } => {
-                    let disabled = sim.character(unit).disable_weapon_spec;
-                    let types = [weapon_type.as_str()];
-                    let (m, s) = both(&|e| {
-                        let on = !disabled
-                            && (weapon_type_in_hand(&e[slot::MAIN_HAND], &types)
-                                || weapon_type_in_hand(&e[slot::OFF_HAND], &types));
-                        aura_state(on, "activate", "off")
-                    });
-                    out.push(json!({"slot": slot, "kind": "aura", "aura": label(aura), "main": m, "swapped": s}));
-                }
                 SwapCallback::ItemUse { item_id, slots } => {
                     let action = ActionId::item(*item_id);
                     let spell = sim.get_spell(unit, &action).ok_or_else(|| {

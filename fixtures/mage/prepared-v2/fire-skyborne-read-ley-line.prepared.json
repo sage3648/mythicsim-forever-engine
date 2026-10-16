@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "73b5931ea563dd0539cbf87b0600d2b371718e2ce49be4fa8e2a1793984eed12",
@@ -683,7 +683,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 16.3354,
+      "PhysicalCritPercent": 13.3354,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 4,
       "RangedAttackPower": 0,
@@ -705,7 +705,7 @@
     },
     "pseudo_stats": {
       "spell_cost_percent_modifier": 100,
-      "cast_speed_multiplier": 1.01,
+      "cast_speed_multiplier": 1.03,
       "spirit_regen_rate_casting": 0.5,
       "force_full_spirit_regen": false,
       "spirit_regen_multiplier": 1,
@@ -873,6 +873,20 @@
         "exclusive_effects": 0
       },
       {
+        "label": "Hot Streak Fire Blast Trigger",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
         "label": "Master of Elements",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -918,7 +932,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -936,7 +950,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1249,7 +1263,7 @@
     "reaction_ns": 100000000,
     "channel_clip_delay_ns": 0,
     "distance_yards": 20,
-    "cast_speed": 0.9900990099009901,
+    "cast_speed": 0.970873786407767,
     "mana": {
       "max": 6513,
       "base": 1213,
@@ -6166,7 +6180,7 @@
     "ignore_armor": false,
     "armor_ignore_factor": 0,
     "in_front_of_target": false,
-    "attack_speed_multiplier": 1.01,
+    "attack_speed_multiplier": 1.03,
     "melee_speed_multiplier": 1,
     "dodge_reduction": 0,
     "disable_dw_miss_penalty": false,
@@ -6349,6 +6363,7 @@
     {
       "aura": "Heating Up",
       "cast_time_per_stack": -0.25,
+      "fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger",
       "kind": "heating_up",
       "trigger_aura": "Heating Up Trigger"
     },

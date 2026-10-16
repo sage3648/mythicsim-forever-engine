@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "f4359c8adaa0ac37333068a3d3db8d89a2c3ff4591fe1c7fe2b3ce0fe41b990d",
@@ -683,7 +683,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 16.4382,
+      "PhysicalCritPercent": 13.4382,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 4,
       "RangedAttackPower": 0,
@@ -780,14 +780,13 @@
         "action_id": {
           "spell_id": 1259817
         },
-        "duration_ns": 15000000000,
-        "max_stacks": 3,
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
         "active": false,
         "stacks": 0,
         "callbacks": [
           "on_gain",
-          "on_expire",
-          "on_cast_complete"
+          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -905,6 +904,20 @@
         "exclusive_effects": 0
       },
       {
+        "label": "Hot Streak Fire Blast Trigger",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
         "label": "Master of Elements",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -950,7 +963,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -968,7 +981,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -6704,6 +6717,7 @@
     {
       "aura": "Heating Up",
       "cast_time_per_stack": -0.25,
+      "fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger",
       "kind": "heating_up",
       "trigger_aura": "Heating Up Trigger"
     },
@@ -6941,65 +6955,6 @@
       ],
       "kind": "eureka",
       "spell_id": 1259817,
-      "spending_spells": [
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26,
-        27,
-        28,
-        29,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-        37,
-        38,
-        39,
-        41,
-        42,
-        43,
-        44,
-        45,
-        46,
-        47,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        59,
-        60,
-        61,
-        62,
-        63,
-        64,
-        65,
-        66,
-        67
-      ],
       "tick_cancel_percent": -0.09090909090909091,
       "tick_cancel_spells": [
         6,

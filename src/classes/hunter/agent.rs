@@ -119,6 +119,8 @@ pub(crate) struct HunterAgent {
     pub(crate) furious_howl: Option<FuriousHowl>,
     /// Resourcefulness's trigger and its regeneration.
     resourcefulness: Option<(SurvivalProc, f64)>,
+    /// The spells Resourcefulness's trigger hears, by spellbook position.
+    resourcefulness_spells: Rc<Vec<bool>>,
     /// Expose Prey's trigger and whether the target carries Hunter's Mark.
     expose_prey: Option<(SurvivalProc, bool)>,
     /// Rapid Recuperation's trigger and its regeneration.
@@ -625,9 +627,19 @@ impl HunterAgent {
                     aura,
                     proc_chance,
                     regen,
+                    spells,
                 } => {
                     let bound = SurvivalProc::bind(&fight, trigger_aura, aura, *proc_chance)?;
+                    let count = fight.spells.len();
+                    if spells.iter().any(|&spell| spell >= count) {
+                        return Err("Resourcefulness names a spell outside the spellbook".into());
+                    }
+                    let mut hears = vec![false; count];
+                    for &spell in spells {
+                        hears[spell] = true;
+                    }
                     fight.agent.resourcefulness = Some((bound, *regen));
+                    fight.agent.resourcefulness_spells = Rc::new(hears);
                 }
                 Effect::ExposePrey {
                     trigger_aura,
@@ -1088,7 +1100,8 @@ impl Agent for HunterAgent {
                     .agent
                     .resourcefulness
                     .expect("Resourcefulness is bound");
-                proc.resourcefulness_hit(fight, spell, result);
+                let hears = Rc::clone(&fight.agent.resourcefulness_spells);
+                proc.resourcefulness_hit(fight, spell, result, &hears);
             }
             HunterAura::ExposePrey => {
                 let (proc, _) = fight.agent.expose_prey.expect("Expose Prey is bound");

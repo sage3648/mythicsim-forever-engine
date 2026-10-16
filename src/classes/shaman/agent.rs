@@ -1,6 +1,8 @@
 //! The Shaman class agent for the fight runtime: class spells and auras by name, and the
 //! hooks that dispatch to each spell's and talent's module.
 
+use std::rc::Rc;
+
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::{
@@ -119,7 +121,7 @@ pub(crate) struct ShamanAgent {
     searing_duration: i64,
     strength_of_earth: Option<StrengthOfEarth>,
     stormstrike: Option<Stormstrike>,
-    devastation: Option<ElementalDevastation>,
+    devastation: Option<Rc<ElementalDevastation>>,
     improved_stormstrike: Option<ImprovedStormstrike>,
     maelstrom: Option<MaelstromWeapon>,
     maelstrom_chances: maelstrom_weapon::Chances,
@@ -759,6 +761,7 @@ impl ShamanAgent {
                     aura,
                     melee_crit,
                     can_proc_from_procs,
+                    excluded_class_spells,
                 } => {
                     let melee = (0..fight.spells.len())
                         .filter(|&spell| {
@@ -766,14 +769,15 @@ impl ShamanAgent {
                             state.melee_proc && !state.flags.no_spell_mods
                         })
                         .collect();
-                    fight.agent.devastation = Some(elemental_devastation::bind(
+                    fight.agent.devastation = Some(Rc::new(elemental_devastation::bind(
                         &mut fight,
                         trigger_aura,
                         aura,
                         *melee_crit,
                         melee,
                         *can_proc_from_procs,
-                    )?);
+                        excluded_class_spells,
+                    )?));
                 }
                 Effect::ImprovedStormstrike {
                     trigger_aura,
@@ -1168,6 +1172,7 @@ impl Agent for ShamanAgent {
                 let state = fight
                     .agent
                     .devastation
+                    .clone()
                     .expect("Elemental Devastation is bound");
                 state.on_spell_hit_dealt(fight, spell, result);
             }
@@ -1250,6 +1255,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastationTrigger => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .grant(fight),
             ShamanAura::ImprovedStormstrikeTrigger => fight
@@ -1362,6 +1368,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastation => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .on_gain(fight),
             ShamanAura::ImprovedStormstrike => fight
@@ -1405,6 +1412,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastation => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .on_expire(fight),
             ShamanAura::ImprovedStormstrike => fight

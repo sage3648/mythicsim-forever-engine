@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "90c431258d2a17ca793a347232e0e0a62782d2181b5137cd5313d6b56a67d0de",
@@ -754,7 +754,7 @@
         ],
         "icd": {
           "timer": "timer-13",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -897,14 +897,8 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 3,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 2,
-            "position": 0
-          },
           {
             "category": "FlametongueTotem",
             "single_aura": false,
@@ -2960,6 +2954,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -8055,7 +8050,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -8159,7 +8154,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -8263,7 +8258,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -8367,7 +8362,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -8471,7 +8466,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -12873,35 +12868,35 @@
       "ranks": [
         {
           "bonus": 4,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 26573,
           "tick": 2
         },
         {
           "bonus": 7,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20116,
           "tick": 3
         },
         {
           "bonus": 11,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20922,
           "tick": 6
         },
         {
           "bonus": 20,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20923,
           "tick": 8
         },
         {
           "bonus": 27,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20924,
           "tick": 12
@@ -12912,7 +12907,7 @@
       "aura": "Righteous Fury",
       "kind": "righteous_fury",
       "spell_id": 25780,
-      "threat_percent": 0.6
+      "threat_percent": 0.9
     },
     {
       "blessing_flash_of_light": 115,
@@ -13108,7 +13103,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.05,
+      "proc_chance": 0.2,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",

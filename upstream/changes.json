@@ -3,10 +3,10 @@
   "source": "community",
   "range": {
     "from": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
-    "to": "f7598154eb8a138831290b34d4d321a532295224",
-    "commits": 273
+    "to": "efd2a43eb5f0e96e3f2e8a1da9765904648c3ebc",
+    "commits": 358
   },
-  "reviewed": "2026-10-07",
+  "reviewed": "2026-10-16",
   "dispositions": [
     "applicable",
     "already_covered",
@@ -3791,6 +3791,1275 @@
       "mechanics": [
         "client_data"
       ]
+    },
+    {
+      "commit": "cbb44f6b3c0044472503919183dc6d76a4a74e33",
+      "date": "2026-10-10 18:56:44 +0000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "83c671d6c5e89eac38586d9f67949ef104337ae4",
+      "date": "2026-10-11 01:12:38 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-11) (#764)",
+      "pr": 764,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "290b0b61e392aa4090855358209e8b4b32ab0191",
+      "date": "2026-10-11 06:15:34 +0000",
+      "subject": "[DB] Update to 1.60.1.70338 with hotfixes as of 2026-10-11 (#765)",
+      "pr": 765,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "67b85370f6e59986092a19303a7d5f8e0dd012b1",
+      "date": "2026-10-11 18:56:51 +0000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "872c0d0c07965c70f1043974d558ea3128fdd8db",
+      "date": "2026-10-12 01:14:53 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-12) (#766)",
+      "pr": 766,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "96719dc69ff3e93de4a8b0eff4653e7df269a604",
+      "date": "2026-10-12 06:20:56 +0000",
+      "subject": "[DB] Update to 1.60.1.70338 with hotfixes as of 2026-10-12 (#767)",
+      "pr": 767,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "33e2af4bd03c9d519daa8d8737e2afc3e8b9b337",
+      "date": "2026-10-13 01:10:50 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-13) (#770)",
+      "pr": 770,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "d4733f7315819c6c19062f2eedc48f0c543a4791",
+      "date": "2026-10-13 06:17:19 +0000",
+      "subject": "[DB] Update to 1.60.1.70338 with hotfixes as of 2026-10-13 (#771)",
+      "pr": 771,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "8404e5f9847fd9f39f6fba189585cf3afe03012e",
+      "date": "2026-10-13 20:13:53 +0000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "ce01dfcc0b81ec8018c9250de6d4b15db244c585",
+      "date": "2026-10-13 20:43:40 +0000",
+      "subject": "Rake adds 5% of attack power to its hit and each tick; the hit ignores armor (#769) (#772)",
+      "pr": 772,
+      "areas": [
+        "sim/druid",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Rake adds 5% of attack power to its hit and each tick, fitted to beta logs, and its hit ignores armor.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the exported share is 5% and Rake's spell ignores resists"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/mcp-feral-druid.go-result.json",
+        "fixtures/mage/prepared-v2/feral-druid-rake.go-result.json"
+      ]
+    },
+    {
+      "commit": "8235db8894d309c28ff565131acc28eb378c4df3",
+      "date": "2026-10-13 20:44:06 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "2bd5b1bebd6ebe570a1da6428bbb33d9aee08076",
+      "date": "2026-10-13 20:50:37 +0000",
+      "subject": "Cat default rotation keeps Rake up (#773)",
+      "pr": 773,
+      "areas": [
+        "sim/druid",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "0b35a92abfc1a05bc6bd1bb70d80ca6c363b39e3",
+      "date": "2026-10-13 20:51:11 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "120e1afa0661325d4fed6017cdbb6458fecdb3f0",
+      "date": "2026-10-13 21:29:14 +0000",
+      "subject": "hunter: Improved Tracking counts on the default Unknown target (#768) (#774)",
+      "pr": 774,
+      "areas": [
+        "sim/hunter"
+      ],
+      "disposition": "applicable",
+      "reason": "Improved Tracking counts a target of no set type, the site's default boss.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the preparation's trackable mob types include Unknown"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-survival-hunter.go-result.json",
+        "fixtures/mage/prepared-v2/survival-hunter-no-whelp.go-result.json"
+      ]
+    },
+    {
+      "commit": "9c80485be78c204f4d6a581077b57d565755801d",
+      "date": "2026-10-13 21:29:48 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "14f1f36dd40a6482f2dc8cf295eaadee8a51ae23",
+      "date": "2026-10-13 22:29:47 +0000",
+      "subject": "shaman: Maelstrom Weapon procs at 10 PPM at every rank (#775)",
+      "pr": 775,
+      "areas": [
+        "sim/shaman",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Maelstrom Weapon procs at 10 PPM at every rank, from beta logs.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the proc manager is built at 10 PPM"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/mcp-enhancement-shaman.go-result.json",
+        "fixtures/mage/prepared-v2/enhancement-shaman-moves.go-result.json"
+      ]
+    },
+    {
+      "commit": "a4a835ce3961c0fb35af41329829575d1daa88dc",
+      "date": "2026-10-13 22:30:12 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "f81a1d8be6e5b18686b4de6dbe5cecfa4ca47c9a",
+      "date": "2026-10-13 22:39:40 +0000",
+      "subject": "mage: Fingers of Frost procs at Frostbolt's cast end, not its impact (#776)",
+      "pr": 776,
+      "areas": [
+        "sim/mage",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Fingers of Frost rolls at Frostbolt's and Frostfire Bolt's cast end, not their impact.",
+      "mechanics": [
+        "fingers_of_frost_and_shatter"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the bolts roll at launch and the chill trigger names Cone of Cold and Improved Blizzard"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/frost-orc.go-result.json",
+        "fixtures/mage/prepared-v2/frost-troll.go-result.json"
+      ]
+    },
+    {
+      "commit": "859556ab7052ddae7fb90f73d5d1fa89cc4073d1",
+      "date": "2026-10-13 22:40:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "eb046a397090458f2ea80f9f09ebed06fa3d2923",
+      "date": "2026-10-13 23:30:54 +0000",
+      "subject": "Shadow Weaving stacks on each target, not on the priest (#777)",
+      "pr": 777,
+      "areas": [
+        "sim/priest",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Shadow Weaving stacks a debuff on each target that raises only this priest's Shadow damage on it.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: one debuff per target and a damage taken modifier that reads its stacks"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/shadow-priest-moves.go-result.json",
+        "fixtures/mage/prepared-v2/shadow-priest-holy-nova.go-result.json"
+      ]
+    },
+    {
+      "commit": "b57a429f570d4c19e4361fc93685d0900b0e9712",
+      "date": "2026-10-13 23:31:18 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b9c1204a7d5b320ddb7638f7e6e0ef82b3a5119a",
+      "date": "2026-10-14 00:56:53 +0000",
+      "subject": "data: Forever client build 1.60.1.70374 (#778)",
+      "pr": 778,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "30bcecad9e0026f29041c09e6f278ce77d2a7014",
+      "date": "2026-10-14 01:16:15 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-14) (#779)",
+      "pr": 779,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "5f33a0a85170519f1e29d0a4ca201face1140e1a",
+      "date": "2026-10-14 03:26:26 +0000",
+      "subject": "priest: Twin Disciplines reaches Mind Flay and Shadow Word: Death, Shadowform's crit bonus reaches SW:D (#780)",
+      "pr": 780,
+      "areas": [
+        "sim/priest",
+        "ui/sim"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried Twin Disciplines' reach and Shadowform's Shadow Word: Death crit at d0bd691f0; the pin 771c6349a only renames helpers."
+    },
+    {
+      "commit": "e8f8b628e66ba546fd691147c7b1bb71b0300500",
+      "date": "2026-10-14 03:26:50 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "865d478ddcd3bffe317d688535ee513a5d39aac0",
+      "date": "2026-10-14 03:31:38 +0000",
+      "subject": "rogue: Instant and Deadly Poison scale with attack power (#781)",
+      "pr": 781,
+      "areas": [
+        "sim/rogue",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Instant Poison adds 0.5% of attack power and Deadly Poison 0.45% a stack a tick, read at each tick.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the exported shares, with Go's attack power share snapshot in the core dot state"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/combat-swords.go-result.json",
+        "fixtures/mage/prepared-v2/combat-riposte.go-result.json"
+      ]
+    },
+    {
+      "commit": "610e53c0877af70265e3af1ecaec8dd37b7b0e14",
+      "date": "2026-10-14 03:32:00 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "df8b433d8b2d07b820b1b4666630a91d5c79f41c",
+      "date": "2026-10-14 04:22:21 +0000",
+      "subject": "Siphon Life ticks can crit (forever-bugs #303, dev: fixed in next build) (#782)",
+      "pr": 782,
+      "areas": [
+        "sim/warlock"
+      ],
+      "disposition": "applicable",
+      "reason": "Siphon Life's ticks crit, a bug the devs fixed.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the export marks Siphon Life's tick as able to crit"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/affliction-warlock-broad.go-result.json",
+        "fixtures/mage/prepared-v2/affliction-warlock-dot-base-duration.go-result.json"
+      ]
+    },
+    {
+      "commit": "3a6735a13409502a75e8d3a4ca67c2930b32cdd1",
+      "date": "2026-10-14 04:22:45 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "22ed326a96b47587ae497c272f8de78d7894120e",
+      "date": "2026-10-14 05:23:39 +0000",
+      "subject": "Resourcefulness discounts Strider Kick too (forever-bugs #271) (#783)",
+      "pr": 783,
+      "areas": [
+        "sim/hunter",
+        "ui/sim"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried Resourcefulness on Strider Kick at d0bd691f0."
+    },
+    {
+      "commit": "c6dca8777952648cc3af59579276376371e6fad2",
+      "date": "2026-10-14 05:24:06 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "055a5d077602be2d9cb182fbd4daa6ee2300c998",
+      "date": "2026-10-14 06:15:28 +0000",
+      "subject": "[DB] Update to 1.60.1.70374 with hotfixes as of 2026-10-14 (#784)",
+      "pr": 784,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "dac20e9a7c3070e1aade478fb4e37b8819b2eb02",
+      "date": "2026-10-14 06:23:57 +0000",
+      "subject": "rogue: Mutilate spends Cold Blood after both hands crit (#785)",
+      "pr": 785,
+      "areas": [
+        "sim/rogue"
+      ],
+      "disposition": "applicable",
+      "reason": "Both Mutilate hands take Cold Blood's crit and the off-hand strike spends it.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the off-hand strike always spends Cold Blood"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/assassination-venom.go-result.json",
+        "fixtures/mage/prepared-v2/assassination-kidney-shot.go-result.json"
+      ]
+    },
+    {
+      "commit": "dd016756a60af16becf3f800e293a9e3989fc1ac",
+      "date": "2026-10-14 06:24:23 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "ce5ea24c698d0cf1dccca0f5d1dafe3db81e7c58",
+      "date": "2026-10-14 06:42:36 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-14) (#786)",
+      "pr": 786,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "a6c05d0ab103bd97e5e3686d47786ff215b34e5f",
+      "date": "2026-10-14 07:32:22 +0000",
+      "subject": "druid: bear Swipe adds 5% of attack power (#787)",
+      "pr": 787,
+      "areas": [
+        "sim/druid",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Bear Swipe adds 5% of attack power, fitted to beta logs.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the exported coefficient is 5%"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/mcp-feral-bear-druid.go-result.json",
+        "fixtures/mage/prepared-v2/feral-bear-druid-crusader.go-result.json"
+      ]
+    },
+    {
+      "commit": "e3b44d0b515cbe01cd7a0d31bfffdc48f59a63aa",
+      "date": "2026-10-14 07:32:47 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "aabe83e7982d6a8662af72eabd46d8f0100a876e",
+      "date": "2026-10-14 08:40:25 +0000",
+      "subject": "Malediction raises Hellfire's area hits again (#788)",
+      "pr": 788,
+      "areas": [
+        "sim/warlock"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried Malediction on Hellfire's area hits at d0bd691f0."
+    },
+    {
+      "commit": "9e76943020de607d4ffb8095fb3724565947d99f",
+      "date": "2026-10-14 08:40:51 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "16258f6eeafffadd4f022bc2364fadeeaf036a83",
+      "date": "2026-10-14 08:43:06 +0000",
+      "subject": "Fire Nova crits no longer trigger Elemental Devastation (#789)",
+      "pr": 789,
+      "areas": [
+        "sim/shaman"
+      ],
+      "disposition": "applicable",
+      "reason": "Fire Nova crits no longer trigger Elemental Devastation.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the effect lists the class spells that never trigger it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/item-swap-mid-cast.go-result.json",
+        "fixtures/mage/prepared-v2/mcp-enhancement-shaman.go-result.json"
+      ]
+    },
+    {
+      "commit": "953c769815fda9741848a66cf184f52c9abf0056",
+      "date": "2026-10-14 08:43:33 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "338eec5b8a0a2fb8770145d5d1b85420d9b479e4",
+      "date": "2026-10-14 09:25:43 +0000",
+      "subject": "warlock: Succubus Lash of Pain crits at ~6% (demon base spell crit) (#790)",
+      "pr": 790,
+      "areas": [
+        "sim/warlock"
+      ],
+      "disposition": "applicable",
+      "reason": "The Succubus carries 6.2% spell crit of its own, from beta logs.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the Succubus' base stats carry the crit"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/affliction-warlock-lash-of-pain-rounding.go-result.json"
+      ]
+    },
+    {
+      "commit": "00cd1ad9a86fd88d5e42b48ef5e7e0ceec879ee7",
+      "date": "2026-10-14 09:26:10 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "6bf8bbfef59c31958d37ad0953c1fbc02ef80434",
+      "date": "2026-10-14 10:32:40 +0000",
+      "subject": "racials: Human/Orc weapon crit follows the hand holding the sword/axe, not ranged (#791)",
+      "pr": 791,
+      "areas": [
+        "sim/core",
+        "sim/hunter",
+        "sim/paladin",
+        "sim/rogue",
+        "sim/warrior"
+      ],
+      "disposition": "already_covered",
+      "reason": "Superseded within the range by #806, whose crit racials need no weapon, as the fork's 16 October racials at d0bd691f0 already did."
+    },
+    {
+      "commit": "df28868bdd7dd98f6b6de7c9d85bfa40741e1eab",
+      "date": "2026-10-14 10:33:08 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "2961914b882c36ab6e7b065f7e3243a2e9afd701",
+      "date": "2026-10-14 11:28:55 +0000",
+      "subject": "paladin: Reckoning swings at once without resetting the swing timer, 1.5 s proc cooldown (#792)",
+      "pr": 792,
+      "areas": [
+        "sim/core",
+        "sim/paladin",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Reckoning swings at once without resetting the swing timer, behind a 1.5 s proc cooldown.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the charges spend on instant main hand swings behind a shared cooldown timer"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/protection-paladin-moves.go-result.json",
+        "fixtures/mage/prepared-v2/protection-bulwark-sapper.go-result.json"
+      ]
+    },
+    {
+      "commit": "fdc17dfa0e79bf452c69d6620928a013062bfa5b",
+      "date": "2026-10-14 11:29:22 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d241e07cbffe8b5a638efc23004cec63b0a760f5",
+      "date": "2026-10-14 20:25:30 +0000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a22c97da56be596a295527603e44cb5abcd1416f",
+      "date": "2026-10-14 20:28:12 +0000",
+      "subject": "priest: Inner Focus crit no longer reaches DoT ticks (#793)",
+      "pr": 793,
+      "areas": [
+        "sim/priest",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Inner Focus's crit no longer reaches dot ticks.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: a tick of a named spell rolls crit with Inner Focus's chance taken back"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/smite-priest-moves.go-result.json",
+        "fixtures/mage/prepared-v2/shadow-priest-moves.go-result.json"
+      ]
+    },
+    {
+      "commit": "0a586ba3294f2d05b63972673b00d43561eec672",
+      "date": "2026-10-14 20:28:38 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "78de26897014f64d04a84667a8c600ac75b3a154",
+      "date": "2026-10-14 21:28:58 +0000",
+      "subject": "rage: a critical auto attack adds its swing's rage again (100%, not 75%) (#794)",
+      "pr": 794,
+      "areas": [
+        "sim/core",
+        "sim/druid",
+        "sim/warrior"
+      ],
+      "disposition": "applicable",
+      "reason": "A critical auto attack adds its swing's rage again at 100%.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the rage bars carry the 100% crit rage bonus"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/warrior-thunderfury.go-result.json",
+        "fixtures/mage/prepared-v2/fury-warrior-prismcharm.go-result.json"
+      ]
+    },
+    {
+      "commit": "844b4abcd203c24fd45072ddf97ce932c5f876cd",
+      "date": "2026-10-14 21:29:25 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "6f5e14c1770b6772ab03b9c6be1ebdbea4c1ee84",
+      "date": "2026-10-14 21:31:26 +0000",
+      "subject": "warrior: Last Stand reads its 30% from client 70291's health aura (no more panic) (#795)",
+      "pr": 795,
+      "areas": [
+        "sim/warrior"
+      ],
+      "disposition": "already_covered",
+      "reason": "Last Stand already read its share from client 70291's health aura; the pin only drops the fallback."
+    },
+    {
+      "commit": "c2b7742a65aae1f57a3ddfd06eb7b38dfee26295",
+      "date": "2026-10-14 21:31:57 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b7ba4685532426716c2146f9a49c1360325af816",
+      "date": "2026-10-15 06:16:49 +0000",
+      "subject": "[DB] Update to 1.60.1.70374 with hotfixes as of 2026-10-15 (#796)",
+      "pr": 796,
+      "areas": [
+        "assets/database",
+        "assets/db_inputs"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data with hotfixes; adopted with the reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: game data re-imported and fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "ad86515970d51df7352eed13fc2a3f1571c6268e",
+      "date": "2026-10-15 06:26:08 +0000",
+      "subject": "warrior: Blood Craze no longer triggers off Bloodthirst (#797)",
+      "pr": 797,
+      "areas": [
+        "sim/warrior",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Blood Craze no longer triggers off Bloodthirst.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the Bloodthirst trigger is gone from preparation, export and runtime"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/protection-warrior-moves.go-result.json",
+        "fixtures/mage/prepared-v2/protection-warrior-taunt.go-result.json"
+      ]
+    },
+    {
+      "commit": "26bcc1ef01e62aa55452e7a306f826a72ef902cf",
+      "date": "2026-10-15 06:26:35 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d7972e4a53af006fdb5ddfa319d13ab4e563c78c",
+      "date": "2026-10-15 06:28:48 +0000",
+      "subject": "druid: Bear Form threat bonus 50% (client 70374), was 30% (#798)",
+      "pr": 798,
+      "areas": [
+        "sim/core",
+        "sim/druid",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Bear Form's threat bonus is 50% in client 70374.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the Bear Form threat multiplier is 1.5"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/mcp-feral-bear-druid.go-result.json",
+        "fixtures/mage/prepared-v2/feral-bear-druid-crusader.go-result.json"
+      ]
+    },
+    {
+      "commit": "e65ead2ae5bdd55dd3afbfc45a21a83fb9922c75",
+      "date": "2026-10-15 06:29:16 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "37776593cb7559be2ac84d144346589bbc31f883",
+      "date": "2026-10-15 06:42:52 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-15) (#799)",
+      "pr": 799,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: fixtures re-exported at client build 1.60.1.70374"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "8a7e873a1a535851f81ff1f9fe6845466d984603",
+      "date": "2026-10-15 07:41:15 +0000",
+      "subject": "paladin: Retribution Aura scales 6% of the paladin's spell power (beta notes 8 Oct) (#800)",
+      "pr": 800,
+      "areas": [
+        "sim/core",
+        "sim/druid",
+        "sim/paladin",
+        "sim/warrior",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Retribution Aura scales with 6% of the paladin's spell power, on the paladin's own copy.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the player's damage shield carries the coefficient"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-retribution-paladin.go-result.json",
+        "fixtures/mage/prepared-v2/retribution-paladin-moves.go-result.json"
+      ]
+    },
+    {
+      "commit": "2f043bc3ce96fa62d46d73baaa77e68c9c017f38",
+      "date": "2026-10-15 07:41:39 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "603dfefa27d0d3510de89ba1a0b3681c3c27745f",
+      "date": "2026-10-15 08:40:24 +0000",
+      "subject": "paladin: Improved Seal of Fury and Shield Specialization mana makes no threat (client 70374) (#801)",
+      "pr": 801,
+      "areas": [
+        "sim/paladin"
+      ],
+      "disposition": "applicable",
+      "reason": "Improved Seal of Fury's and Shield Specialization's mana makes no threat in client 70374.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the effects carry no_threat and the runtime metrics honour it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/protection-paladin-moves.go-result.json",
+        "fixtures/mage/prepared-v2/protection-bulwark-sapper.go-result.json"
+      ]
+    },
+    {
+      "commit": "c984678e5bbc3694f2f6d1839b3940d7a43e49ca",
+      "date": "2026-10-15 08:40:49 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "e13bb7397f988f5122c5b4596a87476c246611ec",
+      "date": "2026-10-15 08:52:33 +0000",
+      "subject": "warlock: Demonic Brand's Imp Fire hit carries normal threat (beta notes 8 Oct) (#802)",
+      "pr": 802,
+      "areas": [
+        "sim/warlock",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Only the Shadow Demonic Brand hit carries triple threat; the Imp's Fire hit has normal threat.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the Imp's brand spell has threat multiplier 1"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/demonology-warlock-orc.go-result.json",
+        "fixtures/mage/prepared-v2/production-demonology-warlock.go-result.json"
+      ]
+    },
+    {
+      "commit": "4712ac5a27277306a782c93314024bc0205a2f78",
+      "date": "2026-10-15 08:52:57 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "3a4cf31dc275332b7504e6ed6296e77710765269",
+      "date": "2026-10-15 09:23:46 +0000",
+      "subject": "druid: Thorns scales with 6% of the druid's spell power (beta notes) (#803)",
+      "pr": 803,
+      "areas": [
+        "sim/core",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Thorns scales with 6% of the druid's spell power, on the druid's own copy.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the player's Thorns damage shield carries the coefficient"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/balance-druid-berserk-natural-reaction.go-result.json"
+      ]
+    },
+    {
+      "commit": "7632960d8d6eb488080908cdf4ff31fe6be6d61b",
+      "date": "2026-10-15 09:24:14 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "c2ba30c3e57c61f78e874f9f2cac2bb16f2ceffc",
+      "date": "2026-10-15 20:21:33 +0000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a60e356cd7cc6ba9df00ce1d001224bb4c92922e",
+      "date": "2026-10-15 20:29:16 +0000",
+      "subject": "hunter: a pet's crit is its master's ranged crit (dev, forever-bugs #331) (#804)",
+      "pr": 804,
+      "areas": [
+        "docs",
+        "sim/hunter"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried a pet's crit as its master's ranged crit at d0bd691f0."
+    },
+    {
+      "commit": "27e15ffc865a4edd28d1e7968bc113f2c0dbea12",
+      "date": "2026-10-15 20:30:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b27624af135a65d0614e37c25fb1e67cefd0be3e",
+      "date": "2026-10-15 21:26:33 +0000",
+      "subject": "druid: Shifting Power can't be used at full Energy (beta notes 8 Oct) (#805)",
+      "pr": 805,
+      "areas": [
+        "sim/druid"
+      ],
+      "disposition": "applicable",
+      "reason": "Shifting Power cannot be used at full Energy.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: Shifting Power's cast condition needs a bar below its maximum"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/mcp-feral-druid.go-result.json",
+        "fixtures/mage/prepared-v2/feral-druid-rake.go-result.json"
+      ]
+    },
+    {
+      "commit": "e253ca75320907d7f1f386df205e93feafabfaee",
+      "date": "2026-10-15 21:26:58 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "1334202dc115d43d1485f2950418b6f8d7943ddf",
+      "date": "2026-10-16 00:53:46 +0000",
+      "subject": "racials: 16 Oct beta build rework (Ruthless, Savage, Earth Fury, Endurance, Wind Blessed) (#806)",
+      "pr": 806,
+      "areas": [
+        "sim/core",
+        "sim/druid",
+        "sim/hunter",
+        "sim/paladin",
+        "sim/priest",
+        "sim/rogue",
+        "sim/shaman",
+        "sim/warlock",
+        "sim/warrior"
+      ],
+      "disposition": "applicable",
+      "reason": "The 16 October racials: Ruthless and Savage are base crit with no aura, Earth Fury the crit damage multiplier alone.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the racials add base stats and the multiplier, with no auras"
+      },
+      "regression": [
+        "src/prepare/racials/tests.rs",
+        "fixtures/mage/prepared-v2/demonology-warlock-orc.go-result.json",
+        "fixtures/mage/prepared-v2/protection-warrior-dwarf-stoneform.go-result.json"
+      ]
+    },
+    {
+      "commit": "35c666cd250305b37a545f8fd9057e155af92343",
+      "date": "2026-10-16 00:54:11 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "4ffa3faf317140d42417457566541c9baf7b2987",
+      "date": "2026-10-16 01:22:45 +0000",
+      "subject": "mage: Ice Lance does +200% to frozen targets (was +300%, beta notes 16 Oct) (#807)",
+      "pr": 807,
+      "areas": [
+        "sim/mage",
+        "ui/sim"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried Ice Lance's +200% on frozen targets at d0bd691f0.",
+      "mechanics": [
+        "ice_lance"
+      ]
+    },
+    {
+      "commit": "609027894898dcd85e25612b545bb7e72e7326a3",
+      "date": "2026-10-16 01:23:10 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "c0f6dcfeaa4b25c256569a2fc42c59822bc3c3a0",
+      "date": "2026-10-16 01:25:40 +0000",
+      "subject": "mage: Fire Blast always adds a Heating Up stack; PoM Pyroblast keeps them (beta notes 16 Oct) (#808)",
+      "pr": 808,
+      "areas": [
+        "sim/mage",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Fire Blast always adds a Heating Up stack, and a Presence of Mind Pyroblast keeps the stacks.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: a Fire Blast trigger adds the stack and only a cast Pyroblast spends them"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/fire-ignite.go-result.json",
+        "fixtures/mage/prepared-v2/fire-reference.go-result.json"
+      ]
+    },
+    {
+      "commit": "98c335738942957a59c48bcdf4a2394d1870d524",
+      "date": "2026-10-16 01:26:06 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "38a4be73baf4d28728b42c8cff5af7321f6d6ad2",
+      "date": "2026-10-16 02:24:13 +0000",
+      "subject": "racials: Eureka! is an 8 s buff with no charges (beta notes 16 Oct) (#809)",
+      "pr": 809,
+      "areas": [
+        "sim/core",
+        "sim/mage",
+        "sim/warlock"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried Eureka! as an 8 s buff with no charges at d0bd691f0."
+    },
+    {
+      "commit": "fbcf290337cd9cb07cf90e8b01d662ca7b141eac",
+      "date": "2026-10-16 02:24:36 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a9e4454a8cc4a6c9f61179dadd766cd80feb6a45",
+      "date": "2026-10-16 02:29:59 +0000",
+      "subject": "paladin: Reckoning banks up to 4 charges, spent on the next swing (beta notes 16 Oct) (#810)",
+      "pr": 810,
+      "areas": [
+        "sim/paladin"
+      ],
+      "disposition": "applicable",
+      "reason": "Reckoning banks up to 4 charges that the next swing spends.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: the charges aura and its spender spells"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/protection-paladin-moves.go-result.json",
+        "fixtures/mage/prepared-v2/protection-bulwark-sapper.go-result.json"
+      ]
+    },
+    {
+      "commit": "d2a97739b73c7a9cc85886fc7f02d67eb6c4b856",
+      "date": "2026-10-16 02:30:25 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "2e220d7e5cd78390a3bd632051a9f6a77dcc262f",
+      "date": "2026-10-16 03:25:21 +0000",
+      "subject": "priest: Twin Disciplines, Power in Light and Silent Resolve from the 16 Oct beta notes (#811)",
+      "pr": 811,
+      "areas": [
+        "sim/priest"
+      ],
+      "disposition": "applicable",
+      "reason": "Silent Resolve's threat cut reaches every spell; the fork carried this change's Twin Disciplines and Power in Light at d0bd691f0.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 771c6349a: Silent Resolve's modifier reads the row's first effect and names no school"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/smite-priest-moves.go-result.json",
+        "fixtures/mage/prepared-v2/shadow-priest-moves.go-result.json"
+      ]
+    },
+    {
+      "commit": "efd2a43eb5f0e96e3f2e8a1da9765904648c3ebc",
+      "date": "2026-10-16 03:25:46 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
     }
   ]
 }

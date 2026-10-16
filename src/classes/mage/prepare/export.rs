@@ -18,8 +18,9 @@ use crate::prepare::spelldata::{Ladder, Spell as Row};
 
 use super::spell_data::spell_data;
 
-/// Go `IceLanceFrozenMultiplier`.
-const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 4.0;
+/// Go `IceLanceFrozenMultiplier`: the 16 October 2026 beta notes cut it to +200% (was +300%),
+/// so a frozen hit deals 3 times an unfrozen one.
+const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 3.0;
 
 /// `mageDamageRows`: the rows by spell ID.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
@@ -260,6 +261,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         let buff = data.heating_up_triggered.highest();
         effects.push(json!({
             "kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
+            "fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger",
             "cast_time_per_stack": buff
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_CASTING_TIME)
                 .percent(),

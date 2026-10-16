@@ -97,7 +97,6 @@
 [9.00] [frostfire-mage (#1)] Casting {SpellID: 1259817} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [9.00] [frostfire-mage (#1)] Completed cast {SpellID: 1259817}
 [9.00] [frostfire-mage (#1)] Aura gained: {SpellID: 1259817}
-[9.00] [frostfire-mage (#1)] {SpellID: 1259817} stacks: 0 --> 3
 [9.00] [frostfire-mage (#1)] Major cooldown used: {SpellID: 1259817}
 [9.00] [frostfire-mage (#1)] Casting {SpellID: 18809} (Cost = 396.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [9.50] [frostfire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:245.2, AfterAttackerMods:245.2, AfterResistances:245.2, AfterTargetMods:245.2, AfterOutcome:245.2, AfterPostOutcome:245.2
@@ -107,7 +106,6 @@
 [10.50] [frostfire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1094.6, AfterAttackerMods:1495.4, AfterResistances:1495.4, AfterTargetMods:1645.0, AfterOutcome:1645.0, AfterPostOutcome:1645.0
 [10.50] [frostfire-mage (#1)] Aura faded: {SpellID: 400625}
 [10.50] [frostfire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[10.50] [frostfire-mage (#1)] {SpellID: 1259817} stacks: 3 --> 2
 [10.50] [frostfire-mage (#1)] Casting {ItemID: 14152} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [10.50] [frostfire-mage (#1)] Completed cast {ItemID: 14152}
 [10.50] [frostfire-mage (#1)] Gained 390.756 mana from {ItemID: 14152} (6045.600 --> 6436.356) of 6886 total.
@@ -124,7 +122,6 @@
 [13.00] [frostfire-mage (#1)] Completed cast {SpellID: 1237313}
 [13.00] [frostfire-mage (#1)] Spent 299.700 mana from {SpellID: 1237313} (6626.206 --> 6326.506) of 6886 total.
 [13.00] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:705.0, AfterAttackerMods:1016.7, AfterResistances:1016.7, AfterTargetMods:1118.4, AfterOutcome:1118.4, AfterPostOutcome:1118.4
-[13.00] [frostfire-mage (#1)] {SpellID: 1259817} stacks: 2 --> 1
 [13.00] [frostfire-mage (#1)] Casting {SpellID: 1237313} (Cost = 299.700, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [13.21] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} Hit for 1118.353 damage (SpellSchool: 20). (Threat: 894.682)
 [13.21] [Target 1] Aura gained: {SpellID: 1237313}
@@ -135,8 +132,6 @@
 [15.50] [frostfire-mage (#1)] Completed cast {SpellID: 1237313}
 [15.50] [frostfire-mage (#1)] Spent 299.700 mana from {SpellID: 1237313} (6450.931 --> 6151.231) of 6886 total.
 [15.50] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:685.3, AfterAttackerMods:988.3, AfterResistances:988.3, AfterTargetMods:1087.1, AfterOutcome:2174.2, AfterPostOutcome:2174.2
-[15.50] [frostfire-mage (#1)] {SpellID: 1259817} stacks: 1 --> 0
-[15.50] [frostfire-mage (#1)] Aura faded: {SpellID: 1259817}
 [15.50] [frostfire-mage (#1)] [DEBUG] Moving to 40.0 yards
 [15.50] [frostfire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [15.50] [frostfire-mage (#1)] Completed cast {OtherID: 20}
@@ -207,6 +202,7 @@
 [16.90] [frostfire-mage (#1)] Queueing up {SpellID: 1237313} to cast at 15.500000001s.
 [16.90] [frostfire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [16.90] [frostfire-mage (#1)] {SpellID: 1237313} failed to cast: casting/channeling while moving not allowed!
+[17.00] [frostfire-mage (#1)] Aura faded: {SpellID: 1259817}
 [17.00] [frostfire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6262.231 --> 6327.656) of 6886 total.
 [17.00] [frostfire-mage (#1)] {OtherID: 20} stacks: 14 --> 15
 [17.00] [frostfire-mage (#1)] Queueing up {SpellID: 1237313} to cast at 15.500000001s.
@@ -1548,16 +1544,17 @@
 [105.30] [frostfire-mage (#1)] Completed cast {SpellID: 1237313}
 [105.30] [frostfire-mage (#1)] Spent 333.000 mana from {SpellID: 1237313} (6270.250 --> 5937.250) of 6886 total.
 [105.30] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:672.8, AfterAttackerMods:882.0, AfterResistances:882.0, AfterTargetMods:970.3, AfterOutcome:970.3, AfterPostOutcome:970.3
-[105.30] [frostfire-mage (#1)] Casting {SpellID: 1237313} (Cost = 333.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
-[105.30] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} Hit for 970.255 damage (SpellSchool: 20). (Threat: 776.204)
 [105.30] [frostfire-mage (#1)] Aura gained: {SpellID: 400669}
 [105.30] [frostfire-mage (#1)] {SpellID: 400669} stacks: 0 --> 2
+[105.30] [frostfire-mage (#1)] Casting {SpellID: 1237313} (Cost = 333.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
+[105.30] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} Hit for 970.255 damage (SpellSchool: 20). (Threat: 776.204)
 [105.30] [Target 1] Aura faded: {SpellID: 1237313}
 [105.30] [Target 1] Aura gained: {SpellID: 1237313}
 [107.00] [frostfire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5937.250 --> 6002.675) of 6886 total.
 [107.80] [frostfire-mage (#1)] Completed cast {SpellID: 1237313}
 [107.80] [frostfire-mage (#1)] Spent 333.000 mana from {SpellID: 1237313} (6002.675 --> 5669.675) of 6886 total.
 [107.80] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:686.6, AfterAttackerMods:900.1, AfterResistances:900.1, AfterTargetMods:990.1, AfterOutcome:1980.1, AfterPostOutcome:1980.1
+[107.80] [frostfire-mage (#1)] {SpellID: 400669} stacks: 2 --> 1
 [107.80] [frostfire-mage (#1)] Casting {SpellID: 1237313} (Cost = 333.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [107.80] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} Crit for 1980.150 damage (SpellSchool: 20). (Threat: 1584.120)
 [107.80] [frostfire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1575,7 +1572,8 @@
 [110.30] [frostfire-mage (#1)] Completed cast {SpellID: 1237313}
 [110.30] [frostfire-mage (#1)] Spent 333.000 mana from {SpellID: 1237313} (5905.100 --> 5572.100) of 6886 total.
 [110.30] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:713.3, AfterAttackerMods:935.2, AfterResistances:935.2, AfterTargetMods:1028.7, AfterOutcome:2057.3, AfterPostOutcome:2057.3
-[110.30] [frostfire-mage (#1)] {SpellID: 400669} stacks: 2 --> 1
+[110.30] [frostfire-mage (#1)] {SpellID: 400669} stacks: 1 --> 0
+[110.30] [frostfire-mage (#1)] Aura faded: {SpellID: 400669}
 [110.30] [frostfire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [110.30] [frostfire-mage (#1)] [Target 1] {SpellID: 1237313} Crit for 2057.333 damage (SpellSchool: 20). (Threat: 1645.866)
 [110.30] [frostfire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1593,8 +1591,6 @@
 [111.80] [frostfire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1135.6, AfterAttackerMods:1410.5, AfterResistances:1057.9, AfterTargetMods:1163.6, AfterOutcome:1745.5, AfterPostOutcome:1745.5
 [111.80] [frostfire-mage (#1)] Aura faded: {SpellID: 400625}
 [111.80] [frostfire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[111.80] [frostfire-mage (#1)] {SpellID: 400669} stacks: 1 --> 0
-[111.80] [frostfire-mage (#1)] Aura faded: {SpellID: 400669}
 [111.80] [frostfire-mage (#1)] Casting {SpellID: 1237313} (Cost = 333.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [111.80] [frostfire-mage (#1)] [Target 1] {SpellID: 18809} Crit (25% Resist) for 1745.461 damage (SpellSchool: 4). (Threat: 1745.461)
 [111.80] [frostfire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)

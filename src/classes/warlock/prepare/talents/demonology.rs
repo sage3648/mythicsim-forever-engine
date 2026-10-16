@@ -336,10 +336,11 @@ impl Warlock {
         sim.register_reset_effect(unit, Rc::new(|_: &mut Sim| {}));
         let imp = self.pets.imp;
         for pet in self.pets.base.clone() {
-            let (brand_id, brand_school) = if Some(pet) == imp {
-                (1293698, school::FIRE)
+            // Only the Shadow hit carries the high threat (beta notes 8 October, community #802).
+            let (brand_id, brand_school, threat) = if Some(pet) == imp {
+                (1293698, school::FIRE, 1.0)
             } else {
-                (1293697, school::SHADOW)
+                (1293697, school::SHADOW, 3.0)
             };
             sim.register_spell(
                 pet,
@@ -350,7 +351,7 @@ impl Warlock {
                     proc_mask: ProcMask::EMPTY,
                     flags: SpellFlag::PASSIVE_SPELL | SpellFlag::NO_ON_CAST_COMPLETE,
                     damage_multiplier: 1.0,
-                    threat_multiplier: 3.0,
+                    threat_multiplier: threat,
                     ..SpellConfig::default()
                 },
             );

@@ -4,7 +4,6 @@
 [0.00] [Target 1] Aura gained: {SpellID: 9907, Tag: -1}
 [0.00] [Target 1] Aura gained: {SpellID: 11198, Tag: -1}
 [0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 29414}
-[0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 20597}
 [0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 28755}
 [0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 28752}
 [0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 28751}
@@ -1172,7 +1171,7 @@
 [76.56] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [76.66] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [76.66] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
-[76.66] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:567.0, AfterAttackerMods:714.5, AfterResistances:606.8, AfterTargetMods:606.8, AfterOutcome:606.8, AfterPostOutcome:606.8
+[76.66] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:567.0, AfterAttackerMods:714.5, AfterResistances:606.8, AfterTargetMods:606.8, AfterOutcome:1395.6, AfterPostOutcome:1395.6
 [76.70] [marksmanship-hunter (#1)] No available actions!
 [76.70] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [76.80] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:0.0, AfterPostOutcome:0.0
@@ -1181,8 +1180,9 @@
 [76.80] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [76.90] [marksmanship-hunter (#1)] No available actions!
 [76.90] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[76.96] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 606.784 damage (SpellSchool: 1). (Threat: 606.784)
-[76.97] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3965.350 --> 4024.350) of 4635 total.
+[76.96] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1395.603 damage (SpellSchool: 1). (Threat: 1395.603)
+[76.97] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3965.350 --> 4015.350) of 4635 total.
+[76.97] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (4015.350 --> 4074.350) of 4635 total.
 [77.00] [marksmanship-hunter (#1)] No available actions!
 [77.00] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [77.10] [marksmanship-hunter (#1)] No available actions!
@@ -1200,35 +1200,35 @@
 [77.70] [marksmanship-hunter (#1)] Queueing up {SpellID: 2643} to cast at 1m17.797467754s.
 [77.70] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [77.80] [marksmanship-hunter (#1)] Casting {SpellID: 2643} (Cost = 186.150, Cast Time = 334.44816ms, GCD = 1.5s, Effective Time = 1.5s)
-[78.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (4024.350 --> 4065.550) of 4635 total.
+[78.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (4074.350 --> 4115.550) of 4635 total.
 [78.13] [marksmanship-hunter (#1)] Completed cast {SpellID: 2643}
-[78.13] [marksmanship-hunter (#1)] Spent 186.150 mana from {SpellID: 2643} (4065.550 --> 3879.400) of 4635 total.
+[78.13] [marksmanship-hunter (#1)] Spent 186.150 mana from {SpellID: 2643} (4115.550 --> 3929.400) of 4635 total.
 [78.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 2643} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:561.8, AfterAttackerMods:778.6, AfterResistances:661.3, AfterTargetMods:661.3, AfterOutcome:1520.9, AfterPostOutcome:1520.9
 [78.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:603.5, AfterPostOutcome:603.5
 [78.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Crit for 603.515 damage (SpellSchool: 8). (Threat: 603.515)
 [78.53] [marksmanship-hunter (#1)] [Target 1] {SpellID: 2643} Crit for 1520.916 damage (SpellSchool: 1). (Threat: 1520.916)
-[78.54] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3879.400 --> 3929.400) of 4635 total.
+[78.54] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3929.400 --> 3979.400) of 4635 total.
 [78.66] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [78.66] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
 [78.66] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:580.4, AfterAttackerMods:731.3, AfterResistances:621.0, AfterTargetMods:621.0, AfterOutcome:621.0, AfterPostOutcome:621.0
 [78.76] [marksmanship-hunter (#1)] No available actions!
 [78.76] [marksmanship-hunter (#1)] Pausing rotation for 535.260406ms due to resources / CDs.
 [78.96] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 621.045 damage (SpellSchool: 1). (Threat: 621.045)
-[78.97] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3929.400 --> 3988.400) of 4635 total.
+[78.97] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3979.400 --> 4038.400) of 4635 total.
 [79.06] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [79.06] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Dodge (SpellSchool: 1). (Threat: 0.000)
 [79.30] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [79.30] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[79.30] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3988.400 --> 3826.900) of 4635 total.
+[79.30] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (4038.400 --> 3876.900) of 4635 total.
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:489.8, AfterPostOutcome:489.8
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Crit for 489.787 damage (SpellSchool: 1). (Threat: 489.787)
 [79.30] [Target 1] Aura faded: {SpellID: 1293527, Tag: 2}
 [79.30] [Target 1] Aura gained: {SpellID: 1293527, Tag: 2}
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [79.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
-[80.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3826.900 --> 3868.100) of 4635 total.
+[80.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3876.900 --> 3918.100) of 4635 total.
 [80.67] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [80.67] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
 [80.67] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:583.4, AfterAttackerMods:735.0, AfterResistances:624.3, AfterTargetMods:624.3, AfterOutcome:624.3, AfterPostOutcome:624.3
@@ -1265,7 +1265,7 @@
 [81.87] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [81.97] [marksmanship-hunter (#1)] No available actions!
 [81.97] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[82.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3868.100 --> 3909.300) of 4635 total.
+[82.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3918.100 --> 3959.300) of 4635 total.
 [82.07] [marksmanship-hunter (#1)] No available actions!
 [82.07] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [82.17] [marksmanship-hunter (#1)] No available actions!
@@ -1290,7 +1290,7 @@
 [82.97] [marksmanship-hunter (#1)] No available actions!
 [82.97] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [82.98] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1427.157 damage (SpellSchool: 1). (Threat: 1427.157)
-[82.99] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3909.300 --> 3959.300) of 4635 total.
+[82.99] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3959.300 --> 4009.300) of 4635 total.
 [83.07] [marksmanship-hunter (#1)] No available actions!
 [83.07] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [83.17] [marksmanship-hunter (#1)] No available actions!
@@ -1311,7 +1311,7 @@
 [83.87] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [83.97] [marksmanship-hunter (#1)] Queueing up {SpellID: 2643} to cast at 1m24.131915914s.
 [83.97] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[84.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3959.300 --> 4000.500) of 4635 total.
+[84.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (4009.300 --> 4050.500) of 4635 total.
 [84.07] [marksmanship-hunter (#1)] Queueing up {SpellID: 2643} to cast at 1m24.131915914s.
 [84.07] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [84.13] [marksmanship-hunter (#1)] Casting {SpellID: 2643} (Cost = 186.150, Cast Time = 334.44816ms, GCD = 1.5s, Effective Time = 1.5s)
@@ -1320,7 +1320,7 @@
 [84.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [84.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [84.47] [marksmanship-hunter (#1)] Completed cast {SpellID: 2643}
-[84.47] [marksmanship-hunter (#1)] Spent 186.150 mana from {SpellID: 2643} (4000.500 --> 3814.350) of 4635 total.
+[84.47] [marksmanship-hunter (#1)] Spent 186.150 mana from {SpellID: 2643} (4050.500 --> 3864.350) of 4635 total.
 [84.47] [marksmanship-hunter (#1)] [Target 1] {SpellID: 2643} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:587.4, AfterAttackerMods:814.1, AfterResistances:691.4, AfterTargetMods:691.4, AfterOutcome:691.4, AfterPostOutcome:691.4
 [84.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:603.5, AfterPostOutcome:603.5
 [84.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Crit for 603.515 damage (SpellSchool: 8). (Threat: 603.515)
@@ -1331,17 +1331,17 @@
 [84.78] [marksmanship-hunter (#1)] Pausing rotation for 849.641678ms due to resources / CDs.
 [84.87] [marksmanship-hunter (#1)] [Target 1] {SpellID: 2643} Hit for 691.443 damage (SpellSchool: 1). (Threat: 691.443)
 [84.98] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 605.206 damage (SpellSchool: 1). (Threat: 605.206)
-[84.99] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3814.350 --> 3873.350) of 4635 total.
+[84.99] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3864.350 --> 3923.350) of 4635 total.
 [85.63] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [85.63] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[85.63] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3873.350 --> 3711.850) of 4635 total.
+[85.63] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3923.350 --> 3761.850) of 4635 total.
 [85.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:489.8, AfterPostOutcome:489.8
 [85.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Crit for 489.787 damage (SpellSchool: 1). (Threat: 489.787)
 [85.63] [Target 1] Aura faded: {SpellID: 1293527, Tag: 1}
 [85.63] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}
 [85.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [85.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
-[86.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3711.850 --> 3753.050) of 4635 total.
+[86.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3761.850 --> 3803.050) of 4635 total.
 [86.35] [marksmanship-hunter (#1)] Aura faded: {SpellID: 6150}
 [86.69] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [86.69] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
@@ -1354,7 +1354,7 @@
 [87.13] [marksmanship-hunter (#1)] Casting {SpellID: 1310786} (Cost = 365.000, Cast Time = 3.478260869s, GCD = 1.5s, Effective Time = 3.478260869s)
 [87.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:262.4, AfterPostOutcome:262.4
 [87.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Hit for 262.398 damage (SpellSchool: 8). (Threat: 262.398)
-[88.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3753.050 --> 3794.250) of 4635 total.
+[88.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3803.050 --> 3844.250) of 4635 total.
 [88.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [88.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [89.30] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
@@ -1365,35 +1365,35 @@
 [89.40] [marksmanship-hunter (#1)] No available actions!
 [89.40] [marksmanship-hunter (#1)] Pausing rotation for 1.212517932s due to resources / CDs.
 [89.60] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 661.549 damage (SpellSchool: 1). (Threat: 661.549)
-[89.61] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3794.250 --> 3853.250) of 4635 total.
-[90.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3853.250 --> 3894.450) of 4635 total.
+[89.61] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3844.250 --> 3903.250) of 4635 total.
+[90.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3903.250 --> 3944.450) of 4635 total.
 [90.50] [Target 1] Aura faded: {SpellID: 25295}
 [90.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:603.5, AfterPostOutcome:603.5
 [90.50] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Crit for 603.515 damage (SpellSchool: 8). (Threat: 603.515)
 [90.61] [marksmanship-hunter (#1)] Completed cast {SpellID: 1310786}
-[90.61] [marksmanship-hunter (#1)] Spent 365.000 mana from {SpellID: 1310786} (3894.450 --> 3529.450) of 4635 total.
+[90.61] [marksmanship-hunter (#1)] Spent 365.000 mana from {SpellID: 1310786} (3944.450 --> 3579.450) of 4635 total.
 [90.61] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1310786} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:856.5, AfterAttackerMods:1079.2, AfterResistances:916.6, AfterTargetMods:916.6, AfterOutcome:1833.2, AfterPostOutcome:1833.2
 [90.61] [marksmanship-hunter (#1)] Casting {SpellID: 20904} (Cost = 246.500, Cast Time = 1.739130434s, GCD = 1.5s, Effective Time = 1.739130434s)
 [90.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [90.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Miss (SpellSchool: 1). (Threat: 0.000)
 [90.81] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1310786} Crit for 1833.170 damage (SpellSchool: 1). (Threat: 1833.170)
-[90.82] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3529.450 --> 3579.450) of 4635 total.
-[90.82] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3579.450 --> 3638.450) of 4635 total.
+[90.82] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3579.450 --> 3629.450) of 4635 total.
+[90.82] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3629.450 --> 3688.450) of 4635 total.
 [91.80] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [91.80] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [91.91] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [91.91] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
 [91.91] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:572.9, AfterAttackerMods:721.8, AfterResistances:613.0, AfterTargetMods:613.0, AfterOutcome:613.0, AfterPostOutcome:613.0
-[92.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3638.450 --> 3679.650) of 4635 total.
+[92.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3688.450 --> 3729.650) of 4635 total.
 [92.01] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 1m32.349307218s.
 [92.01] [marksmanship-hunter (#1)] Pausing rotation for 342.952714ms due to resources / CDs.
 [92.21] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 613.016 damage (SpellSchool: 1). (Threat: 613.016)
 [92.35] [marksmanship-hunter (#1)] Completed cast {SpellID: 20904}
-[92.35] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3679.650 --> 3433.150) of 4635 total.
+[92.35] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3729.650 --> 3483.150) of 4635 total.
 [92.35] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:728.5, AfterAttackerMods:1009.8, AfterResistances:857.6, AfterTargetMods:857.6, AfterOutcome:857.6, AfterPostOutcome:857.6
 [92.35] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [92.35] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[92.35] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3433.150 --> 3271.650) of 4635 total.
+[92.35] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3483.150 --> 3321.650) of 4635 total.
 [92.35] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9
 [92.35] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)
 [92.35] [Target 1] Aura faded: {SpellID: 1293527, Tag: 2}
@@ -1405,11 +1405,11 @@
 [93.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [93.85] [marksmanship-hunter (#1)] Casting {SpellID: 25295} (Cost = 212.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [93.85] [marksmanship-hunter (#1)] Completed cast {SpellID: 25295}
-[93.85] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (3271.650 --> 3059.150) of 4635 total.
-[94.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3059.150 --> 3100.350) of 4635 total.
+[93.85] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (3321.650 --> 3109.150) of 4635 total.
+[94.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3109.150 --> 3150.350) of 4635 total.
 [94.15] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} Hit for 0.000 damage (SpellSchool: 8). (Threat: 0.000)
 [94.15] [Target 1] Aura gained: {SpellID: 25295}
-[94.16] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3100.350 --> 3159.350) of 4635 total.
+[94.16] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3150.350 --> 3209.350) of 4635 total.
 [94.52] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [94.52] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
 [94.52] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:602.8, AfterAttackerMods:759.5, AfterResistances:645.0, AfterTargetMods:645.0, AfterOutcome:645.0, AfterPostOutcome:645.0
@@ -1434,7 +1434,7 @@
 [95.85] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [95.95] [marksmanship-hunter (#1)] No available actions!
 [95.95] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[96.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3159.350 --> 3200.550) of 4635 total.
+[96.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3209.350 --> 3250.550) of 4635 total.
 [96.05] [marksmanship-hunter (#1)] No available actions!
 [96.05] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [96.15] [marksmanship-hunter (#1)] No available actions!
@@ -1483,7 +1483,7 @@
 [97.85] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [97.95] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 1m38.349307218s.
 [97.95] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[98.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3200.550 --> 3241.750) of 4635 total.
+[98.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3250.550 --> 3291.750) of 4635 total.
 [98.05] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 1m38.349307218s.
 [98.05] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [98.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
@@ -1500,15 +1500,15 @@
 [99.83] [marksmanship-hunter (#1)] Pausing rotation for 255.996192ms due to resources / CDs.
 [99.85] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [99.85] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
-[100.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (3241.750 --> 3326.950) of 4635 total.
+[100.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (3291.750 --> 3376.950) of 4635 total.
 [100.03] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 652.047 damage (SpellSchool: 1). (Threat: 652.047)
-[100.04] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3326.950 --> 3385.950) of 4635 total.
+[100.04] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3376.950 --> 3435.950) of 4635 total.
 [100.09] [marksmanship-hunter (#1)] Completed cast {SpellID: 20904}
-[100.09] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3385.950 --> 3139.450) of 4635 total.
+[100.09] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3435.950 --> 3189.450) of 4635 total.
 [100.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:721.7, AfterAttackerMods:1000.3, AfterResistances:849.6, AfterTargetMods:849.6, AfterOutcome:849.6, AfterPostOutcome:849.6
 [100.09] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [100.09] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[100.09] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3139.450 --> 2977.950) of 4635 total.
+[100.09] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3189.450 --> 3027.950) of 4635 total.
 [100.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9
 [100.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)
 [100.09] [Target 1] Aura faded: {SpellID: 1293527, Tag: 1}
@@ -1528,7 +1528,7 @@
 [101.89] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [101.99] [marksmanship-hunter (#1)] No available actions!
 [101.99] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[102.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2977.950 --> 3019.150) of 4635 total.
+[102.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3027.950 --> 3069.150) of 4635 total.
 [102.09] [marksmanship-hunter (#1)] No available actions!
 [102.09] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [102.19] [marksmanship-hunter (#1)] No available actions!
@@ -1549,7 +1549,7 @@
 [102.59] [marksmanship-hunter (#1)] No available actions!
 [102.59] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [102.64] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 623.480 damage (SpellSchool: 1). (Threat: 623.480)
-[102.65] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3019.150 --> 3078.150) of 4635 total.
+[102.65] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3069.150 --> 3128.150) of 4635 total.
 [102.69] [marksmanship-hunter (#1)] No available actions!
 [102.69] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [102.79] [marksmanship-hunter (#1)] No available actions!
@@ -1580,7 +1580,7 @@
 [103.89] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [103.99] [marksmanship-hunter (#1)] No available actions!
 [103.99] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[104.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3078.150 --> 3119.350) of 4635 total.
+[104.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3128.150 --> 3169.350) of 4635 total.
 [104.09] [marksmanship-hunter (#1)] No available actions!
 [104.09] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [104.19] [marksmanship-hunter (#1)] No available actions!
@@ -1613,7 +1613,7 @@
 [105.19] [marksmanship-hunter (#1)] No available actions!
 [105.19] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [105.25] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 624.893 damage (SpellSchool: 1). (Threat: 624.893)
-[105.26] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3119.350 --> 3178.350) of 4635 total.
+[105.26] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (3169.350 --> 3228.350) of 4635 total.
 [105.29] [marksmanship-hunter (#1)] No available actions!
 [105.29] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [105.39] [marksmanship-hunter (#1)] No available actions!
@@ -1630,7 +1630,7 @@
 [105.89] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [105.99] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 1m46.088437652s.
 [105.99] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[106.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (3178.350 --> 3263.550) of 4635 total.
+[106.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (3228.350 --> 3313.550) of 4635 total.
 [106.09] [marksmanship-hunter (#1)] Casting {SpellID: 20904} (Cost = 246.500, Cast Time = 1.739130434s, GCD = 1.5s, Effective Time = 1.739130434s)
 [106.15] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:262.4, AfterPostOutcome:262.4
 [106.15] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Hit for 262.398 damage (SpellSchool: 8). (Threat: 262.398)
@@ -1644,11 +1644,11 @@
 [107.66] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 1m47.827568086s.
 [107.66] [marksmanship-hunter (#1)] Pausing rotation for 169.03967ms due to resources / CDs.
 [107.83] [marksmanship-hunter (#1)] Completed cast {SpellID: 20904}
-[107.83] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3263.550 --> 3017.050) of 4635 total.
+[107.83] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3313.550 --> 3067.050) of 4635 total.
 [107.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:711.9, AfterAttackerMods:986.7, AfterResistances:838.0, AfterTargetMods:838.0, AfterOutcome:1927.4, AfterPostOutcome:1927.4
 [107.83] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [107.83] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[107.83] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3017.050 --> 2855.550) of 4635 total.
+[107.83] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3067.050 --> 2905.550) of 4635 total.
 [107.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9
 [107.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)
 [107.83] [Target 1] Aura faded: {SpellID: 1293527, Tag: 2}
@@ -1656,19 +1656,19 @@
 [107.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [107.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Miss (SpellSchool: 1). (Threat: 0.000)
 [107.86] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 659.895 damage (SpellSchool: 1). (Threat: 659.895)
-[107.87] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2855.550 --> 2914.550) of 4635 total.
-[108.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2914.550 --> 2955.750) of 4635 total.
+[107.87] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2905.550 --> 2964.550) of 4635 total.
+[108.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2964.550 --> 3005.750) of 4635 total.
 [108.13] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} Crit for 1927.362 damage (SpellSchool: 1). (Threat: 1927.362)
-[108.14] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2955.750 --> 3005.750) of 4635 total.
+[108.14] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3005.750 --> 3055.750) of 4635 total.
 [109.15] [Target 1] Aura faded: {SpellID: 25295}
 [109.15] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:262.4, AfterPostOutcome:262.4
 [109.15] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Hit for 262.398 damage (SpellSchool: 8). (Threat: 262.398)
 [109.33] [marksmanship-hunter (#1)] Casting {SpellID: 25295} (Cost = 212.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [109.33] [marksmanship-hunter (#1)] Completed cast {SpellID: 25295}
-[109.33] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (3005.750 --> 2793.250) of 4635 total.
+[109.33] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (3055.750 --> 2843.250) of 4635 total.
 [109.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} Hit for 0.000 damage (SpellSchool: 8). (Threat: 0.000)
 [109.63] [Target 1] Aura gained: {SpellID: 25295}
-[110.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2793.250 --> 2834.450) of 4635 total.
+[110.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2843.250 --> 2884.450) of 4635 total.
 [110.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [110.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [110.17] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1679,10 +1679,10 @@
 [110.33] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [110.33] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [110.47] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1436.920 damage (SpellSchool: 1). (Threat: 1436.920)
-[110.48] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2834.450 --> 2884.450) of 4635 total.
-[110.48] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2884.450 --> 2943.450) of 4635 total.
+[110.48] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2884.450 --> 2934.450) of 4635 total.
+[110.48] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2934.450 --> 2993.450) of 4635 total.
 [110.83] [marksmanship-hunter (#1)] Casting {SpellID: 1310786} (Cost = 365.000, Cast Time = 3.478260869s, GCD = 1.5s, Effective Time = 3.478260869s)
-[112.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2943.450 --> 2984.650) of 4635 total.
+[112.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2993.450 --> 3034.650) of 4635 total.
 [112.59] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [112.59] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [112.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:603.5, AfterPostOutcome:603.5
@@ -1695,14 +1695,14 @@
 [112.88] [marksmanship-hunter (#1)] No available actions!
 [112.88] [marksmanship-hunter (#1)] Pausing rotation for 1.429909235s due to resources / CDs.
 [113.08] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1508.438 damage (SpellSchool: 1). (Threat: 1508.438)
-[113.09] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2984.650 --> 3034.650) of 4635 total.
-[114.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3034.650 --> 3075.850) of 4635 total.
+[113.09] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (3034.650 --> 3084.650) of 4635 total.
+[114.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (3084.650 --> 3125.850) of 4635 total.
 [114.31] [marksmanship-hunter (#1)] Completed cast {SpellID: 1310786}
-[114.31] [marksmanship-hunter (#1)] Spent 365.000 mana from {SpellID: 1310786} (3075.850 --> 2710.850) of 4635 total.
+[114.31] [marksmanship-hunter (#1)] Spent 365.000 mana from {SpellID: 1310786} (3125.850 --> 2760.850) of 4635 total.
 [114.31] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1310786} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:871.3, AfterAttackerMods:1097.9, AfterResistances:932.4, AfterTargetMods:932.4, AfterOutcome:0.0, AfterPostOutcome:0.0
 [114.31] [marksmanship-hunter (#1)] Casting {SpellID: 20904} (Cost = 246.500, Cast Time = 1.739130434s, GCD = 1.5s, Effective Time = 1.739130434s)
 [114.51] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1310786} Miss (SpellSchool: 1). (Threat: 0.000)
-[114.52] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2710.850 --> 2769.850) of 4635 total.
+[114.52] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2760.850 --> 2819.850) of 4635 total.
 [115.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [115.09] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [115.33] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
@@ -1715,15 +1715,15 @@
 [115.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:65.6, AfterTargetMods:65.6, AfterOutcome:65.6, AfterPostOutcome:65.6
 [115.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Hit (75% Resist) for 65.600 damage (SpellSchool: 8). (Threat: 65.600)
 [115.68] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1491.214 damage (SpellSchool: 1). (Threat: 1491.214)
-[115.69] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2769.850 --> 2819.850) of 4635 total.
-[115.69] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2819.850 --> 2878.850) of 4635 total.
-[116.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2878.850 --> 2920.050) of 4635 total.
+[115.69] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2819.850 --> 2869.850) of 4635 total.
+[115.69] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2869.850 --> 2928.850) of 4635 total.
+[116.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2928.850 --> 2970.050) of 4635 total.
 [116.04] [marksmanship-hunter (#1)] Completed cast {SpellID: 20904}
-[116.04] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (2920.050 --> 2673.550) of 4635 total.
+[116.04] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (2970.050 --> 2723.550) of 4635 total.
 [116.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:732.1, AfterAttackerMods:1014.7, AfterResistances:861.7, AfterTargetMods:861.7, AfterOutcome:861.7, AfterPostOutcome:861.7
 [116.04] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [116.04] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[116.04] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (2673.550 --> 2512.050) of 4635 total.
+[116.04] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (2723.550 --> 2562.050) of 4635 total.
 [116.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9
 [116.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)
 [116.04] [Target 1] Aura faded: {SpellID: 1293527, Tag: 1}
@@ -1731,7 +1731,7 @@
 [116.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [116.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [116.34] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} Hit for 861.747 damage (SpellSchool: 1). (Threat: 861.747)
-[116.35] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2512.050 --> 2571.050) of 4635 total.
+[116.35] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2562.050 --> 2621.050) of 4635 total.
 [117.54] [marksmanship-hunter (#1)] No available actions!
 [117.54] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [117.64] [marksmanship-hunter (#1)] No available actions!
@@ -1747,7 +1747,7 @@
 [117.99] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [117.99] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}
 [117.99] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:574.0, AfterAttackerMods:723.2, AfterResistances:614.2, AfterTargetMods:614.2, AfterOutcome:1412.7, AfterPostOutcome:1412.7
-[118.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2571.050 --> 2612.250) of 4635 total.
+[118.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2621.050 --> 2662.250) of 4635 total.
 [118.04] [marksmanship-hunter (#1)] No available actions!
 [118.04] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [118.14] [marksmanship-hunter (#1)] No available actions!
@@ -1755,8 +1755,8 @@
 [118.24] [marksmanship-hunter (#1)] No available actions!
 [118.24] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [118.29] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1412.726 damage (SpellSchool: 1). (Threat: 1412.726)
-[118.30] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2612.250 --> 2662.250) of 4635 total.
-[118.30] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2662.250 --> 2721.250) of 4635 total.
+[118.30] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2662.250 --> 2712.250) of 4635 total.
+[118.30] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2712.250 --> 2771.250) of 4635 total.
 [118.34] [marksmanship-hunter (#1)] No available actions!
 [118.34] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [118.44] [marksmanship-hunter (#1)] No available actions!
@@ -1795,7 +1795,7 @@
 [119.84] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [119.94] [marksmanship-hunter (#1)] No available actions!
 [119.94] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[120.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2721.250 --> 2762.450) of 4635 total.
+[120.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2771.250 --> 2812.450) of 4635 total.
 [120.04] [marksmanship-hunter (#1)] No available actions!
 [120.04] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [120.14] [marksmanship-hunter (#1)] No available actions!
@@ -1820,7 +1820,7 @@
 [120.84] [marksmanship-hunter (#1)] No available actions!
 [120.84] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [120.90] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 633.907 damage (SpellSchool: 1). (Threat: 633.907)
-[120.91] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2762.450 --> 2821.450) of 4635 total.
+[120.91] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2812.450 --> 2871.450) of 4635 total.
 [120.94] [marksmanship-hunter (#1)] No available actions!
 [120.94] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [121.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
@@ -1847,7 +1847,7 @@
 [121.84] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [121.94] [marksmanship-hunter (#1)] Queueing up {SpellID: 20904} to cast at 2m2.044959389s.
 [121.94] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
-[122.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (2821.450 --> 2906.650) of 4635 total.
+[122.00] [marksmanship-hunter (#1)] Gained 85.200 mana from {OtherID: 2, Tag: 2} (2871.450 --> 2956.650) of 4635 total.
 [122.04] [marksmanship-hunter (#1)] Casting {SpellID: 20904} (Cost = 246.500, Cast Time = 1.739130434s, GCD = 1.5s, Effective Time = 1.739130434s)
 [122.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [122.83] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
@@ -1857,30 +1857,30 @@
 [123.31] [marksmanship-hunter (#1)] No available actions!
 [123.31] [marksmanship-hunter (#1)] Pausing rotation for 473.387495ms due to resources / CDs.
 [123.51] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Hit for 622.452 damage (SpellSchool: 1). (Threat: 622.452)
-[123.52] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2906.650 --> 2965.650) of 4635 total.
+[123.52] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2956.650 --> 3015.650) of 4635 total.
 [123.54] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [123.54] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Dodge (SpellSchool: 1). (Threat: 0.000)
 [123.78] [marksmanship-hunter (#1)] Completed cast {SpellID: 20904}
-[123.78] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (2965.650 --> 2719.150) of 4635 total.
+[123.78] [marksmanship-hunter (#1)] Spent 246.500 mana from {SpellID: 20904} (3015.650 --> 2769.150) of 4635 total.
 [123.78] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:735.0, AfterAttackerMods:1018.7, AfterResistances:865.2, AfterTargetMods:865.2, AfterOutcome:865.2, AfterPostOutcome:865.2
 [123.78] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [123.78] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}
-[123.78] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (2719.150 --> 2557.650) of 4635 total.
+[123.78] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (2769.150 --> 2607.650) of 4635 total.
 [123.78] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:489.8, AfterPostOutcome:489.8
 [123.78] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Crit for 489.787 damage (SpellSchool: 1). (Threat: 489.787)
 [123.78] [Target 1] Aura faded: {SpellID: 1293527, Tag: 2}
 [123.78] [Target 1] Aura gained: {SpellID: 1293527, Tag: 2}
 [123.78] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [123.78] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
-[124.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2557.650 --> 2598.850) of 4635 total.
+[124.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2607.650 --> 2648.850) of 4635 total.
 [124.08] [marksmanship-hunter (#1)] [Target 1] {SpellID: 20904} Hit for 865.157 damage (SpellSchool: 1). (Threat: 865.157)
-[124.09] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2598.850 --> 2657.850) of 4635 total.
+[124.09] [marksmanship-hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2648.850 --> 2707.850) of 4635 total.
 [124.63] [Target 1] Aura faded: {SpellID: 25295}
 [124.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:218.7, AfterAttackerMods:262.4, AfterResistances:262.4, AfterTargetMods:262.4, AfterOutcome:262.4, AfterPostOutcome:262.4
 [124.63] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} tick Hit for 262.398 damage (SpellSchool: 8). (Threat: 262.398)
 [125.28] [marksmanship-hunter (#1)] Casting {SpellID: 25295} (Cost = 212.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [125.28] [marksmanship-hunter (#1)] Completed cast {SpellID: 25295}
-[125.28] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (2657.850 --> 2445.350) of 4635 total.
+[125.28] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (2707.850 --> 2495.350) of 4635 total.
 [125.58] [marksmanship-hunter (#1)] [Target 1] {SpellID: 25295} Hit for 0.000 damage (SpellSchool: 8). (Threat: 0.000)
 [125.58] [Target 1] Aura gained: {SpellID: 25295}
 [125.82] [marksmanship-hunter (#1)] Casting {OtherID: 4} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1888,11 +1888,11 @@
 [125.82] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:606.8, AfterAttackerMods:764.6, AfterResistances:649.4, AfterTargetMods:649.4, AfterOutcome:1493.6, AfterPostOutcome:1493.6
 [125.92] [marksmanship-hunter (#1)] No available actions!
 [125.92] [marksmanship-hunter (#1)] Pausing rotation for 864.691843ms due to resources / CDs.
-[126.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2445.350 --> 2486.550) of 4635 total.
+[126.00] [marksmanship-hunter (#1)] Gained 41.200 mana from {OtherID: 2, Tag: 1} (2495.350 --> 2536.550) of 4635 total.
 [126.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [126.04] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [126.12] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} Crit for 1493.594 damage (SpellSchool: 1). (Threat: 1493.594)
-[126.13] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2486.550 --> 2536.550) of 4635 total.
+[126.13] [marksmanship-hunter (#1)] Gained 50.000 mana from {SpellID: 28753} (2536.550 --> 2586.550) of 4635 total.
 [126.28] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:52.2, AfterResistances:52.2, AfterTargetMods:52.2, AfterOutcome:52.2, AfterPostOutcome:52.2
 [126.28] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 2} tick Hit for 52.164 damage (SpellSchool: 1). (Threat: 52.164)
 [126.78] [marksmanship-hunter (#1)] No available actions!
@@ -1906,7 +1906,6 @@
 [127.18] [marksmanship-hunter (#1)] No available actions!
 [127.18] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 29414}
-[127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 20597}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 28755}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 28752}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 28751}

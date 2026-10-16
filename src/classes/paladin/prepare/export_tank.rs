@@ -31,7 +31,7 @@ impl Paladin {
         let fury = data.righteous_fury.highest();
         let mut righteous_fury = json!({
             "kind": "righteous_fury", "spell_id": fury.id, "aura": "Righteous Fury",
-            "threat_percent": fury.effect(dbcenums::A_MOD_THREAT, 2).percent(),
+            "threat_percent": super::RIGHTEOUS_FURY_HOLY_THREAT,
         });
         let law = talents.i32("instrument_of_law");
         if law > 0 {
@@ -79,18 +79,39 @@ impl Paladin {
                 "kind": "shield_specialization",
                 "trigger_aura": format!("Shield Specialization{label}"),
                 "proc_chance": data.shield_specialization.effect_at(2).fraction_at(shield_specialization),
-                "mana_share": share.effect_n(1).percent(),
+                // The 16 October 2026 beta notes cut it from 6% to 4%; the row still says 6.
+                "mana_share": 0.04,
                 "metrics_action_id": action_id(Some(&spell_action(share.id))),
+                // No Threat since client 70374 (beta notes 8 October).
+                "no_threat": share.no_threat(),
             }));
         }
         let reckoning = talents.i32("reckoning");
         if reckoning > 0 {
             // talents_protection.go applyReckoning
             let block = data.reckoning.fraction_at(reckoning);
+            // Since the 16 October 2026 beta notes each trigger banks a charge, up to 4, behind the
+            // triggers' shared cooldown, and the next main hand auto, landed or not, spends them all
+            // on one free main hand swing each that leaves the swing timer alone.
+            let spenders: Vec<usize> = sim
+                .unit(unit)
+                .spellbook
+                .iter()
+                .enumerate()
+                .filter(|(_, &spell)| {
+                    sim.spell(spell)
+                        .proc_mask
+                        .matches(crate::prepare::spell::ProcMask::MELEE_MH_AUTO)
+                })
+                .map(|(i, _)| i)
+                .collect();
             effects.push(json!({
                 "kind": "reckoning", "block_aura": format!("Reckoning - Block{label}"),
                 "crit_aura": format!("Reckoning - Crit{label}"),
                 "block_chance": block, "crit_chance": block * 2.5,
+                "charges_aura": format!("Reckoning{label}"),
+                "icd_ns": data.reckoning.highest().icd(),
+                "spender_spells": spenders,
             }));
         }
         if talents.i32("iron_creed") > 0 {

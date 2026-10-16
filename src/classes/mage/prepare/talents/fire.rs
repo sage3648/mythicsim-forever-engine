@@ -299,6 +299,18 @@ impl Mage {
                 ..ProcTrigger::default()
             },
         );
+        // Since the beta build of 2026-10-16 every Fire Blast cast adds a stack on top of its
+        // crit's (community #808).
+        sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Hot Streak Fire Blast Trigger".to_string(),
+                callback: CallbackMask::ON_CAST_COMPLETE,
+                class_spell_mask: masks::FIRE_BLAST,
+                trigger_immediately: true,
+                ..ProcTrigger::default()
+            },
+        );
     }
 
     fn register_master_of_elements(&self, sim: &mut Sim, unit: UnitId) {

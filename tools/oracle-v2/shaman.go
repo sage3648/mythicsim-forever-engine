@@ -184,6 +184,8 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"melee_crit": shamanDevastation.Effect(dbcenums.A_DUMMY, 0).ValueAt(talents.ElementalDevastation),
 			// Forever's rank lacks the bit: a crit from a spell flagged Proc, as an overload, does not count.
 			"can_proc_from_procs": shamanDevastation.Highest().CanProcFromProcs(),
+			// The ExtraCondition: totems and what they cast never trigger it, Fire Nova included.
+			"excluded_class_spells": []string{"fire_nova"},
 		})
 	}
 	if talents.Flurry > 0 { // talents_enhancement.go applyFlurry: a Go literal 500 ms charge cooldown.
@@ -203,7 +205,7 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"spirit_regen_rate_casting": shamanImpStormBuff.Highest().Effect(dbcenums.A_MOD_MANA_REGEN_INTERRUPT, 0).Percent(),
 		})
 	}
-	// talents_enhancement.go applyMaelstromWeapon: 2 PPM a point, a Go literal, rolled per hand.
+	// talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand.
 	if trigger := character.GetAura("Maelstrom Weapon Trigger"); talents.MaelstromWeapon > 0 && trigger != nil && trigger.Dpm != nil {
 		effects = append(effects, map[string]any{
 			"kind": "maelstrom_weapon", "trigger_aura": trigger.Label, "aura": "Maelstrom Weapon",
@@ -262,29 +264,21 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"charges": int32(shamanLightningShield.Highest().ProcCharges),
 		})
 	}
-	// buffs/air_totem.go: the party holds one air totem, and a totem the shaman casts outbids the
-	// one a party assumption supplies. With both, the slot is a single aura exclusive category the
-	// runtime resolves as Go does.
-	ownAirTotem := character.GetAura("Grace Of Air Totem (Self)") != nil || character.GetAura("Windfury Totem (Self)") != nil
-	partyAirTotem := character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil
-	airSlot := false
-	if ownAirTotem && partyAirTotem {
-		if category := exclusiveCategoryEffect(&character.Unit, "player", buffs.AirTotemCategory); category != nil {
-			effects = append(effects, category)
-			airSlot = true
-		}
-	}
+	// Since the 16 October 2026 beta notes no air totem category stands between the shaman's own
+	// totems and the party's: only the party's Windfury Totem still contests the shaman's own,
+	// through the Windfury Totem category.
+	partyWindfury := character.GetAura("Windfury Totem") != nil
 	// registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat aura.
 	if aura := character.GetAura("Grace Of Air Totem (Self)"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "grace_of_air_totem", "spell_id": shamanGraceOfAir.Highest().ID, "aura": aura.Label,
-			"duration_ns":     nanos(shamanGraceOfAir.Highest().Duration()),
-			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
+			"duration_ns": nanos(shamanGraceOfAir.Highest().Duration()),
 		})
 	}
 	// registerWindfuryTotemSpell: the totem's aura refreshes two auras every 5 seconds, Go literals;
 	// the second's exclusive effect turns the trigger on, which grants charges of attack power and
-	// an extra main hand attack. A party air totem or a main hand Windfury Weapon would contest it.
+	// an extra main hand attack. The party's Windfury Totem or a main hand Windfury Weapon would
+	// contest it.
 	if totem := character.GetAura("Windfury Totem (Self)"); totem != nil {
 		trigger := character.GetAura("Windfury Totem Trigger (Self)")
 		procAura := character.GetAura("Windfury Totem Proc (Self)")
@@ -315,7 +309,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"white_spells":    procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeWhiteHit, CanProcFromProcs: true}),
 			"proc_gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), procAura.ActionID),
 			"proc_expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), procAura.ActionID),
-			"contested": partyAirTotem && !airSlot ||
+			"contested": partyWindfury ||
 				character.GetAura("Windfury Imbue") != nil && character.MainHand().TempEnchant == 283,
 		})
 	}
@@ -332,6 +326,19 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 	if aura := sham.FlametongueTotemAura; aura != nil {
 		trigger := spelldata.ProcTrigger(character, spelldata.MustFind(15036), nil)
 		trigger.ProcMask &= core.ProcMaskMeleeMH
+		// Windfury Weapon's main-hand strikes proc it as the main hand's autos do (patch 141): the
+		// trigger hears main hand specials, and its ExtraCondition keeps the autos and 439440.
+		triggerSpells := procTriggerSpells(character, trigger)
+		if buffs.FlametongueTotemHearsWindfuryWeapon && trigger.ProcMask.Matches(core.ProcMaskMeleeMHAuto) {
+			trigger.ProcMask |= core.ProcMaskMeleeMHSpecial
+			triggerSpells = []int{}
+			for _, i := range procTriggerSpells(character, trigger) {
+				spell := character.Spellbook[i]
+				if spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto) || spell.ActionID.SpellID == buffs.WindfuryWeaponMainHandStrikeID {
+					triggerSpells = append(triggerSpells, i)
+				}
+			}
+		}
 		attack := -1
 		for i, spell := range character.Spellbook {
 			if spell.ActionID == (core.ActionID{SpellID: 16389}) {
@@ -344,7 +351,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"trigger_aura": buffs.FlametongueTotemTriggerLabel, "attack_spell": attack,
 			"attack_deals_damage": weapon != nil && weapon.SwingSpeed != 0,
 			"attack_damage":       buffs.FlametongueTotemBaseDamage(weapon.SwingSpeed),
-			"trigger_spells":      procTriggerSpells(character, trigger), "trigger_outcome": outcomeNames(trigger.Outcome),
+			"trigger_spells":      triggerSpells, "trigger_outcome": outcomeNames(trigger.Outcome),
 			"disabled_by_weapon": character.GetAura("Flametongue Imbue ItemSlotMainHand") != nil,
 			"duration_ns":        nanos(shamanFlametongueTotem.Highest().Duration()),
 			"party_totem":        character.GetAura("Flametongue Totem") != nil,

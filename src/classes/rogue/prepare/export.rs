@@ -142,7 +142,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         "ruthlessness_action": action(14161),
     }));
     // poisons.go: each imbue's weapon proc rolls its chance, raised by Improved Poisons, inside
-    // the handler.
+    // the handler. The attack power shares are server side, from the devs (community #781).
     let bonus = poison_bonus(rogue);
     let hands = |imbue: i32| poison_proc_mask(sim, env.player, imbue).names();
     if let Some(spell) = rogue.spells.instant_poison {
@@ -150,7 +150,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
             "kind": "instant_poison", "trigger_aura": "Instant Poison",
             "spell_id": sim.spell(spell).action_id.spell_id,
             "proc_mask": hands(IMBUES.instant), "proc_chance": 0.2 + bonus,
-            "min_damage": 76.0, "max_damage": 100.0,
+            "min_damage": 76.0, "max_damage": 100.0, "attack_power_share": 0.005,
         }));
     }
     if let Some(spell) = rogue.spells.deadly_poison {
@@ -158,7 +158,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         effects.push(json!({
             "kind": "deadly_poison", "trigger_aura": "Deadly Poison", "spell_id": id.spell_id,
             "tag": id.tag, "proc_mask": hands(IMBUES.deadly), "proc_chance": 0.3 + bonus,
-            "tick_damage": 23.0,
+            "tick_damage": 23.0, "attack_power_share": 0.0045,
         }));
     }
     effects

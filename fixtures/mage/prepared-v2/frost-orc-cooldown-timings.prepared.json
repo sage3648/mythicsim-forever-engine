@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "f50247dd93b3103261df16f08497b0461b3c0c826d37504f70021637e421be95",
@@ -651,7 +651,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.1298,
+      "PhysicalCritPercent": 12.1298,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -660,7 +660,7 @@
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
       "ShadowResistance": 42,
-      "SpellCritPercent": 15.331999999999999,
+      "SpellCritPercent": 16.331999999999997,
       "SpellCritRating": 70,
       "SpellDamage": 454,
       "SpellHasteRating": 0,
@@ -744,22 +744,6 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Axe Specialization",
-        "action_id": {
-          "spell_id": 20574
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
         "label": "Blood Fury",
         "action_id": {
           "spell_id": 20572
@@ -774,7 +758,7 @@
         ],
         "icd": {
           "timer": "timer-0",
-          "duration_ns": 120000000000
+          "duration_ns": 180000000000
         },
         "exclusive_effects": 0
       },
@@ -950,7 +934,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -968,7 +952,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1340,7 +1324,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-0",
-          "duration_ns": 120000000000
+          "duration_ns": 180000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5997,7 +5981,7 @@
       "trigger_aura": "Winters Chill Talent"
     },
     {
-      "frozen_multiplier": 4,
+      "frozen_multiplier": 3,
       "kind": "ice_lance",
       "spell_id": 1240047
     },
@@ -6226,7 +6210,7 @@
     {
       "aura": "Shatter Curse",
       "kind": "shatter_curse",
-      "school_damage_taken_multiplier": 0.85,
+      "school_damage_taken_multiplier": 0.95,
       "schools": [
         "arcane",
         "fire",
@@ -6285,18 +6269,18 @@
           "AttackPower": 10,
           "HealingPower": 269,
           "MP5": 77,
-          "PhysicalCritPercent": 14.1298,
+          "PhysicalCritPercent": 12.1298,
           "RangedAttackPower": 0,
-          "SpellCritPercent": 15.331999999999999,
+          "SpellCritPercent": 16.331999999999997,
           "SpellDamage": 454
         },
         {
           "AttackPower": 11,
           "HealingPower": 295.90000000000003,
           "MP5": 77,
-          "PhysicalCritPercent": 14.1298,
+          "PhysicalCritPercent": 12.1298,
           "RangedAttackPower": 0,
-          "SpellCritPercent": 15.331999999999999,
+          "SpellCritPercent": 16.331999999999997,
           "SpellDamage": 499.40000000000003
         }
       ],

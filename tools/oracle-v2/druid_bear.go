@@ -182,8 +182,8 @@ func druidBearEffects(d *druid.Druid, character *core.Character) []map[string]an
 			effects = append(effects, map[string]any{
 				"kind": "swipe", "spell": spellPosition(character, d.Swipe.Spell),
 				"flat_damage": bearSwipe.Highest().DamageEffect().Average(core.CharacterLevel),
-				// swipeAttackPowerCoefficient, a Go literal the client rows do not carry.
-				"attack_power_coefficient": 0.03,
+				// swipeAttackPowerCoeff, a Go literal the client rows do not carry.
+				"attack_power_coefficient": 0.05,
 			})
 		}
 		if d.Barkskin != nil { // barkskin.go: the aura's physical damage taken cut is a stat aura

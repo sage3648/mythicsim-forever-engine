@@ -349,6 +349,9 @@ impl Paladin {
                     "max_levels": rank.effect_n(3).average(CHARACTER_LEVEL),
                     "levels": f64::from(sim.unit(target).level - sim.unit(unit).level),
                     "metrics_action_id": action_id(Some(&spell_action(rank.id))),
+                    // 1314104 is No Threat since client 70374 (beta notes 8 October); the spell is
+                    // not in the store, so Go sets the flag.
+                    "no_threat": true,
                 });
             }
             effects.push(fury);
@@ -411,7 +414,9 @@ impl Paladin {
             consecrations.push(json!({
                 "spell_id": rank.id, "tick": tick.average(CHARACTER_LEVEL),
                 "bonus": bonus.average(CHARACTER_LEVEL),
-                "bonus_coefficient": bonus.coeff(),
+                // consecration.go consecrationTickCoefficient: the 16 October 2026 beta notes cut
+                // it to 0.042; the rows still carry 0.095.
+                "bonus_coefficient": 0.042,
                 "bonus_targets": dummy.average(CHARACTER_LEVEL) as i32,
             }));
         });

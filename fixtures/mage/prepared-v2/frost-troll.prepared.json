@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "d26b1678bc097dc42bc9af6013325b7b557374bd10e395fcc59672a525235f17",
@@ -651,7 +651,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.386800000000001,
+      "PhysicalCritPercent": 11.3868,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -915,7 +915,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -933,7 +933,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -5893,7 +5893,7 @@
       "trigger_aura": "Winters Chill Talent"
     },
     {
-      "frozen_multiplier": 4,
+      "frozen_multiplier": 3,
       "kind": "ice_lance",
       "spell_id": 1240047
     },

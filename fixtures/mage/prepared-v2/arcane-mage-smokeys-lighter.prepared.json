@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "1007c66bf8f55b364308f4e303b83e37ded8c66e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "079dcf5fa91b2517a0efa309738fef75127cb4d71c1ce1128a2b7b13ff90c201",
@@ -683,7 +683,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.1812,
+      "PhysicalCritPercent": 11.1812,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -791,7 +791,7 @@
         ],
         "icd": {
           "timer": "timer-14",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -903,7 +903,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -921,7 +921,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1325,6 +1325,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -6424,7 +6425,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.1,
+      "proc_chance": 0.3,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",

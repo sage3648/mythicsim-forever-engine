@@ -67,13 +67,15 @@ impl<A: Agent> Fight<A> {
         self.set_stacks(aura, yards);
     }
 
-    /// The Movement aura's gain and expiry.
+    /// The Movement aura's gain and expiry, which records when the unit stopped.
     pub(crate) fn movement_changed(&mut self, side: Side, gained: bool) {
         self.changed(super::reads::CASTS);
+        let now = self.now;
         let unit = self.unit_mut(side);
         unit.moving = gained;
         if !gained {
             unit.movement = None;
+            unit.movement_ended_at = now;
         }
     }
 

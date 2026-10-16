@@ -134,10 +134,8 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             .map(|trigger| ("player", trigger.aura.as_str()))
             .collect(),
         Effect::BloodCraze {
-            damage_taken_aura,
-            bloodthirst_aura,
-            ..
-        } => vec![("player", damage_taken_aura), ("player", bloodthirst_aura)],
+            damage_taken_aura, ..
+        } => vec![("player", damage_taken_aura)],
         _ => Vec::new(),
     }
 }
