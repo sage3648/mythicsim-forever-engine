@@ -1,6 +1,6 @@
 //! The Shaman's shields: Go `sim/shaman` `shields.go`.
 
-use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
+use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, SECOND};
 use crate::prepare::spell::{
     school, CastConfig, DefenseType, ProcMask, SpellConfig, SpellFlag, GCD_DEFAULT,
@@ -42,6 +42,10 @@ impl Shaman {
             return;
         }
         let action_id = spell_action(WATER_SHIELD_SPELL_ID);
+        let row = crate::prepare::spelldata::store::must_find(WATER_SHIELD_SPELL_ID);
+        // One globe every 3.5 sec at most, whichever trigger spends it: the row has one internal
+        // cooldown, a timer of its own.
+        let _icd = sim.new_timer(unit);
         let aura = sim.register_aura(
             unit,
             AuraConfig {
@@ -57,8 +61,22 @@ impl Shaman {
             &ProcTrigger {
                 name: "Water Shield Trigger".to_string(),
                 callback: CallbackMask::ON_SPELL_HIT_TAKEN,
-                icd: 3500 * crate::prepare::sim::MILLISECOND,
                 class_spell_mask: masks::SHIELD_SELF_PROC,
+                ..ProcTrigger::default()
+            },
+        );
+        // MythicSim patch 145: the shaman's own critical spells spend a globe too, as client
+        // 70425's row and the 16 October 2026 beta notes state.
+        sim.attach_proc_trigger(
+            aura,
+            &ProcTrigger {
+                name: "Water Shield Spell Crit Trigger".to_string(),
+                callback: CallbackMask(
+                    CallbackMask::ON_SPELL_HIT_DEALT.0 | CallbackMask::ON_HEAL_DEALT.0,
+                ),
+                proc_mask: ProcMask(ProcMask::SPELL_DAMAGE.0 | ProcMask::SPELL_HEALING.0),
+                outcome: HitOutcome::CRIT,
+                can_proc_from_procs: row.can_proc_from_procs(),
                 ..ProcTrigger::default()
             },
         );

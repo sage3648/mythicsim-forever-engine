@@ -105,9 +105,11 @@ pub(crate) struct RogueAgent {
     adrenaline_rush: Option<AdrenalineRush>,
     finisher: Option<Finisher>,
     instant_poison: Option<Rc<PoisonProc>>,
-    instant_poison_damage: (f64, f64),
+    /// Instant Poison's least and most damage, and its share of attack power.
+    instant_poison_damage: (f64, f64, f64),
     deadly_poison: Option<Rc<PoisonProc>>,
-    deadly_poison_tick: f64,
+    /// Deadly Poison's tick a stack, and its share of attack power a stack.
+    deadly_poison_tick: (f64, f64),
     stealth: Option<Stealth>,
     ambush: Option<Ambush>,
     rupture: Option<Rc<Rupture>>,
@@ -394,6 +396,7 @@ impl RogueAgent {
                     proc_chance,
                     min_damage,
                     max_damage,
+                    attack_power_share,
                     ..
                 } => {
                     let bound = poison(
@@ -404,13 +407,15 @@ impl RogueAgent {
                         *proc_chance,
                     )?;
                     fight.agent.instant_poison = Some(Rc::new(bound));
-                    fight.agent.instant_poison_damage = (*min_damage, *max_damage);
+                    fight.agent.instant_poison_damage =
+                        (*min_damage, *max_damage, *attack_power_share);
                 }
                 Effect::DeadlyPoison {
                     trigger_aura,
                     proc_mask,
                     proc_chance,
                     tick_damage,
+                    attack_power_share,
                     ..
                 } => {
                     let bound = poison(
@@ -426,7 +431,7 @@ impl RogueAgent {
                     // The dot is 25349, which carries Periodic Can Crit in the client.
                     fight.dots[dot].tick_can_crit = true;
                     fight.agent.deadly_poison = Some(Rc::new(bound));
-                    fight.agent.deadly_poison_tick = *tick_damage;
+                    fight.agent.deadly_poison_tick = (*tick_damage, *attack_power_share);
                 }
                 Effect::Stealth { aura, .. } => {
                     fight.agent.stealth = Some(Stealth {
@@ -833,8 +838,8 @@ impl Agent for RogueAgent {
                 rush.apply(fight);
             }
             RogueSpell::InstantPoison => {
-                let (min, max) = fight.agent.instant_poison_damage;
-                poisons::instant_poison(fight, spell, target, min, max);
+                let damage = fight.agent.instant_poison_damage;
+                poisons::instant_poison(fight, spell, target, damage);
             }
             RogueSpell::DeadlyPoison => {
                 let tick = fight.agent.deadly_poison_tick;
@@ -1198,6 +1203,16 @@ impl Agent for RogueAgent {
             RogueAura::ColdBlood => {
                 let cold_blood = fight.agent.cold_blood.clone().expect("bound");
                 cold_blood.on_spell_hit_dealt(fight, spell);
+                // Both Mutilate hands take the crit, then the off-hand strike, always second,
+                // spends the charge (forever-bugs #224, community #785).
+                if fight
+                    .agent
+                    .mutilate
+                    .as_ref()
+                    .is_some_and(|mutilate| spell == mutilate.off_hand)
+                {
+                    fight.deactivate_aura(cold_blood.aura);
+                }
                 None
             }
             RogueAura::Proc(index) => {

@@ -191,6 +191,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "force_reactive_disk",
     "stacking_on_use",
     "sulfuras_hand_of_ragnaros",
+    "blade_of_hanna",
     "energize_proc",
     "eureka",
     "exclusive_category",
@@ -449,6 +450,11 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             immolation_aura,
             ..
         } => vec![("player", trigger_aura), ("player", immolation_aura)],
+        Effect::BladeOfHanna {
+            trigger_aura,
+            stacks_aura,
+            ..
+        } => vec![("player", trigger_aura), ("player", stacks_aura)],
         Effect::StatProc {
             trigger_aura, aura, ..
         }
@@ -1099,6 +1105,8 @@ const INERT_STATS: &[&str] = &[
 /// inheritance carries only its tracked powers.
 const UNINHERITED_STATS: &[&str] = &[
     "Spirit",
+    "RangedCritPercent",
+    "ExpertisePercent",
     "ArcaneDamage",
     "FireDamage",
     "FrostDamage",
@@ -1130,6 +1138,19 @@ fn uninherited_stat_changes(prepared: &PreparedV2) -> Vec<String> {
     }
     let mut reasons = Vec::new();
     for pet in &prepared.pets {
+        // A hunter pet's crit offset follows the owner's ranged-only crit (patch 138), which
+        // the runtime holds fixed.
+        if changed.contains("RangedCritPercent")
+            && pet
+                .inheritance
+                .iter()
+                .any(|term| term.pet == "PhysicalCritPercent")
+        {
+            reasons.push(format!(
+                "pet {} takes a crit offset from RangedCritPercent, which changes during the fight",
+                pet.label
+            ));
+        }
         for term in &pet.inheritance {
             if UNINHERITED_STATS.contains(&term.owner.as_str())
                 && changed.contains(term.owner.as_str())
@@ -1518,6 +1539,12 @@ pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Opti
             spells
                 .iter()
                 .position(|spell| spell.action_id.as_ref() == Some(id))
+        })
+        // Go `RankAliases`: an older rank a rotation names presses the known one.
+        .or_else(|| {
+            spells
+                .iter()
+                .position(|spell| spell.has_flag("SpellFlagAPL") && spell.has_rank_alias(id))
         })
 }
 

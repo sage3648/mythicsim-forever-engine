@@ -128,6 +128,8 @@ pub(crate) enum AuraBehavior<K> {
     /// Sulfuras, Hand of Ragnaros's weapon proc trigger and its Immolation.
     SulfurasProc,
     SulfurasImmolation,
+    /// Blade of Hanna's trigger.
+    BladeOfHanna,
     /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
     WindfuryTotem,
     /// The party Windfury Totem's trigger.
@@ -725,6 +727,20 @@ impl<A: Agent> Fight<A> {
         self.set_stat_mask(mask);
     }
 
+    /// A stacking stat aura's place in the active stat mask, by label: its offset and width.
+    pub(crate) fn stat_aura_place(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<(u32, u32)> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, stacks, .. } => {
+                let position = auras.iter().position(|aura| aura == label)?;
+                Some(stat_aura_places(stacks, auras.len())[position])
+            }
+            _ => None,
+        })
+    }
+
     /// A stat aura's bit in the active stat mask, by label: the first bit of its place.
     pub(crate) fn stat_aura_bit(
         effects: &[crate::contracts::prepared_v2::Effect],
@@ -1071,6 +1087,7 @@ impl<A: Agent> Fight<A> {
     /// Go `auraTracker.doneIteration`: deactivate every aura in registration order, then
     /// fold this iteration's uptime and procs into the aggregates.
     pub(crate) fn aura_done_iteration(&mut self, side: Side) {
+        self.done_iteration = true;
         'restart: loop {
             for index in 0..self.trackers[side.index()].auras.len() {
                 if self.trackers[side.index()].auras[index].active {
@@ -1080,6 +1097,7 @@ impl<A: Agent> Fight<A> {
             }
             break;
         }
+        self.done_iteration = false;
         for state in &mut self.trackers[side.index()].auras {
             state.start = 0;
             state.expires = 0;
@@ -1100,7 +1118,6 @@ impl<A: Agent> Fight<A> {
             let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
-                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
@@ -1229,6 +1246,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Crusader if dealt => self.crusader_callback(aura, spell, result),
                     AuraBehavior::EmeraldDragonWhelp if dealt => {
                         self.whelp_callback(aura, spell, result)
+                    }
+                    AuraBehavior::BladeOfHanna if dealt => {
+                        self.blade_of_hanna_callback(spell, result)
                     }
                     AuraBehavior::SulfurasProc if dealt => {
                         self.sulfuras_callback(aura, spell, result)

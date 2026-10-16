@@ -35,6 +35,17 @@ pub(super) fn apply_weapon_specialization(
             ..SpellModConfig::default()
         },
     );
+    follow_main_hand(sim, unit, weapon_mod, main_hand_matches, hand_type);
+}
+
+/// Go `followMainHand`: keeps a weapon specialization's mod on while the main hand is of its type.
+pub(super) fn follow_main_hand(
+    sim: &mut Sim,
+    unit: UnitId,
+    weapon_mod: crate::prepare::spell_mod::ModId,
+    main_hand_matches: bool,
+    hand_type: &str,
+) {
     if main_hand_matches {
         sim.activate_spell_mod(weapon_mod);
     }

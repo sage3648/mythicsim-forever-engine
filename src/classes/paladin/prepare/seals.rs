@@ -87,6 +87,14 @@ fn judgement_config(
     }
 }
 
+/// Go `JudgementOfRighteousnessSpellPowerCoefficient`, as measured in game on client 70425
+/// (MythicSim patch 143). The seal's per-hit share stays on the dummy's number.
+pub(crate) const JUDGEMENT_OF_RIGHTEOUSNESS_SPELL_POWER_COEFFICIENT: f64 = 0.70;
+/// Go `SealOfFurySpellPowerCoefficient` and `JudgementOfFurySpellPowerCoefficient`, as measured in
+/// game on client 70425 (MythicSim patch 143).
+pub(crate) const SEAL_OF_FURY_SPELL_POWER_COEFFICIENT: f64 = 0.15;
+pub(crate) const JUDGEMENT_OF_FURY_SPELL_POWER_COEFFICIENT: f64 = 0.67;
+
 impl Paladin {
     /// Go `registerSeals`.
     pub(super) fn register_seals(&mut self, sim: &mut Sim, unit: UnitId) {
@@ -160,11 +168,11 @@ impl Paladin {
         let judge_rank = spell_data()
             .judgement_of_righteousness
             .by_id(rank.effect_n(2).base_value() as i32);
-        let judge_damage = judge_rank.damage_effect();
         let per_hit = judge_rank.effect_n(2);
 
         let judgement = SpellConfig {
-            bonus_coefficient: judge_damage.coeff(),
+            // Measured in game on client 70425 (MythicSim patch 143); the rows carry 0.429.
+            bonus_coefficient: JUDGEMENT_OF_RIGHTEOUSNESS_SPELL_POWER_COEFFICIENT,
             ..judgement_config(
                 judge_rank,
                 masks::JUDGEMENT_OF_RIGHTEOUSNESS,
@@ -542,12 +550,11 @@ impl Paladin {
         let judgement_rank = spell_data()
             .seal_of_fury_triggered
             .by_id(rank.effect_n(3).base_value() as i32);
-        let judgement_damage = judgement_rank.damage_effect();
         let proc_rank = rank.refs()[0];
-        let proc_damage = proc_rank.damage_effect();
 
         let judgement = SpellConfig {
-            bonus_coefficient: judgement_damage.coeff(),
+            // Measured in game on client 70425 (MythicSim patch 143); the rows carry 0.429.
+            bonus_coefficient: JUDGEMENT_OF_FURY_SPELL_POWER_COEFFICIENT,
             ..judgement_config(
                 judgement_rank,
                 masks::JUDGEMENT_OF_FURY,
@@ -585,7 +592,8 @@ impl Paladin {
                 class_spell_mask: masks::SEAL_OF_FURY_PROC,
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                bonus_coefficient: proc_damage.coeff(),
+                // Measured in game on client 70425 (MythicSim patch 143); the rows carry 0.10.
+                bonus_coefficient: SEAL_OF_FURY_SPELL_POWER_COEFFICIENT,
                 ..SpellConfig::default()
             },
         );

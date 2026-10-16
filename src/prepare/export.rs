@@ -329,6 +329,10 @@ pub(crate) fn export_spell_of(
     if spell.metric_splits > 1 {
         out.insert("metric_splits".into(), json!(spell.metric_splits));
     }
+    if !spell.rank_aliases.is_empty() {
+        let aliases: Vec<Value> = spell.rank_aliases.iter().map(spell_action_id).collect();
+        out.insert("rank_aliases".into(), Value::Array(aliases));
+    }
     Value::Object(out)
 }
 

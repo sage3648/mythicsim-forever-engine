@@ -7,12 +7,15 @@ import (
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/proto"
+	"github.com/wowsims/forever/sim/core/simsignals"
 	"github.com/wowsims/forever/sim/core/spelldata"
+	"github.com/wowsims/forever/sim/core/stats"
 	"github.com/wowsims/forever/sim/mage"
 )
 
 func init() {
-	classExports[proto.Class_ClassMage] = classExport{spells: mageClassSpells, damageRows: mageDamageRows, effects: mageEffects}
+	classExports[proto.Class_ClassMage] = classExport{spells: mageClassSpells, damageRows: mageDamageRows, effects: mageEffects,
+		statAuras: mageStatAuras, casterDamageHandlers: mageCasterDamageHandlers}
 }
 
 // Mage class masks are Go-internal bit positions. Export the stable class spell name
@@ -34,6 +37,23 @@ var mageClassSpells = []classSpellName{
 	{mage.MageSpellPyroblastDot, "pyroblast_dot"}, {mage.MageSpellScorch, "scorch"},
 	{mage.MageSpellManaGem, "mana_gem"}, {mage.MageSpellCombustion, "combustion"},
 	{mage.MageSpellImprovedBlizzard, "improved_blizzard"}, {mage.MageSpellFrostfireBolt, "frostfire_bolt"},
+	{mage.MageSpellArcaneWrath, "arcane_wrath"},
+}
+
+// arcane_charge.go: Arcane Blast's stacks give spell damage from Intellect, a stacking stat aura.
+func mageStatAuras(agent core.Agent, _ *core.Character) []string {
+	if agent.(mage.MageAgent).GetMage().Talents.ArcaneBlast {
+		return []string{"Arcane Blast"}
+	}
+	return nil
+}
+
+// talents_fire.go registerFirePower: one handler on every attack table, the fire_power effect.
+func mageCasterDamageHandlers(agent core.Agent) int {
+	if agent.(mage.MageAgent).GetMage().Talents.FirePower > 0 {
+		return 1
+	}
+	return 0
 }
 
 // Mage spell rows whose ApplyEffects roll a client damage effect. The ladders and the
@@ -46,7 +66,9 @@ var (
 	arcaneBlastLadder   = spelldata.Ranked(400574, 1239696, 1239697, 1239699, 1239700)
 	arcaneBlastBuff     = spelldata.Ranked(400573)
 	arcanePower         = spelldata.Ranked(12042)
-	missileBarrage      = spelldata.Talent(400588, 1)
+	missileBarrage      = spelldata.Talent(400588, 2)
+	arcaneWrathLadder   = spelldata.Ranked(1326079, 1326080, 1326081, 1326082)
+	firePower           = spelldata.Talent(11124, 3)
 	missileBarrageBuff  = spelldata.Ranked(400589)
 	presenceOfMind      = spelldata.Ranked(12043)
 	igniteTriggered     = spelldata.Ranked(412538)
@@ -95,6 +117,9 @@ func mageDamageRows(rows map[int32]*spelldata.Spell) {
 	if blast := arcaneBlastLadder.Highest(); blast != nil {
 		rows[blast.ID] = blast
 	}
+	if wrath := arcaneWrathLadder.Highest(); wrath != nil {
+		rows[wrath.ID] = wrath
+	}
 	if fireBlast := fireBlastLadder.Highest(); fireBlast != nil {
 		rows[fireBlast.ID] = fireBlast
 	}
@@ -127,12 +152,15 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 			"aura": "Clearcasting", "aura_duration_ns": nanos(clearcastingTrigger.Highest().Duration()),
 		})
 	}
-	if talents.MissileBarrage { // talents_arcane.go registerMissileBarrage: the client rows
+	// talents_arcane.go registerMissileBarrage: the client rows; a missile procs at a quarter of Arcane
+	// Blast's chance, Arcane Wrath and the bolts at half (client 70425).
+	if talents.MissileBarrage > 0 {
 		buff := missileBarrageBuff.Highest()
-		arcaneBlastChance := missileBarrage.Highest().Effect(dbcenums.A_PROC_TRIGGER_SPELL, 0).Average(core.CharacterLevel) / 100
+		arcaneBlastChance := missileBarrage.Effect(dbcenums.A_PROC_TRIGGER_SPELL, 0).ValueAt(talents.MissileBarrage) / 100
 		effects = append(effects, map[string]any{
 			"kind": "missile_barrage", "trigger_aura": "Missile Barrage Trigger", "aura": "Missile Barrage",
-			"arcane_blast_chance": arcaneBlastChance, "bolt_chance": arcaneBlastChance / 2, "rng_label": "Missile Barrage",
+			"arcane_blast_chance": arcaneBlastChance, "missile_chance": arcaneBlastChance / 4,
+			"bolt_chance": arcaneBlastChance / 2, "rng_label": "Missile Barrage",
 			"cost_percent_add":     buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
 			"tick_length_delta_ns": nanos(time.Duration(buff.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_ACTIVATION_TIME)).Average(core.CharacterLevel)) * time.Millisecond),
 		})
@@ -151,7 +179,7 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 			"kind": "winters_chill", "talent_rank": talents.WintersChill,
 			"proc_chance":    wintersChill.EffectAt(2).FractionAt(talents.WintersChill),
 			"max_stacks":     int32(wintersChill.EffectAt(1).ValueAt(talents.WintersChill)),
-			"crit_per_stack": wintersChillTrigger.Highest().EffectN(1).Average(core.CharacterLevel),
+			"damage_per_stack": wintersChillTrigger.Highest().EffectN(1).Percent(),
 			"duration_ns":    nanos(wintersChillTrigger.Highest().Duration()),
 			"trigger_aura":   "Winters Chill Talent", "aura": "Winter's Chill",
 		})
@@ -170,21 +198,36 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 		"kind": "evocation", "spell_id": evocation.ID, "regen_aura": "Evocation Regen", "channel_aura": "Evocation",
 		"regen_multiplier": evocation.Effect(dbcenums.A_MOD_POWER_REGEN_PERCENT, 0).Average(core.CharacterLevel) / 100,
 	})
-	// arcane_missiles.go: channel rank N fires tick rank N. The channel spends Arcane Blast's
-	// stacks as it starts and its missiles keep them, a Go literal share each (community #715).
+	// arcane_missiles.go: channel rank N fires tick rank N.
 	missiles := []map[string]any{}
 	missilesLadder.Each(func(rank int32, row *spelldata.Spell) {
 		missiles = append(missiles, map[string]any{"channel_spell_id": row.ID, "tick_spell_id": missileTicksLadder.Rank(rank).ID})
 	})
-	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles, "arcane_blast_bonus_per_stack": 0.15})
+	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles})
 	// frostbolt.go
 	effects = append(effects, map[string]any{"kind": "frostbolt"})
-	if talents.ArcaneBlast { // arcane_blast.go and arcane_charge.go
+	// arcane_blast.go and arcane_charge.go: the stacks' spell damage from Intellect is a stat aura.
+	if talents.ArcaneBlast {
 		buff := arcaneBlastBuff.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "arcane_blast", "spell_id": arcaneBlastLadder.Highest().ID, "aura": "Arcane Blast",
-			"damage_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
-			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+			"intellect_per_stack": buff.EffectN(1).Percent(),
+			"done_intellect":      arcaneBlastDoneIntellect(),
+			"cost_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+		})
+	}
+	// arcane_wrath.go: the hit adds a share of maximum mana as spell damage at its coefficient.
+	if talents.ArcaneWrath {
+		rank := arcaneWrathLadder.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "arcane_wrath", "spell_id": rank.ID, "coefficient": rank.DamageEffect().Coeff(),
+			"mana_share": rank.EffectN(2).BasePoints / 100,
+		})
+	}
+	// talents_fire.go registerFirePower: a damage done by caster handler on every attack table.
+	if talents.FirePower > 0 {
+		effects = append(effects, map[string]any{
+			"kind": "fire_power", "max_effects": 4, "per_effect": firePower.EffectAt(1).FractionAt(talents.FirePower),
 		})
 	}
 	// fire_blast.go
@@ -235,6 +278,7 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 		buff := heatingUpTriggered.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
+			"fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger", // every Fire Blast cast (community #808)
 			"cast_time_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Percent(),
 		})
 	}
@@ -311,4 +355,22 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 		effects = append(effects, map[string]any{"kind": "mage_armor", "aura": "Mage Armor"})
 	}
 	return effects
+}
+
+// The Intellect the stacks' last log line of an iteration reads: aura.go doneIteration
+// deactivates the player's auras in registration order, so the raid buffs registered before
+// Arcane Blast's have fallen when its stacks do. Read from a separate reset simulation.
+func arcaneBlastDoneIntellect() float64 {
+	simulation := core.NewSim(exportRequest, simsignals.CreateSignals())
+	simulation.Reset()
+	player := simulation.Raid.Parties[0].Players[0].GetCharacter()
+	for _, aura := range player.GetAuras() {
+		if aura.Label == "Arcane Blast" {
+			break
+		}
+		if aura.IsActive() {
+			aura.Deactivate(simulation)
+		}
+	}
+	return player.GetStat(stats.Intellect)
 }

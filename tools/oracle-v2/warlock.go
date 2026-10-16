@@ -217,6 +217,8 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	}
 	if talents.SiphonLife { // siphon_life.go: Corruption's shape, healing for each tick
 		siphon := withKind("siphon_life", warlockTick(wlSiphonLifeLadder.Highest(), unrepresented))
+		// The ticks crit though the client row lacks periodic-can-crit (upstream #782).
+		siphon["tick_can_crit"] = true
 		siphon["self_healing_multiplier"] = w.PseudoStats.SelfHealingMultiplier
 		effects = append(effects, siphon)
 	}

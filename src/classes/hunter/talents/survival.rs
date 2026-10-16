@@ -37,13 +37,18 @@ impl SurvivalProc {
         fight.schedule_delayed_proc(self.trigger, spell, *result);
     }
 
-    /// Resourcefulness Trigger's `OnSpellHitDealt`: any spell's crit.
+    /// Resourcefulness Trigger's `OnSpellHitDealt`: the crit of a spell it hears, a melee or
+    /// ranged ability since the 16 October 2026 beta notes.
     pub(crate) fn resourcefulness_hit<A: Agent>(
         &self,
         fight: &mut Fight<A>,
         spell: SpellId,
         result: &SpellResult,
+        hears: &[bool],
     ) {
+        if !hears[spell] {
+            return;
+        }
         if fight.spells[spell].flags.proc || result.outcome & OUTCOME_CRIT == 0 {
             return;
         }

@@ -213,6 +213,9 @@ impl Meta {
     }
 
     /// Go `newDamageShield`: `NewDamageShield` with the spell's school and `Value` as its damage.
+    /// Thorns scales with the druid's spell power at 6% though its row carries no coefficient
+    /// (Go `ThornsSpellPowerCoefficient`, beta notes of 24 September and 8 October 2026); only the
+    /// druid's own copy carries it.
     fn damage_shield(
         &self,
         sim: &mut Sim,
@@ -231,14 +234,18 @@ impl Meta {
                 single_aura: self.single_aura,
                 school: self.row().spell_school(),
                 damage: self.value(talent_points),
-                bonus_coefficient: 0.0,
+                bonus_coefficient: if is_player && std::ptr::eq(self, &generated::THORNS) {
+                    0.06
+                } else {
+                    0.0
+                },
             },
         );
         support::join_shared_category(sim, aura, self.shared_category, is_player);
         aura
     }
 
-    fn buff(
+    pub(crate) fn buff(
         &self,
         sim: &mut Sim,
         unit: UnitId,

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"slices"
 	"unsafe"
 
 	"github.com/wowsims/forever/sim/core"
@@ -71,6 +72,10 @@ type Pet struct {
 	DismissStats   []DismissStat      `json:"dismiss_stats,omitempty"`
 	// What each permanent aura's expiry adds to the stats before dependencies.
 	AuraStats []PetAuraStats `json:"aura_stats,omitempty"`
+	// What the pet's OnPetDisable adds to the stats before dependencies, after Disable takes the
+	// inheritance away and before its auras expire, for a pet whose class file states that its
+	// enable and disable callbacks only move stats.
+	DisableStats map[string]float64 `json:"disable_stats,omitempty"`
 }
 
 // The change a pet aura's expiry makes to the pet's stats before dependencies.
@@ -151,8 +156,11 @@ type StatInheritance struct {
 func petInheritance(request *proto.RaidSimRequest, index int, pet *core.Pet, note func(bool, string)) []StatInheritance {
 	inherit := petStatInheritance(pet)
 	terms := []StatInheritance{}
-	sources := map[stats.Stat]stats.Stat{}
-	coefficients := map[stats.Stat]float64{}
+	type source struct {
+		owner, pet  stats.Stat
+		coefficient float64
+	}
+	sources := []source{}
 	for owner := stats.Stat(0); owner < stats.SimStatsLen; owner++ {
 		unit := stats.Stats{}
 		unit[owner] = 1
@@ -161,21 +169,29 @@ func petInheritance(request *proto.RaidSimRequest, index int, pet *core.Pet, not
 			if inherited[petStat] == 0 {
 				continue
 			}
-			if _, taken := sources[petStat]; taken {
-				note(true, fmt.Sprintf("pet %s inherits %s from more than one stat", pet.Label, petStat.StatName()))
-			}
-			sources[petStat] = owner
-			coefficients[petStat] = inherited[petStat]
+			sources = append(sources, source{owner, petStat, inherited[petStat]})
 			terms = append(terms, StatInheritance{Owner: owner.StatName(), Pet: petStat.StatName(), Coefficient: inherited[petStat]})
 		}
 	}
-	// Linear, bit for bit, on changes of either sign.
+	// Linear, bit for bit, on changes of either sign. A pet stat several owner stats feed (the
+	// Hunter pet's crit, patch 136) takes the sum of their terms, so each pair is checked too.
 	for _, amount := range []float64{3.7, -12.25, 123.456, 0.1} {
-		for petStat, owner := range sources {
+		for _, term := range sources {
 			change := stats.Stats{}
-			change[owner] = amount
-			if got, want := inherit(change)[petStat], amount*coefficients[petStat]; got != want && !(math.IsNaN(got) && math.IsNaN(want)) {
-				note(true, fmt.Sprintf("pet %s inherits %s nonlinearly", pet.Label, petStat.StatName()))
+			change[term.owner] = amount
+			if got, want := inherit(change)[term.pet], amount*term.coefficient; got != want && !(math.IsNaN(got) && math.IsNaN(want)) {
+				note(true, fmt.Sprintf("pet %s inherits %s nonlinearly", pet.Label, term.pet.StatName()))
+			}
+			for _, other := range sources {
+				if other.pet != term.pet || other.owner <= term.owner {
+					continue
+				}
+				change := stats.Stats{}
+				change[term.owner] = amount
+				change[other.owner] = -2.5 * amount
+				if got, want := inherit(change)[term.pet], amount*term.coefficient+-2.5*amount*other.coefficient; got != want {
+					note(true, fmt.Sprintf("pet %s inherits %s as other than the sum of its terms", pet.Label, term.pet.StatName()))
+				}
 			}
 		}
 	}
@@ -185,13 +201,13 @@ func petInheritance(request *proto.RaidSimRequest, index int, pet *core.Pet, not
 	if got := applyDependencies(pet.GetStatsWithoutDeps(), deps); got != pet.GetStats() {
 		note(true, fmt.Sprintf("pet %s's stats do not follow its dependencies", pet.Label))
 	}
-	for owner := range func() map[stats.Stat]bool {
-		owners := map[stats.Stat]bool{}
-		for _, o := range sources {
-			owners[o] = true
+	owners := []stats.Stat{}
+	for _, term := range sources {
+		if !slices.Contains(owners, term.owner) {
+			owners = append(owners, term.owner)
 		}
-		return owners
-	}() {
+	}
+	for _, owner := range owners {
 		simulation := core.NewSim(request, simsignals.CreateSignals())
 		simulation.Reset()
 		resetPet := simulation.Raid.Parties[0].Players[0].GetCharacter().PetAgents[index].GetPet()
@@ -222,6 +238,19 @@ var summonedPetNames = map[string]bool{"Emerald Dragon Whelp": true}
 // effect describes the pet's enable and disable callbacks and the stats it inherits at each
 // summon.
 var classSummonedPets []func(pet *core.Pet) bool
+
+// Pets whose enable and disable callbacks only add stats, each recognized by its class file:
+// what OnPetEnable adds is in the reset pet's stats, and what OnPetDisable adds is exported.
+var statCallbackPets []func(pet *core.Pet) bool
+
+func statCallbackPet(pet *core.Pet) bool {
+	for _, recognized := range statCallbackPets {
+		if recognized(pet) {
+			return true
+		}
+	}
+	return false
+}
 
 func classSummonedPet(pet *core.Pet) bool {
 	for _, summoned := range classSummonedPets {
@@ -272,7 +301,7 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 		note(privateField(pet, "hasDynamicCastSpeedInheritance").Bool(), fmt.Sprintf("pet %s inherits cast speed", label))
 		note(privateField(pet, "hasResourceRegenInheritance").Bool(), fmt.Sprintf("pet %s inherits resource regeneration", label))
 		note(privateField(pet, "startAttackDelay").Int() != 0, fmt.Sprintf("pet %s delays its first attack", label))
-		note((pet.OnPetEnable != nil || pet.OnPetDisable != nil) && !classSummonedPet(pet),
+		note((pet.OnPetEnable != nil || pet.OnPetDisable != nil) && !classSummonedPet(pet) && !statCallbackPet(pet),
 			fmt.Sprintf("pet %s has enable or disable callbacks", label))
 		note(pet.HasEnergyBar(), fmt.Sprintf("pet %s has an energy bar", label))
 		note(len(pet.Pets) != 0, fmt.Sprintf("pet %s has pets", label))
@@ -341,6 +370,9 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 					}
 				}
 				exported.AuraStats = petAuraFadeStats(request, index)
+				if pet.OnPetDisable != nil && statCallbackPet(pet) {
+					exported.DisableStats = petDisableStats(request, index)
+				}
 				exported.DismissStats = petDismissStatList(dismissStats, exported)
 			}
 		}
@@ -349,6 +381,25 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 		}
 	}
 	return pets
+}
+
+// What a pet's OnPetDisable adds to its stats before dependencies, from a separate reset
+// simulation.
+func petDisableStats(request *proto.RaidSimRequest, index int) map[string]float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	pet := simulation.Raid.Parties[0].Players[0].GetCharacter().PetAgents[index].GetPet()
+	without := readPrivate(privateField(&pet.Unit, "statsWithoutDeps"))
+	without.Set(reflect.ValueOf(stats.Stats{}))
+	pet.OnPetDisable(simulation)
+	change := without.Interface().(stats.Stats)
+	values := map[string]float64{}
+	for s := stats.Stat(0); s < stats.SimStatsLen; s++ {
+		if change[s] != 0 {
+			values[s.StatName()] = change[s]
+		}
+	}
+	return values
 }
 
 // The stats of a dynamic pet's dismissal line, in Go's stat order: each stat FlatString prints,

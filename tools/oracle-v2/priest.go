@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
@@ -19,7 +20,7 @@ import (
 func init() {
 	classExports[proto.Class_ClassPriest] = classExport{
 		spells: priestClassSpells, damageRows: priestDamageRows, effects: priestEffects, inertPet: priestInertPet,
-		damageTakenModifiers: priestDamageTakenModifiers,
+		damageTakenModifiers: priestDamageTakenModifiers, statAuras: priestStatAuras,
 	}
 	classSummonedPets = append(classSummonedPets, priestSummonedShadowfiend)
 }
@@ -189,6 +190,7 @@ var (
 	priestPowerInLight           = spelldata.Talent(1309969, 5)
 	priestSearingLight           = spelldata.Talent(14909, 2)
 	priestSearingLightTriggered  = spelldata.Ranked(1284536)
+	priestImprovedMindFlay       = spelldata.Talent(1225139, 2)
 )
 
 // mind_blast.go and shadow_word_death.go register every rank, each rolling its own row.
@@ -204,11 +206,17 @@ func priestDamageRows(rows map[int32]*spelldata.Spell) {
 
 // Dynamic damage taken modifiers the priest effects describe: Power in Light registers one on
 // every target (talents_discipline.go applyPowerInLight).
+// Power in Light's modifier and Shadow Weaving's (community #777), one on each target.
 func priestDamageTakenModifiers(agent core.Agent) int {
-	if agent.(priest.PriestAgent).GetPriest().Talents.PowerInLight > 0 {
-		return 1
+	talents := agent.(priest.PriestAgent).GetPriest().Talents
+	count := 0
+	if talents.PowerInLight > 0 {
+		count++
 	}
-	return 0
+	if talents.ShadowWeaving > 0 {
+		count++
+	}
+	return count
 }
 
 // The spellbook positions a spell modifier with a class mask and school applies to, by core
@@ -296,6 +304,19 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 	}
 	if talents.MindFlay { // talents_shadow.go registerMindFlaySpell: a binary hit roll, then a channel
 		effects = append(effects, map[string]any{"kind": "mind_flay", "ranks": priestDotRanks(priest.MindFlayRankMap)})
+		// Improved Mind Flay (client 70425): each tick deals its share more than the one before.
+		if talents.ImprovedMindFlay > 0 {
+			effects = append(effects, map[string]any{
+				"kind": "improved_mind_flay", "ramp_per_tick": priestImprovedMindFlay.FractionAt(talents.ImprovedMindFlay),
+			})
+		}
+	}
+	// talents_shadow.go applyDarkInspiration: a Spirit stat aura from Mind Blast and a full Mind Flay channel.
+	if talents.DarkInspiration > 0 {
+		effects = append(effects, map[string]any{
+			"kind": "dark_inspiration", "aura": "Dark Inspiration",
+			"mind_blast_trigger": "Dark Inspiration Mind Blast", "mind_flay_trigger": "Dark Inspiration Mind Flay",
+		})
 	}
 	// talents_shadow.go applyShadowform. A helpful Holy cast no longer ends it (community #719); its
 	// form refuses Holy Nova and Chastise through their cast requirements (#686).
@@ -328,7 +349,9 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"spender_spells": spenders,
 		})
 	}
-	if aura := p.ShadowWeavingAura; aura != nil { // talents_shadow.go applyShadowWeaving
+	if p.ShadowWeavingAuras != nil { // talents_shadow.go applyShadowWeaving
+		// The stacks are a debuff on each target, multiplying this priest's Shadow damage on it.
+		aura := p.ShadowWeavingAuras.Get(character.CurrentTarget)
 		stack := priestShadowWeavingTriggered.Highest()
 		trigger := core.ProcTrigger{
 			Name: "Shadow Weaving Trigger", Callback: core.CallbackOnSpellHitDealt, ClassSpellMask: priest.PriestShadowSpells,
@@ -340,7 +363,6 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"trigger_immediately": trigger.TriggerImmediately, "proc_chance": trigger.ProcChance,
 			"trigger_spells":   procTriggerSpells(character, trigger),
 			"damage_per_stack": stack.Effect(dbcenums.A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32).Average(core.CharacterLevel) / 100,
-			"damage_spells":    priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
 		})
 	}
 	// smite.go: a cast on the rank's own row.
@@ -360,18 +382,17 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 		effects = append(effects, map[string]any{"kind": "penance", "ranks": ranks})
 	}
 	if talents.PowerInLight > 0 { // talents_discipline.go applyPowerInLight
-		holyFire := []int{}
+		// Holy Fire, and since the 16 October 2026 beta notes Shadow Word: Pain.
+		dots := []int{}
 		for i, spell := range character.Spellbook {
-			for _, known := range p.HolyFire {
-				if spell == known {
-					holyFire = append(holyFire, i)
-				}
+			if slices.Contains(p.HolyFire, spell) || slices.Contains(p.ShadowWordPain, spell) {
+				dots = append(dots, i)
 			}
 		}
 		effects = append(effects, map[string]any{
 			"kind": "power_in_light", "multiplier": priestPowerInLight.MultiplierAt(talents.PowerInLight),
-			"spells":           spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
-			"holy_fire_spells": holyFire,
+			"spells":     spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
+			"dot_spells": dots,
 		})
 	}
 	if aura := p.SearingLightAura; aura != nil { // talents_holy.go applySearingLight
@@ -414,4 +435,12 @@ func priestInertPet(agent core.Agent, pet *core.Pet) string {
 		return ""
 	}
 	return "no registered spell summons the Shadowfiend"
+}
+
+// talents_shadow.go applyDarkInspiration: its Spirit multiplier is a stat aura.
+func priestStatAuras(agent core.Agent, _ *core.Character) []string {
+	if agent.(priest.PriestAgent).GetPriest().Talents.DarkInspiration > 0 {
+		return []string{"Dark Inspiration"}
+	}
+	return nil
 }

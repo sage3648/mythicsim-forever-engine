@@ -96,8 +96,10 @@ fn enhancement_request_without_battle_shout_is_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// A basic totem needs the effect that gives it a behavior, and a Grace of Air or Windfury
-/// Totem cast beside the party's Windfury Totem needs the air totem category.
+/// A basic totem needs the effect that gives it a behavior. Since the 16 October 2026 beta notes
+/// no air totem category joins the shaman's totems to the party's: a Grace of Air cast beside
+/// the party's Windfury Totem is supported, and the shaman's own Windfury Totem there still
+/// contests the party's.
 #[test]
 fn other_basic_totems_are_rejected() {
     let mut value = enhancement_json();
@@ -115,45 +117,21 @@ fn other_basic_totems_are_rejected() {
         "rotation reaches spell 10614, a totem without a known behavior".into()
     )));
 
-    // The exported air totem category resolves an own air totem beside the party's.
-    for spell in [10614, 25359] {
-        let mut value = enhancement_json();
-        value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]
-            ["spellId"] = json!(spell);
-        let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
-        assert!(prepared_coverage(&prepared)
-            .iter()
-            .all(|reason| !reason.contains("contests a party air totem")));
-    }
+    // Grace of Air beside the party's Windfury Totem contests nothing.
+    let mut value = enhancement_json();
+    value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
+        json!(25359);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    assert!(prepared_coverage(&prepared)
+        .iter()
+        .all(|reason| !reason.contains("Grace of Air Totem")));
 
-    // Without it, the cast would contest the party's air totem.
-    let without_slot = || {
-        let mut value = enhancement_json();
-        value["effects"]
-            .as_array_mut()
-            .unwrap()
-            .retain(|effect| effect["category"] != "AirTotem");
-        value["effects"]
-            .as_array_mut()
-            .unwrap()
-            .iter_mut()
-            .filter(|effect| effect["kind"] == "windfury_totem_self")
-            .for_each(|effect| effect["contested"] = json!(true));
-        value
-    };
-    let mut value = without_slot();
+    // The shaman's own Windfury Totem contests the party's.
+    let mut value = enhancement_json();
     value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
         json!(10614);
     assert!(reasons(value).contains(
-        &"rotation reaches spell 10614, a Windfury Totem that contests a party air totem or Windfury Weapon"
-            .into()
-    ));
-
-    let mut value = without_slot();
-    value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
-        json!(25359);
-    assert!(reasons(value).contains(
-        &"rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
+        &"rotation reaches spell 10614, a Windfury Totem that contests the party's or Windfury Weapon"
             .into()
     ));
 }

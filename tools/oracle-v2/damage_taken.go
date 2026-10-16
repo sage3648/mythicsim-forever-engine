@@ -19,7 +19,12 @@ func playerTakesDamage(character *core.Character, target *core.Unit) bool {
 // The player's attack table against itself, which a spell that hits the player rolls on.
 func selfAttackTable(character *core.Character, request *proto.RaidSimRequest, unrepresented *[]string) AttackTable {
 	table := character.AttackTables[character.UnitIndex]
-	if table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0 {
+	// A class's described handlers sit on this table too; Fire Power's finds no Fire effect on the player.
+	described := 0
+	if class, ok := classExports[character.Class]; ok && class.casterDamageHandlers != nil {
+		described = class.casterDamageHandlers(character.Env.Raid.Parties[0].Players[0])
+	}
+	if table.DamageDoneByCasterMultiplier != nil || casterHandlers(table) > described {
 		*unrepresented = append(*unrepresented, "caster damage callbacks on the player are unsupported")
 	}
 	// Absorb shields register a damage taken modifier that acts only while their aura is up;

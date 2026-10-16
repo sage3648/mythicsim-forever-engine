@@ -15,15 +15,8 @@ pub(crate) fn apply_channel<A: Agent>(fight: &mut Fight<A>, spell: SpellId) {
 
 /// One missile of the channel, with the channel's Arcane Blast bonus added to the spell's
 /// additive multiplier for its damage and taken off again, as Go does.
-pub(crate) fn apply_missile<A: Agent>(
-    fight: &mut Fight<A>,
-    spell: SpellId,
-    target: Side,
-    arcane_blast_bonus: f64,
-) {
-    fight.spells[spell].damage_multiplier_additive += arcane_blast_bonus;
+pub(crate) fn apply_missile<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side) {
     let base = fight.roll_damage_effect(spell);
     let result = fight.calc_damage(spell, target, base);
-    fight.spells[spell].damage_multiplier_additive -= arcane_blast_bonus;
     fight.deal_damage_after_travel(spell, result);
 }

@@ -2,6 +2,7 @@
 
 pub(crate) mod elemental_devastation;
 pub(crate) mod elemental_focus;
+pub(crate) mod elemental_mastery;
 pub(crate) mod flurry;
 pub(crate) mod improved_stormstrike;
 pub(crate) mod maelstrom_weapon;

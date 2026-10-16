@@ -497,6 +497,7 @@ impl DruidAgent {
                     moonkin_cooldown_multiplier,
                     cost_spells,
                     cost_percent_add,
+                    form_excluded_spells,
                     ..
                 } => {
                     let moonkin = prepared.effects.iter().find_map(|effect| match effect {
@@ -519,6 +520,7 @@ impl DruidAgent {
                             aura,
                             trigger: trigger_aura,
                             trigger_spells,
+                            form_excluded_spells,
                             spell_masked,
                             cost_spells,
                             icd: *icd_ns,
@@ -968,6 +970,17 @@ impl DruidAgent {
         fight.agent.innervate.clone().expect("Innervate is bound")
     }
 
+    /// Omen of Clarity's trigger: since the 16 October 2026 beta notes Faerie Fire cannot set it
+    /// off in Cat or Bear Form, which costs no resources there (the sim's Bear Form is Dire Bear
+    /// Form too).
+    fn omen_hit(fight: &mut Fight<Self>, spell: SpellId, result: &SpellResult) {
+        let omen = Self::omen(fight);
+        if omen.form_excluded[spell] && fight.agent.form & (forms::CAT | forms::BEAR) != 0 {
+            return;
+        }
+        omen.on_spell_hit_dealt(fight, spell, result);
+    }
+
     fn omen(fight: &Fight<Self>) -> Rc<omen_of_clarity::OmenOfClarity> {
         fight.agent.omen.clone().expect("Omen of Clarity is bound")
     }
@@ -1140,6 +1153,7 @@ impl Agent for DruidAgent {
             DruidSpell::Prowl => Self::prowl(fight).can_cast(fight),
             DruidSpell::Builder(builder) => Self::builders(fight).can_cast(fight, builder),
             DruidSpell::Rip => Self::rip(fight).can_cast(fight),
+            DruidSpell::ShiftingPower => ShiftingPower::can_cast(fight),
             DruidSpell::FerociousBite => fight
                 .agent
                 .ferocious_bite
@@ -1387,7 +1401,7 @@ impl Agent for DruidAgent {
         result: &SpellResult,
     ) {
         if kind == DruidAura::OmenOfClarity {
-            Self::omen(fight).on_spell_hit_dealt(fight, spell, result);
+            Self::omen_hit(fight, spell, result);
         }
     }
 
@@ -1399,7 +1413,7 @@ impl Agent for DruidAgent {
         result: &SpellResult,
     ) {
         match kind {
-            DruidAura::OmenOfClarity => Self::omen(fight).on_spell_hit_dealt(fight, spell, result),
+            DruidAura::OmenOfClarity => Self::omen_hit(fight, spell, result),
             DruidAura::NaturesGraceTrigger => {
                 Self::natures_grace(fight).on_spell_hit_dealt(fight, spell, result)
             }

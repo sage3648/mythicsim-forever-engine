@@ -1171,7 +1171,7 @@
                 },
                 "effects": [
                   {
-                    "category": "DruidCritAura",
+                    "category": "MoonkinAura",
                     "uptimeSecondsAvg": 119.89869125429367
                   }
                 ],
@@ -1265,7 +1265,7 @@
               "{\"otherId\": \"OtherActionDamageTaken\"}": {
                 "actualGain": -13092000,
                 "events": 357876,
-                "gain": -76820760.0000005,
+                "gain": -76827960,
                 "type": "ResourceTypeHealth"
               },
               "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 1}": {
@@ -1275,9 +1275,9 @@
                 "type": "ResourceTypeMana"
               },
               "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 2}": {
-                "actualGain": 10577865.399976272,
+                "actualGain": 10625621,
                 "events": 119389,
-                "gain": 10577865.399976272,
+                "gain": 10625621,
                 "type": "ResourceTypeMana"
               },
               "{\"spellId\": 11684}": {
@@ -1288,7 +1288,7 @@
               },
               "{\"spellId\": 11689}": {
                 "events": 3000,
-                "gain": 2296800.0000001295,
+                "gain": 2304000,
                 "type": "ResourceTypeMana"
               },
               "{\"spellId\": 1225228}": {
@@ -1332,19 +1332,19 @@
             "tto": {
               "aggregatorData": {
                 "n": 3000,
-                "sumSq": 35273900.19951544
+                "sumSq": 35291739.4811526
               },
-              "avg": 107.98983519237741,
+              "avg": 108.00867600759811,
               "hist": {
                 "110": 2887,
-                "150": 3,
-                "160": 110
+                "150": 1,
+                "160": 112
               },
-              "max": 158.503709049,
+              "max": 159.007517413,
               "maxSeed": "2238",
               "min": 106.04999999999998,
               "minSeed": "2976",
-              "stdev": 9.806234154606882
+              "stdev": 9.90146794520387
             },
             "unitIndex": 2
           }

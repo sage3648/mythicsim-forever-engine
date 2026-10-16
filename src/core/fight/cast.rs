@@ -890,6 +890,11 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::SulfurasFireball { min, max } => {
                 self.sulfuras_fireball(spell, target, min, max)
             }
+            SpellBehavior::FixedTableDamage { damage, outcome } => {
+                // Go `CalcAndDealDamage(damage, outcomeApplier)`: no roll.
+                let result = self.calc_physical_damage(spell, target, damage, outcome);
+                self.deal_damage(spell, result, false);
+            }
             SpellBehavior::FixedHit(base) => {
                 let result = self.calc_damage_with(spell, target, base, super::Outcome::AlwaysHit);
                 self.deal_damage(spell, result, false);
@@ -1448,6 +1453,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::ThunderfuryStrike(_)
             | SpellBehavior::ThunderfuryBounce
             | SpellBehavior::FixedHit(_)
+            | SpellBehavior::FixedTableDamage { .. }
             | SpellBehavior::EffectRoll { .. }
             | SpellBehavior::None => false,
         }

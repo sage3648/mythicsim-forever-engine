@@ -17,6 +17,10 @@ use super::spell_data::spell_data;
 use super::util::{cooldown, gcd_cast, mana_cost, shared_timer, spell_action};
 use super::Paladin;
 
+/// Go `HolyStrikeSpellPowerCoefficient`: Holy Strike's spell power share as measured in game on
+/// client 70425 (MythicSim patch 143).
+pub(crate) const HOLY_STRIKE_SPELL_POWER_COEFFICIENT: f64 = 0.286;
+
 impl Paladin {
     /// Go `registerForbearance`: Cannot be made invulnerable by Divine Shield, Divine
     /// Protection, Blessing of Protection, or shielded by Templar's Bulwark.
@@ -53,7 +57,9 @@ impl Paladin {
             SpellModConfig {
                 kind: SpellModType::ThreatMultiplierPct,
                 school: school::HOLY,
-                float_value: rank.effect(dbcenums::A_MOD_THREAT, 2).percent(),
+                // The 16 October 2026 beta notes raise it from 60% to 90%; the client row still
+                // says 60.
+                float_value: super::RIGHTEOUS_FURY_HOLY_THREAT,
                 ..SpellModConfig::default()
             },
         );
@@ -134,7 +140,6 @@ impl Paladin {
     /// Go `registerHolyStrike`: an instant strike that causes 50% weapon damage plus an
     /// additional 93 as Holy damage.
     pub(super) fn register_holy_strike(&mut self, sim: &mut Sim, unit: UnitId, rank: &Row) {
-        let flat = rank.damage_effect();
         let timer = shared_timer(sim, unit, &mut self.timers.holy_strike);
 
         sim.register_spell(
@@ -154,7 +159,8 @@ impl Paladin {
                 cast: gcd_cast(rank.gcd(), 0, Some((timer, cooldown(rank)))),
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                bonus_coefficient: flat.coeff(),
+                // Measured in game on client 70425 (MythicSim patch 143); the rows carry 0.429.
+                bonus_coefficient: HOLY_STRIKE_SPELL_POWER_COEFFICIENT,
                 ..SpellConfig::default()
             },
         );

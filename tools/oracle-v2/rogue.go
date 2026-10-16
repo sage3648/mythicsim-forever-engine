@@ -164,13 +164,14 @@ func rogueEffects(agent core.Agent, character *core.Character) []map[string]any 
 		effects = append(effects, map[string]any{
 			"kind": "instant_poison", "trigger_aura": "Instant Poison", "spell_id": r.InstantPoison.ActionID.SpellID,
 			"proc_mask": hands(rogueInstantImbueID), "proc_chance": 0.2 + bonus, "min_damage": 76.0, "max_damage": 100.0,
+			"attack_power_share": 0.005, // poisons.go instantPoisonAPShare (upstream #781)
 		})
 	}
 	if r.DeadlyPoison != nil {
 		effects = append(effects, map[string]any{
 			"kind": "deadly_poison", "trigger_aura": "Deadly Poison", "spell_id": r.DeadlyPoison.ActionID.SpellID,
 			"tag": r.DeadlyPoison.ActionID.Tag, "proc_mask": hands(rogueDeadlyImbueID), "proc_chance": 0.3 + bonus,
-			"tick_damage": 23.0,
+			"tick_damage": 23.0, "attack_power_share": 0.0045, // poisons.go deadlyPoisonAPShare
 		})
 	}
 	return append(effects, rogueSpecEffects(r, character)...)
