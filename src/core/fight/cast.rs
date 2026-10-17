@@ -762,6 +762,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.applyEffects`.
     pub(crate) fn apply_effects(&mut self, spell: SpellId, target: Side) {
         self.spells[spell].metrics[target.index()].casts += 1;
+        self.spells[spell].casts += 1;
         // Go runs OnApplyEffects first, unless the spell skips cast completion callbacks.
         if !self.spells[spell].flags.no_on_cast_complete {
             self.on_apply_effects(spell, target);
@@ -889,6 +890,11 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::ThunderfuryBounce => self.thunderfury_bounce(spell, target),
             SpellBehavior::SulfurasFireball { min, max } => {
                 self.sulfuras_fireball(spell, target, min, max)
+            }
+            SpellBehavior::FixedTableDamage { damage, outcome } => {
+                // Go `CalcAndDealDamage(damage, outcomeApplier)`: no roll.
+                let result = self.calc_physical_damage(spell, target, damage, outcome);
+                self.deal_damage(spell, result, false);
             }
             SpellBehavior::FixedHit(base) => {
                 let result = self.calc_damage_with(spell, target, base, super::Outcome::AlwaysHit);
@@ -1448,6 +1454,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::ThunderfuryStrike(_)
             | SpellBehavior::ThunderfuryBounce
             | SpellBehavior::FixedHit(_)
+            | SpellBehavior::FixedTableDamage { .. }
             | SpellBehavior::EffectRoll { .. }
             | SpellBehavior::None => false,
         }
@@ -1596,6 +1603,9 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::PeriodicMana { .. }
             | SpellBehavior::PotionResource { .. } => {
                 Some((crate::core::time::NEVER_EXPIRES, f64::INFINITY))
+            }
+            SpellBehavior::Class(behavior) => {
+                A::should_activate_until(self, spell, behavior).map(|until| (until, f64::INFINITY))
             }
             _ => None,
         }

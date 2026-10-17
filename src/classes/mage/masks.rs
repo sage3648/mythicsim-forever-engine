@@ -18,6 +18,7 @@ pub(crate) const DAMAGING: &[&str] = &[
     "cone_of_cold",
     "frost_nova",
     "frostfire_bolt",
+    "arcane_wrath",
 ];
 
 /// Go `MageSpellsAll`: every Mage class spell.
@@ -54,6 +55,7 @@ pub(crate) const ALL: &[&str] = &[
     "combustion",
     "improved_blizzard",
     "frostfire_bolt",
+    "arcane_wrath",
 ];
 
 /// Go `MageSpellInstantCast`.
@@ -73,11 +75,6 @@ pub(crate) const INSTANT_CAST: &[&str] = &[
 /// Whether a spell's class mask is in a set.
 pub(crate) fn is_class(class: Option<&str>, set: &[&str]) -> bool {
     class.is_some_and(|class| set.contains(&class))
-}
-
-/// The damaging spells outside `excluded`, as Go writes `MageSpellsAllDamaging &^ mask`.
-pub(crate) fn damaging_except(excluded: &[&str]) -> Vec<&'static str> {
-    except(DAMAGING, excluded)
 }
 
 /// The spells of `set` outside `excluded`, as Go writes `set &^ mask`.

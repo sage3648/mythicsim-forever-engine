@@ -282,6 +282,9 @@ impl Druid {
                 1.0 + moonkin.effect(A_ADD_PCT_MODIFIER, SPELLMOD_PROC_COOLDOWN).percent(),
             "cost_spells": spells_matching(sim, unit, masks::CLEARCASTING_SPELLS),
             "cost_percent_add": clearcasting.effect(A_ADD_PCT_MODIFIER, SPELLMOD_COST).percent(),
+            // 16 October 2026 beta notes: Faerie Fire no longer triggers it in Cat or Bear Form.
+            "form_excluded_spells":
+                spells_matching(sim, unit, masks::FAERIE_FIRE | masks::FAERIE_FIRE_FERAL),
         }));
         if self.tal.natures_grace {
             // talents_balance.go applyNaturesGrace
@@ -452,8 +455,9 @@ impl Druid {
                 "kind": "rake", "spell": spell_position(sim, unit, rake),
                 "flat_damage": rank.damage_effect().average(CHARACTER_LEVEL),
                 "tick_base": rank.periodic_effect().average(CHARACTER_LEVEL),
-                // rake.go: 5.26% of attack power on the hit and on every tick, a Go literal.
-                "attack_power_share": 0.0526,
+                // rake.go: 5% of attack power on the hit and on every tick, a Go literal fitted
+                // to beta logs (community #769).
+                "attack_power_share": 0.05,
                 "tick_can_crit": rank.periodic_can_crit(),
                 "tick_magic": rank.defense_type_core() == DefenseType::Magic,
                 "short_name": "Rake",
@@ -669,8 +673,9 @@ impl Druid {
                     "kind": "swipe", "spell": spell_position(sim, unit, swipe),
                     "flat_damage": Ladder::ranked(&SWIPE_RANKS).highest()
                         .damage_effect().average(CHARACTER_LEVEL),
-                    // swipeAttackPowerCoefficient, a Go literal the client rows do not carry.
-                    "attack_power_coefficient": 0.03,
+                    // swipeAttackPowerCoeff, a Go literal the client rows do not carry, fitted
+                    // to beta logs (community #787).
+                    "attack_power_coefficient": 0.05,
                 }));
             }
             if self.barkskin.is_some() {

@@ -188,13 +188,13 @@ fn searing_light_outside_periodic_damage_is_rejected() {
 }
 
 #[test]
-fn power_in_light_needs_a_burning_holy_fire() {
-    // With no Holy Fire named, the modifier never applies and the build deals less.
+fn power_in_light_needs_a_burning_dot() {
+    // With no dot named, the modifier never applies and the build deals less.
     let mut value = smite();
     value["sim"]["iterations"] = json!(20);
     value["sim"]["debug_first_iteration"] = json!(false);
     let mut unlit = value.clone();
-    effect(&mut unlit, "power_in_light")["holy_fire_spells"] = json!([]);
+    effect(&mut unlit, "power_in_light")["dot_spells"] = json!([]);
     let dps = |value: Value| {
         simulate_prepared(&parse(value)).unwrap().result["raidMetrics"]["dps"]["avg"]
             .as_f64()

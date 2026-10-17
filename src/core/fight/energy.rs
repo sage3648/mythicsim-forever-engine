@@ -262,6 +262,21 @@ impl<A: Agent> Fight<A> {
         self.energy_bar_mut().regen_multiplier *= multiplier;
     }
 
+    /// Go `energyBar.TimeToTargetEnergy`: none while the bar already holds the target, never
+    /// when it does not tick or cannot hold it, otherwise until the first tick that reaches it.
+    pub(crate) fn time_to_target_energy(&self, target: f64) -> i64 {
+        let bar = self.energy_bar();
+        if bar.current >= target {
+            return 0;
+        }
+        let per_tick = bar.per_tick * bar.regen_multiplier;
+        if !self.energy_ticking() || per_tick <= 0.0 || target > bar.max {
+            return NEVER_EXPIRES;
+        }
+        let ticks = ((target - bar.current) / per_tick).ceil();
+        self.time_to_next_energy_tick() + ((ticks - 1.0) * bar.tick_duration as f64) as i64
+    }
+
     /// Go `energyBar.TimeToNextEnergyTick`.
     pub(crate) fn time_to_next_energy_tick(&self) -> i64 {
         (self.energy_bar().next_tick - self.now).max(0)

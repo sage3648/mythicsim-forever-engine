@@ -2,11 +2,11 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "2fe7678a0844a6d19f3e6a4ec1469e542763710b",
+    "client_build": "1.60.1.70425",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "70a4c5909769b2928cc55ffd4a6371f7d47c006ab84bd16e8105a24a3a59855a",
+  "request_sha256": "d08740aba24d9d6b8c4603e594ab3bea77f29048a0d726e61f2aafb2508cfed4",
   "scenario_id": "frost-2-targets-eye-of-moam",
   "sim": {
     "iterations": 3000,
@@ -652,7 +652,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 15.283999999999999,
+      "PhysicalCritPercent": 12.284,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -740,23 +740,6 @@
           "on_reset",
           "on_spell_hit_taken",
           "on_periodic_damage_taken"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Sword Specialization",
-        "action_id": {
-          "spell_id": 20597
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_gain",
-          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -936,7 +919,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -954,7 +937,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1205,7 +1188,7 @@
     "professions": [
       "Engineering"
     ],
-    "talents_string": "05020500300001-03-0555000301001301251",
+    "talents_string": "05012050030000-03-0555000301001301251",
     "talents": {
       "arcane_concentration": 5,
       "arcane_focus": 5,
@@ -5969,11 +5952,12 @@
       "trigger_aura": "Arcane Concentration"
     },
     {
-      "arcane_blast_chance": 0.4,
+      "arcane_blast_chance": 0.2,
       "aura": "Missile Barrage",
-      "bolt_chance": 0.2,
+      "bolt_chance": 0.1,
       "cost_percent_add": -1,
       "kind": "missile_barrage",
+      "missile_chance": 0.05,
       "rng_label": "Missile Barrage",
       "tick_length_delta_ns": -500000000,
       "trigger_aura": "Missile Barrage Trigger"
@@ -5991,7 +5975,7 @@
     },
     {
       "aura": "Winter's Chill",
-      "crit_per_stack": 2,
+      "damage_per_stack": 0.05,
       "duration_ns": 15000000000,
       "kind": "winters_chill",
       "max_stacks": 5,
@@ -6000,7 +5984,7 @@
       "trigger_aura": "Winters Chill Talent"
     },
     {
-      "frozen_multiplier": 4,
+      "frozen_multiplier": 3,
       "kind": "ice_lance",
       "spell_id": 1240047
     },
@@ -6016,7 +6000,6 @@
       "spell_id": 12051
     },
     {
-      "arcane_blast_bonus_per_stack": 0.15,
       "kind": "arcane_missiles",
       "ranks": [
         {
@@ -6274,7 +6257,7 @@
         {
           "AttackPower": 10,
           "MP5": 77,
-          "PhysicalCritPercent": 15.283999999999999,
+          "PhysicalCritPercent": 12.284,
           "RangedAttackPower": 0,
           "SpellCritPercent": 16.3824,
           "SpellDamage": 443,
@@ -6283,7 +6266,7 @@
         {
           "AttackPower": 10,
           "MP5": 77,
-          "PhysicalCritPercent": 15.283999999999999,
+          "PhysicalCritPercent": 12.284,
           "RangedAttackPower": 0,
           "SpellCritPercent": 16.3824,
           "SpellDamage": 493,

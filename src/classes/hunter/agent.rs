@@ -119,10 +119,13 @@ pub(crate) struct HunterAgent {
     pub(crate) furious_howl: Option<FuriousHowl>,
     /// Resourcefulness's trigger and its regeneration.
     resourcefulness: Option<(SurvivalProc, f64)>,
+    /// The spells Resourcefulness's trigger hears, by spellbook position.
+    resourcefulness_spells: Rc<Vec<bool>>,
     /// Expose Prey's trigger and whether the target carries Hunter's Mark.
     expose_prey: Option<(SurvivalProc, bool)>,
     /// Rapid Recuperation's trigger and its regeneration.
     rapid_recuperation: Option<(SurvivalProc, f64)>,
+    immolation_trap: Option<melee::ImmolationTrap>,
     explosive_trap: Option<ExplosiveTrap>,
     volley: Option<Volley>,
 }
@@ -565,6 +568,7 @@ impl HunterAgent {
                 Effect::ImmolationTrap {
                     spell_id,
                     tick_base,
+                    attack_power_share,
                     tick_can_crit,
                     tick_magic,
                 } => {
@@ -574,6 +578,12 @@ impl HunterAgent {
                         .dot
                         .ok_or("Immolation Trap has no dot")?;
                     fight.dots[dot].tick_base = Some(*tick_base);
+                    // traps.go: the share split over the burn's ticks.
+                    fight.agent.immolation_trap = Some(melee::ImmolationTrap {
+                        tick_base: *tick_base,
+                        attack_power_per_tick: attack_power_share
+                            / f64::from(fight.dots[dot].base_tick_count),
+                    });
                     fight.dots[dot].tick_can_crit = explosive_trap::trap_tick_crit(
                         Outcome::tick_hit_rolled(*tick_can_crit, *tick_magic)?,
                     )?;
@@ -582,6 +592,7 @@ impl HunterAgent {
                     spell_id,
                     hit_min,
                     hit_max,
+                    attack_power_share,
                     hits,
                     aoe_cap_multiplier,
                     tick_base,
@@ -599,6 +610,7 @@ impl HunterAgent {
                         spell,
                         *hit_min,
                         *hit_max,
+                        *attack_power_share,
                         *hits,
                         *aoe_cap_multiplier,
                         *tick_base,
@@ -625,9 +637,19 @@ impl HunterAgent {
                     aura,
                     proc_chance,
                     regen,
+                    spells,
                 } => {
                     let bound = SurvivalProc::bind(&fight, trigger_aura, aura, *proc_chance)?;
+                    let count = fight.spells.len();
+                    if spells.iter().any(|&spell| spell >= count) {
+                        return Err("Resourcefulness names a spell outside the spellbook".into());
+                    }
+                    let mut hears = vec![false; count];
+                    for &spell in spells {
+                        hears[spell] = true;
+                    }
                     fight.agent.resourcefulness = Some((bound, *regen));
+                    fight.agent.resourcefulness_spells = Rc::new(hears);
                 }
                 Effect::ExposePrey {
                     trigger_aura,
@@ -812,7 +834,13 @@ impl Agent for HunterAgent {
                 let base = fight.agent.wing_clip_damage;
                 melee::wing_clip(fight, spell, target, base);
             }
-            HunterSpell::ImmolationTrap => melee::immolation_trap(fight, spell, target),
+            HunterSpell::ImmolationTrap => {
+                let trap = fight
+                    .agent
+                    .immolation_trap
+                    .expect("Immolation Trap is bound");
+                melee::immolation_trap(fight, spell, target, trap);
+            }
             HunterSpell::ExplosiveTrap => fight
                 .agent
                 .explosive_trap
@@ -1088,7 +1116,8 @@ impl Agent for HunterAgent {
                     .agent
                     .resourcefulness
                     .expect("Resourcefulness is bound");
-                proc.resourcefulness_hit(fight, spell, result);
+                let hears = Rc::clone(&fight.agent.resourcefulness_spells);
+                proc.resourcefulness_hit(fight, spell, result, &hears);
             }
             HunterAura::ExposePrey => {
                 let (proc, _) = fight.agent.expose_prey.expect("Expose Prey is bound");

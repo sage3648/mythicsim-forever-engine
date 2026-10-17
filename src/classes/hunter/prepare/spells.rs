@@ -84,6 +84,8 @@ pub(super) const SUMMON_HAWK_RAP_SHARE: f64 = 0.05;
 pub(super) const SUMMON_HAWK_SWING_SHARE: f64 = 0.35;
 /// Go `volleyTickDamage`.
 pub(super) const VOLLEY_TICK_DAMAGE: [f64; 4] = [0.0, 70.0, 91.0, 112.0];
+/// Go `trapAttackPowerShare` (patch 147).
+pub(super) const TRAP_ATTACK_POWER_SHARE: f64 = 0.13;
 /// Go `explosiveTrapRange`.
 pub(super) const EXPLOSIVE_TRAP_RANGE: [[f64; 2]; 4] =
     [[0.0, 0.0], [104.0, 135.0], [145.0, 193.0], [208.0, 265.0]];

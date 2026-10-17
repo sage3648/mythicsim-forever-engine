@@ -36,6 +36,10 @@ pub(crate) struct FlametongueAttackTraits {
 /// not add a second hit.
 pub(crate) const FLAMETONGUE_TOTEM_TRIGGER_LABEL: &str = "Flametongue Totem Trigger";
 
+/// Go `WindfuryWeaponMainHandStrikeID`: Windfury Weapon's main-hand strike, which procs
+/// Flametongue Totem (MythicSim patch 141).
+pub(crate) const WINDFURY_WEAPON_MAIN_HAND_STRIKE: i32 = 439440;
+
 /// Go `flametongueTotemValue`: the proc's dummy value at the character's level, 1363, flat, since
 /// the row has no per-level gain.
 fn flametongue_totem_value() -> f64 {
@@ -117,7 +121,9 @@ pub(crate) fn flametongue_totem_attack(
 /// attacks. It is not on by itself: the totem aura that holds the personal benefit turns it on
 /// (`join_flametongue_totem`), so that a main-hand Flametongue Weapon can turn it off. The row's
 /// own proc flags say what it hears, a landed melee auto attack, narrowed to the main hand as the
-/// tooltip says: an off-hand swing does not add the damage.
+/// tooltip says: an off-hand swing does not add the damage. Windfury Weapon's main-hand strikes
+/// proc it too (MythicSim patch 141): the trigger also hears main hand specials, and its extra
+/// condition, which the exporter applies to the spells it lists, keeps only the autos and 439440.
 pub(crate) fn flametongue_totem_trigger(
     sim: &mut Sim,
     unit: UnitId,
@@ -131,6 +137,9 @@ pub(crate) fn flametongue_totem_trigger(
     trigger.name = FLAMETONGUE_TOTEM_TRIGGER_LABEL.to_string();
     trigger.action_id = ActionId::default();
     trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
+    if trigger.proc_mask.matches(ProcMask::MELEE_MH_AUTO) {
+        trigger.proc_mask = ProcMask(trigger.proc_mask.0 | ProcMask::MELEE_MH_SPECIAL.0);
+    }
     trigger.duration = NEVER_EXPIRES;
     trigger.trigger_immediately = true;
     sim.make_proc_trigger_aura(unit, &trigger)

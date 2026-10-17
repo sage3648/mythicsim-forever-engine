@@ -6,17 +6,20 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES};
+use crate::prepare::sim::{
+    AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES, SECOND,
+};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, ProcMask, SpellConfig, SpellFlag,
     GCD_DEFAULT,
 };
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::SchoolIndex;
+use crate::prepare::stats::Stat;
 
 use super::super::masks;
 use super::super::spell_data::spell_data;
-use super::super::spells::{flat_cost, longest_cooldown};
+use super::super::spells::flat_cost;
 use super::super::Priest;
 use super::millis;
 
@@ -28,7 +31,6 @@ impl Priest {
         // Blackout and Spirit Tap model nothing in Go either.
 
         // Tier 2
-        self.apply_shadow_affinity(sim, unit);
         self.apply_improved_shadow_word_pain(sim, unit);
         self.apply_shadow_reach(sim, unit);
 
@@ -36,10 +38,10 @@ impl Priest {
         self.apply_improved_mind_blast(sim, unit);
         // Improved Psychic Scream models nothing in Go either.
         self.apply_mind_flay(sim, unit);
-        self.apply_improved_mind_flay(sim, unit);
+        // Improved Mind Flay's ramp is in Mind Flay's tick, which the fight runs.
 
         // Tier 4
-        // Improved Fade models nothing in Go either.
+        self.apply_dark_inspiration(sim, unit);
         self.apply_vampiric_embrace(sim, unit);
         self.apply_shadow_weaving(sim, unit);
 
@@ -106,23 +108,6 @@ impl Priest {
                 .value_at(points);
     }
 
-    fn apply_shadow_affinity(&self, sim: &mut Sim, unit: UnitId) {
-        let points = self.talents.i32("shadow_affinity");
-        if points == 0 {
-            return;
-        }
-        sim.add_static_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::ALL,
-                school: school::SHADOW,
-                float_value: spell_data().shadow_affinity.fraction_at(points),
-                kind: SpellModType::ThreatMultiplierPct,
-                ..SpellModConfig::default()
-            },
-        );
-    }
-
     /// +3 sec of duration per point, which is one more tick at Shadow Word: Pain's 3 second
     /// cadence.
     fn apply_improved_shadow_word_pain(&self, sim: &mut Sim, unit: UnitId) {
@@ -169,23 +154,46 @@ impl Priest {
         });
     }
 
-    /// Improved Mind Flay is new in Forever: +10% damage per point, plus range and slow the sim
-    /// ignores.
-    fn apply_improved_mind_flay(&self, sim: &mut Sim, unit: UnitId) {
-        let points = self.talents.i32("improved_mind_flay");
+    /// Dark Inspiration (client 70425): Mind Blast and a fully channeled Mind Flay raise the
+    /// priest's Spirit by 3% a point for 10 sec. The party half is not applied.
+    fn apply_dark_inspiration(&self, sim: &mut Sim, unit: UnitId) {
+        let points = self.talents.i32("dark_inspiration");
         if points == 0 {
             return;
         }
-        sim.add_static_mod(
+        let data = spell_data();
+        let buff = data.dark_inspiration_triggered.highest();
+        let spirit = sim.new_dynamic_multiply_stat(
             unit,
-            SpellModConfig {
-                class_mask: masks::MIND_FLAY,
-                float_value: spell_data()
-                    .improved_mind_flay
-                    .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DOT)
-                    .fraction_at(points),
-                kind: SpellModType::DamageDoneFlat,
-                ..SpellModConfig::default()
+            Stat::Spirit,
+            data.dark_inspiration.multiplier_at(points),
+        );
+        let aura = sim.register_aura(
+            unit,
+            AuraConfig {
+                label: "Dark Inspiration".to_string(),
+                action_id: Some(ActionId::spell(buff.id)),
+                duration: buff.duration(),
+                ..AuraConfig::default()
+            },
+        );
+        sim.attach_stat_dependency(aura, spirit);
+        sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Dark Inspiration Mind Blast".to_string(),
+                callback: CallbackMask::ON_CAST_COMPLETE,
+                class_spell_mask: masks::MIND_BLAST,
+                ..ProcTrigger::default()
+            },
+        );
+        sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Dark Inspiration Mind Flay".to_string(),
+                callback: CallbackMask::ON_PERIODIC_DAMAGE_DEALT,
+                class_spell_mask: masks::MIND_FLAY,
+                ..ProcTrigger::default()
             },
         );
     }
@@ -250,9 +258,11 @@ impl Priest {
                         gcd: GCD_DEFAULT,
                         ..Cast::default()
                     },
+                    // The 16 October 2026 beta notes cut the cooldown to 30 sec; the client row
+                    // still states 60.
                     cd: Cooldown {
                         timer: Some(timer),
-                        duration: longest_cooldown(rank),
+                        duration: 30 * SECOND,
                     },
                     ..CastConfig::default()
                 },
@@ -277,36 +287,29 @@ impl Priest {
             .average(CHARACTER_LEVEL)
             / 100.0;
 
-        let damage_mod = sim.add_dynamic_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::ALL,
-                school: school::SHADOW,
-                kind: SpellModType::DamageDonePct,
-                ..SpellModConfig::default()
-            },
-        );
-
-        let aura = sim.register_aura(
-            unit,
-            AuraConfig {
-                label: "Shadow Weaving".to_string(),
-                action_id: Some(ActionId::spell(stack_aura.id)),
-                duration: stack_aura.duration(),
-                max_stacks: 5,
-                on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.activate_spell_mod(damage_mod);
-                })),
-                on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.deactivate_spell_mod(damage_mod);
-                })),
-                on_stacks_change: Some(Rc::new(move |sim: &mut Sim, _, _, new_stacks| {
-                    sim.update_spell_mod_float_value(damage_mod, per_stack * f64::from(new_stacks));
-                })),
-                ..AuraConfig::default()
-            },
-        );
-        self.shadow_weaving_aura = Some(aura);
+        // Shadow Weaving's stacks are a debuff on the target, raising only this priest's Shadow
+        // damage on it (A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER), and each target keeps its own
+        // (community #777): the targets' damage taken modifiers belong to the fight.
+        let _ = per_stack;
+        let label = format!("Shadow Weaving-{}", sim.unit(unit).label);
+        let auras = crate::prepare::classic_weapons::new_enemy_aura_array(sim, |sim, target| {
+            sim.register_aura(
+                target,
+                AuraConfig {
+                    label: label.clone(),
+                    action_id: Some(ActionId::spell(stack_aura.id)),
+                    duration: stack_aura.duration(),
+                    max_stacks: 5,
+                    ..AuraConfig::default()
+                },
+            )
+        });
+        self.shadow_weaving_aura = auras.into_iter().flatten().next();
+        for target in sim.env_units.clone() {
+            if sim.unit(target).unit_type == UnitType::Enemy {
+                sim.add_dynamic_damage_taken_modifier(target);
+            }
+        }
 
         sim.make_proc_trigger_aura(
             unit,

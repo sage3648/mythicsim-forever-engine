@@ -114,17 +114,8 @@ pub(crate) fn windfury_totem_effect(
         let id = &sim.spell(*spell).action_id;
         id.other_id == "OtherActionAttack" && id.tag == 25584 && id.spell_id == 0 && id.item_id == 0
     });
-    // buffs/air_totem.go: the party holds one air totem and Windfury Totem outbids a party Grace
-    // of Air, which the reset then leaves displaced or blocked, as the aura export records. A
-    // Grace of Air still up after the reset, as a twisting shaman's, would contest the slot.
-    if let Some(other) = sim.get_aura(player, "Grace of Air Totem (External)") {
-        if sim.aura(other).active {
-            unrepresented.push(format!(
-                "Windfury Totem shares the air totem slot with {}",
-                sim.aura(other).label
-            ));
-        }
-    }
+    // Since the 16 October 2026 beta notes the party's Grace of Air stands beside Windfury Totem:
+    // no air totem slot joins them.
     let grant = proc_trigger(sim, Some(player), must_find(10612), &[]);
     let spend = proc_trigger(sim, Some(player), must_find(10610), &[chance(1.0)]);
     let grant_spells = windfury_trigger_spells(env, &grant);

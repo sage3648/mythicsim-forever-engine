@@ -8,6 +8,7 @@ use crate::prepare::spelldata::Ladder;
 /// Go `generatedSpellData`, for the ladders `sim/mage` uses.
 pub(super) struct SpellData {
     pub arcane_blast: Ladder,
+    pub arcane_wrath: Ladder,
     pub arcane_blast_triggered: Ladder,
     pub arcane_concentration: Ladder,
     pub arcane_concentration_triggered: Ladder,
@@ -43,6 +44,7 @@ pub(super) struct SpellData {
     pub fingers_of_frost_triggered: Ladder,
     pub fire_blast: Ladder,
     pub fire_power: Ladder,
+    pub improved_fire_blast: Ladder,
     pub fire_vulnerability: Ladder,
     pub fireball: Ladder,
     pub flame_throwing: Ladder,
@@ -76,7 +78,6 @@ pub(super) struct SpellData {
     pub pyroblast: Ladder,
     pub scorch: Ladder,
     pub shatter: Ladder,
-    pub wake_of_fire: Ladder,
     pub winters_chill: Ladder,
     pub winters_chill_triggered: Ladder,
     /// Go `FlameStrikeRankMap`: `spelldata.Ranked(spellData.Flamestrike.Rank(6).ID)`.
@@ -90,6 +91,7 @@ pub(super) fn spell_data() -> &'static SpellData {
         let flamestrike = Ladder::ranked(&[2120, 2121, 8422, 8423, 10215, 10216]);
         SpellData {
             arcane_blast: Ladder::ranked(&[400574, 1239696, 1239697, 1239699, 1239700]),
+            arcane_wrath: Ladder::ranked(&[1326079, 1326080, 1326081, 1326082]),
             arcane_blast_triggered: Ladder::ranked(&[400573]),
             arcane_concentration: Ladder::talent(11213, 5),
             arcane_concentration_triggered: Ladder::ranked(&[12536]),
@@ -122,13 +124,14 @@ pub(super) fn spell_data() -> &'static SpellData {
             conjure_mana_citrine_triggered: Ladder::ranked(&[10057]),
             conjure_mana_jade_triggered: Ladder::ranked(&[10052]),
             conjure_mana_ruby_triggered: Ladder::ranked(&[10058]),
-            critical_mass: Ladder::talent(11115, 3),
+            critical_mass: Ladder::talent(11115, 5),
             elemental_precision: Ladder::talent(29438, 5),
             evocation: Ladder::ranked(&[12051]),
             fingers_of_frost: Ladder::talent(400647, 2),
             fingers_of_frost_triggered: Ladder::ranked(&[400669]),
             fire_blast: Ladder::ranked(&[2136, 2137, 2138, 8412, 8413, 10197, 10199]),
-            fire_power: Ladder::talent(11124, 5),
+            fire_power: Ladder::talent(11124, 3),
+            improved_fire_blast: Ladder::talent(11078, 2),
             fire_vulnerability: Ladder::ranked(&[22959]),
             fireball: Ladder::ranked(&[
                 133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306,
@@ -162,14 +165,13 @@ pub(super) fn spell_data() -> &'static SpellData {
             mage_armor: Ladder::ranked(&[6117, 22782, 22783]),
             magic_absorption: Ladder::talent(29441, 2),
             master_of_elements: Ladder::talent(29074, 3),
-            missile_barrage: Ladder::talent(400588, 1),
+            missile_barrage: Ladder::talent(400588, 2),
             missile_barrage_triggered: Ladder::ranked(&[400589]),
             piercing_ice: Ladder::talent(11151, 3),
             presence_of_mind: Ladder::ranked(&[12043]),
             pyroblast: Ladder::ranked(&[11366, 12505, 12522, 12523, 12524, 12525, 12526, 18809]),
             scorch: Ladder::ranked(&[2948, 8444, 8445, 8446, 10205, 10206, 10207]),
             shatter: Ladder::talent(11170, 3),
-            wake_of_fire: Ladder::talent(11078, 2),
             winters_chill: Ladder::talent(11180, 5),
             winters_chill_triggered: Ladder::ranked(&[12579]),
         }

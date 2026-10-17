@@ -26,7 +26,8 @@ var spellDataStatProcs = []struct {
 	parsed  bool
 }{
 	{"Draconic Infused Emblem", 1318931, 1318930, 22268, 0, false},
-	{"The Green Tower", 18097, 17154, 1204, 0, false},
+	// Client 70425's generator names it after the stat it grants.
+	{"The Green Tower - NatureResistance - ", 18097, 17154, 1204, 0, false},
 	{"Wall of the Dead", 19409, 18828, 1979, 0, false},
 	{"Darkmoon Card: Blue Dragon", 23688, 23684, 19288, 0, false},
 	{"Wrath of Cenarius", 25906, 25907, 21190, 0, false},

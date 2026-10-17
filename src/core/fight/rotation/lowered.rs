@@ -81,6 +81,20 @@ impl Cond {
         }
     }
 
+    /// Whether every check in the condition that can keep bookkeeping is a `spellCanCast`
+    /// node of its own whose spell `quiet` accepts: where asking each spell leaves no trace,
+    /// nor does the condition.
+    pub(crate) fn cost_checks_all(&self, quiet: &impl Fn(SpellId) -> bool) -> bool {
+        match self {
+            Cond::SpellCanCast(spell) => quiet(*spell),
+            Cond::And(values) | Cond::Or(values) => {
+                values.iter().all(|value| value.cost_checks_all(quiet))
+            }
+            Cond::Not(value) => value.cost_checks_all(quiet),
+            _ => !self.asks_cost(),
+        }
+    }
+
     /// Whether evaluating the condition can run a cost check (Go `APLValueSpellCanCast`).
     pub(crate) fn asks_cost(&self) -> bool {
         match self {
@@ -145,16 +159,29 @@ impl Cond {
     }
 }
 
-/// Whether a compiled value can run a cost check (Go `APLValueSpellCanCast`).
+/// Whether a compiled value can run a cost check (Go `APLValueSpellCanCast`) or another read
+/// whose side effects must happen whenever Go asks it: a sequence's readiness runs its step's cast
+/// check, and a dot's expected tick rolls the partial resist and counts ticks as Go calculates
+/// it.
 fn compiled_asks_cost(value: &Compiled) -> bool {
     match value {
-        Compiled::SpellCanCast(_) => true,
-        Compiled::And(values) | Compiled::Or(values) => values.iter().any(compiled_asks_cost),
-        Compiled::Not(value) | Compiled::Coerced { inner: value, .. } => compiled_asks_cost(value),
+        Compiled::SpellCanCast(_)
+        | Compiled::SequenceIsReady(_)
+        | Compiled::DotPercentIncrease(_) => true,
+        Compiled::And(values)
+        | Compiled::Or(values)
+        | Compiled::Max(values)
+        | Compiled::Min(values) => values.iter().any(compiled_asks_cost),
+        Compiled::Not(value)
+        | Compiled::Coerced { inner: value, .. }
+        | Compiled::EnergyTimeToTarget(value) => compiled_asks_cost(value),
         Compiled::Compare { lhs, rhs, .. } | Compiled::Math { lhs, rhs, .. } => {
             compiled_asks_cost(lhs) || compiled_asks_cost(rhs)
         }
-        Compiled::AuraShouldRefresh { overlap, .. } => compiled_asks_cost(overlap),
+        Compiled::AuraShouldRefresh { overlap, .. }
+        | Compiled::MultipleCdUsages {
+            offset: overlap, ..
+        } => compiled_asks_cost(overlap),
         _ => false,
     }
 }
@@ -369,7 +396,18 @@ impl<A: Agent> Fight<A> {
                 NEVER_EXPIRES,
                 reads::PHASE,
             ),
-            Cond::SpellCanCast(spell) => (self.can_cast_or_queue(*spell), self.now, reads::ALL),
+            // Asked where it leaves no trace, a spell that cannot cast or queue stays so as a
+            // cast item's proof says, while nothing changes.
+            Cond::SpellCanCast(spell) => {
+                let quiet = self.asking_is_quiet(*spell);
+                let can = self.can_cast_or_queue(*spell);
+                let until = if can || !quiet {
+                    self.now
+                } else {
+                    self.cast_refused_until(*spell)
+                };
+                (can, until, reads::ALL)
+            }
             // A false `and` stays false while its first false operand does; a true one holds
             // while every operand does.
             Cond::And(values) => {

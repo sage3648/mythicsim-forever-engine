@@ -2,11 +2,11 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "2fe7678a0844a6d19f3e6a4ec1469e542763710b",
+    "client_build": "1.60.1.70425",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "a940a67dadef6d09d20e11a625a424764494b5d3229966139d7301cd115cd227",
+  "request_sha256": "51978548d85511a632a83542e2fbb5330bf6e7427932a099443298f83d0ed797",
   "scenario_id": "smite-priest-power-infusion",
   "sim": {
     "iterations": 500,
@@ -713,9 +713,9 @@
       "HealingPower": 313,
       "Health": 3537,
       "HolyDamage": 0,
-      "Intellect": 444,
+      "Intellect": 424,
       "MP5": 82,
-      "Mana": 7756,
+      "Mana": 7456,
       "MeleeCritRating": 14,
       "MeleeHasteRating": 0,
       "MeleeHitRating": 30,
@@ -723,7 +723,7 @@
       "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 10.15,
+      "PhysicalCritPercent": 7.15,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 3,
       "RangedAttackPower": 0,
@@ -732,7 +732,7 @@
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 40,
       "ShadowResistance": 60,
-      "SpellCritPercent": 13.2592,
+      "SpellCritPercent": 12.9232,
       "SpellCritRating": 14,
       "SpellDamage": 498,
       "SpellHasteRating": 0,
@@ -831,7 +831,7 @@
         ],
         "icd": {
           "timer": "timer-12",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -943,7 +943,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -961,7 +961,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1250,7 +1250,7 @@
     "professions": [
       "Engineering"
     ],
-    "talents_string": "515030031305001031-00505023002-003",
+    "talents_string": "515035031030001031-00505023002-003",
     "talents": {
       "blessed_recovery": 2,
       "divine_aegis": 3,
@@ -1276,12 +1276,12 @@
     "distance_yards": 20,
     "cast_speed": 1,
     "mana": {
-      "max": 7756,
+      "max": 7456,
       "base": 1376,
       "spirit_regen_per_second": 35.875,
       "regen_per_second_casting": 34.3375,
       "regen_per_second_not_casting": 52.275,
-      "teardown_max": 6331
+      "teardown_max": 6106
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -1349,6 +1349,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -1493,7 +1494,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1567,7 +1568,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1641,7 +1642,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1715,7 +1716,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3081,7 +3082,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-8",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3091,7 +3092,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3144,7 +3145,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-8",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3154,7 +3155,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3207,7 +3208,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-8",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3217,7 +3218,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3270,7 +3271,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-8",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3280,7 +3281,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -4775,7 +4776,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -4848,7 +4849,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -4921,7 +4922,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -4994,7 +4995,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5067,7 +5068,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5140,7 +5141,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-11",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5753,7 +5754,7 @@
         },
         {
           "spell_id": 15265,
-          "tick_base": 13,
+          "tick_base": 9,
           "tick_can_crit": true
         },
         {
@@ -5799,7 +5800,15 @@
       ]
     },
     {
-      "holy_fire_spells": [
+      "dot_spells": [
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
         39,
         40,
         41,
@@ -5885,7 +5894,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.1,
+      "proc_chance": 0.3,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",

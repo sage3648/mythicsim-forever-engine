@@ -124,15 +124,14 @@ pub(crate) fn shadow_resistance_aura(
     ranked_buff(sim, unit, &SHADOW_RESISTANCE_AURA, is_player, rank)
 }
 
-/// Go `RetributionAuraSpellPowerCoefficient`: Retribution Aura scales with Holy spell power in
-/// Forever even though its client row carries no coefficient. It is the 1.5 s cast-time floor over
-/// 3.5, the AoE divisor because the shield hits every attacker, and the 0.95 penalty for the aura
-/// effect: `1.5 / 3.5 / 3 * 0.95`, which Go evaluates exactly as 19/140.
-const RETRIBUTION_AURA_SPELL_POWER_COEFFICIENT: f64 = 19.0 / 140.0;
+/// Go `RetributionAuraSpellPowerCoefficient`: Retribution Aura scales with the paladin's Holy spell
+/// power at 6%, though its client row carries no coefficient (beta notes of 8 October 2026: "the
+/// spell power ratio has been reduced to 6% (was 13.3%)", read from the casting paladin).
+const RETRIBUTION_AURA_SPELL_POWER_COEFFICIENT: f64 = 0.06;
 
-/// Go `RetributionAuraBuff`: the aura on the unit the shield protects. Both copies read the Holy
-/// spell power of the unit the aura is on, not the paladin's (beta logs 2729 to 2736): the
-/// party's copy no longer states the providing paladin's.
+/// Go `RetributionAuraBuff`: the aura on the unit the shield protects. The paladin's own copy
+/// carries the paladin's spell power; the party option's copy deals the base, since the party
+/// config does not say the paladin's.
 pub(crate) fn retribution_aura_buff(
     sim: &mut Sim,
     unit: UnitId,
@@ -144,7 +143,12 @@ pub(crate) fn retribution_aura_buff(
     if let Some(aura) = sim.get_aura(unit, &label) {
         return aura;
     }
-    let (damage, coefficient) = (rank.value, RETRIBUTION_AURA_SPELL_POWER_COEFFICIENT);
+    let coefficient = if is_player {
+        RETRIBUTION_AURA_SPELL_POWER_COEFFICIENT
+    } else {
+        0.0
+    };
+    let damage = rank.value;
     let aura = super::support::new_damage_shield(
         sim,
         unit,

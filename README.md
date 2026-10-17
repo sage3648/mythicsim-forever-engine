@@ -94,7 +94,7 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
   [fair comparison](docs/forever-rust-fair-comparison-2026-10-03.md) and the
   [prototype report](docs/forever-rust-prototype-2026-10-03.md).
 
-The reference is Go revision `0025d73986eebd90df1849c202b8c9a88d1f01c9`. A match
+The reference is Go revision `2fe7678a0844a6d19f3e6a4ec1469e542763710b`. A match
 proves the same behavior as that Go engine. It does not prove the live game.
 [UPSTREAM.md](UPSTREAM.md) explains how community fixes are reviewed and ported.
 

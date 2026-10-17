@@ -39,7 +39,7 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
 }
 
 /// Go `NewEnemyAuraArray`: one aura per enemy, in unit order.
-fn new_enemy_aura_array(
+pub(crate) fn new_enemy_aura_array(
     sim: &mut Sim,
     mut make_aura: impl FnMut(&mut Sim, UnitId) -> AuraId,
 ) -> Vec<Option<AuraId>> {

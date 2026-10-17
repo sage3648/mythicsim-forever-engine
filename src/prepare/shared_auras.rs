@@ -274,6 +274,15 @@ pub(crate) fn apply_spell_data_aura_proc(env: &mut Environment, cfg: &SpellDataP
     if !auras.wearer_stats.is_empty() {
         let icd = env.sim.aura(trigger_aura).icd;
         env.sim.aura_mut(wearer).icd = icd;
+        let slots = source.eligible_slots(&env.sim, unit);
+        super::shared_items::add_stat_proc_buff(
+            &mut env.sim,
+            unit,
+            source.id,
+            StatBuffAura::new(wearer, auras.wearer_stats.clone()),
+            source.is_enchant,
+            &slots,
+        );
     }
 }
 

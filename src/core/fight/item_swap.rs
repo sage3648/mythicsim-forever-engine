@@ -391,7 +391,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `ItemSwap.SwapItems` for the main hand alone.
-    fn swap_items(&mut self, to_swapped: bool, is_reset: bool) {
+    pub(crate) fn swap_items(&mut self, to_swapped: bool, is_reset: bool) {
         let Some(swap) = self.item_swap.as_ref() else {
             return;
         };

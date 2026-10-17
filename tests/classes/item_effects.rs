@@ -249,18 +249,24 @@ fn a_permanent_clap_keeps_the_attack_speed_category_from_cyclone() {
 }
 
 /// The warrior's Thunder Clap and Cyclone bid in one category, and a warrior that casts the clap
-/// under Thunderfury is prepared with the clap's effect: both slows are described. The clap
-/// outlasts Cyclone and bids the same, so it keeps the category whenever it is up: the target
-/// swings as it would without Cyclone's slow until Cyclone is first up without the clap. The
-/// fight compared is the first, from the fixture's seed, whose first clap lands before Cyclone.
+/// under Thunderfury is prepared with the clap's effect: both slows are described. The two bid
+/// the same, so the clap keeps the category while it outlasts each Cyclone gained beside it (Go
+/// `keepsTie`): the target swings as it would without Cyclone's slow until Cyclone is up without
+/// the clap or gained when the clap no longer outlasts it. The fight compared is the first, from
+/// the fixture's seed, whose first clap lands before Cyclone.
 #[test]
 fn a_warrior_shares_the_attack_speed_category_with_cyclone() {
     const CLAP: &str = "{SpellID: 11581}";
     const CYCLONE: &str = "{SpellID: 27648}";
     let at = |line: &str| -> f64 { line[1..line.find(']').unwrap()].parse().unwrap() };
-    // When Cyclone is first up without the clap, and how often it was gained before.
+    // Thunder Clap (Player) lasts 30 seconds and Cyclone 12, the prepared auras' durations.
+    const CLAP_SECONDS: f64 = 30.0;
+    const CYCLONE_SECONDS: f64 = 12.0;
+    // When the clap first stops holding the category against Cyclone (Cyclone up without the
+    // clap, or gained or refreshed when the clap does not outlast it), and how often Cyclone was
+    // gained beside the clap before.
     let alone = |logs: &str| -> (f64, usize) {
-        let (mut clap, mut cyclone, mut gains) = (false, false, 0);
+        let (mut clap, mut cyclone, mut gains, mut clap_ends) = (false, false, 0, 0.0);
         for line in logs.lines() {
             for (aura, up) in [(CLAP, &mut clap), (CYCLONE, &mut cyclone)] {
                 if line.contains(&format!("[Target 1] Aura gained: {aura}")) {
@@ -269,7 +275,17 @@ fn a_warrior_shares_the_attack_speed_category_with_cyclone() {
                     *up = false;
                 }
             }
-            if line.contains(&format!("[Target 1] Aura gained: {CYCLONE}")) && clap {
+            if line.contains(&format!("[Target 1] Aura gained: {CLAP}"))
+                || line.contains(&format!("[Target 1] Aura refreshed: {CLAP}"))
+            {
+                clap_ends = at(line) + CLAP_SECONDS;
+            }
+            let cyclone_applied = line.contains(&format!("[Target 1] Aura gained: {CYCLONE}"))
+                || line.contains(&format!("[Target 1] Aura refreshed: {CYCLONE}"));
+            if cyclone_applied && clap {
+                if clap_ends <= at(line) + CYCLONE_SECONDS {
+                    return (at(line), gains);
+                }
                 gains += 1;
             }
             if cyclone && !clap {

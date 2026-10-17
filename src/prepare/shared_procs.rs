@@ -267,11 +267,19 @@ pub(crate) fn apply_proc_stat_bonus_effect(env: &mut Environment, config: &ProcS
         let slots = source.eligible_slots(&env.sim, unit);
         if source.is_enchant {
             env.sim
-                .register_enchant_proc_with_slots(unit, source.id, trigger_aura, slots);
+                .register_enchant_proc_with_slots(unit, source.id, trigger_aura, slots.clone());
         } else {
             env.sim
-                .register_item_proc_with_slots(unit, source.id, trigger_aura, slots);
+                .register_item_proc_with_slots(unit, source.id, trigger_aura, slots.clone());
         }
         source.register_weapon_enchant_buff(env, proc_aura.aura);
+        super::shared_items::add_stat_proc_buff(
+            &mut env.sim,
+            unit,
+            source.id,
+            proc_aura,
+            source.is_enchant,
+            &slots,
+        );
     }
 }

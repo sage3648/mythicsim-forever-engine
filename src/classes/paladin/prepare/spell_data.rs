@@ -243,7 +243,7 @@ pub(super) fn spell_data() -> &'static SpellData {
         purifying_power: Ladder::talent(429144, 2),
         pursuit_of_justice: Ladder::talent(26022, 2),
         reckoning: Ladder::talent(20177, 5),
-        reckoning_triggered: Ladder::ranked(&[20178]),
+        reckoning_triggered: Ladder::ranked(&[1326084]),
         redemption: Ladder::ranked(&[7328, 10322, 10324, 20772, 20773]),
         redoubt: Ladder::talent(20127, 5),
         redoubt_triggered: Ladder::ranked(&[20128]),
@@ -271,7 +271,7 @@ pub(super) fn spell_data() -> &'static SpellData {
             21084, 20287, 20288, 20289, 20290, 20291, 20292, 20293,
         ]),
         seal_of_righteousness_triggered: Ladder::ranked(&[
-            20187, 20280, 20281, 20282, 20283, 20284, 20285, 20286,
+            20187, 20224, 20280, 20281, 20282, 20283, 20284, 20285, 20286,
         ]),
         seal_of_wisdom: Ladder::ranked(&[20166, 20356, 20357]),
         seal_of_wisdom_triggered: Ladder::ranked(&[

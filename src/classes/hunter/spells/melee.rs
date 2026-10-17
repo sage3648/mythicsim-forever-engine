@@ -217,12 +217,32 @@ pub(crate) fn wing_clip<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: 
     fight.deal_damage(spell, result, false);
 }
 
-/// Immolation Trap's `ApplyEffects`: the outcome is dealt, then a landed trap burns.
-pub(crate) fn immolation_trap<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side) {
+/// Immolation Trap's client tick and the share of attack power each tick takes (patch 147).
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ImmolationTrap {
+    pub(crate) tick_base: f64,
+    pub(crate) attack_power_per_tick: f64,
+}
+
+/// Immolation Trap's `ApplyEffects`: the outcome is dealt, then a landed trap burns. Its
+/// `OnSnapshot` takes the higher of ranged and melee attack power at the snapshot, and each tick
+/// reads that one as it stands.
+pub(crate) fn immolation_trap<A: Agent>(
+    fight: &mut Fight<A>,
+    spell: SpellId,
+    target: Side,
+    trap: ImmolationTrap,
+) {
     let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
     fight.deal_damage(spell, result, false);
     if result.landed() {
         let dot = fight.spells[spell].dot.expect("Immolation Trap has a dot");
-        fight.apply_dot(fight.dot_on(dot, target));
+        let dot = fight.dot_on(dot, target);
+        let (attack_power, ranged) = super::explosive_trap::trap_attack_power(fight);
+        let share = trap.attack_power_per_tick;
+        // Go fuses the share's multiply into the add on the reference arm64 build.
+        fight.dots[dot].tick_base = Some(share.mul_add(attack_power, trap.tick_base));
+        fight.apply_dot(dot);
+        fight.snapshot_dot_attack_power_share(dot, share, ranged);
     }
 }

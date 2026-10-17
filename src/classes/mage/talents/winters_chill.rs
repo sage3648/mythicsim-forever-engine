@@ -1,6 +1,6 @@
 //! Winter's Chill (talent 11180, aura 12579), from Go sim/mage/talents_frost.go
-//! `registerWinterChill`: a landed Frost spell can add a stack, and each stack gives the
-//! mage's Frostbolt and Ice Lance a flat crit bonus.
+//! `registerWinterChill`: a landed Frost spell can add a stack, and each stack makes the mage's
+//! Cone of Cold deal more damage (client 70425).
 
 use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult};
 
@@ -9,17 +9,17 @@ pub(crate) struct WintersChill {
     pub(crate) aura: AuraRef,
     pub(crate) trigger: AuraRef,
     proc_chance: f64,
-    crit_per_stack: f64,
-    crit_mod: ModId,
+    damage_per_stack: f64,
+    damage_mod: ModId,
 }
 
-/// Bind the exported auras and register Go's dynamic crit modifier.
+/// Bind the exported auras and register Go's dynamic damage modifier.
 pub(crate) fn bind<A: Agent>(
     fight: &mut Fight<A>,
     aura: &str,
     trigger: &str,
     proc_chance: f64,
-    crit_per_stack: f64,
+    damage_per_stack: f64,
 ) -> Result<WintersChill, String> {
     let find = |label: &str| {
         fight.trackers[Side::Player.index()]
@@ -31,28 +31,28 @@ pub(crate) fn bind<A: Agent>(
             .ok_or_else(|| format!("Winter's Chill aura {label} is not registered"))
     };
     let (aura, trigger) = (find(aura)?, find(trigger)?);
-    let affected = fight.spells_with_class(&["frostbolt", "ice_lance"]);
-    let crit_mod = fight.register_mod(ModKind::BonusCritPercent, 0.0, 0, affected);
+    let affected = fight.spells_with_class(&["cone_of_cold"]);
+    let damage_mod = fight.register_mod(ModKind::DamageDoneFlat, 0.0, 0, affected);
     Ok(WintersChill {
         aura,
         trigger,
         proc_chance,
-        crit_per_stack,
-        crit_mod,
+        damage_per_stack,
+        damage_mod,
     })
 }
 
 impl WintersChill {
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.activate_mod(self.crit_mod);
+        fight.activate_mod(self.damage_mod);
     }
 
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.deactivate_mod(self.crit_mod);
+        fight.deactivate_mod(self.damage_mod);
     }
 
     pub(crate) fn on_stacks_change<A: Agent>(&self, fight: &mut Fight<A>, stacks: i32) {
-        fight.update_mod_value(self.crit_mod, self.crit_per_stack * f64::from(stacks));
+        fight.update_mod_value(self.damage_mod, self.damage_per_stack * f64::from(stacks));
     }
 
     /// The "Winters Chill Talent" proc trigger: spell damage, landed, Frost school.

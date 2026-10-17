@@ -2,11 +2,11 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "2fe7678a0844a6d19f3e6a4ec1469e542763710b",
+    "client_build": "1.60.1.70425",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "079dcf5fa91b2517a0efa309738fef75127cb4d71c1ce1128a2b7b13ff90c201",
+  "request_sha256": "34f4ba530c3ae2b7ed252d50ffab09973b4811059238fec971cc7b117aea470f",
   "scenario_id": "arcane-mage-smokeys-lighter",
   "sim": {
     "iterations": 1000,
@@ -683,7 +683,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.1812,
+      "PhysicalCritPercent": 11.1812,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -791,7 +791,7 @@
         ],
         "icd": {
           "timer": "timer-14",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -903,7 +903,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -921,7 +921,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1073,7 +1073,7 @@
         "action_id": {
           "spell_id": 400573
         },
-        "duration_ns": 8000000000,
+        "duration_ns": 15000000000,
         "max_stacks": 4,
         "active": false,
         "stacks": 0,
@@ -1081,8 +1081,7 @@
           "on_reset",
           "on_gain",
           "on_expire",
-          "on_stacks_change",
-          "on_cast_complete"
+          "on_stacks_change"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -1224,7 +1223,7 @@
     "professions": [
       "Engineering"
     ],
-    "talents_string": "055205003100311531-230500001-005",
+    "talents_string": "0551205003100301531-230500001-005",
     "talents": {
       "arcane_blast": 1,
       "arcane_concentration": 5,
@@ -1238,11 +1237,11 @@
       "elemental_precision": 5,
       "ignite": 5,
       "improved_channeling": 5,
+      "improved_fire_blast": 2,
       "incineration": 3,
       "missile_barrage": 1,
       "presence_of_mind": 1,
-      "pyroblast": 1,
-      "wake_of_fire": 2
+      "pyroblast": 1
     },
     "class_options": {
       "defaultMageArmor": "MageArmorMageArmor"
@@ -1325,6 +1324,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -1688,7 +1688,7 @@
           "cost": 181,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 1500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -1712,13 +1712,13 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 1,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.42899999022483826,
         "threat_multiplier": 0.7,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
         "damage_effect": {
-          "average": 394,
+          "average": 236,
           "variance": 0.15102040767669678
         }
       },
@@ -6168,11 +6168,12 @@
       "trigger_aura": "Arcane Concentration"
     },
     {
-      "arcane_blast_chance": 0.4,
+      "arcane_blast_chance": 0.2,
       "aura": "Missile Barrage",
-      "bolt_chance": 0.2,
+      "bolt_chance": 0.1,
       "cost_percent_add": -1,
       "kind": "missile_barrage",
+      "missile_chance": 0.05,
       "rng_label": "Missile Barrage",
       "tick_length_delta_ns": -500000000,
       "trigger_aura": "Missile Barrage Trigger"
@@ -6185,7 +6186,6 @@
       "spell_id": 12051
     },
     {
-      "arcane_blast_bonus_per_stack": 0.15,
       "kind": "arcane_missiles",
       "ranks": [
         {
@@ -6228,7 +6228,8 @@
     {
       "aura": "Arcane Blast",
       "cost_per_stack": 1.75,
-      "damage_per_stack": 0.1,
+      "done_intellect": 323,
+      "intellect_per_stack": 0.15,
       "kind": "arcane_blast",
       "spell_id": 1239700
     },
@@ -6424,7 +6425,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.1,
+      "proc_chance": 0.3,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",
@@ -6480,6 +6481,84 @@
       "regen_window_seconds": 5,
       "rng_label": "Demonic Rune",
       "selected": true
+    },
+    {
+      "auras": [
+        "Arcane Blast"
+      ],
+      "changed": [
+        "SpellDamage"
+      ],
+      "combos": [
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 465
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 526.8
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 588.6
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 650.4
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 712.2
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 712.2
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 712.2
+        },
+        {
+          "AttackPower": 10,
+          "MP5": 77,
+          "PhysicalCritPercent": 11.1812,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 16.121599999999997,
+          "SpellDamage": 712.2
+        }
+      ],
+      "kind": "stat_auras",
+      "stacks": [
+        4
+      ]
     },
     {
       "aura": "Chance of Death",

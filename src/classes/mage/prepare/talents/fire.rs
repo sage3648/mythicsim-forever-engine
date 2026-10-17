@@ -18,7 +18,7 @@ impl Mage {
     /// Go `registerFireTalents`.
     pub(super) fn register_fire_talents(&self, sim: &mut Sim, unit: UnitId) {
         // Tier 1
-        self.register_wake_of_fire(sim, unit);
+        self.register_improved_fire_blast(sim, unit);
         self.register_incineration(sim, unit);
         self.register_improved_fireball(sim, unit);
 
@@ -45,9 +45,10 @@ impl Mage {
         // Tier 7: Combustion is in combustion.go.
     }
 
-    /// The Fire Blast cooldown half only.
-    fn register_wake_of_fire(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = self.talents.i32("wake_of_fire");
+    /// Improved Fire Blast (11078, called Wake of Fire until client 70425): the Fire Blast
+    /// cooldown. Its range bonus changes no number.
+    fn register_improved_fire_blast(&self, sim: &mut Sim, unit: UnitId) {
+        let rank = self.talents.i32("improved_fire_blast");
         if rank == 0 {
             return;
         }
@@ -57,7 +58,7 @@ impl Mage {
                 class_mask: masks::FIRE_BLAST,
                 time_value: millis(
                     spell_data()
-                        .wake_of_fire
+                        .improved_fire_blast
                         .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_COOLDOWN)
                         .value_at(rank),
                 ),
@@ -299,6 +300,18 @@ impl Mage {
                 ..ProcTrigger::default()
             },
         );
+        // Since the beta build of 2026-10-16 every Fire Blast cast adds a stack on top of its
+        // crit's (community #808).
+        sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Hot Streak Fire Blast Trigger".to_string(),
+                callback: CallbackMask::ON_CAST_COMPLETE,
+                class_spell_mask: masks::FIRE_BLAST,
+                trigger_immediately: true,
+                ..ProcTrigger::default()
+            },
+        );
     }
 
     fn register_master_of_elements(&self, sim: &mut Sim, unit: UnitId) {
@@ -338,24 +351,8 @@ impl Mage {
         );
     }
 
-    /// Ignite is left out by its NoSpellMods flag.
-    fn register_fire_power(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = self.talents.i32("fire_power");
-        if rank == 0 {
-            return;
-        }
-        sim.add_static_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::ALL,
-                school: school::FIRE,
-                float_value: spell_data()
-                    .fire_power
-                    .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-                    .fraction_at(rank),
-                kind: SpellModType::DamageDoneFlat,
-                ..SpellModConfig::default()
-            },
-        );
-    }
+    /// Fire Power (client 70425): 1/2/3% more damage for Fire spells per Fire effect the mage has
+    /// on the target, up to four, a damage done by caster handler on every attack table that the
+    /// fight runs (the `fire_power` effect). Preparation keeps no state of it.
+    fn register_fire_power(&self, _sim: &mut Sim, _unit: UnitId) {}
 }

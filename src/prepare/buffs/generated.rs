@@ -1,5 +1,5 @@
 //! Translated by tools/rust_buffs.py from the reference's sim/core/buffs/buffs_auto_gen.go and
-//! debuffs_auto_gen.go at 0025d73986eebd90df1849c202b8c9a88d1f01c9. Do not edit; run `python3 tools/rust_buffs.py write`.
+//! debuffs_auto_gen.go at 2fe7678a0844a6d19f3e6a4ec1469e542763710b. Do not edit; run `python3 tools/rust_buffs.py write`.
 
 use crate::contracts::request::Message;
 
@@ -40,7 +40,7 @@ pub(crate) static LEADER_OF_THE_PACK: Meta = Meta {
     kind: MetaKind::Buff,
     label: "Leader of the Pack",
     spell: 24932,
-    category: "DruidCritAura",
+    category: "LeaderOfThePack",
     single_aura: true,
     ..Meta::DEFAULT
 };
@@ -58,8 +58,8 @@ pub(crate) static MANA_SPRING_TOTEM: Meta = Meta {
 pub(crate) static MANA_TIDE_TOTEMS: Meta = Meta {
     kind: MetaKind::Buff,
     label: "Mana Tide Totem",
-    spell: 17360,
-    cast: Some(17359),
+    spell: 1325257,
+    cast: Some(1325256),
     category: "ManaTideTotem",
     ..Meta::DEFAULT
 };
@@ -68,7 +68,7 @@ pub(crate) static MOONKIN_AURA: Meta = Meta {
     kind: MetaKind::Buff,
     label: "Moonkin Aura",
     spell: 24907,
-    category: "DruidCritAura",
+    category: "MoonkinAura",
     single_aura: true,
     ..Meta::DEFAULT
 };
@@ -292,7 +292,7 @@ pub(crate) static GREATER_BLESSING_OF_WISDOM: Meta = Meta {
 
 pub(crate) static GREATER_BLESSING_OF_SALVATION: Meta = Meta {
     kind: MetaKind::Buff,
-    label: "Greater Blessing of Salvation",
+    label: "Mass Salvation",
     spell: 25895,
     ..Meta::DEFAULT
 };
@@ -456,7 +456,7 @@ pub(crate) fn apply_generated_buffs(
         permanent(env, unit, &DEVOTION_AURA, false, 0)?;
     }
     if party.bool("leader_of_the_pack") {
-        permanent(env, unit, &LEADER_OF_THE_PACK, false, 0)?;
+        super::drivers::drive_leader_of_the_pack(env, unit, party)?;
     }
     if party.enum_number("mana_spring_totem") != 0 {
         permanent(
@@ -471,7 +471,7 @@ pub(crate) fn apply_generated_buffs(
         super::drivers::drive_mana_tide_totems(env, unit, party)?;
     }
     if party.bool("moonkin_aura") {
-        permanent(env, unit, &MOONKIN_AURA, false, 0)?;
+        super::drivers::drive_moonkin_aura(env, unit, party)?;
     }
     if party.bool("retribution_aura") {
         super::drivers::drive_retribution_aura(env, unit, party)?;

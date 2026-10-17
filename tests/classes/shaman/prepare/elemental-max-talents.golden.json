@@ -1,6 +1,6 @@
 {
  "case": "elemental-max-talents",
- "request_sha256": "478b2709e67e057f8f4c7ee9296ab254111ffdb1a082e610b1c542371419ea76",
+ "request_sha256": "ba03963a8330d3fdfc531eee746447c372fafd403b5e83d9b524cf4740d8f855",
  "sections": {
   "effects": [
    [
@@ -17,11 +17,11 @@
    ],
    [
     "lava_burst",
-    "4975b77393e03dcadd7a801b9f387ed46e1f233ce477353ccc3e89474580ac01"
+    "ee2b07a39d7014b4d2266999bc026dcaee3fcbfaf7c3ed9e2877d2c5ac8fbe7a"
    ],
    [
     "fire_nova",
-    "e995a5c714a544e216374ca059014abef1c3407a2e151cca7c071ce79b0c3f61"
+    "37942b3f17868bc509d0a553733c60f3e8d52c2248d4c2204595a1adc0023980"
    ],
    [
     "searing_totem",
@@ -37,7 +37,7 @@
    ],
    [
     "magma_totem",
-    "188e4dc780c79357086c89d8c35ac5111d5d06a3f33dae35125dddce496cabc0"
+    "894eae967ef1c1617846a17d9ae5ecbb4000b4cff2ea3ee5b694fb94fec101a7"
    ],
    [
     "lightning_shield",
@@ -45,11 +45,11 @@
    ],
    [
     "grace_of_air_totem",
-    "79d84628ebd51da24efebe26fe1f68afba815a88a89422d6d3ad76922e81593f"
+    "dfd7e6899879eccd91bc2cf48bbaaf4c007b0f35333e602ac5c7a1b95185c2f8"
    ],
    [
     "windfury_totem_self",
-    "08fcfb84470c14afa72bb5473d07f8a98ca5848871f3bd47cf16ce0377cab2c0"
+    "0c386599e5391a0c8ec1f0ded304a3072851c3311daea4c0dc673a9fe71ead16"
    ],
    [
     "mana_spring_totem",
@@ -57,7 +57,7 @@
    ],
    [
     "flametongue_totem",
-    "c781b1cd235446fa2b33cb3e222879241ff645ea2cda2231768c44be50d7dc12"
+    "bb3130998e4297a93a9de69aaa7ab58e37aa13f6a3c7644ac2b207a5e15a60a4"
    ],
    [
     "strength_of_earth_totem",
@@ -65,7 +65,11 @@
    ],
    [
     "elemental_devastation",
-    "78512824041066d86b59f9dab9557d04d98ca4f5dc65087e192e0ad0225cc9a7"
+    "92fcc62632c73e0b16daab95a25cfe2eb8a5d06a3d2154798eb530e372f6aa24"
+   ],
+   [
+    "elemental_mastery",
+    "aeda64ae93457455d060d6461815fa23858d8f7973177f61947b0a5c41c0d5d5"
    ],
    [
     "elemental_focus",
@@ -108,12 +112,16 @@
     "485ab5dc9a035ab1a64631ebcacdf48b358eec3d54ec18d40a58e5ef5fd17a20"
    ],
    [
+    "Elemental Mastery",
+    "2e1c1670522ad302b8542f84f914f4274bb764a4f1c9d7e6ebacea2b01a82c63"
+   ],
+   [
     "Lightning Shield",
-    "6f1c8f9ccc26ab193e79942ac1b2c308665c7a6abe43d840be08e9baf1ccab44"
+    "77877b0b68736044c2ac7cd48424748ed7c40f7650ed9081f173bfbf1e34210f"
    ],
    [
     "Magma Totem",
-    "4114908c953554de53d229fb86da36d647c139f618a48941a5fc40921c239fb4"
+    "272362038f8e327bbe7d11da25ad90de4c1950f57a0743176518fbb2c8f13e84"
    ],
    [
     "Flametongue Totem Trigger",
@@ -129,7 +137,7 @@
    ],
    [
     "Windfury Totem Trigger (Self)",
-    "73ab62c4c265e130930d72bf085f3db69c4f98eaf53e63d7a3f709a1eb3b63c5"
+    "ca2b10d94ded5f501de309714fc272330fd7b9d1b36e63ede9bf7cdb58e17d0f"
    ],
    [
     "Windfury Dummy Aura (self)",
@@ -141,7 +149,7 @@
    ],
    [
     "Windfury Totem (Self)",
-    "cc487d6dc123c8762a9568d33844bb4aedf93906ae8aff5930df4a396af41c04"
+    "b2860d7179a9ecfe616d3b7a7e4a045142dc8d8f6adbafcfda1e304918146116"
    ],
    [
     "Strength Of Earth Totem (Self)",
@@ -149,7 +157,7 @@
    ],
    [
     "Grace Of Air Totem (Self)",
-    "d5b7081933c73f936f992b251461e590e0fbfaa683a4aabcb9f3afbfaad4fbea"
+    "0a0534ac593223c6df1c3f04d1d5b8592ad770e31d05cd2f0db6a7ef61a9e53d"
    ],
    [
     "Mana Spring Totem (Self)",
@@ -160,129 +168,138 @@
     "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
    ]
   ],
-  "player.major_cooldowns": [],
+  "player.major_cooldowns": [
+   [
+    "{\"spell_id\": 16166}",
+    "710800ef79c1fc07bb9fedcaaa8b004a93040de470cfa78d54ecb359ed35190a"
+   ]
+  ],
   "player.mana": "30150683d6cbabed2b6402dfed42fcb992ca43756c23d8dffb9e42ab7c008786",
-  "player.pseudo_stats": "e6372d97286971886340a699eed7cb0f0df1e7732483ef9b64d2d5f51ad81ba6",
+  "player.pseudo_stats": "ddf536bf4c8b98e13fd293485633ea0d63e0bd1cb865e7b03b7bf418f32e746e",
   "player.spells": [
    [
     "{\"other_id\": \"OtherActionManaGain\"}",
     "162525ce50e2c1fdfb133896acf35d224c6c22325cbd6ed1412d0f385d07e743"
    ],
    [
-    "{\"spell_id\": 1238300}",
-    "3a95378d40078758ded799049cf683be6aea0beeeb923829c7f22ab503cd7cfb"
+    "{\"spell_id\": 1326047}",
+    "4a49ab59452e0ed30ec8f666bbbd985f99691deeefa09780fc5f3ef0e5169c44"
+   ],
+   [
+    "{\"spell_id\": 16166}",
+    "52c85a719eb09edc2c20661372dd251447f11203e4b44f86381492198faf6b39"
    ],
    [
     "{\"spell_id\": 421}",
-    "bcf6a244bb2cf4b53a18aeacd5b0540fdc80812f22937b4883b9ececa7ccc6cc"
+    "98054c5f3bf62ec0c32ca65b135bc05da6ed963dbf2edf6b0a1d80bfe47518ae"
    ],
    [
     "{\"spell_id\": 421, \"tag\": 6}",
-    "7cae99caa7b0545b3bbd9c9b04d1873413db4f15d852022314487ceaa93991b8"
+    "11dbf345b42021675a3d7d16ad7fedd8926d8eac319c95a829600aa3e1770c8e"
    ],
    [
     "{\"spell_id\": 930}",
-    "11a4c527e2849247669656593f29eb46a8ac1d4e3915fb7dc3825965c3f018ec"
+    "8aeb3ca0d370c339bee3e1c96f95545981bef6ac1511491bc08e34bdb41eeacd"
    ],
    [
     "{\"spell_id\": 930, \"tag\": 6}",
-    "f65fc58d0cc115d1f2a380964ff483b321b7365fcd17ed1954337be4d23f1d1b"
+    "45edcaa8fb71637771ab5272b9f0e04f28ab7bd59dd53a27785a8ed7153638a4"
    ],
    [
     "{\"spell_id\": 2860}",
-    "faacf6ab094c6eb53acdd2c0b0d441ddcefaf2fe500d052e6e785653eba7b1a3"
+    "295cdc9c28487458798f64da79919c78db6695c7640e51ca1b6d05a668cb8e9e"
    ],
    [
     "{\"spell_id\": 2860, \"tag\": 6}",
-    "19d83f1bc941884595b1c342ff536e3daac781f893a31dbd745acb7da120ec20"
+    "3a508d750e736a084ab6f454f8860bf3cefb26179a098d41819f6392eaec3195"
    ],
    [
     "{\"spell_id\": 10605}",
-    "0f83a42d40bdd2e4c0939b149c440df35166adf149744a05015cb35a64a4a384"
+    "3f57e2c1a0dd24fb32e923a27a8542ace81503c6d17fffc1193521f97b109cc2"
    ],
    [
     "{\"spell_id\": 10605, \"tag\": 6}",
-    "38fa02a158e6d6d9983418b214e848b02777b262649f6c226946191383ae384d"
+    "2d826f0f959463c92cd5d76ccdaa2a34397da7aba6b8a2dac96126b1b57bf90b"
    ],
    [
     "{\"spell_id\": 403}",
-    "ebf7ef29f848ff74e005b4bf20ab2a0816ca67db7ef08d2b176877d8ca122631"
+    "2ffc75d228a91719d4af0386bf37ce457c834ae8ae018a5c8b5adb6dfde27ac8"
    ],
    [
     "{\"spell_id\": 403, \"tag\": 6}",
-    "f9fb15520241c427538d80cc87c2fe7cf07bf863b0516e7f9beac6dc9ff307de"
+    "ad41b025fc93d002a3c88420a6e77404c5841dc0765690426891f06ada12d492"
    ],
    [
     "{\"spell_id\": 529}",
-    "ec9e8668b819c9cdcffdec9c8f3e0bcfd6c4e920d290eb8178b12e8a535269f0"
+    "5cb60feb163570084fe175f74a6c5d20aabeb83de64c38d913787085951b838b"
    ],
    [
     "{\"spell_id\": 529, \"tag\": 6}",
-    "328bea98f7aec5a6abf545dbac09b7be73793da04216e9cb0412a4af3a78873a"
+    "aade62ca128d5bc0e975e4725b3a9ff49fc16da78fc1690d53127f5650f87cd3"
    ],
    [
     "{\"spell_id\": 548}",
-    "ff8748eb8c8d5a24527e722ed52db033eccf867ccab2a91b955ca622afbc25d9"
+    "9b6426a99b691496b8c975bc3eb59637bcd89b348f741e30cd584ce5b1c30a4d"
    ],
    [
     "{\"spell_id\": 548, \"tag\": 6}",
-    "910fd0d21526afac5c6f74f5b465c927c4b1cd0be5c0a344abfb7953ae69947a"
+    "73a46925d1f646048ae4d000d1eaf7c07acd0d189cae24b348109e4b7b32fd28"
    ],
    [
     "{\"spell_id\": 915}",
-    "09105b3e23a8af9065f602927258eb1f4b83741198f5a3a018200462b62f45c1"
+    "f2405d812e69156728f6013e8ad940132ba60cc0e2a99e131f374b6be8380f39"
    ],
    [
     "{\"spell_id\": 915, \"tag\": 6}",
-    "d4683fb5aca87ec1145294881a0942e84b4e9e3f49f2ce2fa7c52e0a28df3ec9"
+    "dbb4b4474f00153d95566f5fab33fab528435967a8c76134eada2a4925f2bb70"
    ],
    [
     "{\"spell_id\": 943}",
-    "12760a09030771e07b5bb95248b0aa4a27445d2630b7efceff96c6770f70aff9"
+    "0b308906e599b37918d112dd7419decf6cd8c6bfb5aeeefb992d6173f54cc7eb"
    ],
    [
     "{\"spell_id\": 943, \"tag\": 6}",
-    "c7ed7435845569e729b63e85c8a0909924da9cd4bf0b9a4ec2ed8eba43b8dd26"
+    "d71110d15f6eacfaa38a23de4ebcf8e5ed633fc5e2edfc5a31a9109ef6c32a86"
    ],
    [
     "{\"spell_id\": 6041}",
-    "5f8ff6231e4017a5a8beefc2c3143c9026713c955dc72d5653afdfcac68df813"
+    "29a072b6888571f3923a77bb66d0bc375433bbe9fde5a2fc194dca20b14f48a1"
    ],
    [
     "{\"spell_id\": 6041, \"tag\": 6}",
-    "2ce7e7646b611d97f9c3ed579b8c37d2a9097c0a6641b09a21179ead427e5740"
+    "026c500c2c6841c1f3eb1a37e1b58e83ca41726dc373e0740fb96380f2a00503"
    ],
    [
     "{\"spell_id\": 10391}",
-    "d57003b4cec3eead6f6908a2ff01d4304c4829d5b09a180ae3a071109bf23643"
+    "706c131cc3796b0fc00577ac4629569deefb87c5075cc3e0f124de14461dbc2a"
    ],
    [
     "{\"spell_id\": 10391, \"tag\": 6}",
-    "0684a05f65d63bbe49d9184f98a4f57898469827b21b8fbaa4976f018a39b482"
+    "d00cc39cf44db40bf8b97dae9a3c55027073eea3cc8a67c28157b76b8f392145"
    ],
    [
     "{\"spell_id\": 10392}",
-    "26be55186592a657e326e5f233cb2b0145f47d4fd84b769d43d462026f1ee111"
+    "fd483c8b2eadebbec69082b2767cc6b64847570ded93f3368160484bd124a69c"
    ],
    [
     "{\"spell_id\": 10392, \"tag\": 6}",
-    "7cbc2477b66180853c8632827f861a5707004be6716163e2e3bdabe0d1946ee6"
+    "4092a6c768da8b0b3088121c9f1a0bbfdc58ccdac459220d1c9a8c16e12f4048"
    ],
    [
     "{\"spell_id\": 15207}",
-    "20a16d7bc5ba52472e7e0f1da67b7af731d5b8268287e021340849c54a9ec5f9"
+    "27d9c1d469a62b5f0cf0023f02bb614f1aebd96b414b1eef9cadd92d38ba7ef5"
    ],
    [
     "{\"spell_id\": 15207, \"tag\": 6}",
-    "1d944b32e803be3f41d79706210cffad4fe04da32a968631615ac7e29cdbed7b"
+    "a304e5064651a599ff18a2039970403deac5cca41a4fee5b56ba35611ef9d30e"
    ],
    [
     "{\"spell_id\": 15208}",
-    "2a157dc56539968d5b6b3613fac66ecd75a173c74671da397fec8fefc71bc396"
+    "6e91a866f9dbda23132321dad48e43098a76df9604baab1f0b9dc8253e8c4721"
    ],
    [
     "{\"spell_id\": 15208, \"tag\": 6}",
-    "68f1aad0b3440c13c8a64b14075e15a63bf29577fb917ae6bc94f9d22db95d3c"
+    "ffe4547d65f60d24d6951d8dd841786e39bccb54834bacb3189e47777b3886a1"
    ],
    [
     "{\"spell_id\": 26363}",
@@ -298,7 +315,7 @@
    ],
    [
     "{\"spell_id\": 10587}",
-    "744ef68d09ab08147e016c3cf0e940cd641f82d2456205ee0b333be139385cc4"
+    "f22e98508792d0346e5597339d09607ca12345c901e0e4f961df781726363003"
    ],
    [
     "{\"spell_id\": 10436}",
@@ -318,7 +335,7 @@
    ],
    [
     "{\"spell_id\": 408345}",
-    "eeac77e07ae33c1d9e7bce5009ca0acd6b29c146b1a21248b5d9d91086de64bd"
+    "7b3c45d0c6e2a571b17a6c834abb182f8fd61e5b7d0d425555b0e1d0d8990798"
    ],
    [
     "{\"spell_id\": 10614}",
@@ -338,19 +355,19 @@
    ],
    [
     "{\"spell_id\": 10414}",
-    "21fb61651dc85eb18f600f94828b292c6ce33dc03eed7a89e3ef431712d66e51"
+    "0ba900d694dfd55a773c5b469ab6e53f484648856e8f9fe565703ab0403f2fd0"
    ],
    [
     "{\"spell_id\": 29228}",
-    "faa8599231e3997d24dac86beb9e490f44deac435f995c4d454b878bb3e8f2f4"
+    "1105acc2daac7bc0555cc35272b3d3bf6c6927a0acfd1836738d69bf84eb1603"
    ],
    [
     "{\"spell_id\": 29228, \"tag\": 1}",
-    "65527bedada164d96b98d46acf298e35f8d93d0ec58f8d94845b24bdd365f656"
+    "4d45baa2e7966eeacb765fa6c64cf0102fc5b5f2b6543350fea745ead9b7d8c4"
    ],
    [
     "{\"spell_id\": 10473}",
-    "ae590fa140a0c95df0c24ffb59fe26e3a642c91505da4f7ad7ca0e16036ffa9b"
+    "2a45759d808ed09a0ea243243a7d13fe94de91e203b12d289e97e09d914780e7"
    ],
    [
     "{\"other_id\": \"OtherActionMove\"}",
@@ -361,8 +378,8 @@
     "ffd4bd5734b792621f498569aeed550d25fdf3563c6f030b76d472b9b295fd50"
    ]
   ],
-  "player.stats": "80260cf4eddc3f8be6a705b228d3c7e4cbb131ae71947799f8a383481979262f",
-  "player.talents": "9b7df04dc8e92bd66d69a476584119c713e890a5b6ce9f2aa2509fafeae43af5",
+  "player.stats": "005900ebd6f152f041620a86fecdd458a9422f161366db4404bd2622d378ca50",
+  "player.talents": "e23757a4181f17df45603e14fc8eb0b37a940d246634bece14b4b7f26e33add4",
   "target.auras": [
    [
     "Searing Totem-1",

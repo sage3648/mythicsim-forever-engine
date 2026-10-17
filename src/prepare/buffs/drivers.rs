@@ -12,6 +12,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
 
 use super::super::character::cooldown_type;
+use super::super::dbcenums;
 use super::super::env::Environment;
 use super::super::external_cooldowns;
 use super::super::periodic_action::PeriodicActionOptions;
@@ -26,7 +27,8 @@ use super::super::Refusal;
 use super::generated::{
     ATIESH_DRUID, ATIESH_MAGE, ATIESH_PRIEST, ATIESH_WARLOCK, BATTLE_SHOUT, GRACE_OF_AIR_TOTEM,
     GREATER_BLESSING_OF_LIGHT, INNERVATES, JUDGEMENT_OF_LIGHT, JUDGEMENT_OF_WISDOM,
-    MANA_TIDE_TOTEMS, POWER_INFUSIONS, SUNDER_ARMOR, WINDFURY_TOTEM,
+    LEADER_OF_THE_PACK, MANA_TIDE_TOTEMS, MOONKIN_AURA, POWER_INFUSIONS, SUNDER_ARMOR,
+    WINDFURY_TOTEM,
 };
 use super::paladin;
 use super::support::{
@@ -44,20 +46,11 @@ pub(crate) const INNERVATE_SPIRIT_REGEN_MULTIPLIER: f64 = 5.0;
 /// Battle Shout family. The resolver reads no ItemSetSpell, so the amount is stated here.
 pub(crate) const BATTLE_SHOUT_T2_BONUS: f64 = 30.0;
 
-/// Go `AirTotemCategory`: since build 70009 Tranquil Air, Windfury and Grace of Air totems no
-/// longer stack, even from different shamans in the group. One air totem stands: a totem the
-/// shaman casts replaces the one the party buffs assume, and of the two party buffs Windfury
-/// holds.
-pub(crate) const AIR_TOTEM_CATEGORY: &str = "AirTotem";
-
-/// Go `AirTotemPartyGraceOfAir`, `AirTotemPartyWindfury`, `AirTotemCastGraceOfAir` and
-/// `AirTotemCastWindfury`: what each bids in the category.
-pub(crate) const AIR_TOTEM_PARTY_GRACE_OF_AIR: f64 = 1.0;
-pub(crate) const AIR_TOTEM_PARTY_WINDFURY: f64 = 2.0;
-#[allow(dead_code)]
-pub(crate) const AIR_TOTEM_CAST_GRACE_OF_AIR: f64 = 3.0;
-#[allow(dead_code)]
-pub(crate) const AIR_TOTEM_CAST_WINDFURY: f64 = 4.0;
+// Build 70009 made Tranquil Air, Windfury and Grace of Air totems exclusive, even from different
+// shamans in the group. The 16 October 2026 beta notes take Grace of Air back out: it is no longer
+// exclusive with Windfury Totem or Flametongue Totem, while those two stay exclusive with each
+// other. So the party's Grace of Air stacks with either. A single shaman still has one air totem
+// slot, which the shaman's own cast totems keep.
 
 /// Go `driveBattleShout`: the party's Battle Shout is the external caster's copy, which chains
 /// behind the player's own shout rather than being up from the start. Its improved state says
@@ -266,15 +259,6 @@ pub(crate) fn drive_windfury_totem(
         }),
     );
 
-    // Joined first, so a cast air totem refuses the aura before it arms the proc.
-    env.sim.new_exclusive_effect(
-        totem_aura,
-        AIR_TOTEM_CATEGORY,
-        true,
-        AIR_TOTEM_PARTY_WINDFURY,
-        None,
-        None,
-    );
     super::flametongue::windfury_totem_disables_flametongue_totem(&mut env.sim, totem_aura);
     env.sim.new_exclusive_effect(
         totem_aura,
@@ -301,15 +285,10 @@ pub(crate) fn drive_grace_of_air_totem(
     party: &Message,
 ) -> Result<(), Refusal> {
     let aura = GRACE_OF_AIR_TOTEM.aura(&mut env.sim, unit, false, 0, 0.0);
-    env.sim.new_exclusive_effect(
-        aura,
-        AIR_TOTEM_CATEGORY,
-        true,
-        AIR_TOTEM_PARTY_GRACE_OF_AIR,
-        None,
-        None,
-    );
-    if !party.bool("totem_twisting") {
+    // With the party's Windfury Totem set as well the two are different shamans' totems, which
+    // stack since the 16 October 2026 beta notes, so Grace of Air stands with no twisting
+    // downtime.
+    if !party.bool("totem_twisting") || party.bool("windfury_totem") {
         env.sim.make_permanent(aura);
         return Ok(());
     }
@@ -328,9 +307,9 @@ pub(crate) fn drive_grace_of_air_totem(
     Ok(())
 }
 
-/// Go `driveRetributionAura`: the party's Retribution Aura is the top rank, and its damage
-/// carries the holder's own Holy spell power. The party's `retribution_aura_spell_power` is
-/// retired and nothing reads it.
+/// Go `driveRetributionAura`: the party's Retribution Aura is the top rank at its base damage: it
+/// scales with the paladin's spell power, which the party config does not carry. The party's
+/// `retribution_aura_spell_power` is retired and nothing reads it.
 pub(crate) fn drive_retribution_aura(
     env: &mut Environment,
     unit: UnitId,
@@ -465,4 +444,41 @@ pub(crate) fn drive_sunder_armor(
         },
     );
     Ok(())
+}
+
+/// Go `driveLeaderOfThePack`: the client row is A_MOD_CRIT_PCT, every kind of crit, and 17007
+/// makes it exclusive with Moonkin Aura. The 16 October 2026 beta notes keep it to melee and
+/// ranged crit and let the two stack, so it bids in a category of its own and its row's crit is
+/// read as physical crit, at the client's amount, until the client data moves.
+pub(crate) fn drive_leader_of_the_pack(
+    env: &mut Environment,
+    unit: UnitId,
+    _party: &Message,
+) -> Result<(), Refusal> {
+    narrowed_crit_buff(
+        env,
+        unit,
+        &LEADER_OF_THE_PACK,
+        dbcenums::A_MOD_WEAPON_CRIT_PERCENT,
+    );
+    Ok(())
+}
+
+/// Go `driveMoonkinAura`: since the 16 October 2026 beta notes Moonkin Aura is spell crit alone,
+/// in a category of its own.
+pub(crate) fn drive_moonkin_aura(
+    env: &mut Environment,
+    unit: UnitId,
+    _party: &Message,
+) -> Result<(), Refusal> {
+    narrowed_crit_buff(env, unit, &MOONKIN_AURA, dbcenums::A_MOD_SPELL_CRIT_CHANCE);
+    Ok(())
+}
+
+/// Go `narrowedCritBuff`: the buff with its row's A_MOD_CRIT_PCT read as one kind of crit.
+fn narrowed_crit_buff(env: &mut Environment, unit: UnitId, meta: &super::Meta, kind: i32) {
+    let mut options = meta.options(0);
+    options.read_as.push((dbcenums::A_MOD_CRIT_PCT, kind));
+    let aura = meta.buff(&mut env.sim, unit, false, 0, options);
+    env.sim.make_permanent(aura);
 }

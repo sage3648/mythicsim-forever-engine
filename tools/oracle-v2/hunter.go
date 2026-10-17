@@ -33,6 +33,11 @@ func init() {
 	// pet.go: the pet is enabled on start and never summoned after; its rotation may disable it
 	// once the fight passes its uptime, which the hunter_pet effect describes.
 	resetOnlyPetClasses[proto.Class_ClassHunter] = true
+	// pet.go trackPetCritOffset (patches 136 and 138): the pet's disable callback clears the crit
+	// offset its owner keeps for the inheritance and moves no stat.
+	statCallbackPets = append(statCallbackPets, func(pet *core.Pet) bool {
+		return pet.Owner != nil && pet.Owner.Class == proto.Class_ClassHunter && pet.EnabledOnStart() && !pet.IsGuardian()
+	})
 }
 
 // Hunter class masks are Go-internal bit positions (sim/hunter/hunter.go). Export the stable class
@@ -613,6 +618,8 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 		effects = append(effects, map[string]any{
 			"kind": "immolation_trap", "spell_id": h.ImmolationTrap.ActionID.SpellID,
 			"tick_base": effect.PeriodicEffect().Average(core.CharacterLevel),
+			// traps.go trapAttackPowerShare (patch 147), split over the burn's ticks.
+			"attack_power_share": 0.13,
 			// spelldata TickOutcomeHitRolled: a crit where the effect row states Periodic Can Crit.
 			"tick_can_crit": effect.PeriodicCanCrit(), "tick_magic": h.ImmolationTrap.DefenseType == core.DefenseTypeMagic,
 		})
@@ -628,6 +635,8 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 		effects = append(effects, map[string]any{
 			"kind": "explosive_trap", "spell_id": h.ExplosiveTrap.ActionID.SpellID,
 			"hit_min": hitRange[0], "hit_max": hitRange[1], "hits": character.Env.ActiveTargetCount(),
+			// traps.go explosiveTrapHitDamage: trapAttackPowerShare (patch 147) on each hit's roll.
+			"attack_power_share": 0.13,
 			"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier(),
 			"tick_base":          effect.Effect(dbcenums.A_PERIODIC_DAMAGE, 0).Average(core.CharacterLevel),
 			"tick_can_crit":      effect.PeriodicCanCrit(), "tick_magic": h.ExplosiveTrap.DefenseType == core.DefenseTypeMagic,
@@ -651,6 +660,8 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 			"kind": "resourcefulness", "trigger_aura": trigger.Label, "aura": character.GetAura("Resourcefulness").Label,
 			"proc_chance": 0.5 * float64(talents.Resourcefulness),
 			"regen":       buff.Effect(dbcenums.A_MOD_MANA_REGEN_INTERRUPT, 0).Average(core.CharacterLevel) / 100,
+			// 16 October 2026 beta notes: only melee and ranged ability crits.
+			"spells": procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeSpecial | core.ProcMaskRangedSpecial}),
 		})
 	}
 	if trigger := character.GetAura("Expose Prey"); trigger != nil {

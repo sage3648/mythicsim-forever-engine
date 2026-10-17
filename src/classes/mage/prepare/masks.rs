@@ -35,9 +35,11 @@ pub(crate) const MANA_GEM: i64 = 1 << 30;
 pub(crate) const COMBUSTION: i64 = 1 << 31;
 pub(crate) const IMPROVED_BLIZZARD: i64 = 1 << 32;
 pub(crate) const FROSTFIRE_BOLT: i64 = 1 << 33;
+/// Arcane talent of client 70425 (16 October 2026 beta).
+pub(crate) const ARCANE_WRATH: i64 = 1 << 34;
 
 /// `MageSpellLast`.
-const LAST: i64 = 1 << 34;
+const LAST: i64 = 1 << 35;
 /// `MageSpellsAll`.
 pub(crate) const ALL: i64 = (LAST << 1) - 1;
 /// `MageSpellsAllDamaging`.
@@ -56,7 +58,8 @@ pub(crate) const ALL_DAMAGING: i64 = ARCANE_BLAST
     | BLAST_WAVE
     | CONE_OF_COLD
     | FROST_NOVA
-    | FROSTFIRE_BOLT;
+    | FROSTFIRE_BOLT
+    | ARCANE_WRATH;
 /// `MageSpellInstantCast`.
 pub(crate) const INSTANT_CAST: i64 = ARCANE_MISSILES_CAST
     | ARCANE_MISSILES_TICK
@@ -70,5 +73,3 @@ pub(crate) const INSTANT_CAST: i64 = ARCANE_MISSILES_CAST
     | PRESENCE_OF_MIND;
 /// `MageSpellArcaneMissiles`.
 pub(crate) const ARCANE_MISSILES: i64 = ARCANE_MISSILES_CAST | ARCANE_MISSILES_TICK;
-/// `MageSpellChill`.
-pub(crate) const CHILL: i64 = FROSTBOLT | CONE_OF_COLD | FROSTFIRE_BOLT | IMPROVED_BLIZZARD;

@@ -452,6 +452,8 @@ pub struct ImprovedSealOfFury {
     pub max_levels: f64,
     pub levels: f64,
     pub metrics_action_id: ActionId,
+    /// Its mana makes no threat (client 70374).
+    pub no_threat: bool,
 }
 
 /// A Seal of the Crusader rank: its seal, judgement, the judgement's target aura, the melee
@@ -775,9 +777,22 @@ pub struct Spell {
     /// Go `MetricSplits`: the spell reports one tagged metric entry per split.
     #[serde(default, skip_serializing_if = "is_zero_usize")]
     pub metric_splits: usize,
+    /// Go `RankAliases`: older rank IDs a rotation may still name, which `GetAPLSpell` falls
+    /// back to (Lava Burst rank 4, client 70425).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rank_aliases: Vec<ActionId>,
 }
 
 impl Spell {
+    /// Go `slices.ContainsFunc(RankAliases, id.SameAction)`.
+    pub fn has_rank_alias(&self, id: &ActionId) -> bool {
+        self.rank_aliases.iter().any(|alias| {
+            alias.spell_id == id.spell_id
+                && alias.item_id == id.item_id
+                && alias.other_id == id.other_id
+        })
+    }
+
     pub fn has_flag(&self, flag: &str) -> bool {
         self.flags.iter().any(|f| f == flag)
     }
@@ -842,6 +857,10 @@ pub struct Player {
     /// the rotation, by spell.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rotation_dot_base_durations: Vec<RotationDotBaseDuration>,
+    /// What the rotation's values read that the rest of the input leaves out, for a rotation
+    /// that holds such a value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rotation_reads: Option<RotationReads>,
 }
 
 /// What `APLValueDotBaseDuration` captured for a spell: the dot's `BaseDuration` on the first
@@ -851,6 +870,74 @@ pub struct Player {
 pub struct RotationDotBaseDuration {
     pub spell: ActionId,
     pub base_duration_ns: i64,
+}
+
+/// What the rotation's values read that the rest of the input leaves out.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RotationReads {
+    /// Go apl_values_consumables.go: the potion and the conjured item the consumables select.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub potion_id: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conjured_id: Option<i32>,
+    /// Go apl_values_boss.go: the spells the first target knows that a boss value names.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub target_spells: Vec<RotationTargetSpell>,
+    /// Go `APLValueMultipleCdUsages`: the related self buff of each spell it names that has one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub self_buffs: Vec<RotationSelfBuff>,
+    /// Go `Character.ItemProcBuffs`, which the item stat proc values filter by stat and ICD.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub item_proc_buffs: Vec<RotationItemProcBuff>,
+    /// The major cooldowns whose buff aura moves one of the stats a stat buff cooldown value
+    /// names, as the value finds them while the rotation is built, by the stats.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cooldown_buffs: Vec<RotationCooldownBuffs>,
+    /// The spells each `castAllStatBuffCooldowns` casts, by its stats.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cast_cooldowns: Vec<RotationCooldownBuffs>,
+}
+
+/// A `StatBuffAura` of `Character.ItemProcBuffs`: the aura's label, the stats it buffs as Go's
+/// stat indices, and whether it is swapped out.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RotationItemProcBuff {
+    pub aura: String,
+    pub stats: Vec<i32>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub swapped: bool,
+}
+
+/// The major cooldowns matching stats: their spells and their buff auras' labels.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RotationCooldownBuffs {
+    pub stats: Vec<i32>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub spells: Vec<ActionId>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub auras: Vec<String>,
+}
+
+/// A spell the first target knows, which its identical copies share.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RotationTargetSpell {
+    pub spell: ActionId,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub has_cooldown: bool,
+}
+
+/// A spell's `RelatedSelfBuff`, by the aura's label, and whether the spell has a cooldown.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RotationSelfBuff {
+    pub spell: ActionId,
+    pub aura: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub has_cooldown: bool,
 }
 
 /// A pet Go enables at each reset, as core/pet.go builds it.
@@ -913,6 +1000,11 @@ pub struct Pet {
     /// What each permanent aura's expiry adds to the stats before dependencies.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aura_stats: Vec<PetAuraStats>,
+    /// What the pet's `OnPetDisable` adds to the stats before dependencies, after Disable takes
+    /// the inheritance away and before its auras expire, for a pet whose enable and disable
+    /// callbacks only move stats.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub disable_stats: BTreeMap<String, f64>,
 }
 
 /// The change a pet aura's expiry makes to the pet's stats before dependencies, Go
@@ -1407,7 +1499,7 @@ impl ExternalActivation {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
-    /// The Gnome racial Eureka!: a major cooldown whose three stacks lower the cost and raise
+    /// The Gnome racial Eureka!: a major cooldown whose 8 second buff lowers the cost and raises
     /// the damage of the spells the class names, resolved into spell positions.
     Eureka {
         spell_id: i32,
@@ -1418,9 +1510,19 @@ pub enum Effect {
         cost_spells: Vec<usize>,
         damage_spells: Vec<usize>,
         tick_cancel_spells: Vec<usize>,
-        spending_spells: Vec<usize>,
     },
     /// The Undead racial Touch of the Grave: landed hits can drain the target.
+    /// items_70425.go Blade of Hanna: a landed main hand swing among `trigger_spells` stacks
+    /// `stacks_aura`; at its most the stacks go, `strike_spell` deals `damage` to the target on the
+    /// melee special table, and `buff_aura`, a stat aura, comes up.
+    BladeOfHanna {
+        trigger_aura: String,
+        stacks_aura: String,
+        buff_aura: String,
+        damage: f64,
+        strike_spell: usize,
+        trigger_spells: Vec<usize>,
+    },
     TouchOfTheGrave {
         trigger_aura: String,
         drain_spell_id: i32,
@@ -1578,6 +1680,9 @@ pub enum Effect {
         moonkin_cooldown_multiplier: f64,
         cost_spells: Vec<usize>,
         cost_percent_add: f64,
+        /// The spells that never trigger it in Cat or Bear Form: Faerie Fire since the 16 October
+        /// 2026 beta notes.
+        form_excluded_spells: Vec<usize>,
     },
     /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
     NaturesGrace {
@@ -2096,6 +2201,8 @@ pub enum Effect {
         proc_chance: f64,
         mana_share: f64,
         metrics_action_id: ActionId,
+        /// Its mana makes no threat (client 70374).
+        no_threat: bool,
     },
     /// Paladin talents_protection.go Reckoning: blocks and crits taken can grant an extra
     /// attack.
@@ -2104,6 +2211,12 @@ pub enum Effect {
         crit_aura: String,
         block_chance: f64,
         crit_chance: f64,
+        /// The charges each trigger adds behind the shared cooldown, which the next main hand
+        /// auto spends on one free main hand swing each (16 October 2026 beta notes).
+        charges_aura: String,
+        icd_ns: i64,
+        /// The spells that spend the charges: every main hand auto.
+        spender_spells: Vec<usize>,
     },
     /// Paladin talents_protection.go Iron Creed: a landed Holy Strike under Righteous Fury
     /// lowers damage taken.
@@ -2355,6 +2468,18 @@ pub enum Effect {
     MindFlay {
         ranks: Vec<FireballRank>,
     },
+    /// Improved Mind Flay (client 70425): each Mind Flay tick deals `ramp_per_tick` more than the
+    /// one before, a step added per tick.
+    ImprovedMindFlay {
+        ramp_per_tick: f64,
+    },
+    /// Dark Inspiration (client 70425): Mind Blast's cast and a full Mind Flay channel's last tick
+    /// activate `aura`, a stat aura.
+    DarkInspiration {
+        aura: String,
+        mind_blast_trigger: String,
+        mind_flay_trigger: String,
+    },
     /// Holy Nova: each rank's rolled hit, then its triggered heal on the priest, with the
     /// healing modifiers Go reads.
     HolyNova {
@@ -2428,8 +2553,9 @@ pub enum Effect {
         trigger_immediately: bool,
         proc_chance: f64,
         trigger_spells: Vec<usize>,
+        /// Each stack of the target's debuff `aura` multiplies this priest's Shadow damage on
+        /// that target (community #777).
         damage_per_stack: f64,
-        damage_spells: Vec<usize>,
     },
     /// Dark Sacrifice: a self-only periodic mana gain of the client base plus Spirit over a
     /// divisor, a major cooldown used once the whole gain fits.
@@ -2456,11 +2582,12 @@ pub enum Effect {
         ranks: Vec<FireballRank>,
     },
     /// Power in Light: the target's dynamic damage taken modifier multiplies `spells` while any
-    /// Holy Fire in `holy_fire_spells` burns it.
+    /// dot in `dot_spells` burns it: Holy Fire, and since the 16 October 2026 beta notes Shadow
+    /// Word: Pain.
     PowerInLight {
         multiplier: f64,
         spells: Vec<usize>,
-        holy_fire_spells: Vec<usize>,
+        dot_spells: Vec<usize>,
     },
     /// Searing Light: Holy Fire ticks may grant a free Holy Nova.
     SearingLight {
@@ -2562,6 +2689,8 @@ pub enum Effect {
     HeatingUp {
         aura: String,
         trigger_aura: String,
+        /// The trigger that adds a stack on every Fire Blast cast (community #808).
+        fire_blast_trigger_aura: String,
         cast_time_per_stack: f64,
     },
     /// Combustion's major cooldown and stacking Fire crit buff.
@@ -2630,11 +2759,30 @@ pub enum Effect {
         cast_time_percent: f64,
     },
     /// Arcane Blast and its stacking buff.
+    /// Arcane Blast and its stacks (client 70425): each stack's spell damage from Intellect is a
+    /// stacking stat aura; the stacks raise Arcane Blast's own cost.
     ArcaneBlast {
         spell_id: i32,
         aura: String,
-        damage_per_stack: f64,
+        /// The share of Intellect each stack gives as spell damage, for the log line.
+        intellect_per_stack: f64,
+        /// The Intellect left once an iteration's end has deactivated the auras registered
+        /// before the stacks', which their last log line reads.
+        done_intellect: f64,
         cost_per_stack: f64,
+    },
+    /// Arcane Wrath (client 70425): the hit adds `mana_share` of maximum mana as spell damage at
+    /// its `coefficient`.
+    ArcaneWrath {
+        spell_id: i32,
+        coefficient: f64,
+        mana_share: f64,
+    },
+    /// Fire Power (client 70425): Fire spells, Ignite aside, deal `per_effect` more per Fire
+    /// effect of the mage on the target, up to `max_effects`.
+    FirePower {
+        per_effect: f64,
+        max_effects: i32,
     },
     IceLance {
         spell_id: i32,
@@ -2642,9 +2790,6 @@ pub enum Effect {
     },
     ArcaneMissiles {
         ranks: Vec<MissileRank>,
-        /// The additive damage bonus each Arcane Blast stack the channel spent gives its
-        /// missiles.
-        arcane_blast_bonus_per_stack: f64,
     },
     ColdSnap {
         spell_id: i32,
@@ -2674,6 +2819,8 @@ pub enum Effect {
         trigger_aura: String,
         aura: String,
         arcane_blast_chance: f64,
+        /// An Arcane Missiles missile's chance (client 70425).
+        missile_chance: f64,
         bolt_chance: f64,
         rng_label: String,
         cost_percent_add: f64,
@@ -2693,7 +2840,8 @@ pub enum Effect {
         talent_rank: i32,
         proc_chance: f64,
         max_stacks: i32,
-        crit_per_stack: f64,
+        /// Each stack's Cone of Cold damage (client 70425).
+        damage_per_stack: f64,
         duration_ns: i64,
         trigger_aura: String,
         aura: String,
@@ -3096,6 +3244,8 @@ pub enum Effect {
         melee_crit: f64,
         /// Whether a crit from a spell flagged Proc can trigger it.
         can_proc_from_procs: bool,
+        /// The class spells whose crits never trigger it (community #789).
+        excluded_class_spells: Vec<String>,
     },
     /// Flurry: melee crits grant charges of melee speed that white hits spend.
     Flurry {
@@ -3143,13 +3293,12 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         duration_ns: i64,
-        /// Whether a party air totem holds the slot the cast would contest.
-        party_air_totem: bool,
     },
     /// The shaman's own Windfury Totem: the totem's aura refreshes a tracking aura and a dummy
     /// aura every period, the dummy's exclusive effect turns the trigger on, and the trigger
     /// grants the proc aura's charges and an extra main hand attack. Spellbook positions name
-    /// the spells; `contested` says a party air totem or a main hand imbue would contest it.
+    /// the spells; `contested` says the party's Windfury Totem or a main hand imbue would contest
+    /// it.
     WindfuryTotemSelf {
         spell_id: i32,
         totem_aura: String,
@@ -3240,6 +3389,14 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         melee_speed_multiplier: f64,
+    },
+    /// Elemental Mastery (client 70425): a major cooldown whose aura makes Lightning Bolt and
+    /// Lava Burst cast faster and cancels Chain Lightning's cooldown.
+    ElementalMastery {
+        spell_id: i32,
+        aura: String,
+        cast_time_delta_ns: i64,
+        chain_lightning_cooldown_ns: i64,
     },
     /// Elemental Focus: a completed elemental cast may grant Clearcasting.
     ElementalFocus {
@@ -3485,6 +3642,9 @@ pub enum Effect {
         proc_chance: f64,
         extra_attack_tag: i32,
         sword_hands: Vec<String>,
+        /// The class spells that never trigger it: Shield Bash and Shield Slam since the 16
+        /// October 2026 beta notes.
+        excluded_class_spells: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {
@@ -3560,13 +3720,11 @@ pub enum Effect {
         proc_chance: f64,
         delay_ns: i64,
     },
-    /// Blood Craze: a hot of maximum health after a crit or a large hit taken, or a landed
-    /// Bloodthirst.
+    /// Blood Craze: a hot of maximum health after a crit or a large hit taken.
     BloodCraze {
         spell_id: i32,
         heal: HealModifiers,
         damage_taken_aura: String,
-        bloodthirst_aura: String,
         health_fraction: f64,
         hit_threshold: f64,
     },
@@ -3708,6 +3866,8 @@ pub enum Effect {
         proc_chance: f64,
         min_damage: f64,
         max_damage: f64,
+        /// The share of attack power each hit adds (community #781).
+        attack_power_share: f64,
     },
     DeadlyPoison {
         trigger_aura: String,
@@ -3716,6 +3876,9 @@ pub enum Effect {
         proc_mask: Vec<String>,
         proc_chance: f64,
         tick_damage: f64,
+        /// The share of attack power each stack adds to a tick, read at the tick (community
+        /// #781).
+        attack_power_share: f64,
     },
     /// Go sim/rogue/stealth.go and vanish.go: Stealth before the pull, and Vanish.
     Stealth {
@@ -3911,6 +4074,9 @@ pub enum Effect {
     ImmolationTrap {
         spell_id: i32,
         tick_base: f64,
+        /// The share of the higher of ranged and melee attack power the whole burn takes, a Go
+        /// literal (patch 147), split over its ticks.
+        attack_power_share: f64,
         /// Whether the effect row lets a tick crit, and whether the trap is a magic spell.
         tick_can_crit: bool,
         tick_magic: bool,
@@ -3922,6 +4088,9 @@ pub enum Effect {
         spell_id: i32,
         hit_min: f64,
         hit_max: f64,
+        /// The share of the higher of ranged and melee attack power each hit adds to its roll,
+        /// a Go literal (patch 147); the burning ground takes none.
+        attack_power_share: f64,
         hits: i32,
         aoe_cap_multiplier: f64,
         tick_base: f64,
@@ -3942,6 +4111,8 @@ pub enum Effect {
         aura: String,
         proc_chance: f64,
         regen: f64,
+        /// The spells whose crits it hears: melee and ranged abilities (16 October 2026 notes).
+        spells: Vec<usize>,
     },
     /// Rapid Recuperation: Serpent Sting's landed hit grants casting regeneration.
     RapidRecuperation {
@@ -4172,6 +4343,8 @@ impl Effect {
         match self {
             Effect::Frostbolt {} => "frostbolt",
             Effect::ArcaneBlast { .. } => "arcane_blast",
+            Effect::ArcaneWrath { .. } => "arcane_wrath",
+            Effect::FirePower { .. } => "fire_power",
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
             Effect::FireBlast {} => "fire_blast",
@@ -4189,6 +4362,7 @@ impl Effect {
             Effect::FrostfireBolt { .. } => "frostfire_bolt",
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
+            Effect::BladeOfHanna { .. } => "blade_of_hanna",
             Effect::Eureka { .. } => "eureka",
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
@@ -4214,6 +4388,8 @@ impl Effect {
             Effect::ShadowWordPain { .. } => "shadow_word_pain",
             Effect::DevouringPlague { .. } => "devouring_plague",
             Effect::MindFlay { .. } => "mind_flay",
+            Effect::ImprovedMindFlay { .. } => "improved_mind_flay",
+            Effect::DarkInspiration { .. } => "dark_inspiration",
             Effect::Starshards { .. } => "starshards",
             Effect::HolyNova { .. } => "holy_nova",
             Effect::Shadowfiend { .. } => "shadowfiend",
@@ -4370,6 +4546,7 @@ impl Effect {
             Effect::ImprovedStormstrike { .. } => "improved_stormstrike",
             Effect::MaelstromWeapon { .. } => "maelstrom_weapon",
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
+            Effect::ElementalMastery { .. } => "elemental_mastery",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::FrostShock { .. } => "frost_shock",
             Effect::WeaponSync { .. } => "weapon_sync",

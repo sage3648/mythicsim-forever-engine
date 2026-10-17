@@ -12,6 +12,7 @@
 
 mod absorb;
 mod aura;
+mod blade_of_hanna;
 mod cast;
 mod cleave;
 mod damage;
@@ -211,6 +212,17 @@ pub(crate) trait Agent: Sized {
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
+    /// For a class cooldown whose [`Agent::should_activate`] just refused it: until when the
+    /// clock alone cannot make it accept while nothing a cached look reads changes. `None`
+    /// where the class does not say, and the autocast promises nothing past this look. A rule
+    /// whose answer can change as energy rises has none.
+    fn should_activate_until(
+        _fight: &Fight<Self>,
+        _spell: SpellId,
+        _behavior: Self::Spell,
+    ) -> Option<i64> {
+        None
+    }
     /// The `WaitTravelTime` callback of a class spell scheduled with
     /// [`Fight::class_after_travel`]: by default the result is dealt on arrival.
     fn on_travel(
@@ -227,6 +239,16 @@ pub(crate) trait Agent: Sized {
         _fight: &Fight<Self>,
         _spell: SpellId,
         _target: Side,
+    ) -> Option<f64> {
+        None
+    }
+    /// A class spell's Go `ExpectedTickDamage` on a target, from the dot's snapshot or for a
+    /// tick cast now, where the class computes it itself.
+    fn expected_tick_damage(
+        _fight: &mut Fight<Self>,
+        _spell: SpellId,
+        _target: Side,
+        _snapshot: bool,
     ) -> Option<f64> {
         None
     }
@@ -482,6 +504,12 @@ pub(crate) enum SpellBehavior<S> {
     SulfurasFireball {
         min: f64,
         max: f64,
+    },
+    /// A fixed amount on a physical attack table, which rolls no damage: Blade of Hanna's
+    /// Perfected Form.
+    FixedTableDamage {
+        damage: f64,
+        outcome: melee::PhysicalOutcome,
     },
     /// A fixed hit that always lands, as Sulfuras's Immolation casts.
     FixedHit(f64),
@@ -767,6 +795,8 @@ pub(crate) struct Spell<S> {
     /// Go `CastRequirement`, as the player auras whose form it refuses.
     pub(crate) requirement_auras: Vec<AuraRef>,
     pub(crate) class_spell: Option<String>,
+    /// Go `RankAliases`: older rank IDs a rotation may still name.
+    pub(crate) rank_aliases: Vec<ActionId>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
     pub(crate) cast_kind: crate::contracts::prepared_v2::CastKind,
@@ -827,6 +857,10 @@ pub(crate) struct Spell<S> {
     pub(crate) split_actions: Vec<usize>,
     /// The current split, which Go keeps across iterations.
     pub(crate) split: usize,
+    /// Go `Spell.casts`: the casts whose effects applied this iteration, prepull casts included.
+    pub(crate) casts: u32,
+    /// Go `Unit.SpellsInFlight` of the spell: its travel callbacks still pending.
+    pub(crate) in_flight: u32,
 }
 
 /// Go `Hardcast`.
@@ -954,6 +988,9 @@ pub(crate) struct Player {
     /// Go `Unit.Moving` and its pending movement.
     pub(crate) moving: bool,
     pub(crate) movement: Option<movement::Movement>,
+    /// Go `Unit.movementEndedAt`: when the unit last stopped moving, `-NEVER_EXPIRES` while it
+    /// has not moved this iteration.
+    pub(crate) movement_ended_at: i64,
 }
 
 impl Player {
@@ -998,6 +1035,7 @@ impl Player {
             went_oom: false,
             first_oom: 0,
             moving: false,
+            movement_ended_at: -NEVER_EXPIRES,
             movement: None,
         }
     }
@@ -1327,6 +1365,8 @@ pub(crate) struct DamageTakenModifier {
     pub(crate) school_mask: u8,
     pub(crate) aura: AuraRef,
     pub(crate) multiplier: f64,
+    /// When set, the multiplier is one plus this for each of the aura's stacks.
+    pub(crate) per_stack: Option<f64>,
 }
 
 /// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
@@ -1377,8 +1417,28 @@ pub(crate) enum Action {
     },
     /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
     Prepull(SpellId),
+    /// A rotation prepull action: Go `APLActionCastFriendlySpell.Execute` at the player.
+    PrepullAtPlayer(SpellId),
+    /// A rotation prepull action: Go `APLActionChannelSpell.Execute`, with the item holding its
+    /// interrupt condition.
+    PrepullChannel(SpellId, usize),
+    /// A rotation prepull action: Go `APLActionItemSwap.Execute`.
+    PrepullItemSwap(bool),
+    /// apl.go's swap back to Main before the pull.
+    PrepullSwapBack,
+    /// A rotation prepull action: Go `APLActionChangeTarget.Execute` to the first target.
+    PrepullChangeTarget,
+    /// A rotation prepull action that runs a list: every stat buff cooldown it casts, or every
+    /// proc buff it activates for its set (Swap1 when true).
+    PrepullList(bool, usize),
     /// A rotation prepull action: Go `APLActionActivateAura.Execute`.
     PrepullAura(AuraRef),
+    /// A rotation prepull action: Go `APLActionCancelAura.Execute`.
+    PrepullCancelAura(AuraRef),
+    /// A rotation prepull action: Go `APLActionActivateAuraWithStacks.Execute`.
+    PrepullAuraWithStacks(AuraRef, i32),
+    /// A rotation prepull action: Go `APLActionTriggerICD.Execute`.
+    PrepullTriggerIcd(AuraRef),
     /// A rotation prepull action: Go `APLActionMove.Execute`.
     PrepullMove(f64),
     /// A rotation prepull action: Go `APLActionMoveDuration.Execute`.
@@ -1600,6 +1660,8 @@ pub(crate) struct Fight<A: Agent> {
     free_travel_batches: Vec<usize>,
     /// The target's dynamic damage taken modifiers.
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
+    /// Go `doneIteration` is deactivating the auras: an iteration is ending.
+    pub(crate) done_iteration: bool,
     /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
     /// both kinds, so Go's single registration order is kept.
     pub(crate) spell_damage_taken_modifiers: Vec<SpellDamageTakenModifier>,
@@ -1608,6 +1670,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
     pub(crate) mods: Vec<spell_mod::SpellMod>,
+    /// Crit modifiers a dot's tick does not take, as a priest's Inner Focus (community #793):
+    /// while active, a tick of a spell it names rolls crit with its chance taken back.
+    pub(crate) tick_crit_takebacks: Vec<(spell_mod::ModId, Vec<bool>, f64)>,
     pub(crate) timers: Vec<i64>,
     pub(crate) major_cooldowns: Vec<MajorCooldown>,
     pub(crate) cooldown_order: Vec<usize>,
@@ -1617,8 +1682,17 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) priority_len: usize,
     /// Where each group instance's items are.
     pub(crate) group_ranges: Vec<std::ops::Range<usize>>,
+    /// A Warlock's assigned curse: the curse option and the curse spell's action.
+    pub(crate) assigned_curse: Option<(String, ActionId)>,
+    /// What the rotation's values read that the rest of the input leaves out.
+    pub(crate) rotation_reads: Option<crate::contracts::prepared_v2::RotationReads>,
+    /// The priority list's sequences by name, which reset sequence actions and sequence values
+    /// find.
+    pub(crate) rotation_sequences: Vec<(std::rc::Rc<str>, usize)>,
     /// Prepull casts by time, in Go's stable time order.
     prepull: Vec<(i64, rotation::PrepullAct)>,
+    /// The spells and auras of the prepull actions that run several, by position.
+    prepull_lists: Vec<rotation::PrepullList>,
     /// The dot base durations the rotation's `dotBaseDuration` values captured, by spell.
     dot_base_durations: Vec<(ActionId, i64)>,
     in_rotation: bool,
@@ -1658,6 +1732,7 @@ pub(crate) struct Fight<A: Agent> {
     /// Dragon's Call and the Emerald Dragon Whelp it summons.
     pub(crate) whelp: Option<whelp::Whelp>,
     pub(crate) sulfuras: Option<sulfuras::Sulfuras>,
+    pub(crate) blade_of_hanna: Option<blade_of_hanna::BladeOfHanna>,
     /// The slows of the attack speed category, by the position of their aura on the target.
     pub(crate) enemy_slows: Vec<(usize, enemy::EnemySlow)>,
     /// Thunderfury's proc, when worn.
@@ -2605,6 +2680,18 @@ impl<A: Agent> Fight<A> {
                         } if *immolation_spell == spells.len() => {
                             Some(SpellBehavior::FixedHit(*immolation_damage))
                         }
+                        Effect::BladeOfHanna {
+                            strike_spell,
+                            damage,
+                            ..
+                        } if *strike_spell == spells.len() => {
+                            melee::PhysicalOutcome::of_melee_proc("melee_special_hit_and_crit").map(
+                                |outcome| SpellBehavior::FixedTableDamage {
+                                    damage: *damage,
+                                    outcome,
+                                },
+                            )
+                        }
                         Effect::ForceReactiveDisk { spell, damage, .. } if *spell == spells.len() => {
                             Some(SpellBehavior::AreaFixedDamage(*damage))
                         }
@@ -2712,6 +2799,7 @@ impl<A: Agent> Fight<A> {
                     )
                 }),
                 class_spell: exported.class_spell.clone(),
+                rank_aliases: exported.rank_aliases.clone(),
                 class_spell_mask: exported.class_spell.is_some(),
                 missile_speed: exported.missile_speed,
                 cast_kind: exported.cast_kind,
@@ -2771,6 +2859,8 @@ impl<A: Agent> Fight<A> {
                 split_metrics: Vec::new(),
                 split_actions: Vec::new(),
                 split: 0,
+                casts: 0,
+                in_flight: 0,
                 id,
             });
         }
@@ -3315,6 +3405,12 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::SulfurasProc
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
+                        matches!(effect, Effect::BladeOfHanna { trigger_aura, .. } if *trigger_aura == exported.label)
+                    })
+                {
+                    AuraBehavior::BladeOfHanna
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
                         matches!(effect, Effect::SulfurasHandOfRagnaros { immolation_aura, .. } if *immolation_aura == exported.label)
                     })
                 {
@@ -3574,6 +3670,7 @@ impl<A: Agent> Fight<A> {
             travel_batches: Vec::new(),
             free_travel_batches: Vec::new(),
             damage_taken_modifiers: Vec::new(),
+            done_iteration: false,
             spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
             config,
@@ -3581,6 +3678,7 @@ impl<A: Agent> Fight<A> {
             spells,
             dots,
             mods: Vec::new(),
+            tick_crit_takebacks: Vec::new(),
             timers: vec![STARTING_CD_TIME; timer_names.len()],
             versions: Versions::default(),
             cooldown_order: (0..major_cooldowns.len()).collect(),
@@ -3589,7 +3687,11 @@ impl<A: Agent> Fight<A> {
             rotation: Vec::new(),
             priority_len: 0,
             group_ranges: Vec::new(),
+            rotation_sequences: Vec::new(),
+            assigned_curse: crate::engine::coverage::assigned_curse(prepared),
+            rotation_reads: prepared.player.rotation_reads.clone(),
             prepull: Vec::new(),
+            prepull_lists: Vec::new(),
             dot_base_durations: Vec::new(),
             in_rotation: false,
             apl: rotation::AplState::default(),
@@ -3629,6 +3731,7 @@ impl<A: Agent> Fight<A> {
             crusader: None,
             whelp: None,
             sulfuras: None,
+            blade_of_hanna: None,
             thunderfury: None,
             enemy_slows: Vec::new(),
             windfury: None,
@@ -3997,7 +4100,11 @@ impl<A: Agent> Fight<A> {
         fight.rotation = compilation.items;
         fight.priority_len = compilation.priority;
         fight.group_ranges = compilation.groups;
-        fight.prepull = fight.compile_prepull(&parsed);
+        fight.rotation_sequences = compilation.sequences;
+        let (prepull, channels, lists) = fight.compile_prepull(&parsed, fight.rotation.len());
+        fight.rotation.extend(channels);
+        fight.prepull = prepull;
+        fight.prepull_lists = lists;
         for effect in effects {
             if let Effect::SunderArmorRamp {
                 aura,
@@ -4074,6 +4181,7 @@ impl<A: Agent> Fight<A> {
                 }
                 Effect::EmeraldDragonWhelp { .. } => fight.bind_whelp(effect)?,
                 Effect::SulfurasHandOfRagnaros { .. } => fight.bind_sulfuras(effect)?,
+                Effect::BladeOfHanna { .. } => fight.bind_blade_of_hanna(effect)?,
                 Effect::Thunderfury { .. } => fight.bind_thunderfury(effect)?,
                 _ => {}
             }
@@ -4298,7 +4406,6 @@ impl<A: Agent> Fight<A> {
                 cost_spells,
                 damage_spells,
                 tick_cancel_spells,
-                spending_spells,
                 ..
             } = effect
             {
@@ -4306,7 +4413,6 @@ impl<A: Agent> Fight<A> {
                     aura,
                     [*cost_percent, *damage_percent, *tick_cancel_percent],
                     [cost_spells, damage_spells, tick_cancel_spells],
-                    spending_spells,
                 )?);
             }
         }
@@ -4756,7 +4862,23 @@ impl<A: Agent> Fight<A> {
             let (at, act) = self.prepull[index];
             let action = match act {
                 rotation::PrepullAct::Cast(spell) => Action::Prepull(spell),
+                rotation::PrepullAct::CastAtPlayer(spell) => Action::PrepullAtPlayer(spell),
+                rotation::PrepullAct::Channel(spell, item) => Action::PrepullChannel(spell, item),
+                rotation::PrepullAct::ItemSwap(to_swapped) => Action::PrepullItemSwap(to_swapped),
+                rotation::PrepullAct::SwapBackToMain => Action::PrepullSwapBack,
+                rotation::PrepullAct::ChangeTarget => Action::PrepullChangeTarget,
+                rotation::PrepullAct::CastAllStatBuffCooldowns(list) => {
+                    Action::PrepullList(false, list)
+                }
+                rotation::PrepullAct::ActivateAllStatBuffProcAuras(swap1, list) => {
+                    Action::PrepullList(swap1, list)
+                }
                 rotation::PrepullAct::ActivateAura(aura) => Action::PrepullAura(aura),
+                rotation::PrepullAct::CancelAura(aura) => Action::PrepullCancelAura(aura),
+                rotation::PrepullAct::ActivateAuraWithStacks(aura, stacks) => {
+                    Action::PrepullAuraWithStacks(aura, stacks)
+                }
+                rotation::PrepullAct::TriggerIcd(aura) => Action::PrepullTriggerIcd(aura),
                 rotation::PrepullAct::Move(range) => Action::PrepullMove(range),
                 rotation::PrepullAct::MoveDuration(duration) => {
                     Action::PrepullMoveDuration(duration)
@@ -4843,6 +4965,7 @@ impl<A: Agent> Fight<A> {
             self.move_multiplier = self.initial_move_multiplier;
             self.player.moving = false;
             self.player.movement = None;
+            self.player.movement_ended_at = -NEVER_EXPIRES;
             // Go UnitMetrics.reset.
             self.death.died = false;
             let player = &mut self.player;
@@ -4934,6 +5057,9 @@ impl<A: Agent> Fight<A> {
             // Only the slots of the fight's targets and the player ever hold metrics.
             let units = self.defender_count();
             for spell in &mut self.spells {
+                // Go `Spell.reset` and the reset's clear of `SpellsInFlight`.
+                spell.casts = 0;
+                spell.in_flight = 0;
                 spell.metrics[..units].fill(SpellMetrics::default());
                 for split in &mut spell.split_metrics {
                     split[..units].fill(SpellMetrics::default());
@@ -5119,6 +5245,7 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Action::Travel { spell, result, dot } => {
+                self.spells[spell].in_flight -= 1;
                 self.deal_damage(spell, result, false);
                 if let (Some(dot), true) = (dot, result.landed()) {
                     self.apply_dot(dot);
@@ -5127,6 +5254,9 @@ impl<A: Agent> Fight<A> {
             Action::DotTick(dot) => self.periodic_tick(dot, handle),
             Action::TravelBatch(batch) => {
                 let results = std::mem::take(&mut self.travel_batches[batch]);
+                if let Some(&(spell, _)) = results.first() {
+                    self.spells[spell].in_flight -= 1;
+                }
                 for &(spell, result) in &results {
                     self.deal_damage(spell, result, false);
                 }
@@ -5135,6 +5265,7 @@ impl<A: Agent> Fight<A> {
                 self.free_travel_batches.push(batch);
             }
             Action::ClassTravel { spell, result } => {
+                self.spells[spell].in_flight -= 1;
                 if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
                     A::on_travel(self, spell, result, behavior);
                 }
@@ -5152,7 +5283,53 @@ impl<A: Agent> Fight<A> {
             }
             Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
+            Action::PrepullAtPlayer(spell) => self.cast_or_queue(spell, Side::Player),
+            Action::PrepullChannel(spell, item) => self.prepull_channel(spell, item),
+            Action::PrepullItemSwap(to_swapped) => self.item_swap_action(to_swapped),
+            // Go's `SwapItems` to Main, which logs nothing of its own.
+            Action::PrepullSwapBack => self.swap_items(false, false),
+            Action::PrepullChangeTarget => self.log_change_target(),
+            Action::PrepullList(swap1, list) => match self.prepull_lists[list].clone() {
+                rotation::PrepullList::Spells(spells) => {
+                    for spell in spells {
+                        self.cast_or_queue(spell, Side::Target);
+                    }
+                }
+                // Go: nothing while the other set is worn, else each aura as an activate aura
+                // action activates it.
+                rotation::PrepullList::Auras(auras) => {
+                    if self.item_swap.is_some() && self.item_swapped() != swap1 {
+                        return;
+                    }
+                    for aura in auras {
+                        self.activate_aura_action(aura);
+                    }
+                }
+            },
             Action::PrepullAura(aura) => self.activate_aura_action(aura),
+            // Go `APLActionCancelAura.Execute`, which a prepull runs whether or not it is ready.
+            Action::PrepullCancelAura(aura) => {
+                if self.log.is_some() {
+                    let id = self.aura(aura).action_id.clone().unwrap_or_default();
+                    let line = format!("Cancelling aura {}", log::action_string(&id));
+                    self.unit_log(aura.side, &line);
+                }
+                self.deactivate_aura(aura);
+            }
+            Action::PrepullAuraWithStacks(aura, stacks) => {
+                self.activate_aura_with_stacks_action(aura, stacks)
+            }
+            // Go `APLActionTriggerICD.Execute`.
+            Action::PrepullTriggerIcd(aura) => {
+                if self.log.is_some() {
+                    let id = self.aura(aura).action_id.clone().unwrap_or_default();
+                    let line = format!("Triggering ICD {}", log::action_string(&id));
+                    self.unit_log(aura.side, &line);
+                }
+                let (timer, duration) = self.aura(aura).icd.expect("an ICD aura");
+                self.timers[timer] = self.now + duration;
+                self.changed(reads::TIMERS);
+            }
             Action::PrepullMove(range) => {
                 // Go `APLActionMove.Execute` logs the range even when the unit is already there.
                 if self.log.is_some() {

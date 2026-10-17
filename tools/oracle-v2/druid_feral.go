@@ -185,13 +185,13 @@ func druidFeralEffects(d *druid.Druid, character *core.Character) []map[string]a
 			"expected_combo_points": 5.0, "short_name": d.Rip.ShortName,
 		})
 	}
-	if d.Rake != nil { // rake.go: a flat hit and a flat bleed tick, and 5.26% of attack power on both (a Go literal)
+	if d.Rake != nil { // rake.go: a flat hit and a flat bleed tick, and 5% of attack power on both (a Go literal)
 		rank := feralRake.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "rake", "spell": spellPosition(character, d.Rake.Spell),
 			"flat_damage":        rank.DamageEffect().Average(core.CharacterLevel),
 			"tick_base":          rank.PeriodicEffect().Average(core.CharacterLevel),
-			"attack_power_share": 0.0526,
+			"attack_power_share": 0.05,
 			"tick_can_crit":      rank.PeriodicCanCrit(),
 			"tick_magic":         rank.DefenseTypeCore() == core.DefenseTypeMagic,
 			"short_name":         d.Rake.ShortName,

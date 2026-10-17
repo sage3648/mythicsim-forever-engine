@@ -73,6 +73,9 @@ pub(crate) struct ParseOptions {
     pub exclusive: Option<(String, bool)>,
     pub per_stat_category: Option<String>,
     pub school_resistances: bool,
+    /// Go `ReadAuraAs`: every effect of the first aura is read as if the row stated the second,
+    /// at the row's own amount.
+    pub read_as: Vec<(i32, i32)>,
 }
 
 impl ParseOptions {
@@ -312,7 +315,20 @@ fn parse(
         if let Some(modifier) = scale {
             value = scaled(value, modifier);
         }
-        let attached = parser.row(sim, effect, value, options.buff_auras);
+        let read = options
+            .read_as
+            .iter()
+            .find(|(from, _)| *from == effect.aura)
+            .map(|&(_, to)| Effect {
+                aura: to,
+                ..effect.clone()
+            });
+        let attached = parser.row(
+            sim,
+            read.as_ref().unwrap_or(effect),
+            value,
+            options.buff_auras,
+        );
         let Some(mut attachment) = attached else {
             parsed.skipped.push((i as i32 + 1, effect.aura));
             continue;
@@ -726,9 +742,21 @@ fn school_indexes(mask: i32) -> Vec<usize> {
     out
 }
 
-/// Go `percentStatRowsNamingNoStat`.
-fn percent_stat_row_naming_no_stat(spell_id: i32) -> Option<Stat> {
-    (spell_id == 1248751).then_some(Stat::Spirit)
+/// Go `percentStatRowsNamingNoStat`: rows whose stat the client left unnamed, with the stat their
+/// own tooltip gives. Client 70425 names Increased Spirit's stat again, in the stat mask alone, so
+/// none is left.
+fn percent_stat_row_naming_no_stat(_spell_id: i32) -> Option<Stat> {
+    None
+}
+
+/// Go `clientStatMask`: the stats a client stat mask names, bit i for `CLIENT_STATS[i]`.
+fn client_stat_mask(mask: i32) -> Vec<Stat> {
+    CLIENT_STATS
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| mask & (1 << i) != 0)
+        .map(|(_, stat)| *stat)
+        .collect()
 }
 
 impl Parser {
@@ -880,6 +908,15 @@ impl Parser {
             return self.stats_buff(sim, client_stat_list(e.misc), v);
         }
         if a == A_MOD_PERCENT_STAT || a == A_MOD_TOTAL_STAT_PERCENTAGE {
+            // A_MOD_TOTAL_STAT_PERCENTAGE names its stats in a mask in MiscValue_1 as well as, on
+            // older rows, a stat in MiscValue_0; client 70425's rows carry the mask alone, so the
+            // mask wins when it is set.
+            if a == A_MOD_TOTAL_STAT_PERCENTAGE && e.misc2 != 0 {
+                let list = client_stat_mask(e.misc2);
+                if !list.is_empty() {
+                    return self.stat_multiplier(sim, list, percent_multiplier(v));
+                }
+            }
             if a == A_MOD_TOTAL_STAT_PERCENTAGE && e.misc == 0 && e.misc2 == 0 {
                 if let Some(stat) = percent_stat_row_naming_no_stat(e.spell_id) {
                     return self.stat_multiplier(sim, vec![stat], percent_multiplier(v));

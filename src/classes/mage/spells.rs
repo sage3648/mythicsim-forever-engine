@@ -3,6 +3,7 @@
 pub(crate) mod arcane_blast;
 pub(crate) mod arcane_missiles;
 pub(crate) mod arcane_power;
+pub(crate) mod arcane_wrath;
 pub(crate) mod area_hit;
 pub(crate) mod blizzard;
 pub(crate) mod cold_snap;

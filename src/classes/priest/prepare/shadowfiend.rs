@@ -27,7 +27,7 @@ fn base_stats() -> Stats {
 
 /// Go `Priest.shadowfiendStatInheritance`: attack power from the priest's spell damage and
 /// shadow damage.
-fn stat_inheritance(owner_stats: &Stats) -> Stats {
+fn stat_inheritance(_sim: &mut Sim, owner_stats: &Stats) -> Stats {
     let mut inherited = Stats::default();
     inherited[Stat::AttackPower] =
         (owner_stats[Stat::SpellDamage] + owner_stats[Stat::ShadowDamage]) * 0.57;

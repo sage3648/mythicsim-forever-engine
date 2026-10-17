@@ -24,6 +24,7 @@ const EFFECTS: &[&str] = &[
     "arcane_explosion",
     "arcane_missiles",
     "arcane_power",
+    "arcane_wrath",
     "blast_wave",
     "blizzard",
     "cold_snap",
@@ -32,6 +33,7 @@ const EFFECTS: &[&str] = &[
     "evocation",
     "fingers_of_frost",
     "fire_blast",
+    "fire_power",
     "fireball",
     "flamestrike",
     "frost_nova",
@@ -54,6 +56,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
     match spell.class_spell.as_deref()? {
         "frostbolt" => Some("frostbolt"),
         "arcane_blast" => Some("arcane_blast"),
+        "arcane_wrath" => Some("arcane_wrath"),
         "arcane_power" => Some("arcane_power"),
         "fire_blast" => Some("fire_blast"),
         "fireball" => Some("fireball"),
@@ -87,9 +90,6 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::MissileBarrage {
             trigger_aura, aura, ..
         }
-        | Effect::HeatingUp {
-            trigger_aura, aura, ..
-        }
         | Effect::FingersOfFrost {
             trigger_aura, aura, ..
         }
@@ -98,6 +98,16 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", trigger_aura), ("player", aura)]
         }
+        Effect::HeatingUp {
+            trigger_aura,
+            aura,
+            fire_blast_trigger_aura,
+            ..
+        } => vec![
+            ("player", trigger_aura),
+            ("player", aura),
+            ("player", fire_blast_trigger_aura),
+        ],
         Effect::Evocation {
             regen_aura,
             channel_aura,
