@@ -128,8 +128,13 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::Reckoning {
             block_aura,
             crit_aura,
+            charges_aura,
             ..
-        } => vec![("player", block_aura), ("player", crit_aura)],
+        } => vec![
+            ("player", block_aura),
+            ("player", crit_aura),
+            ("player", charges_aura),
+        ],
         Effect::RighteousFury {
             aura,
             instrument_of_law,

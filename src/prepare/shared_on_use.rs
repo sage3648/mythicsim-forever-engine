@@ -371,6 +371,20 @@ pub(crate) fn apply_stacking_stat_bonus_cd(env: &mut Environment, config: &Stack
                 timings: Vec::new(),
             },
         );
+        env.sim
+            .character_mut(unit)
+            .cooldown_buff_auras
+            .push((spell, stat_aura.clone()));
+        // The stat aura and not the window: the stacks are what an APL keys off.
+        let slots = super::shared_items::eligible_slots_for_item(&env.sim, unit, config.id);
+        super::shared_items::add_stat_proc_buff(
+            &mut env.sim,
+            unit,
+            config.id,
+            stat_aura,
+            false,
+            &slots,
+        );
     }
 }
 

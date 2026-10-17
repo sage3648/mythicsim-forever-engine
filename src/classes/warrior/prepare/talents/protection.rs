@@ -141,6 +141,10 @@ impl Warrior {
             },
         );
         add_cooldown(sim, unit, spell, cooldown_type::SURVIVAL);
+        sim.character_mut(unit).cooldown_buff_auras.push((
+            spell,
+            crate::prepare::aura_helpers::StatBuffAura::new(aura, vec![Stat::Health]),
+        ));
     }
 
     fn register_improved_sunder_armor(&self, sim: &mut Sim, unit: UnitId) {

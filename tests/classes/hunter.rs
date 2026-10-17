@@ -270,8 +270,10 @@ fn a_pet_past_its_uptime_is_disabled() {
         .position(|line| line.ends_with("Pet dismissed"))
         .expect("the Cat is disabled");
     let at_dismissal = at(cat[dismissed]);
+    // The rotation finds the uptime spent at its next evaluation, which waits on the pet's GCD
+    // or focus.
     assert!(
-        at_dismissal > end / 2.0 && at_dismissal < end / 2.0 + 0.5,
+        at_dismissal > end / 2.0 && at_dismissal < end / 2.0 + 2.0,
         "{at_dismissal} of {end}"
     );
     assert!(
@@ -880,4 +882,22 @@ fn furious_howl_needs_its_effect() {
         .unwrap()
         .retain(|effect| effect["kind"] != "hunter_pet_furious_howl");
     assert!(reasons(value).contains(&"the pet's ability at 1 has no behavior".to_string()));
+}
+
+/// Go pet.go makeStatInheritance (fork patches 136 and 138): the pet's crit is its master's
+/// physical crit plus the higher of the Auto Shot's ranged-only crit and the swing's melee-only
+/// crit, held as an offset the owner moves, and it inherits its master's Expertise. Its disable
+/// callback only clears the offset, so it exports no disable stats.
+#[test]
+fn the_pet_inherits_its_masters_crit_and_expertise() {
+    let value = fixture("production-beast-mastery-hunter");
+    let pet = &value["pets"][0];
+    assert_eq!(
+        pet["inheritance"],
+        json!([
+            {"owner": "PhysicalCritPercent", "pet": "PhysicalCritPercent", "coefficient": 1},
+            {"owner": "ExpertisePercent", "pet": "ExpertisePercent", "coefficient": 1},
+        ])
+    );
+    assert_eq!(pet["disable_stats"], Value::Null);
 }

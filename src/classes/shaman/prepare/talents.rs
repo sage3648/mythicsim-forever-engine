@@ -23,7 +23,7 @@ use super::spells::{longest_cooldown, spell_action};
 use super::{flags, masks, Shaman};
 
 /// `time.Millisecond * time.Duration(value)`: the float is cut to whole milliseconds.
-fn millis(value: f64) -> Duration {
+pub(super) fn millis(value: f64) -> Duration {
     (value as i64).wrapping_mul(MILLISECOND)
 }
 
@@ -77,9 +77,8 @@ impl Shaman {
         self.apply_elemental_alacrity(sim, unit);
 
         // Tier 4
-        self.apply_improved_fire_nova(sim, unit);
+        self.apply_trial_by_fire(sim, unit);
         // Eye of the Storm (pushback resistance) changes no number.
-        self.apply_call_of_thunder(sim, unit);
 
         // Tier 5
         self.apply_elemental_reach(sim, unit);
@@ -87,8 +86,97 @@ impl Shaman {
         // Tier 6
         self.apply_elemental_fury(sim, unit);
 
-        // Tier 7
+        // Tier 5 (client 70425 moved Lava Burst up from tier 7)
         self.register_lava_burst_spell(sim, unit);
+
+        // Tier 7
+        self.apply_elemental_mastery(sim, unit);
+    }
+
+    /// Elemental Mastery, the tier 7 Elemental talent of client 70425: for 15 sec, Lightning
+    /// Bolt and Lava Burst cast 0.5 sec faster and Chain Lightning has no cooldown, on a 3 min
+    /// cooldown. Chain Lightning's cooldown is cancelled with a flat mod of its own length.
+    fn apply_elemental_mastery(&self, sim: &mut Sim, unit: UnitId) {
+        if !self.has_talent("elemental_mastery") {
+            return;
+        }
+        let data = spell_data();
+        let rank = data.elemental_mastery.highest();
+        let cast_time = millis(
+            rank.effect(
+                dbcenums::A_ADD_FLAT_MODIFIER,
+                dbcenums::SPELLMOD_CASTING_TIME,
+            )
+            .base_points,
+        );
+        let chain_lightning = data.chain_lightning.highest();
+        let chain_lightning_cooldown = chain_lightning
+            .cooldown()
+            .max(chain_lightning.category_cooldown());
+
+        let cast_mod = sim.add_dynamic_mod(
+            unit,
+            SpellModConfig {
+                kind: SpellModType::CastTimeFlat,
+                class_mask: masks::LIGHTNING_BOLT | masks::LAVA_BURST,
+                time_value: cast_time,
+                ..SpellModConfig::default()
+            },
+        );
+        let cooldown_mod = sim.add_dynamic_mod(
+            unit,
+            SpellModConfig {
+                kind: SpellModType::CooldownFlat,
+                class_mask: masks::CHAIN_LIGHTNING,
+                time_value: -chain_lightning_cooldown,
+                ..SpellModConfig::default()
+            },
+        );
+        let aura = sim.register_aura(
+            unit,
+            AuraConfig {
+                label: "Elemental Mastery".to_string(),
+                action_id: Some(spell_action(rank.id)),
+                duration: rank.duration(),
+                on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
+                    sim.activate_spell_mod(cast_mod);
+                    sim.activate_spell_mod(cooldown_mod);
+                })),
+                on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
+                    sim.deactivate_spell_mod(cast_mod);
+                    sim.deactivate_spell_mod(cooldown_mod);
+                })),
+                ..AuraConfig::default()
+            },
+        );
+        let timer = sim.new_timer(unit);
+        let spell = sim.register_spell(
+            unit,
+            SpellConfig {
+                action_id: spell_action(rank.id),
+                flags: SpellFlag::NO_ON_CAST_COMPLETE | SpellFlag::APL,
+                class_spell_mask: masks::ELEMENTAL_MASTERY,
+                cast: CastConfig {
+                    cd: Cooldown {
+                        timer: Some(timer),
+                        duration: rank.cooldown().max(rank.category_cooldown()),
+                    },
+                    ..CastConfig::default()
+                },
+                related_self_buff: Some(aura),
+                ..SpellConfig::default()
+            },
+        );
+        sim.add_major_cooldown(
+            unit,
+            MajorCooldown {
+                spell,
+                priority: 0,
+                cooldown_type: cooldown_type::DPS,
+                allow_spell_queueing: false,
+                timings: Vec::new(),
+            },
+        );
     }
 
     fn apply_call_of_flame(&self, sim: &mut Sim, unit: UnitId) {
@@ -106,24 +194,23 @@ impl Shaman {
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
                 .fraction_at(points),
         );
-    }
-
-    fn apply_call_of_thunder(&self, sim: &mut Sim, unit: UnitId) {
-        if !self.has_talent("call_of_thunder") {
-            return;
-        }
-        static_mod(
-            sim,
+        // "Call of Flame now also increases the duration of Flame Shock by 3/6/9 sec" (16 October
+        // 2026 beta notes). The row has no duration modifier yet, so the time is added as ticks of
+        // the dot's own period: 3 sec a rank.
+        const CALL_OF_FLAME_FLAME_SHOCK_SECONDS: i64 = 3 * SECOND;
+        let period = spell_data()
+            .flame_shock
+            .highest()
+            .periodic_effect()
+            .period();
+        sim.add_static_mod(
             unit,
-            SpellModType::BonusCritPercent,
-            masks::LIGHTNING_BOLT | masks::CHAIN_LIGHTNING | masks::OVERLOAD,
-            spell_data()
-                .call_of_thunder
-                .effect(
-                    dbcenums::A_ADD_FLAT_MODIFIER,
-                    dbcenums::SPELLMOD_CRITICAL_CHANCE,
-                )
-                .value_at(1),
+            SpellModConfig {
+                kind: SpellModType::DotNumberOfTicksFlat,
+                int_value: (CALL_OF_FLAME_FLAME_SHOCK_SECONDS * i64::from(points) / period) as i32,
+                class_mask: masks::FLAME_SHOCK_DOT,
+                ..SpellModConfig::default()
+            },
         );
     }
 
@@ -375,13 +462,14 @@ impl Shaman {
         }
     }
 
-    /// Improved Fire Nova is new in Forever: more Fire Nova damage and a shorter cooldown on it.
-    fn apply_improved_fire_nova(&self, sim: &mut Sim, unit: UnitId) {
-        let points = self.talent("improved_fire_nova");
+    /// Trial by Fire (16086, Improved Fire Nova until client 70425): more Fire Nova damage, a
+    /// shorter cooldown on it and a longer Magma Totem, which registerMagmaTotemSpell reads.
+    fn apply_trial_by_fire(&self, sim: &mut Sim, unit: UnitId) {
+        let points = self.talent("trial_by_fire");
         if points == 0 {
             return;
         }
-        let data = &spell_data().improved_fire_nova;
+        let data = &spell_data().trial_by_fire;
         static_mod(
             sim,
             unit,
@@ -681,8 +769,8 @@ impl Shaman {
     }
 
     /// Maelstrom Weapon is new in Forever: melee hits stack a buff that makes the next Lightning
-    /// Bolt faster and cheaper, and the cast consumes it. The client states no proc rate; 2 PPM
-    /// per point is ours.
+    /// Bolt faster and cheaper, and the cast consumes it. The client states no proc rate; beta
+    /// logs give 10 PPM whatever the points, Season of Discovery's base (community #775).
     fn apply_maelstrom_weapon(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talent("maelstrom_weapon");
         if points == 0 {
@@ -694,7 +782,7 @@ impl Shaman {
         let per_stack = data.maelstrom_weapon.effect_at(1).fraction_at(points);
 
         // NewLegacyPPMManager: an item swap rebuilds it.
-        let ppm = 2.0 * f64::from(points);
+        let ppm = 10.0;
         let ppmm = Rc::new(
             sim.new_ppm_manager(unit, ppm, ProcMask::MELEE)
                 .rebuilt_by_swap(

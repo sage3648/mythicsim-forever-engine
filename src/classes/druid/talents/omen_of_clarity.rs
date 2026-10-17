@@ -14,6 +14,8 @@ pub(crate) struct OmenOfClarity {
     pub(crate) aura: AuraRef,
     trigger: AuraRef,
     trigger_spells: Vec<bool>,
+    /// The spells that never trigger it in Cat or Bear Form.
+    pub(crate) form_excluded: Vec<bool>,
     /// Spells whose proc mask names spell damage or healing, which take the cast time.
     spell_masked: Vec<bool>,
     cost_spells: Vec<bool>,
@@ -34,6 +36,7 @@ pub(crate) struct Params<'a> {
     pub(crate) aura: &'a str,
     pub(crate) trigger: &'a str,
     pub(crate) trigger_spells: &'a [usize],
+    pub(crate) form_excluded_spells: &'a [usize],
     pub(crate) spell_masked: Vec<bool>,
     pub(crate) cost_spells: &'a [usize],
     pub(crate) icd: i64,
@@ -89,6 +92,7 @@ pub(crate) fn bind<A: Agent>(
         aura,
         trigger,
         trigger_spells: mask(len, params.trigger_spells),
+        form_excluded: mask(len, params.form_excluded_spells),
         spell_masked: params.spell_masked,
         cost_spells: mask(len, params.cost_spells),
         icd_timer,

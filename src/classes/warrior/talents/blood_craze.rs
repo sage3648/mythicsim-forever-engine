@@ -1,6 +1,6 @@
 //! Blood Craze (16487, hot 16488), from Go sim/warrior/talents_fury.go `registerBloodCraze`:
-//! a crit or a hit taken above a share of maximum health, or a landed Bloodthirst, applies a
-//! hot on the warrior a spell batch window later. Each tick heals a share of maximum health
+//! a crit or a hit taken above a share of maximum health applies a hot on the warrior a spell
+//! batch window later; Bloodthirst no longer does (community #797). Each tick heals a share of maximum health
 //! over the hot's ticks.
 
 use crate::{
@@ -39,13 +39,6 @@ pub(crate) fn on_hit_taken<A: Agent>(
         return;
     }
     if result.crit() || result.damage > fight.player_max_health() * params.hit_threshold {
-        delay(fight);
-    }
-}
-
-/// "Blood Craze - Bloodthirst": a landed Bloodthirst that dealt damage.
-pub(crate) fn on_bloodthirst<A: Agent>(fight: &mut Fight<A>, result: &SpellResult) {
-    if result.landed() && result.damage != 0.0 {
         delay(fight);
     }
 }

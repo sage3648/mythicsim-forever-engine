@@ -125,8 +125,8 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 		})
 	}
 	// talents_assassination.go registerColdBlood: a crit bonus on the masked spells until one of
-	// them hits, except Mutilate's hand strikes, which take the crit without spending it
-	// (community #690).
+	// them hits, except Mutilate's hand strikes, which take the crit; the off-hand strike then
+	// spends it (upstream #785), which the runtime reads off the mutilate effect.
 	if r.ColdBlood != nil {
 		row := rogueColdBlood.Highest()
 		effects = append(effects, map[string]any{

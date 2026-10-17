@@ -24,6 +24,9 @@ const MAX_MELEE_RANGE: f64 = 5.0;
 /// Go `RangedAutoRetryInterval`: how often a ranged auto that cannot fire while its unit moves
 /// looks again.
 const RANGED_AUTO_RETRY_INTERVAL: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
+/// Go `RangedAutoStandStill`: how long a unit stands still before its ranged auto can fire (16
+/// October 2026 beta notes: "Auto Shot now requires 0.5 seconds of standing still").
+const RANGED_AUTO_STAND_STILL: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
 
 /// Go `heldSwingLag`: a held swing lands this long after the moment it waits for.
 const HELD_SWING_LAG: i64 = 1;
@@ -393,6 +396,29 @@ impl<A: Agent> Fight<A> {
     /// When the rotation's `autoTimeToNext` reads the next auto attack of a kind: Go
     /// `NextAttackAt`, `MainhandSwingAt`, `OffhandSwingAt`, `NextRangedAttackAt` and
     /// `NextAnyAttackAt`.
+    /// Go `APLValueAutoTimeSinceLast`: the time since the hands it reads last swung, each a
+    /// wrapping difference as Go's durations are.
+    pub(crate) fn time_since_last_auto(&self, kind: crate::rotation::AutoAttackType) -> i64 {
+        use crate::rotation::AutoAttackType;
+        let autos = &self.autos;
+        let since = |attack: &WeaponAttack| self.now.wrapping_sub(attack.previous_swing);
+        match kind {
+            AutoAttackType::MainHand => since(&autos.mh),
+            AutoAttackType::OffHand => since(&autos.oh),
+            AutoAttackType::Ranged => since(&autos.ranged),
+            AutoAttackType::Melee | AutoAttackType::Any => {
+                let mut value = since(&autos.mh);
+                if autos.oh.enabled {
+                    value = value.min(since(&autos.oh));
+                }
+                if kind == AutoAttackType::Any && autos.ranged.enabled {
+                    value = value.min(since(&autos.ranged));
+                }
+                value
+            }
+        }
+    }
+
     pub(crate) fn next_auto_attack_at(&self, kind: crate::rotation::AutoAttackType) -> i64 {
         use crate::rotation::AutoAttackType;
         let autos = &self.autos;
@@ -609,11 +635,22 @@ impl<A: Agent> Fight<A> {
             return self.autos_of_mut(side).attack(hand).swing_at;
         }
         // A ranged auto cannot fire while moving. The hidden retry timer looks again every
-        // 500ms, and the shot goes off at the first look after the move ends.
+        // 500ms. Casts never hold it.
         if hand == Hand::Ranged && self.unit(side).moving {
             let attack = self.autos_of_mut(side).attack(hand);
             attack.swing_at = now + RANGED_AUTO_RETRY_INTERVAL;
             return attack.swing_at;
+        }
+        // The 16 October 2026 beta notes: a shot that comes due (or is retried) less than 0.5 s
+        // after the last move ended waits until it has passed. A shot with no move before it
+        // keeps its timing.
+        if hand == Hand::Ranged {
+            let ready_at = self.unit(side).movement_ended_at + RANGED_AUTO_STAND_STILL;
+            if now < ready_at {
+                let attack = self.autos_of_mut(side).attack(hand);
+                attack.swing_at = ready_at;
+                return attack.swing_at;
+            }
         }
         if hand == Hand::Enemy {
             let attack = self.autos.enemy_attack(side);
@@ -753,12 +790,15 @@ impl<A: Agent> Fight<A> {
     /// Go `AutoAttacks.holdArrivalSwingForRotation`: the rotation acts before the swing that
     /// lands the moment a weaver steps into melee range, so an on-next-swing ability pressed
     /// on arrival replaces that first swing instead of waiting behind a white hit. Only the
-    /// player's rotation can be held here; a Wait, which would block it, is unsupported.
+    /// player's rotation can be held here, and not while a Wait or WaitUntil holds it.
     pub(crate) fn hold_arrival_swing_for_rotation(&mut self, side: Side) {
         let autos = self.autos_of(side);
         let replaces = side == Side::Player
             && (self.config.melee.replace_main_hand_swing || autos.react_before_mh_swing);
         if !autos.ranged_auto || !replaces || !autos.mh.enabled || autos.mh.swing_at > self.now {
+            return;
+        }
+        if self.rotation_blocked() {
             return;
         }
         let swing_at = self.now + HELD_SWING_LAG;
@@ -835,9 +875,30 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(self.now);
     }
 
-    /// Go `Unit.ReactToEvent(sim, false, false)`: the rotation runs, then evaluates again now.
+    /// Go `AutoAttacks.InstantMHAttack`: a main hand swing right now that leaves the swing timer
+    /// alone (Forever Reckoning).
+    pub(crate) fn instant_mh_attack(&mut self) {
+        if !self.autos.melee
+            || !self.autos.mh.enabled
+            || !in_range(&self.autos.mh.weapon, self.config.distance)
+        {
+            return;
+        }
+        let spell = self
+            .autos
+            .mh
+            .spell
+            .expect("an enabled weapon attack has a spell");
+        self.cast(spell, Side::Target);
+    }
+
+    /// Go `Unit.ReactToEvent(sim, false, false)`: the rotation runs, then evaluates again now,
+    /// unless a Wait or WaitUntil holds it.
     pub(crate) fn react_to_event_now(&mut self) {
         self.do_next_action();
+        if self.rotation_blocked() {
+            return;
+        }
         if self.player.rotation_timer > self.now {
             self.set_rotation_timer(self.now);
         }
@@ -872,6 +933,10 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.ReactToEvent(sim, false, true)`.
     pub(crate) fn react_to_event(&mut self, side: Side) {
         self.do_next_action_of(side);
+        // Go: a Wait or WaitUntil holding the rotation keeps the time it wakes at.
+        if side == Side::Player && self.rotation_blocked() {
+            return;
+        }
         let evaluation = self.now + self.unit_config(side).reaction;
         if self.unit(side).rotation_timer > evaluation {
             self.set_rotation_timer_of(side, evaluation);
@@ -1215,8 +1280,15 @@ impl<A: Agent> Fight<A> {
         };
         let after_attacker = result.damage;
         result.armor_multiplier = 1.0;
-        if !self.spells[spell].flags.ignore_resists && !self.spells[spell].flags.binary {
-            let (multiplier, partial) = self.partial_resist(spell, target);
+        if !self.spells[spell].flags.ignore_resists {
+            // Spell Vulnerability multiplies the partial resist, and a binary spell's whole hit.
+            let vulnerability = self.spell_vulnerability(spell, target);
+            let (multiplier, partial) = if self.spells[spell].flags.binary {
+                (vulnerability, 0)
+            } else {
+                let (partial, outcome) = self.partial_resist(spell, target);
+                (partial * vulnerability, outcome)
+            };
             result.armor_multiplier = multiplier;
             result.damage *= multiplier;
             result.outcome |= partial;

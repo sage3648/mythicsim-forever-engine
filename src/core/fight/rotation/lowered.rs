@@ -145,16 +145,29 @@ impl Cond {
     }
 }
 
-/// Whether a compiled value can run a cost check (Go `APLValueSpellCanCast`).
+/// Whether a compiled value can run a cost check (Go `APLValueSpellCanCast`) or another read
+/// whose side effects must happen whenever Go asks it: a sequence's readiness runs its step's cast
+/// check, and a dot's expected tick rolls the partial resist and counts ticks as Go calculates
+/// it.
 fn compiled_asks_cost(value: &Compiled) -> bool {
     match value {
-        Compiled::SpellCanCast(_) => true,
-        Compiled::And(values) | Compiled::Or(values) => values.iter().any(compiled_asks_cost),
-        Compiled::Not(value) | Compiled::Coerced { inner: value, .. } => compiled_asks_cost(value),
+        Compiled::SpellCanCast(_)
+        | Compiled::SequenceIsReady(_)
+        | Compiled::DotPercentIncrease(_) => true,
+        Compiled::And(values)
+        | Compiled::Or(values)
+        | Compiled::Max(values)
+        | Compiled::Min(values) => values.iter().any(compiled_asks_cost),
+        Compiled::Not(value)
+        | Compiled::Coerced { inner: value, .. }
+        | Compiled::EnergyTimeToTarget(value) => compiled_asks_cost(value),
         Compiled::Compare { lhs, rhs, .. } | Compiled::Math { lhs, rhs, .. } => {
             compiled_asks_cost(lhs) || compiled_asks_cost(rhs)
         }
-        Compiled::AuraShouldRefresh { overlap, .. } => compiled_asks_cost(overlap),
+        Compiled::AuraShouldRefresh { overlap, .. }
+        | Compiled::MultipleCdUsages {
+            offset: overlap, ..
+        } => compiled_asks_cost(overlap),
         _ => false,
     }
 }

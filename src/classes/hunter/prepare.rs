@@ -394,6 +394,12 @@ impl Hunter {
 }
 
 impl PrepAgent for Hunter {
+    /// pet.go trackPetCritOffset (patches 136 and 138): the pet's disable callback clears the
+    /// crit offset its owner keeps for the inheritance and moves no stat.
+    fn stat_callback_pet(&self, _sim: &Sim, pet: UnitId) -> bool {
+        self.pet == Some(pet)
+    }
+
     fn add_party_buffs(&self, _sim: &Sim, party_buffs: &mut Message) {
         if self.flag("trueshot_aura") {
             party_buffs.set_bool("trueshot_aura", true);

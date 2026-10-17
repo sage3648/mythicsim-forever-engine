@@ -4,12 +4,12 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `0025d73986eebd90df1849c202b8c9a88d1f01c9`, on community base `f7598154eb8a138831290b34d4d321a532295224` |
-| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f7598154eb8a138831290b34d4d321a532295224` (2026-10-10) |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `12ffe586e5c4b2e622e6ccad0d6146ff10c394d1`, on community base `b7083fac1ec8cc88bfbba0518dba3e0b5e71f8e1` |
+| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `b7083fac1ec8cc88bfbba0518dba3e0b5e71f8e1` (2026-10-16) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
 intentionally differ from inherited Classic behavior. Fixture client build:
-`1.60.1.70338`.
+`1.60.1.70425`.
 
 The pin is written once, in [upstream/sources.json](upstream/sources.json). The Rust
 build script, the Python tools and the Go helpers they build (through `-ldflags -X`)
@@ -337,6 +337,187 @@ exporter writes for every one of the 614. Every variant of the 0025d7398 rerun w
 engine against the Go results that rerun kept: 14,278 match, 63 are refused for the same reasons, none
 differ, and the 66 weapon skill and 10 regenerated variants match as well
 ([record](validation/2026-10-15-item-swap-sweeps.json)).
+
+The pin moved from `0025d7398` to `b1137248e` on 2026-10-16, one commit: the fork's patch 136 (branch
+`mythicsim/racials-20261016`), a pet's crit from its master's ranged crit. The community base `f7598154e`
+and client build 70338 did not move, so the ledger has no new commit. From 16 October 2026 a hunter pet's
+crit is its master's Auto Shot crit, not its own Agility: it inherits PhysicalCritPercent plus the
+ranged-only RangedCritPercent on the pet heartbeat, and its enable and disable callbacks add and take back
+the Auto Shot spell's crit modifiers (the weapon racials' take-back until patch 137). Ferocity and
+Intimidation still add on the pet.
+
+- Both exporters accept a pet stat that several owner stats feed, checking the sum of the terms bit for
+  bit, and a pet whose class states that its enable and disable callbacks only move stats. Such a pet
+  exports `disable_stats`, what its `OnPetDisable` adds, which the runtime applies after the inheritance
+  leaves and before the auras expire, as Go's `Disable` does; the runtime sums the terms that feed one stat
+  before adding them.
+- The runtime holds the owner's ranged-only crit fixed, so coverage refuses a fight that changes it.
+
+21 of the 614 Go goldens changed, all Hunter builds with a pet, and the Hunter preparation goldens follow.
+The fixtures were re-exported by the pinned exporter built for linux/arm64 under emulation: an amd64
+build differs from the accepted goldens in the last bits of 591 others. Rust matches all 612 accepted
+fixtures with a Go golden, and preparation writes exactly what the exporter writes for every one of the
+614. The pet uptime test now allows the rotation's next evaluation, 1.1 seconds after half the fight,
+where Go's log has it. The recorded sweeps were not rerun.
+
+The pin moved from `b1137248e` to `713b825aa` on 2026-10-16, one commit: the fork's patch 137 (branch
+`mythicsim/racials-20261016`), the racials of the 16 October 2026 beta development notes. The community
+base `f7598154e` and client build 70338 did not move, so the ledger has no new commit; community #806 and
+#809 make the same changes on the other line.
+
+- Human Ruthless (2% crit) and Orc Savage (1%) replace the sword and axe specializations and need no
+  weapon, so they no longer leave Auto Shot out; Dwarf Earth Fury replaces Mace Specialization with 2%
+  crit damage, as Tauren Endurance does instead of 1% hit. The weapon racials' item swap callbacks go,
+  and `Player.disable_weapon_specialization` no longer changes anything.
+- Blood Fury's cooldown is 3 minutes, Shatter Curse takes 5% off magic damage (was 15%) and Wind Blessed
+  is 3% haste (was 1%).
+- Eureka! is an 8 second buff with no charges: its effect drops `spending_spells` and the runtime its
+  stacks.
+- Touch of the Grave procs 30% (20% for paladins, rogues and warriors) behind a 25 second cooldown, and
+  its drain ignores every modifier.
+
+361 of the 614 Go goldens changed, 350 in DPS, and the preparation goldens of every class follow. Rust
+matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the exporter
+writes for every one of the 614. Two tests move with the random stream: the hunter pet exports no
+disable stats once Ruthless counts for Auto Shot, and the Cyclone test now stops where Go's `keepsTie`
+hands the category to a Cyclone the clap no longer outlasts, which its new seed reaches. The recorded
+sweeps were not rerun.
+
+The pin moved from `713b825aa` to `d0bd691f0` on 2026-10-16, one commit: the fork's patch 138 (branch
+`mythicsim/oct16-notes`), part one of the 16 October 2026 beta development notes: every class change
+that states its numbers or rule outright and needs no new client row. The community base `f7598154e` and
+client build 70338 did not move, so the ledger has no new commit; community #807, #808, #810 and #811 make
+some of the same changes on the other line.
+
+- Core: Auto Shot needs 0.5 seconds of standing still after a move. Leader of the Pack and Moonkin Aura
+  reach the whole raid and stack: Leader of the Pack reads its row's crit as melee and ranged crit,
+  Moonkin Aura as spell crit, through the new parse option `ReadAuraAs`.
+- Paladin: Consecration's coefficient 0.042, Righteous Fury's Holy threat 90%, Shield Specialization 4%
+  mana and Champion of the Light 10/20/30%. Reckoning banks up to 4 charges that the next main hand auto
+  spends on one extra attack each, through an always-up spender aura.
+- Hunter: the pet inherits its owner's physical crit plus the higher of the Auto Shot's ranged-only crit
+  and the swing's melee-only crit, an offset the owner keeps, and its Expertise; a pet stat inheritance
+  takes the simulation, and the exporters probe it on a separate reset copy. Resourcefulness reduces
+  Strider Kick's cost and hears only melee and ranged ability crits.
+- Priest: Devouring Plague 24 seconds, Shadow Word: Death 18, Vampiric Embrace 30; Twin Disciplines adds
+  Shadow Word: Death, Mind Flay, Starshards and Penance, and Power in Light also waits on Shadow Word:
+  Pain (`dot_spells`).
+- Rogue: a Mutilate spends Cold Blood once both hands struck if either crit.
+- Warlock: Grim Reach replaces Malediction, range only; Shadow Mastery is 2% a point.
+- Warrior: Shield Bash and Shield Slam no longer trigger Weaponmaster's Sword Specialization.
+- Druid: Faerie Fire no longer triggers Omen of Clarity in Cat or Bear Form.
+- Mage: Ice Lance +200% on a frozen target; a Fire Blast crit adds 2 Heating Up stacks, and a Pyroblast
+  under Presence of Mind keeps them.
+- Shaman: Chain Lightning costs 35% less, Stormstrike 8% of base mana, Fire Nova's coefficient is 0.143
+  and Call of Flame adds 3 seconds of Flame Shock a rank. Grace of Air no longer shares an air totem slot
+  with Windfury Totem: the category goes, the party's Grace of Air stands beside the party's Windfury
+  Totem, and only the party's Windfury Totem contests the shaman's own.
+
+602 of the 614 Go goldens changed, 525 in DPS, and the preparation goldens of every class follow. Rust
+matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the exporter
+writes for every one of the 614. The recorded sweeps were not rerun.
+
+The pin moved from `d0bd691f0` to `771c6349a` on 2026-10-16, two merges: the fork takes community #764
+to #811 and client build 1.60.1.70374, and the community base moves to `efd2a43eb`. Where the fork's
+patch 138 and the community made the same 16 October change, the community's version stands, so several
+of patch 138's shapes change again. The ledger reviews the 85 new community commits.
+
+- Data: game data and fixtures at client 70374.
+- Core: a critical auto attack adds its swing's rage at 100% (#794). Retribution Aura and Thorns scale
+  with 6% of their caster's spell power, on the player's own copy only (#800, #803). A dot can snapshot a
+  share of melee attack power that each tick reads again, as Go's `SnapshotAttackPowerShare`.
+- Racials (#806): Ruthless and Savage are base crit and Earth Fury the crit damage multiplier alone, with
+  no auras.
+- Paladin (#792, #810): Reckoning's charges sit on one aura behind the triggers' shared 1.5 second
+  cooldown, and the next main hand auto spends them on instant main hand swings that leave the swing timer
+  alone; the always-up spender aura goes. Improved Seal of Fury's and Shield Specialization's mana makes
+  no threat (#801).
+- Priest: Shadow Weaving is a debuff on each target, read by a damage taken modifier (#777); Inner Focus's
+  crit no longer reaches dot ticks (#793); Silent Resolve reaches every spell (#811).
+- Mage: Fingers of Frost rolls at Frostbolt's and Frostfire Bolt's cast end (#776); every Fire Blast cast
+  adds a Heating Up stack through its own trigger, and only a Pyroblast with a cast time spends them
+  (#808).
+- Rogue: Instant Poison adds 0.5% of attack power and Deadly Poison 0.45% a stack a tick (#781); the
+  off-hand strike always spends Cold Blood (#785).
+- Warlock: Siphon Life's ticks crit (#782), the Succubus carries 6.2% spell crit (#790), and the Imp's
+  Demonic Brand hit has normal threat (#802).
+- Druid: Rake takes 5% of attack power and its hit ignores resists (#772), Swipe 5% (#787), Bear Form's
+  threat is 50% (#798), and Shifting Power cannot be cast at full energy (#805).
+- Hunter: Improved Tracking counts a target of no set type (#774).
+- Shaman: Maelstrom Weapon procs at 10 PPM (#775), and Fire Nova never triggers Elemental Devastation
+  (#789).
+- Warrior: Blood Craze no longer triggers off Bloodthirst (#797).
+
+486 of the 614 Go goldens changed, 242 in DPS, and the preparation goldens of every class follow. Rust
+matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the exporter
+writes for every one of the 614. The recorded sweeps were not rerun.
+
+The pin moved from `771c6349a` to `1007c66bf` on 2026-10-16, three commits: the fork's patches 139
+to 141 (branch `mythicsim/oct16-evening`), from in-game beta testing on 16 October. The community
+base `efd2a43eb` and client build 70374 did not move, so the ledger has no new commit.
+
+- Mage (patch 139): a Fingers of Frost charge is spent when the consuming spell lands, ahead of the
+  landing's own damage and procs, so an instant Ice Lance while a Frostbolt flies on the last charge
+  still sees it. A bolt that procced at launch still spends none.
+- Shaman (patch 140): Earth Shock takes Stormstrike's bonus without spending a charge; only Lightning
+  Bolt, Chain Lightning and their overloads spend it.
+- Shaman (patch 141): Windfury Weapon's main-hand strike (439440) procs Flametongue Totem as the main
+  hand's autos do; the exported trigger spells list it.
+
+51 of the 614 Go goldens changed, 22 in DPS, and the Shaman preparation goldens with an Enhancement build follow. Rust
+matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the exporter
+writes for every one of the 614. The recorded sweeps were not rerun.
+
+The pin moved from `1007c66bf` to `5af130344` on 2026-10-16, two commits: the fork's merge of
+community #813 and #814 (client build 1.60.1.70425 and Wowhead data) and its patch 142, the 70425
+client data with the 16 October talent trees and redesigns. The community base moves to `b7083fac1`;
+the ledger reviews the two commits.
+
+- Data: game data at client 70425; the buff tables take Mana Tide Totem rank 4. A total stat
+  percentage names its stats in the stat mask, which wins when set.
+- Trees: Mage 19/17/19 and Priest 18/17/17, and the Shaman and Warlock trees moved. Every talent
+  string in the repository is remapped field by field, as the fork remapped its own: renamed
+  talents keep their points, and the points of removed or capped ones go where patch 142 put them.
+- Mage: Arcane Blast's stacks give 15% of Intellect as spell damage each, a stacking stat aura, for
+  15 sec from the first stack, and nothing spends them. Arcane Wrath is new. Missile Barrage has two
+  ranks and procs off a missile and Arcane Wrath too. Fire Power counts the mage's Fire effects on the
+  target, up to four, through a damage done by caster handler the exporters now describe. Wake of Fire
+  is Improved Fire Blast, and Winter's Chill raises Cone of Cold's damage.
+- Priest: Improved Mind Flay ramps each tick; Dark Inspiration raises Spirit after Mind Blast or a
+  full Mind Flay channel, a stat aura behind its triggers' batch window; Silent Resolve reaches Holy and
+  Shadow. Shadow Affinity and Improved Fade are gone.
+- Shaman: Elemental Mastery is a major cooldown that speeds Lightning Bolt and Lava Burst and cancels
+  Chain Lightning's cooldown, through a new runtime cooldown modifier. Lava Burst has rank 4, and a
+  rotation naming an older rank presses it through the spell's `rank_aliases`. Trial by Fire lengthens
+  Magma Totem; Chain Lightning's cost and Fire Nova's coefficient come from their rows.
+- Warlock, warrior and paladin: Demonic Embrace lost its Spirit penalty, Grim Reach takes
+  Malediction's slot, and Bloodthrill opens the 5 sec Overpower window.
+- Items: Blade of Hanna (2801) is new and runs in Rust; Lord Sakrasis' Scepter registers no effect, as
+  in Go; The Green Tower follows its generated name.
+
+329 of the 614 Go goldens changed, 276 in DPS, and the preparation goldens of every class follow. Rust
+matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the exporter
+writes for every one of the 614. The recorded sweeps were not rerun.
+
+The pin moved from `5af130344` to `12ffe586e` on 2026-10-17, four commits: the fork's patches 143 to
+146 (branch `mythicsim/oct16-evening`), from in-game measurements on client 70425. The community base
+`b7083fac1` and client build 70425 did not move, so the ledger has no new commit.
+
+- Paladin (patch 143): spell power shares as measured in game: Holy Shield 0.07, Holy Strike 0.286,
+  Seal of Fury 0.15 a hit and 0.67 on its judgement, Judgement of Righteousness 0.70. One-Handed Weapon
+  Specialization raises every school but Consecration and Retribution Aura, heals aside, through a
+  custom modifier that follows the main hand; the exporter reads the swap callback from
+  `followMainHand`.
+- Mage (patch 144): Ice Lance spends its Fingers of Frost charge at cast, while the bolts spend theirs on
+  landing.
+- Shaman (patch 145): Water Shield's shared internal cooldown is a timer of its own, and the shaman's
+  critical spells spend a globe too; preparation registers both, and no supported build casts it.
+- Core (patch 146): Spell Piercing past the target's resistance, floored at 0, adds 1 / (5 x target
+  level) of damage a point, on binary spells too, multiplying the partial resist.
+
+174 of the 614 Go goldens changed, 134 in DPS, and the paladin, shaman and classic weapon preparation
+goldens follow. Rust matches all 612 accepted fixtures with a Go golden, and preparation writes exactly
+what the exporter writes for every one of the 614. The recorded sweeps were not rerun.
 
 ## Ledger
 

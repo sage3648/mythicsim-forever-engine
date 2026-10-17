@@ -157,9 +157,9 @@ fn innervate_waits_for_the_mana_threshold() {
 #[test]
 fn mana_tide_totem_waits_for_its_initial_delay() {
     // 40 seconds into a long fight, and halfway through a short one.
-    let times = cast_times(fixture("fire-mage-external-mana-tide"), 17360);
+    let times = cast_times(fixture("fire-mage-external-mana-tide"), 1325257);
     assert!(times[0] >= 40.0 && times[0] < 45.0, "{times:?}");
-    let times = cast_times(fixture("fire-mage-external-mana-tide-short-fight"), 17360);
+    let times = cast_times(fixture("fire-mage-external-mana-tide-short-fight"), 1325257);
     assert!(times[0] >= 22.5 && times[0] < 27.0, "{times:?}");
     // The delay is the activation's: earlier for a smaller one.
     let times = cast_times(
@@ -167,7 +167,7 @@ fn mana_tide_totem_waits_for_its_initial_delay() {
             fixture("fire-mage-external-mana-tide"),
             json!({"kind": "not_before", "time_ns": 5_000_000_000_i64}),
         ),
-        17360,
+        1325257,
     );
     assert!(times[0] >= 5.0 && times[0] < 10.0, "{times:?}");
 }
@@ -177,7 +177,7 @@ fn the_sources_of_mana_tide_and_innervate_take_turns() {
     for (case, spell, cooldown, aura) in [
         (
             "destruction-warlock-external-mana-tide-2-sources",
-            17360,
+            1325257,
             300.0,
             13.0,
         ),

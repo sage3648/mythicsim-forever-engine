@@ -62,7 +62,7 @@ src/
   engine.rs                      validation and iteration orchestration
   engine/validation.rs           prepared v1 input validation
   engine/prepared.rs             prepared v2 identity checks and coverage entry
-  rotation.rs                    strict APL subset parser
+  rotation.rs                    strict APL parser
   core.rs                        shared scheduler/RNG/runtime module entry
   core/{events,queue,rng,time}.rs scheduling, random streams, time
   core/fight.rs                  class-independent fight runtime and Agent hooks
@@ -263,9 +263,8 @@ from runtime support and should not be used as a registry of implemented classes
 
 Dynamic auras/cooldowns, data ingestion, Rust preparation and upstream change
 tracking are planned. Add `data`, `prepare` and `upstream` modules or directories
-when those pieces are implemented. `rotation.rs` currently parses the APL subset
-used by the Frost preset. The current
-Frost loop remains deliberately limited to static prepared casting.
+when those pieces are implemented. `rotation.rs` parses every APL value Go builds at the pin
+and every action the application's rotation editor offers; [prepared-v2.md](prepared-v2.md) lists the few the gate refuses.
 
 The [layout validation](../validation/2026-10-03-domain-layout.json) records 33
 passing pinned-Go comparisons and exact old/new Rust report matches apart from

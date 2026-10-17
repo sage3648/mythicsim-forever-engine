@@ -660,7 +660,8 @@ const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
         parsed: false,
     },
     SpellDataStatProc {
-        label: "The Green Tower",
+        // Client 70425's generator names it after the stat it grants.
+        label: "The Green Tower - NatureResistance - ",
         trigger: 18097,
         buff: 17154,
         item: 1204,

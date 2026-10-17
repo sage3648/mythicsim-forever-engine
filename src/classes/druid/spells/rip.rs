@@ -103,6 +103,18 @@ impl Rip {
 
     /// A bleed tick on the stored amounts and the current attack power.
     pub(crate) fn tick(&self, fight: &mut Fight<DruidAgent>, dot: DotId) {
+        let result = self.tick_calc(fight, dot, self.tick_can_crit);
+        let spell = fight.dots[dot].spell;
+        fight.deal_damage(spell, result, true);
+    }
+
+    /// Go `Dot.CalcSnapshotDamage` of the bleed, its crit rolled only where it can crit.
+    fn tick_calc(
+        &self,
+        fight: &mut Fight<DruidAgent>,
+        dot: DotId,
+        can_crit: bool,
+    ) -> crate::core::fight::SpellResult {
         let state = &fight.dots[dot];
         let (spell, side, multiplier) = (state.spell, state.side, state.periodic_damage_multiplier);
         let snapshot = fight.agent.rip_snapshot.get(dot);
@@ -113,7 +125,24 @@ impl Rip {
                 .mul_add(fight.melee_attack_power(), -snapshot.attack_power);
         }
         let attacker = fight.attacker_multiplier(spell, true) * multiplier;
-        let result = fight.calc_physical_periodic(spell, side, base, attacker, self.tick_can_crit);
-        fight.deal_damage(spell, result, true);
+        fight.calc_physical_periodic(spell, side, base, attacker, can_crit)
+    }
+
+    /// Go rip.go `ExpectedTickDamage`: the snapshot's tick with `OutcomeTick`, or a tick cast
+    /// now of the combo points it projects.
+    pub(crate) fn expected_tick_damage(
+        &self,
+        fight: &mut Fight<DruidAgent>,
+        spell: SpellId,
+        target: Side,
+        snapshot: bool,
+    ) -> f64 {
+        if snapshot {
+            let dot = fight.spells[spell].dot.expect("Rip has a dot");
+            let dot = fight.dot_on(dot, target);
+            self.tick_calc(fight, dot, false).damage
+        } else {
+            self.expected_tick(fight, spell, target)
+        }
     }
 }

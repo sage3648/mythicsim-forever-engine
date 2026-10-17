@@ -26,11 +26,20 @@ pub(crate) fn is_class(class: Option<&str>, set: &[&str]) -> bool {
     class.is_some_and(|class| set.contains(&class))
 }
 
-/// The spells Stormstrike's debuff raises and that spend its charges: Go `stormstrikeSpells`.
+/// The spells Stormstrike's debuff raises: Go `stormstrikeSpells`.
 pub(crate) const STORMSTRIKE_SPELLS: &[&str] = &[
     "lightning_bolt",
     "chain_lightning",
     "earth_shock",
+    "lightning_bolt_overload",
+    "chain_lightning_overload",
+];
+
+/// The spells that spend Stormstrike's charges: Go `stormstrikeConsumers`. Earth Shock takes
+/// the bonus without spending it (MythicSim patch 140).
+pub(crate) const STORMSTRIKE_CONSUMERS: &[&str] = &[
+    "lightning_bolt",
+    "chain_lightning",
     "lightning_bolt_overload",
     "chain_lightning_overload",
 ];

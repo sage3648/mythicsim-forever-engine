@@ -1,6 +1,8 @@
 //! The Shaman class agent for the fight runtime: class spells and auras by name, and the
 //! hooks that dispatch to each spell's and talent's module.
 
+use std::rc::Rc;
+
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::{
@@ -26,6 +28,7 @@ use super::{
     talents::{
         elemental_devastation::{self, ElementalDevastation},
         elemental_focus::{self, ElementalFocus},
+        elemental_mastery,
         flurry::{self, Flurry},
         improved_stormstrike::{self, ImprovedStormstrike},
         maelstrom_weapon::{self, MaelstromWeapon},
@@ -68,6 +71,7 @@ pub(crate) enum ShamanSpell {
         main_hand: bool,
     },
     RageOfTheFarseer,
+    ElementalMastery,
 }
 
 /// Class auras with Rust behavior.
@@ -96,6 +100,7 @@ pub(crate) enum ShamanAura {
     FlametongueTrigger(usize),
     FrostbrandTrigger,
     Flurry,
+    ElementalMastery,
     RageOfTheFarseer,
     RockbiterWeapon,
 }
@@ -119,7 +124,7 @@ pub(crate) struct ShamanAgent {
     searing_duration: i64,
     strength_of_earth: Option<StrengthOfEarth>,
     stormstrike: Option<Stormstrike>,
-    devastation: Option<ElementalDevastation>,
+    devastation: Option<Rc<ElementalDevastation>>,
     improved_stormstrike: Option<ImprovedStormstrike>,
     maelstrom: Option<MaelstromWeapon>,
     maelstrom_chances: maelstrom_weapon::Chances,
@@ -129,6 +134,7 @@ pub(crate) struct ShamanAgent {
     /// Melee auto attacks, Go `ProcMaskMeleeWhiteHit`, by spellbook position.
     white: Vec<bool>,
     farseer: Option<RageOfTheFarseer>,
+    elemental_mastery: Option<elemental_mastery::ElementalMastery>,
     /// Stormstrike's main hand strike, when the character has a main hand weapon.
     stormstrike_main_hand: Option<SpellId>,
     /// Go `HasMHWeapon() || HasOHWeapon()`, Stormstrike's cast condition.
@@ -280,6 +286,7 @@ impl ShamanAgent {
                 Some(ShamanSpell::FlameShockDot)
             }
             "lava_burst" if damage && has("lava_burst") => Some(ShamanSpell::LavaBurst),
+            "elemental_mastery" if has("elemental_mastery") => Some(ShamanSpell::ElementalMastery),
             "fire_nova" if has("fire_nova") => Some(ShamanSpell::FireNova),
             "searing_totem" if spell.dot.is_some() && has("searing_totem") => {
                 Some(ShamanSpell::SearingTotem)
@@ -382,6 +389,9 @@ impl ShamanAgent {
                 ],
                 Effect::RageOfTheFarseer { aura, .. } => {
                     vec![(aura.clone(), ShamanAura::RageOfTheFarseer)]
+                }
+                Effect::ElementalMastery { aura, .. } => {
+                    vec![(aura.clone(), ShamanAura::ElementalMastery)]
                 }
                 Effect::RockbiterWeapon { aura, .. } => {
                     vec![(aura.clone(), ShamanAura::RockbiterWeapon)]
@@ -609,6 +619,19 @@ impl ShamanAgent {
                         *can_proc_from_procs,
                     )?);
                 }
+                Effect::ElementalMastery {
+                    aura,
+                    cast_time_delta_ns,
+                    chain_lightning_cooldown_ns,
+                    ..
+                } => {
+                    fight.agent.elemental_mastery = Some(elemental_mastery::bind(
+                        &mut fight,
+                        aura,
+                        *cast_time_delta_ns,
+                        *chain_lightning_cooldown_ns,
+                    )?);
+                }
                 Effect::RageOfTheFarseer {
                     aura,
                     melee_speed_multiplier,
@@ -759,6 +782,7 @@ impl ShamanAgent {
                     aura,
                     melee_crit,
                     can_proc_from_procs,
+                    excluded_class_spells,
                 } => {
                     let melee = (0..fight.spells.len())
                         .filter(|&spell| {
@@ -766,14 +790,15 @@ impl ShamanAgent {
                             state.melee_proc && !state.flags.no_spell_mods
                         })
                         .collect();
-                    fight.agent.devastation = Some(elemental_devastation::bind(
+                    fight.agent.devastation = Some(Rc::new(elemental_devastation::bind(
                         &mut fight,
                         trigger_aura,
                         aura,
                         *melee_crit,
                         melee,
                         *can_proc_from_procs,
-                    )?);
+                        excluded_class_spells,
+                    )?));
                 }
                 Effect::ImprovedStormstrike {
                     trigger_aura,
@@ -1076,6 +1101,14 @@ impl Agent for ShamanAgent {
                     .expect("Windfury Weapon is bound");
                 state.strike(fight, spell, target, main_hand);
             }
+            ShamanSpell::ElementalMastery => {
+                let aura = fight
+                    .agent
+                    .elemental_mastery
+                    .expect("Elemental Mastery is bound")
+                    .aura;
+                fight.activate_aura(aura);
+            }
             ShamanSpell::RageOfTheFarseer => {
                 let aura = fight
                     .agent
@@ -1168,6 +1201,7 @@ impl Agent for ShamanAgent {
                 let state = fight
                     .agent
                     .devastation
+                    .clone()
                     .expect("Elemental Devastation is bound");
                 state.on_spell_hit_dealt(fight, spell, result);
             }
@@ -1250,6 +1284,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastationTrigger => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .grant(fight),
             ShamanAura::ImprovedStormstrikeTrigger => fight
@@ -1362,6 +1397,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastation => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .on_gain(fight),
             ShamanAura::ImprovedStormstrike => fight
@@ -1385,6 +1421,11 @@ impl Agent for ShamanAgent {
                 .farseer
                 .expect("Rage of the Farseer is bound")
                 .on_gain(fight),
+            ShamanAura::ElementalMastery => fight
+                .agent
+                .elemental_mastery
+                .expect("Elemental Mastery is bound")
+                .on_gain(fight),
             ShamanAura::RockbiterWeapon => {
                 if let (Some((line, _)), true) = (&fight.agent.rockbiter_logs, fight.log.is_some())
                 {
@@ -1405,6 +1446,7 @@ impl Agent for ShamanAgent {
             ShamanAura::ElementalDevastation => fight
                 .agent
                 .devastation
+                .clone()
                 .expect("Elemental Devastation is bound")
                 .on_expire(fight),
             ShamanAura::ImprovedStormstrike => fight
@@ -1451,6 +1493,11 @@ impl Agent for ShamanAgent {
                 .agent
                 .farseer
                 .expect("Rage of the Farseer is bound")
+                .on_expire(fight),
+            ShamanAura::ElementalMastery => fight
+                .agent
+                .elemental_mastery
+                .expect("Elemental Mastery is bound")
                 .on_expire(fight),
             ShamanAura::RockbiterWeapon => {
                 if let (Some((_, line)), true) = (&fight.agent.rockbiter_logs, fight.log.is_some())

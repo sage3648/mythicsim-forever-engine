@@ -245,7 +245,7 @@ pub(crate) fn black_book(sim: &mut Sim, unit: UnitId) {
         );
     }
 
-    sim.register_aura(
+    let aura = sim.register_aura(
         unit,
         AuraConfig {
             label: "Blessing of The Black Book".to_string(),
@@ -295,6 +295,13 @@ pub(crate) fn black_book(sim: &mut Sim, unit: UnitId) {
             timings: Vec::new(),
         },
     );
+    sim.character_mut(unit).cooldown_buff_auras.push((
+        spell,
+        crate::prepare::aura_helpers::StatBuffAura::new(
+            aura,
+            vec![Stat::SpellDamage, Stat::AttackPower, Stat::Armor],
+        ),
+    ));
 }
 
 /// The Go `core.NewItemEffect(19957, ...)`: Hazza'rah's Charm of Destruction. Use: increases the

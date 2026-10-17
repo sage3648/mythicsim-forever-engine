@@ -25,8 +25,9 @@ use super::{masks, Druid};
 pub(crate) const ANIMAL_SPIRIT_REGEN_SUPPRESSION: f64 = 0.911337;
 /// Go `BaseBearArmorMulti`.
 pub(crate) const BASE_BEAR_ARMOR_MULTI: f64 = 4.6;
-/// Go `BearFormThreatMultiplier`.
-pub(crate) const BEAR_FORM_THREAT_MULTIPLIER: f64 = 1.3;
+/// Go `BearFormThreatMultiplier`: client 70374 raised Classic's 30% to 50% (8 October beta
+/// notes, community #798).
+pub(crate) const BEAR_FORM_THREAT_MULTIPLIER: f64 = 1.5;
 /// Go `CatFormThreatMultiplier`.
 pub(crate) const CAT_FORM_THREAT_MULTIPLIER: f64 = 0.71;
 /// Go `MoonkinFormArmorMultiplier`.

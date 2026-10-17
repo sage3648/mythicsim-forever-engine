@@ -497,7 +497,8 @@ impl Warrior {
             effects.push(
                 json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
                 "proc_chance": data.bloodthrill.fraction_at(talent("bloodthrill")),
-                "window_ns": data.bloodthrill_triggered.by_id(1289681).duration(),
+                // Client 70425: the proc opens the 5 sec Overpower window (1282733).
+                "window_ns": data.bloodthrill_triggered.by_id(1282733).duration(),
                 "delay_ns": SPELL_BATCH_WINDOW}),
             );
         }
@@ -513,7 +514,9 @@ impl Warrior {
             effects.push(json!({"kind": "weaponmaster_sword",
                 "trigger_aura": "Weaponmaster (Sword)",
                 "proc_chance": data.weaponmaster.effect_at(3).fraction_at(talent("weaponmaster")),
-                "extra_attack_tag": 1290261, "sword_hands": hands}));
+                "extra_attack_tag": 1290261, "sword_hands": hands,
+                // 16 October 2026 beta notes: Shield Bash and Shield Slam no longer trigger it.
+                "excluded_class_spells": ["shield_bash", "shield_slam"]}));
         }
         // heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the
         // base damage the strike adds to a main hand weapon swing.
@@ -695,7 +698,6 @@ impl Warrior {
                     "spell_id": sim.spell(hot).action_id.spell_id,
                     "heal": heal_modifiers(env, notes),
                     "damage_taken_aura": "Blood Craze - Damage Taken",
-                    "bloodthirst_aura": "Blood Craze - Bloodthirst",
                     "health_fraction": data.blood_craze.effect_at(1)
                         .fraction_at(self.talent("blood_craze")),
                     "hit_threshold": data.blood_craze.effect_at(2)

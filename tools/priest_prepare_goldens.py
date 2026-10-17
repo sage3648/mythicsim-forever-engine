@@ -28,10 +28,10 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "fixtures" / "mage" / "prepared-v2"
 OUT = ROOT / "tests" / "classes" / "priest" / "prepare"
 
-SHADOW = "025300011303--500222501201302251"
-SMITE = "505030031300001-305051130020003-50002"
-MAX = "525333231335121531-33555133232121531-555322521221312251"
-ONE = "111111111111111111-11111111111111111-111111111111111111"
+SHADOW = "025303011030--50052201221302251"
+SMITE = "505030031030001-305051130020003-50002"
+MAX = "525335231333211531-33555133232121531-55552221251312251"
+ONE = "111111111111111111-11111111111111111-11111111111111111"
 
 MIND_BLAST = 10947
 SMITE_RANK_8 = 10934
@@ -48,24 +48,24 @@ CASES = [
     ("shadow-three-targets", "shadow-priest-3-targets-multidot-reads", SHADOW, "RaceUndead",
      {"useShadowfiend": True}, MIND_BLAST),
     ("smite-holy-nova", "smite-priest-holy-nova", SMITE, "RaceHuman", {}, SMITE_RANK_8),
-    ("smite-power-infusion", "smite-priest-power-infusion", "515030031305001031-00505023002-003",
+    ("smite-power-infusion", "smite-priest-power-infusion", "515035031030001031-00505023002-003",
      "RaceUndead", {}, SMITE_RANK_8),
-    ("smite-no-inner-focus", "smite-priest-no-inner-focus", "505030030300001-305051130020003-50002",
+    ("smite-no-inner-focus", "smite-priest-no-inner-focus", "505030030030001-305051130020003-50002",
      "RaceDwarf", {}, SMITE_RANK_8),
     ("every-talent-at-max", "shadow-priest-shadowfiend", MAX, "RaceUndead",
      {"useShadowfiend": True, "preShadowform": True, "armor": "InnerFire"}, MIND_BLAST),
     ("every-talent-at-one", "shadow-priest-shadowfiend", ONE, "RaceNightElf",
      {"useShadowfiend": True}, MIND_BLAST),
-    ("mixed-build", "shadow-priest-shadowfiend", "203000100003100030-01554030002011101-451022501020001241",
+    ("mixed-build", "shadow-priest-shadowfiend", "203003100000010030-01554030002011101-45152201020001241",
      "RaceHuman", {"useShadowfiend": True}, MIND_BLAST),
-    ("mixed-build-two", "shadow-priest-shadowfiend", "214322010024111200-31213100221121430-023002511121201110",
+    ("mixed-build-two", "shadow-priest-shadowfiend", "214324010202111200-31213100221121430-02350211121201110",
      "RaceUndead", {"preShadowform": True}, MIND_BLAST),
-    ("mixed-build-three", "shadow-priest-shadowfiend", "301211131013121131-32531001012001411-201321421020311130",
+    ("mixed-build-three", "shadow-priest-shadowfiend", "301213131101211131-32531001012001411-20142121050311130",
      "RaceTroll", {"useShadowfiend": True, "armor": "InnerFire"}, MIND_BLAST),
     # The fixture's own rotation, whose strict sequence needs Inner Focus, which this build lacks:
     # Go builds no sequence then, and with it none of the values of its condition.
     ("rotation-without-inner-focus", "shadow-priest-shadowfiend",
-     "020130020335121511-30505023230101300-242020520020200201", "RaceUndead", {}, None),
+     "020135020033211511-30505023230101300-24252020020200201", "RaceUndead", {}, None),
 ]
 
 

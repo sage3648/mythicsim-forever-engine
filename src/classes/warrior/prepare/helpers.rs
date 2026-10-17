@@ -157,15 +157,9 @@ pub(super) fn action_id_string(action: &ActionId) -> String {
     out
 }
 
-/// The share of maximum health the buff adds. Client 1.60.1.70291 moved the buff's 30% from
-/// `A_MOD_MAX_HEALTH` to `A_MOD_INCREASE_HEALTH` with the same 30, and the tooltip still reads 30%
-/// of maximum health. Go reads whichever the client states when the talent registers (fork patch
-/// 112), so a later move fails there and not in the middle of a fight.
+/// The share of maximum health the buff adds. Client 1.60.1.70291 moved the buff from
+/// `A_MOD_MAX_HEALTH` to `A_MOD_INCREASE_HEALTH`, still 30; the talent tooltip reads "30% of your
+/// maximum health", so it stays a share of maximum health (community #795).
 pub(super) fn last_stand_share(buff: &Row) -> f64 {
-    let stated = buff.find_effect(dbcenums::E_APPLY_AURA, dbcenums::A_MOD_MAX_HEALTH, 0);
-    if stated.is_nil() {
-        buff.effect(dbcenums::A_MOD_INCREASE_HEALTH, 0).percent()
-    } else {
-        stated.percent()
-    }
+    buff.effect(dbcenums::A_MOD_INCREASE_HEALTH, 0).percent()
 }

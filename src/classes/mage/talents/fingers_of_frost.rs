@@ -1,31 +1,28 @@
 //! Fingers of Frost (talent 400647, aura 400669) with Shatter (11170), from Go
 //! sim/mage/talents_frost.go `registerFingersOfFrost`. A landed chill spell can grant
 //! charges that treat the target as frozen and add Shatter's crit to every Mage spell.
-//! A spell already being cast when the charges arrive keeps no Shatter bonus and spends
-//! no charge; Go marks it in flight.
+//! Frostbolt and Frostfire Bolt roll it at launch, as the beta's logs gain the aura at the cast
+//! end (community #776): the next cast takes the bonus and a charge, the bolt's own impact
+//! neither. Cone of Cold and Improved Blizzard's ticks land at once and roll on their hits. A
+//! consuming spell that travels spends its charge when it lands (MythicSim patch 139), so an
+//! instant Ice Lance while a Frostbolt flies on the last charge still sees it.
 
 use crate::{
     classes::mage::masks::{is_class, DAMAGING},
     core::fight::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult},
 };
 
-/// Go `MageSpellChill`: the chill effects Fingers of Frost rolls on.
-const CHILL: &[&str] = &[
-    "frostbolt",
-    "cone_of_cold",
-    "frostfire_bolt",
-    "improved_blizzard",
-];
+/// The chills the trigger hears: Go `MageSpellConeOfCold | MageSpellImprovedBlizzard`.
+const CHILL: &[&str] = &["cone_of_cold", "improved_blizzard"];
 
 #[derive(Clone, Debug)]
 pub(crate) struct FingersOfFrost {
     pub(crate) aura: AuraRef,
     pub(crate) trigger: AuraRef,
     proc_chance: f64,
-    shatter_crit: f64,
     shatter_mod: ModId,
-    /// Go `inFlight`: the spell being cast when the charges arrived.
-    in_flight: Option<SpellId>,
+    /// Go `launcher`: the bolt whose launch granted the charges, which spends none.
+    launcher: Option<SpellId>,
 }
 
 pub(crate) fn bind<A: Agent>(
@@ -56,9 +53,8 @@ pub(crate) fn bind<A: Agent>(
         aura,
         trigger,
         proc_chance,
-        shatter_crit,
         shatter_mod,
-        in_flight: None,
+        launcher: None,
     })
 }
 
@@ -70,31 +66,14 @@ impl FingersOfFrost {
 
     pub(crate) fn on_gain<A: Agent>(&mut self, fight: &mut Fight<A>) {
         fight.activate_mod(self.shatter_mod);
-        self.in_flight = None;
-        let hardcast = fight.player.hardcast;
-        if hardcast.expires > fight.now {
-            if let Some(casting) = hardcast.spell {
-                let id = fight.spells[casting].id.clone();
-                let found = (0..fight.spells.len()).find(|&spell| {
-                    fight.spells[spell].class_spell.is_some() && fight.spells[spell].id == id
-                });
-                if let Some(spell) = found {
-                    fight.spells[spell].bonus_crit_percent -= self.shatter_crit;
-                    self.in_flight = Some(spell);
-                }
-            }
-        }
     }
 
     pub(crate) fn on_expire<A: Agent>(&mut self, fight: &mut Fight<A>) {
         fight.deactivate_mod(self.shatter_mod);
-        if let Some(spell) = self.in_flight.take() {
-            fight.spells[spell].bonus_crit_percent += self.shatter_crit;
-        }
     }
 
     /// Returns whether a charge should be removed; the caller removes it so the aura's
-    /// own callbacks run with this state already stored.
+    /// own callbacks run with this state already stored. The launching bolt spends none.
     pub(crate) fn on_cast_complete<A: Agent>(
         &mut self,
         fight: &mut Fight<A>,
@@ -103,12 +82,26 @@ impl FingersOfFrost {
         if !is_class(fight.spells[spell].class_spell.as_deref(), DAMAGING) {
             return false;
         }
-        if self.in_flight == Some(spell) {
-            fight.spells[spell].bonus_crit_percent += self.shatter_crit;
-            self.in_flight = None;
+        if self.launcher == Some(spell) {
+            self.launcher = None;
             return false;
         }
         true
+    }
+
+    /// Go `procFingersOfFrost`: Frostbolt or Frostfire Bolt at launch, on the hit already rolled.
+    /// Returns whether the charges are granted, which the caller does.
+    pub(crate) fn launch<A: Agent>(
+        &mut self,
+        fight: &mut Fight<A>,
+        spell: SpellId,
+        result: &SpellResult,
+    ) -> bool {
+        if result.landed() && fight.proc(self.proc_chance, "Fingers of Frost") {
+            self.launcher = Some(spell);
+            return true;
+        }
+        false
     }
 
     /// The "Fingers of Frost Trigger" proc: a landed chill spell.

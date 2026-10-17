@@ -128,6 +128,8 @@ pub(crate) enum AuraBehavior<K> {
     /// Sulfuras, Hand of Ragnaros's weapon proc trigger and its Immolation.
     SulfurasProc,
     SulfurasImmolation,
+    /// Blade of Hanna's trigger.
+    BladeOfHanna,
     /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
     WindfuryTotem,
     /// The party Windfury Totem's trigger.
@@ -263,6 +265,8 @@ pub(crate) struct Aura<K> {
     /// Go `Aura.Tag`, which `HasActiveAuraWithTag` matches.
     pub(crate) tag: Option<String>,
     pub(crate) action_id: Option<ActionId>,
+    /// Go `ActionIDForProc`: the proc a trigger aura stands for.
+    pub(crate) proc_action_id: Option<ActionId>,
     /// Go `AuraMetrics.ID`, fixed at registration; a metric split retags `action_id` alone.
     pub(crate) metrics_id: Option<ActionId>,
     pub(crate) duration: i64,
@@ -349,6 +353,7 @@ impl<K> Tracker<K> {
             label: exported.label.clone(),
             tag: exported.tag.clone(),
             action_id: exported.action_id.clone(),
+            proc_action_id: exported.action_id_for_proc.clone(),
             metrics_id: exported
                 .action_id
                 .clone()
@@ -391,6 +396,7 @@ impl<K> Tracker<K> {
                 label: aura.label.clone(),
                 tag: aura.tag.clone(),
                 action_id: aura.action_id.clone(),
+                proc_action_id: aura.proc_action_id.clone(),
                 metrics_id: aura.metrics_id.clone(),
                 duration: aura.duration,
                 max_stacks: aura.max_stacks,
@@ -437,6 +443,15 @@ impl<K> Tracker<K> {
         self.auras
             .iter()
             .position(|aura| aura.action_id.as_ref() == Some(id))
+    }
+
+    /// Go `GetIcdAuraByID`: the first aura with the action, or triggered by it, that has an
+    /// ICD.
+    pub(crate) fn find_icd_by_id(&self, id: &ActionId) -> Option<usize> {
+        self.auras.iter().position(|aura| {
+            aura.icd.is_some()
+                && (aura.action_id.as_ref() == Some(id) || aura.proc_action_id.as_ref() == Some(id))
+        })
     }
 
     fn add_to(&mut self, list: List, aura: usize) {
@@ -723,6 +738,20 @@ impl<A: Agent> Fight<A> {
             self.stat_mask & !bit
         };
         self.set_stat_mask(mask);
+    }
+
+    /// A stacking stat aura's place in the active stat mask, by label: its offset and width.
+    pub(crate) fn stat_aura_place(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<(u32, u32)> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, stacks, .. } => {
+                let position = auras.iter().position(|aura| aura == label)?;
+                Some(stat_aura_places(stacks, auras.len())[position])
+            }
+            _ => None,
+        })
     }
 
     /// A stat aura's bit in the active stat mask, by label: the first bit of its place.
@@ -1030,6 +1059,33 @@ impl<A: Agent> Fight<A> {
 
     /// Go `APLActionActivateAura.Execute`: an aura whose cooldown is not ready only logs so;
     /// otherwise it activates and its cooldown starts.
+    /// Go `APLActionActivateAuraWithStacks.Execute`: not while its ICD runs, then the aura
+    /// with its stacks.
+    pub(crate) fn activate_aura_with_stacks_action(&mut self, aura: AuraRef, stacks: i32) {
+        let id = self.aura(aura).action_id.clone().unwrap_or_default();
+        if let Some((timer, _)) = self.aura(aura).icd {
+            if self.timers[timer] > self.now {
+                if self.log.is_some() {
+                    let line = format!(
+                        "Could not activate aura {} ({stacks} stacks) because it's not ready",
+                        super::log::action_string(&id)
+                    );
+                    self.unit_log(aura.side, &line);
+                }
+                return;
+            }
+        }
+        if self.log.is_some() {
+            let line = format!(
+                "Activating aura {} ({stacks} stacks)",
+                super::log::action_string(&id)
+            );
+            self.unit_log(aura.side, &line);
+        }
+        self.activate_aura(aura);
+        self.set_stacks(aura, stacks);
+    }
+
     pub(crate) fn activate_aura_action(&mut self, aura: AuraRef) {
         let id = self.aura(aura).action_id.clone().unwrap_or_default();
         let icd = self.aura(aura).icd;
@@ -1071,6 +1127,7 @@ impl<A: Agent> Fight<A> {
     /// Go `auraTracker.doneIteration`: deactivate every aura in registration order, then
     /// fold this iteration's uptime and procs into the aggregates.
     pub(crate) fn aura_done_iteration(&mut self, side: Side) {
+        self.done_iteration = true;
         'restart: loop {
             for index in 0..self.trackers[side.index()].auras.len() {
                 if self.trackers[side.index()].auras[index].active {
@@ -1080,6 +1137,7 @@ impl<A: Agent> Fight<A> {
             }
             break;
         }
+        self.done_iteration = false;
         for state in &mut self.trackers[side.index()].auras {
             state.start = 0;
             state.expires = 0;
@@ -1100,7 +1158,6 @@ impl<A: Agent> Fight<A> {
             let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
-                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
@@ -1229,6 +1286,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Crusader if dealt => self.crusader_callback(aura, spell, result),
                     AuraBehavior::EmeraldDragonWhelp if dealt => {
                         self.whelp_callback(aura, spell, result)
+                    }
+                    AuraBehavior::BladeOfHanna if dealt => {
+                        self.blade_of_hanna_callback(spell, result)
                     }
                     AuraBehavior::SulfurasProc if dealt => {
                         self.sulfuras_callback(aura, spell, result)
