@@ -415,7 +415,7 @@ impl Hunter {
                 let mut stats = Stats::default();
                 stats[Stat::AttackPower] = 275.0;
                 stats[Stat::RangedAttackPower] = 275.0;
-                sim.new_temporary_stats_aura(
+                let stats_aura = sim.new_temporary_stats_aura(
                     unit,
                     "Deadly Aim",
                     &ActionId::spell(40487),
@@ -434,8 +434,19 @@ impl Hunter {
                         ..ProcTrigger::default()
                     },
                 );
-                // AddStatProcBuff and the item swap proc only bookkeep for the sim's item proc
-                // manager and item swapping, which preparation refuses.
+                let slots = crate::prepare::shared_items::eligible_slots_for_item(
+                    sim,
+                    unit,
+                    ASHTONGUE_TALISMAN_OF_SWIFTNESS,
+                );
+                crate::prepare::shared_items::add_stat_proc_buff(
+                    sim,
+                    unit,
+                    ASHTONGUE_TALISMAN_OF_SWIFTNESS,
+                    stats_aura,
+                    false,
+                    &slots,
+                );
                 true
             }
             TALON_OF_ALAR => {

@@ -30,6 +30,22 @@ fn apl_spell(env: &Environment, id: &ActionId) -> Option<SpellId> {
         .copied()
         .find(|s| &sim.spell(*s).action_id == id && sim.spell(*s).flags.matches(SpellFlag::APL))
         .or_else(|| sim.get_spell(env.player, id))
+        // Go `RankAliases`: an older rank a rotation names presses the known one.
+        .or_else(|| {
+            book.iter().copied().find(|s| {
+                sim.spell(*s).flags.matches(SpellFlag::APL)
+                    && sim
+                        .spell(*s)
+                        .rank_aliases
+                        .iter()
+                        .any(|alias| same_action(alias, id))
+            })
+        })
+}
+
+/// Go `ActionID.SameAction`: the same action whatever the tag.
+fn same_action(a: &ActionId, b: &ActionId) -> bool {
+    a.spell_id == b.spell_id && a.item_id == b.item_id && a.other_id == b.other_id
 }
 
 /// Go `GetAPLCastSpell`.
@@ -729,7 +745,9 @@ impl Builder<'_> {
                     "a change of target to this unit is not prepared yet".to_string(),
                 )),
             },
-            "multidot" => {
+            // Go `newActionStrictMultidot` as `newActionMultidot`: its casts on each target are
+            // its own, which no walk of the rotation's actions reaches.
+            "multidot" | "strict_multidot" => {
                 let Some(id) = action.message("spell_id") else {
                     return Ok(None);
                 };
@@ -750,6 +768,58 @@ impl Builder<'_> {
             "item_swap" => {
                 let unknown = action.enum_name("swap_set") == "Unknown";
                 if unknown || self.env.sim.item_swap(self.env.player).is_none() {
+                    return Ok(None);
+                }
+                Ok(Some(Built::new(Vec::new())))
+            }
+            // Go `newActionSchedule`: the inner action as `newAPLAction` builds it, whose casts
+            // leave the major cooldowns, then the times; one that fails to parse drops both.
+            "schedule" => {
+                let Some(inner) = self.action(action.message("inner_action"))? else {
+                    return Ok(None);
+                };
+                let parses = action
+                    .str("schedule")
+                    .split(',')
+                    .all(|timing| crate::rotation::parse_go_duration(timing.trim()).is_some());
+                if !parses {
+                    return Ok(None);
+                }
+                Ok(Some(Built::new(inner.casts)))
+            }
+            // Go `newActionCastAllStatBuffCooldowns` always builds the action; the cooldowns it
+            // casts leave the major cooldowns once the rotation is finalized.
+            "cast_all_stat_buff_cooldowns" => Ok(Some(Built::new(Vec::new()))),
+            // Go `newActionActivateAllStatBuffProcAuras`: none without an item proc buff of the
+            // stats in the set, or for Swap1 without an item swap.
+            "activate_all_stat_buff_proc_auras" => {
+                let swap1 = action.enum_name("swap_set") == "Swap1";
+                if swap1 && self.env.sim.item_swap(self.env.player).is_none() {
+                    return Ok(None);
+                }
+                let stats: Vec<i32> = ["stat_type1", "stat_type2", "stat_type3"]
+                    .iter()
+                    .map(|field| action.i32(field))
+                    .filter(|stat| *stat >= 0)
+                    .collect();
+                let any = self
+                    .env
+                    .sim
+                    .character(self.env.player)
+                    .item_proc_buffs
+                    .iter()
+                    .any(|buff| {
+                        buff.is_swapped == swap1
+                            && buff
+                                .buffed_stat_types
+                                .iter()
+                                .any(|stat| stats.contains(&(*stat as i32)))
+                    });
+                Ok(any.then(|| Built::new(Vec::new())))
+            }
+            // Go `newActionResetSequence`: no action without a sequence name.
+            "reset_sequence" => {
+                if action.str("sequence_name").is_empty() {
                     return Ok(None);
                 }
                 Ok(Some(Built::new(Vec::new())))
@@ -974,7 +1044,8 @@ fn group_casts(
             interrupt_if: None,
             ..
         } if target.resolve(targets).is_some() => casts.extend(apl_cast_spell(env, spell)),
-        Action::Sequence(steps) => casts.extend(steps.iter().filter_map(|step| {
+        Action::Schedule { inner, .. } => group_casts(env, &inner.action, casts, pruned),
+        Action::Sequence { steps, .. } => casts.extend(steps.iter().filter_map(|step| {
             step.target
                 .resolve(targets)
                 .and_then(|_| apl_cast_spell(env, &step.spell))
@@ -1097,21 +1168,16 @@ pub(crate) fn build_rotation(
             pruned_casts: Vec::new(),
             built_values: Vec::new(),
         };
+        // apl.go: the set the last prepull item swap Go builds goes to.
+        let mut last_swap: Option<String> = None;
         for item in rotation.messages("prepull_actions") {
             if item.bool("hide") {
                 continue;
             }
-            // apl.go: a prepull item swap, and the swap back to Main Go then schedules.
-            let swaps = item
+            let swap = item
                 .message("action")
-                .and_then(|action| action.oneof("action"))
-                .is_some_and(|(kind, _)| kind == "item_swap");
-            if swaps && builder.env.sim.item_swap(builder.env.player).is_some() {
-                return Err(Refusal::new(
-                    "item_swap",
-                    "a prepull item swap is unsupported".to_string(),
-                ));
-            }
+                .and_then(|action| action.message("item_swap"))
+                .map(|swap| swap.enum_name("swap_set"));
             let Some(at) = item.message("do_at_value") else {
                 continue;
             };
@@ -1129,7 +1195,15 @@ pub(crate) fn build_rotation(
             }
             if builder.action(item.message("action"))?.is_some() {
                 prepull += 1;
+                if let Some(set) = swap {
+                    last_swap = Some(set);
+                }
             }
+        }
+        // apl.go: Go swaps back to Main a nanosecond before the pull when the prepull's last
+        // item swap goes to another set.
+        if last_swap.is_some_and(|set| set != "Main") {
+            prepull += 1;
         }
         for item in rotation.messages("priority_list") {
             if item.bool("hide") {
@@ -1151,11 +1225,304 @@ pub(crate) fn build_rotation(
         pruned.extend(group_pruned);
     }
     env.rotation_dot_base_durations = rotation_dot_base_durations(env, rotation);
+    env.rotation_reads = rotation_reads(env, rotation);
     env.prepull_actions += prepull;
     let player = env.player;
     for spell in casts.into_iter().chain(pruned) {
         let action = env.sim.spell(spell).action_id.clone();
         env.sim.remove_initial_major_cooldown(player, &action);
     }
+    cast_all_stat_buff_cooldowns(env, rotation);
     Ok(())
+}
+
+/// Every value message of the rotation, depth first.
+fn all_values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
+    if message.type_name() == "proto.APLValue" {
+        out.push(message);
+    }
+    for name in message.set_fields() {
+        match message.get(name) {
+            Some(Value::Message(inner)) => all_values(inner, out),
+            Some(Value::List(items)) => {
+                for item in items {
+                    if let Value::Message(inner) = item {
+                        all_values(inner, out);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// apl_values_boss.go `GetTargetUnit` of a boss value: a target for no reference, the current,
+/// next, previous or an indexed one; none for the player or a set, which read no target.
+fn boss_value_target(env: &Environment, reference: Option<&Message>) -> Option<UnitId> {
+    let targets = &env.encounter.targets;
+    let first = *targets.first()?;
+    let Some(reference) = reference else {
+        return Some(first);
+    };
+    match reference.enum_name("type").as_str() {
+        "Unknown" | "CurrentTarget" | "NextTarget" | "PreviousTarget" => Some(first),
+        "Target" => usize::try_from(reference.i32("index"))
+            .ok()
+            .and_then(|index| targets.get(index).copied()),
+        _ => None,
+    }
+}
+
+/// The exporter's `rotationReads`: what the rotation's values read that the rest of the export
+/// leaves out, or none when no value reads any of it.
+fn rotation_reads(
+    env: &Environment,
+    rotation: &Message,
+) -> Option<crate::contracts::prepared_v2::RotationReads> {
+    use crate::contracts::prepared_v2::{
+        RotationCooldownBuffs, RotationItemProcBuff, RotationReads, RotationSelfBuff,
+        RotationTargetSpell,
+    };
+    let mut values = Vec::new();
+    all_values(rotation, &mut values);
+    let mut reads = RotationReads::default();
+    let mut used = false;
+    let mut item_procs = false;
+    let mut cooldown_keys: Vec<Vec<i32>> = Vec::new();
+    let stat_key = |config: &Message| -> Vec<i32> {
+        ["stat_type1", "stat_type2", "stat_type3"]
+            .iter()
+            .map(|field| config.i32(field))
+            .filter(|stat| *stat >= 0)
+            .collect()
+    };
+    // The prepull's activateAllStatBuffProcAuras reads the item proc buffs too, and
+    // castAllStatBuffCooldowns names its stats; both are actions.
+    let mut actions = Vec::new();
+    all_actions(rotation, &mut actions);
+    for action in &actions {
+        match action.oneof("action") {
+            Some(("activate_all_stat_buff_proc_auras", _)) => {
+                item_procs = true;
+                used = true;
+            }
+            Some(("cast_all_stat_buff_cooldowns", _)) => used = true,
+            _ => {}
+        }
+    }
+    let consumables = &env.sim.character(env.player).consumables;
+    for value in values {
+        let Some((kind, Value::Message(config))) = value.oneof("value") else {
+            continue;
+        };
+        match kind {
+            "all_item_stat_procs_active"
+            | "any_item_stat_procs_active"
+            | "any_item_stat_procs_available"
+            | "item_procs_min_remaining_time"
+            | "item_procs_max_remaining_icd"
+            | "num_equipped_stat_proc_items" => {
+                item_procs = true;
+                used = true;
+            }
+            "num_stat_buff_cooldowns"
+            | "any_stat_buff_cooldowns_active"
+            | "any_stat_buff_cooldowns_min_duration" => {
+                let key = stat_key(config);
+                if !cooldown_keys.contains(&key) {
+                    cooldown_keys.push(key);
+                }
+                used = true;
+            }
+            "selected_potion" => {
+                reads.potion_id = Some(consumables.i32("pot_id"));
+                used = true;
+            }
+            "selected_conjured" => {
+                reads.conjured_id = Some(consumables.i32("conjured_id"));
+                used = true;
+            }
+            "boss_spell_is_casting" | "boss_spell_time_to_ready" => {
+                let (Some(id), Some(target)) = (
+                    config.message("spell_id"),
+                    boss_value_target(env, config.message("target_unit")),
+                ) else {
+                    continue;
+                };
+                let id = proto_to_action_id(id);
+                let Some(spell) = env.sim.get_spell(target, &id) else {
+                    continue;
+                };
+                if reads.target_spells.iter().any(|known| known.spell == id) {
+                    continue;
+                }
+                let spell = env.sim.spell(spell);
+                reads.target_spells.push(RotationTargetSpell {
+                    spell: id,
+                    has_cooldown: spell.cd.timer.is_some() || spell.shared_cd.timer.is_some(),
+                });
+                used = true;
+            }
+            "multiple_cd_usages" => {
+                for field in ["base_spell_id", "target_spell_id"] {
+                    let Some(id) = config.message(field) else {
+                        continue;
+                    };
+                    let Some(spell) = apl_spell(env, &proto_to_action_id(id)) else {
+                        continue;
+                    };
+                    let state = env.sim.spell(spell);
+                    let Some(aura) = state.related_self_buff else {
+                        continue;
+                    };
+                    if reads
+                        .self_buffs
+                        .iter()
+                        .any(|known| known.spell == state.action_id)
+                    {
+                        continue;
+                    }
+                    reads.self_buffs.push(RotationSelfBuff {
+                        spell: state.action_id.clone(),
+                        aura: env.sim.aura(aura).label.clone(),
+                        has_cooldown: state.cd.timer.is_some(),
+                    });
+                    used = true;
+                }
+            }
+            _ => {}
+        }
+    }
+    if !used {
+        return None;
+    }
+    if item_procs {
+        for buff in &env.sim.character(env.player).item_proc_buffs {
+            reads.item_proc_buffs.push(RotationItemProcBuff {
+                aura: env.sim.aura(buff.aura).label.clone(),
+                stats: buff
+                    .buffed_stat_types
+                    .iter()
+                    .map(|stat| *stat as i32)
+                    .collect(),
+                swapped: buff.is_swapped,
+            });
+        }
+    }
+    cooldown_keys.sort();
+    for key in cooldown_keys {
+        let (spells, auras) = matching_stat_buff_cooldowns(env, &key);
+        reads.cooldown_buffs.push(RotationCooldownBuffs {
+            stats: key,
+            spells: spells
+                .iter()
+                .map(|spell| env.sim.spell(*spell).action_id.clone())
+                .collect(),
+            auras: auras
+                .iter()
+                .map(|aura| env.sim.aura(*aura).label.clone())
+                .collect(),
+        });
+    }
+    let key = |id: &ActionId| (id.spell_id, id.item_id, id.other_id.clone(), id.tag);
+    reads.target_spells.sort_by_key(|entry| key(&entry.spell));
+    reads.self_buffs.sort_by_key(|entry| key(&entry.spell));
+    Some(reads)
+}
+
+/// Every action message of the rotation, depth first.
+fn all_actions<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
+    if message.type_name() == "proto.APLAction" {
+        out.push(message);
+    }
+    for name in message.set_fields() {
+        match message.get(name) {
+            Some(Value::Message(inner)) => all_actions(inner, out),
+            Some(Value::List(items)) => {
+                for item in items {
+                    if let Value::Message(inner) = item {
+                        all_actions(inner, out);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Go `majorCooldownManager.GetMatchingStatBuffSpells` and `GetMatchingStatBuffCooldownAuras`:
+/// the instant major cooldowns whose buff aura moves one of the stats, as spells and auras.
+fn matching_stat_buff_cooldowns(
+    env: &Environment,
+    stats: &[i32],
+) -> (Vec<SpellId>, Vec<super::sim::AuraId>) {
+    let character = env.sim.character(env.player);
+    let mut spells = Vec::new();
+    let mut auras = Vec::new();
+    for mcd in &character.initial_major_cooldowns {
+        let Some((_, buff)) = character
+            .cooldown_buff_auras
+            .iter()
+            .find(|(spell, _)| *spell == mcd.spell)
+        else {
+            continue;
+        };
+        let matches = buff
+            .buffed_stat_types
+            .iter()
+            .any(|stat| stats.contains(&(*stat as i32)));
+        if matches && env.sim.spell(mcd.spell).default_cast.effective_time() == 0 {
+            spells.push(mcd.spell);
+            auras.push(buff.aura);
+        }
+    }
+    (spells, auras)
+}
+
+/// Go `APLActionCastAllStatBuffCooldowns.processMajorCooldowns`, after the rotation took the
+/// cooldowns it casts: each action's spells, by its stats, which then leave the major cooldowns.
+fn cast_all_stat_buff_cooldowns(env: &mut Environment, rotation: &Message) {
+    let mut actions = Vec::new();
+    all_actions(rotation, &mut actions);
+    let mut keys: Vec<Vec<i32>> = Vec::new();
+    for action in actions {
+        let Some(("cast_all_stat_buff_cooldowns", Value::Message(config))) = action.oneof("action")
+        else {
+            continue;
+        };
+        let key: Vec<i32> = ["stat_type1", "stat_type2", "stat_type3"]
+            .iter()
+            .map(|field| config.i32(field))
+            .filter(|stat| *stat >= 0)
+            .collect();
+        if !keys.contains(&key) {
+            keys.push(key);
+        }
+    }
+    if keys.is_empty() {
+        return;
+    }
+    keys.sort();
+    let mut casts = Vec::new();
+    let mut removed = Vec::new();
+    for key in keys {
+        let (spells, _) = matching_stat_buff_cooldowns(env, &key);
+        removed.extend(spells.iter().copied());
+        casts.push(crate::contracts::prepared_v2::RotationCooldownBuffs {
+            stats: key,
+            spells: spells
+                .iter()
+                .map(|spell| env.sim.spell(*spell).action_id.clone())
+                .collect(),
+            auras: Vec::new(),
+        });
+    }
+    let player = env.player;
+    for spell in removed {
+        let action = env.sim.spell(spell).action_id.clone();
+        env.sim.remove_initial_major_cooldown(player, &action);
+    }
+    if let Some(reads) = env.rotation_reads.as_mut() {
+        reads.cast_cooldowns = casts;
+    }
 }

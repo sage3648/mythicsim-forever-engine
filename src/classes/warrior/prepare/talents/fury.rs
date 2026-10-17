@@ -300,17 +300,8 @@ impl Warrior {
                 ..ProcTrigger::default()
             },
         );
-        sim.make_proc_trigger_aura(
-            unit,
-            &ProcTrigger {
-                name: "Blood Craze - Bloodthirst".to_string(),
-                callback: CallbackMask::ON_SPELL_HIT_DEALT,
-                class_spell_mask: masks::BLOODTHIRST,
-                outcome: HitOutcome::LANDED,
-                require_damage_dealt: true,
-                ..ProcTrigger::default()
-            },
-        );
+        // No Bloodthirst trigger: the 1 October beta notes ("Blood Craze no longer activates off
+        // of Bloodthirst casts") and the client 70374 tooltip dropped it (community #797).
     }
 
     /// Booming Voice also takes 5% a point off the Rage cost of the shouts.

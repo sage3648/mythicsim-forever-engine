@@ -49,6 +49,8 @@ pub(crate) struct Environment {
     pub prepull_actions: usize,
     /// The dot base durations the rotation's `dotBaseDuration` values captured as it was built.
     pub rotation_dot_base_durations: Vec<crate::contracts::prepared_v2::RotationDotBaseDuration>,
+    /// What the rotation's values read that the rest of the export leaves out.
+    pub rotation_reads: Option<crate::contracts::prepared_v2::RotationReads>,
     /// The factory that built the agent, for a separate simulation of the same request.
     pub factory: AgentFactory,
     /// Every attacker's table against every defender, by unit index.
@@ -201,6 +203,7 @@ impl Environment {
             pre_finalize: Vec::new(),
             prepull_actions: 0,
             rotation_dot_base_durations: Vec::new(),
+            rotation_reads: None,
             attack_tables: Vec::new(),
             party_buffs: Message::empty("proto.PartyBuffs"),
             external_activations: Vec::new(),
@@ -315,6 +318,18 @@ impl Environment {
             .cloned()
             .unwrap_or_else(|| Message::empty("proto.PartyBuffs"));
         self.agent.add_party_buffs(&self.sim, &mut party_buffs);
+        // Go `spreadRaidWidePartyBuffs`: Leader of the Pack and Moonkin Aura reach the whole raid
+        // since the 16 October 2026 beta notes, so either on any party reaches the player.
+        for field in ["leader_of_the_pack", "moonkin_aura"] {
+            let anywhere = raid.messages("parties").iter().any(|other| {
+                other
+                    .message("buffs")
+                    .is_some_and(|buffs| buffs.bool(field))
+            });
+            if anywhere && !party_buffs.bool(field) {
+                party_buffs.set_bool(field, true);
+            }
+        }
         self.party_buffs = party_buffs.clone();
         let individual = player
             .message("buffs")

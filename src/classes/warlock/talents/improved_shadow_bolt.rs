@@ -34,6 +34,7 @@ pub(crate) fn bind<A: Agent>(
         school_mask: SHADOW,
         aura: debuff,
         multiplier,
+        per_stack: None,
     });
     Ok(ImprovedShadowBolt {
         debuff,

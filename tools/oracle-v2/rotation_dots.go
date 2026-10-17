@@ -2,6 +2,7 @@
 package main
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/wowsims/forever/sim/core"
@@ -117,7 +118,15 @@ func aplSpell(unit *core.Unit, id core.ActionID) *core.Spell {
 			return spell
 		}
 	}
-	return unit.GetSpell(id)
+	if spell := unit.GetSpell(id); spell != nil {
+		return spell
+	}
+	for _, spell := range unit.Spellbook {
+		if spell.Flags.Matches(core.SpellFlagAPL) && slices.ContainsFunc(spell.RankAliases, id.SameAction) {
+			return spell
+		}
+	}
+	return nil
 }
 
 func actionIDOrEmpty(id core.ActionID) *ActionID {

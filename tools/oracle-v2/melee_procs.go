@@ -46,7 +46,7 @@ var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Healt
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
 	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath",
-	"Diamond Flask", "Mana Tide Totem (External)"}
+	"Diamond Flask", "Mana Tide Totem (External)", "Perfected Form"}
 
 // The stat auras of the character, in the order a combination's bits number them.
 func characterStatAuras(character *core.Character, class classExport, agent core.Agent) []string {
@@ -828,12 +828,8 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 				extra = i
 			}
 		}
-		// buffs/air_totem.go: the party holds one air totem and Windfury Totem outbids a party Grace
-		// of Air, which the reset then leaves displaced or blocked, as the aura export records. A
-		// Grace of Air still up after the reset, as a twisting shaman's, would contest the slot.
-		if other := character.GetAura("Grace of Air Totem (External)"); other != nil && other.IsActive() {
-			*unrepresented = append(*unrepresented, fmt.Sprintf("Windfury Totem shares the air totem slot with %s", other.Label))
-		}
+		// Since the 16 October 2026 beta notes the party's Grace of Air stands beside Windfury Totem:
+		// no air totem slot joins them.
 		grant := spelldata.ProcTrigger(character, spelldata.MustFind(10612), nil)
 		spend := spelldata.ProcTrigger(character, spelldata.MustFind(10610), nil, spelldata.Chance(1))
 		grantSpells := windfuryTriggerSpells(character, grant)

@@ -42,10 +42,10 @@ var shamanClassSpells = []classSpellName{
 // The client rows sim/shaman reads. spellData is private to the package, so the ladders are
 // restated with the ids of sim/shaman/spell_data_auto_gen.go at the pinned revision.
 var (
-	shamanLavaBurst        = spelldata.Ranked(408490, 1238299, 1238300)
+	shamanLavaBurst        = spelldata.Ranked(408490, 1238299, 1238300, 1326047)
 	shamanFlameShock       = spelldata.Ranked(8050, 8052, 8053, 10447, 10448, 29228)
 	shamanFireNova         = spelldata.Ranked(408341, 408342, 408343, 408344, 408345)
-	shamanFireNovaHit      = spelldata.Ranked(8349, 8502, 8503, 11306, 11307, 408423, 408424, 408426, 408427, 408428)
+	shamanFireNovaHit      = spelldata.Ranked(408423, 408424, 408426, 408427, 408428)
 	shamanSearingTotem     = spelldata.Ranked(3599, 6363, 6364, 6365, 10437, 10438)
 	shamanSearingAttack    = spelldata.Ranked(3606, 6350, 6351, 6352, 10435, 10436)
 	shamanElementalFocus   = spelldata.Ranked(16164)
@@ -67,6 +67,8 @@ var (
 	shamanFrostbrandProc   = spelldata.Ranked(8034, 8037, 10458, 16352, 16353)
 	shamanFrostShock       = spelldata.Ranked(8056, 8058, 10472, 10473)
 	shamanMagmaTotem       = spelldata.Ranked(8190, 10585, 10586, 10587)
+	shamanTrialByFire      = spelldata.Talent(16086, 2)
+	shamanElementalMastery = spelldata.Ranked(16166)
 	shamanMagmaPulse       = spelldata.Ranked(8187, 8188, 10579, 10580, 10581, 10582, 10583, 10584).ByID(10581)
 	shamanLightningShield  = spelldata.Ranked(324, 325, 905, 945, 8134, 10431, 10432)
 	shamanShieldOrb        = spelldata.Ranked(26363, 26364, 26365, 26366, 26367, 26369, 26370, 26545).ByID(26363)
@@ -184,6 +186,8 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"melee_crit": shamanDevastation.Effect(dbcenums.A_DUMMY, 0).ValueAt(talents.ElementalDevastation),
 			// Forever's rank lacks the bit: a crit from a spell flagged Proc, as an overload, does not count.
 			"can_proc_from_procs": shamanDevastation.Highest().CanProcFromProcs(),
+			// The ExtraCondition: totems and what they cast never trigger it, Fire Nova included.
+			"excluded_class_spells": []string{"fire_nova"},
 		})
 	}
 	if talents.Flurry > 0 { // talents_enhancement.go applyFlurry: a Go literal 500 ms charge cooldown.
@@ -203,7 +207,7 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"spirit_regen_rate_casting": shamanImpStormBuff.Highest().Effect(dbcenums.A_MOD_MANA_REGEN_INTERRUPT, 0).Percent(),
 		})
 	}
-	// talents_enhancement.go applyMaelstromWeapon: 2 PPM a point, a Go literal, rolled per hand.
+	// talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand.
 	if trigger := character.GetAura("Maelstrom Weapon Trigger"); talents.MaelstromWeapon > 0 && trigger != nil && trigger.Dpm != nil {
 		effects = append(effects, map[string]any{
 			"kind": "maelstrom_weapon", "trigger_aura": trigger.Label, "aura": "Maelstrom Weapon",
@@ -232,6 +236,17 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"melee_speed_multiplier": 1 + row.Effect(dbcenums.A_MOD_MELEE_RANGED_HASTE_2, 0).Percent(),
 		})
 	}
+	// talents_elemental.go applyElementalMastery: a major cooldown whose aura speeds Lightning Bolt
+	// and Lava Burst and cancels Chain Lightning's cooldown (client 70425).
+	if talents.ElementalMastery {
+		row := shamanElementalMastery.Highest()
+		chain := shaman.ChainLightningRankMap.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "elemental_mastery", "spell_id": row.ID, "aura": "Elemental Mastery",
+			"cast_time_delta_ns": nanos(time.Millisecond * time.Duration(row.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).BasePoints)),
+			"chain_lightning_cooldown_ns": nanos(max(chain.Cooldown(), chain.CategoryCooldown())),
+		})
+	}
 	if talents.ElementalFocus { // talents_elemental.go applyElementalFocus
 		clearcasting := shamanClearcasting.Highest()
 		effects = append(effects, map[string]any{
@@ -252,7 +267,9 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 	effects = append(effects, map[string]any{
 		"kind": "magma_totem", "spell_id": shamanMagmaTotem.Highest().ID,
 		"pulse_damage": shamanMagmaPulse.DamageEffect().Average(core.CharacterLevel),
-		"duration_ns":  nanos(shamanMagmaTotem.Highest().Duration()),
+		// Trial by Fire (client 70425) lengthens it.
+		"duration_ns": nanos(shamanMagmaTotem.Highest().Duration() + time.Millisecond*time.Duration(
+			shamanTrialByFire.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_DURATION)).ValueAt(sham.Talents.TrialByFire))),
 	})
 	// registerLightningShieldSpell: the cast puts up every charge. Its trigger hears only the
 	// shield self proc, which needs a proc rate the exporter rejects, so the orb never fires.
@@ -262,29 +279,21 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"charges": int32(shamanLightningShield.Highest().ProcCharges),
 		})
 	}
-	// buffs/air_totem.go: the party holds one air totem, and a totem the shaman casts outbids the
-	// one a party assumption supplies. With both, the slot is a single aura exclusive category the
-	// runtime resolves as Go does.
-	ownAirTotem := character.GetAura("Grace Of Air Totem (Self)") != nil || character.GetAura("Windfury Totem (Self)") != nil
-	partyAirTotem := character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil
-	airSlot := false
-	if ownAirTotem && partyAirTotem {
-		if category := exclusiveCategoryEffect(&character.Unit, "player", buffs.AirTotemCategory); category != nil {
-			effects = append(effects, category)
-			airSlot = true
-		}
-	}
+	// Since the 16 October 2026 beta notes no air totem category stands between the shaman's own
+	// totems and the party's: only the party's Windfury Totem still contests the shaman's own,
+	// through the Windfury Totem category.
+	partyWindfury := character.GetAura("Windfury Totem") != nil
 	// registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat aura.
 	if aura := character.GetAura("Grace Of Air Totem (Self)"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "grace_of_air_totem", "spell_id": shamanGraceOfAir.Highest().ID, "aura": aura.Label,
-			"duration_ns":     nanos(shamanGraceOfAir.Highest().Duration()),
-			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
+			"duration_ns": nanos(shamanGraceOfAir.Highest().Duration()),
 		})
 	}
 	// registerWindfuryTotemSpell: the totem's aura refreshes two auras every 5 seconds, Go literals;
 	// the second's exclusive effect turns the trigger on, which grants charges of attack power and
-	// an extra main hand attack. A party air totem or a main hand Windfury Weapon would contest it.
+	// an extra main hand attack. The party's Windfury Totem or a main hand Windfury Weapon would
+	// contest it.
 	if totem := character.GetAura("Windfury Totem (Self)"); totem != nil {
 		trigger := character.GetAura("Windfury Totem Trigger (Self)")
 		procAura := character.GetAura("Windfury Totem Proc (Self)")
@@ -315,7 +324,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"white_spells":    procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeWhiteHit, CanProcFromProcs: true}),
 			"proc_gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), procAura.ActionID),
 			"proc_expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), procAura.ActionID),
-			"contested": partyAirTotem && !airSlot ||
+			"contested": partyWindfury ||
 				character.GetAura("Windfury Imbue") != nil && character.MainHand().TempEnchant == 283,
 		})
 	}
@@ -332,6 +341,19 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 	if aura := sham.FlametongueTotemAura; aura != nil {
 		trigger := spelldata.ProcTrigger(character, spelldata.MustFind(15036), nil)
 		trigger.ProcMask &= core.ProcMaskMeleeMH
+		// Windfury Weapon's main-hand strikes proc it as the main hand's autos do (patch 141): the
+		// trigger hears main hand specials, and its ExtraCondition keeps the autos and 439440.
+		triggerSpells := procTriggerSpells(character, trigger)
+		if buffs.FlametongueTotemHearsWindfuryWeapon && trigger.ProcMask.Matches(core.ProcMaskMeleeMHAuto) {
+			trigger.ProcMask |= core.ProcMaskMeleeMHSpecial
+			triggerSpells = []int{}
+			for _, i := range procTriggerSpells(character, trigger) {
+				spell := character.Spellbook[i]
+				if spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto) || spell.ActionID.SpellID == buffs.WindfuryWeaponMainHandStrikeID {
+					triggerSpells = append(triggerSpells, i)
+				}
+			}
+		}
 		attack := -1
 		for i, spell := range character.Spellbook {
 			if spell.ActionID == (core.ActionID{SpellID: 16389}) {
@@ -344,7 +366,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"trigger_aura": buffs.FlametongueTotemTriggerLabel, "attack_spell": attack,
 			"attack_deals_damage": weapon != nil && weapon.SwingSpeed != 0,
 			"attack_damage":       buffs.FlametongueTotemBaseDamage(weapon.SwingSpeed),
-			"trigger_spells":      procTriggerSpells(character, trigger), "trigger_outcome": outcomeNames(trigger.Outcome),
+			"trigger_spells":      triggerSpells, "trigger_outcome": outcomeNames(trigger.Outcome),
 			"disabled_by_weapon": character.GetAura("Flametongue Imbue ItemSlotMainHand") != nil,
 			"duration_ns":        nanos(shamanFlametongueTotem.Highest().Duration()),
 			"party_totem":        character.GetAura("Flametongue Totem") != nil,

@@ -168,6 +168,17 @@ impl MathOp {
     }
 }
 
+/// Go `highestOrderTypeList`: the highest type of the values, placeholders left out until a
+/// reference fills them.
+fn highest_type(values: &[Value]) -> ValueType {
+    values
+        .iter()
+        .filter(|value| !matches!(value, Value::Placeholder(_)))
+        .map(Value::value_type)
+        .max()
+        .unwrap_or(ValueType::Int)
+}
+
 /// Operand types after `newValueMath`, which coerces addition and subtraction operands to
 /// the higher of their two types.
 fn math_operand_types(op: MathOp, lhs: ValueType, rhs: ValueType) -> (ValueType, ValueType) {
@@ -278,6 +289,152 @@ pub enum Value {
     AutoSwingTime(SwingType),
     /// Go `APLValueSpellCurrentCost`.
     SpellCurrentCost(ActionId),
+    /// Go `APLValueSpellTravelTime`: `Spell.TravelTime`.
+    SpellTravelTime(ActionId),
+    /// Go `APLValueSpellCPM`: the casts this iteration per minute of the fight so far.
+    SpellCpm(ActionId),
+    /// Go `APLValueSpellIsChanneling`: the player's channel is the spell's.
+    SpellIsChanneling(ActionId),
+    /// Go `APLValueSpellChanneledTicks`: the ticks of whatever the player channels.
+    SpellChanneledTicks(ActionId),
+    /// Go `APLValueSpellNumCharges`. No spell of the fork has charges.
+    SpellNumCharges(ActionId),
+    /// Go `APLValueSpellTimeToCharge`. No spell of the fork recharges.
+    SpellTimeToCharge(ActionId),
+    /// Go `APLValueSpellGCDHastedDuration`.
+    SpellGcdHastedDuration(ActionId),
+    /// Go `APLValueSpellFullCooldown`: `Spell.CD.Duration`, with its flat modifiers.
+    SpellFullCooldown(ActionId),
+    /// Go `APLValueSpellInFlight`: a travel of the spell is still pending.
+    SpellInFlight(ActionId),
+    /// Go `APLValueMax`: the largest of the values, all coerced to the highest of their types.
+    Max(Vec<Value>),
+    /// Go `APLValueMin`: the smallest of them.
+    Min(Vec<Value>),
+    /// Go `APLValueCurrentTimePercent`: the time so far over the fight's duration.
+    CurrentTimePercent,
+    /// Go `APLValueCurrentHealth` of the player.
+    CurrentHealth,
+    /// Go `APLValueMaxHealth`.
+    MaxHealth,
+    /// Go `APLValueMaxRage`: no value without a rage bar.
+    MaxRage,
+    /// Go `APLValueMaxComboPoints`: no value without an energy bar.
+    MaxComboPoints,
+    /// Go `APLValueCurrentManaRegen`: the mana tick while casting; no value without mana.
+    CurrentManaRegen,
+    /// Go `APLValueEnergyTimeToTarget`: when the energy ticks reach the value, read as a float.
+    EnergyTimeToTarget(Box<Value>),
+    /// Go `APLValueUnitIsMoving` of the unit; only the player moves.
+    UnitIsMoving(UnitRef),
+    /// Go `APLValueUnitDistance`: the player's distance from the target, whatever unit it names.
+    UnitDistance,
+    /// Go `APLValueGCDTimeToReady`.
+    GcdTimeToReady,
+    /// Go `APLValueAutoTimeSinceLast`: the time since the auto attack last swung.
+    AutoTimeSinceLast(AutoAttackType),
+    /// Go `APLValueInputDelay`: the player's reaction time.
+    InputDelay,
+    /// Go `APLValueChannelClipDelay`.
+    ChannelClipDelay,
+    /// Go `APLValueAuraInternalCooldown`: the time until the ICD of the first aura of the unit
+    /// with the action, or triggered by it, that has one, is ready.
+    AuraInternalCooldown {
+        unit: UnitRef,
+        id: ActionId,
+    },
+    /// Go `APLValueAuraICDIsReady`; with `includeReactionTime` also while the aura has been
+    /// up for less than the reaction time.
+    AuraIcdIsReady {
+        unit: UnitRef,
+        id: ActionId,
+        include_reaction_time: bool,
+    },
+    /// Go `APLValueAuraDuration`: the aura's duration.
+    AuraDuration {
+        unit: UnitRef,
+        id: ActionId,
+    },
+    /// Go `APLValueDotIsActiveOnAllTargets` of the spell's dot.
+    DotIsActiveOnAllTargets(ActionId),
+    /// Go `APLValueDotLowestRemainingTime`: zero once a target lacks the dot.
+    DotLowestRemainingTime(ActionId),
+    /// Go `APLValueDotTickFrequency`: the dot's tick period, or the one it would tick at now
+    /// while it is down.
+    DotTickFrequency(DotRef),
+    /// Go `APLValueDotPercentIncrease`: how much more a tick cast now would deal than the
+    /// dot's snapshot, through the spell's `ExpectedTickDamage`.
+    DotPercentIncrease(DotRef),
+    /// Go `APLValueDotTickRatePercentIncrease`: how much longer the running tick period is
+    /// than one cast now.
+    DotTickRatePercentIncrease(DotRef),
+    /// Go `APLValueBossCurrentTarget`: whether the unit's current target is the player, which
+    /// a target's is while the player tanks it.
+    BossCurrentTarget(UnitRef),
+    /// Go `APLValueAllItemStatProcsActive`: every proc buff that can proc is up at full stacks.
+    AllItemStatProcsActive(StatProcs),
+    /// Go `APLValueAnyItemStatProcsActive`: one is up at full stacks.
+    AnyItemStatProcsActive(StatProcs),
+    /// Go `APLValueAnyItemStatProcsAvailable`: one that can proc is down with its ICD ready.
+    AnyItemStatProcsAvailable(StatProcs),
+    /// Go `APLValueItemProcsMinRemainingTime`: the least time left of those up.
+    ItemProcsMinRemainingTime(StatProcs),
+    /// Go `APLValueItemProcsMaxRemainingICD`: the longest ICD left of those that can proc and are down.
+    ItemProcsMaxRemainingIcd(StatProcs),
+    /// Go `APLValueNumEquippedStatProcItems`: how many can proc.
+    NumEquippedStatProcItems(StatProcs),
+    /// Go `APLValueNumStatBuffCooldowns`: how many of the matching cooldowns are worn.
+    NumStatBuffCooldowns(Vec<i32>),
+    /// Go `APLValueAnyStatBuffCooldownsActive`: a matching cooldown's buff is up at full stacks.
+    AnyStatBuffCooldownsActive(Vec<i32>),
+    /// Go `APLValueAnyStatBuffCooldownsMinDuration`: the least time left of those up at full stacks.
+    AnyStatBuffCooldownsMinDuration(Vec<i32>),
+    /// Go `APLValueSelectedPotion`: whether the consumables select the potion.
+    SelectedPotion(i32),
+    /// Go `APLValueSelectedConjured`: whether the consumables select the conjured item.
+    SelectedConjured(i32),
+    /// Go `APLValueBossSpellIsCasting`: the unit hardcasts its spell of the action.
+    BossSpellIsCasting {
+        spell: ActionId,
+        unit: UnitRef,
+    },
+    /// Go `APLValueBossSpellTimeToReady`: the time until the unit's spell is ready.
+    BossSpellTimeToReady {
+        spell: ActionId,
+        unit: UnitRef,
+    },
+    /// Go `APLValueMultipleCdUsages`: whether casting the target spell now keeps the uses its
+    /// cooldown allows, lined up with the base spell's buff when the base spell has one.
+    MultipleCdUsages {
+        base: Option<ActionId>,
+        target: ActionId,
+        offset: Option<Box<Value>>,
+        align_cd_end: bool,
+    },
+    /// Go sim/warlock/apl_values.go `APLValueWarlockIsAssignedCurse`: whether the curse type
+    /// (Agony when absent) is the Warlock's assigned curse.
+    WarlockIsAssignedCurse(String),
+    /// Go `APLValueWarlockAssignedCurseIsActive`: the assigned curse's aura on the unit has
+    /// been up for the reaction time.
+    WarlockAssignedCurseIsActive(UnitRef),
+    /// Go `APLValueSequenceIsComplete` of the sequence of the name.
+    SequenceIsComplete(String),
+    /// Go `APLValueSequenceIsReady`: the sequence's next step is ready.
+    SequenceIsReady(String),
+    /// Go `APLValueSequenceTimeToReady`: the time until its next step's spell is ready.
+    SequenceTimeToReady(String),
+    /// A value the pinned Go engine builds nothing for, so it drops out of its parent as a
+    /// value without one does: Go's switch has no case for it, or its constructor is in a file
+    /// the build leaves out.
+    Unbuilt(&'static str),
+}
+
+/// What an item stat proc value matches: Go `IntTupleToStatsList` of its stat types, as Go's
+/// stat indices, and the ICD its buffs must exceed (`minIcdSeconds`), none at zero or less.
+#[derive(Clone, Debug, PartialEq)]
+pub struct StatProcs {
+    pub stats: Vec<i32>,
+    pub min_icd: i64,
 }
 
 /// Go `APLValueAutoSwingTime_SwingType`: which swing a value reads. Unknown reads as none.
@@ -313,6 +470,14 @@ impl Value {
             }
             Value::Not(value) => value.visit(f),
             Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.visit(f),
+            Value::Max(values) | Value::Min(values) => {
+                values.iter().for_each(|value| value.visit(f))
+            }
+            Value::EnergyTimeToTarget(value) => value.visit(f),
+            Value::MultipleCdUsages {
+                offset: Some(offset),
+                ..
+            } => offset.visit(f),
             Value::Variable { resolved, .. } => resolved.visit(f),
             _ => {}
         }
@@ -349,6 +514,19 @@ impl Value {
                     .collect(),
             ),
             Value::Not(value) => Value::Not(map(value)),
+            Value::Max(values) => Value::Max(
+                values
+                    .iter()
+                    .map(|value| value.with_targets(count))
+                    .collect(),
+            ),
+            Value::Min(values) => Value::Min(
+                values
+                    .iter()
+                    .map(|value| value.with_targets(count))
+                    .collect(),
+            ),
+            Value::EnergyTimeToTarget(value) => Value::EnergyTimeToTarget(map(value)),
             Value::Variable { name, resolved } => Value::Variable {
                 name: name.clone(),
                 resolved: map(resolved),
@@ -377,6 +555,8 @@ impl Value {
             | Value::IsExecutePhase(_)
             | Value::SpellCanCast(_)
             | Value::ActiveItemSwapSet(_)
+            | Value::SpellIsChanneling(_)
+            | Value::SpellInFlight(_)
             | Value::GcdIsReady => ValueType::Bool,
             Value::TargetAura {
                 read:
@@ -394,9 +574,11 @@ impl Value {
                 read: AuraRead::RemainingTime,
                 ..
             } => ValueType::Duration,
-            Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
-                ValueType::Int
-            }
+            Value::AuraNumStacks(_)
+            | Value::NumberTargets
+            | Value::SpellChanneledTicks(_)
+            | Value::SpellNumCharges(_)
+            | Value::CurrentComboPoints => ValueType::Int,
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
@@ -408,6 +590,10 @@ impl Value {
             | Value::RemainingTime
             | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
+            | Value::SpellTravelTime(_)
+            | Value::SpellTimeToCharge(_)
+            | Value::SpellGcdHastedDuration(_)
+            | Value::SpellFullCooldown(_)
             | Value::TimeToNextEnergyTick => ValueType::Duration,
             Value::CurrentManaPercent
             | Value::CurrentHealthPercent
@@ -417,12 +603,57 @@ impl Value {
             | Value::CurrentRage
             | Value::MaxEnergy
             | Value::SpellCurrentCost(_)
+            | Value::SpellCpm(_)
             | Value::MaxMana => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
             }
             Value::Variable { resolved, .. } => resolved.value_type(),
+            Value::Max(values) | Value::Min(values) => highest_type(values),
+            Value::UnitIsMoving(_)
+            | Value::AuraIcdIsReady { .. }
+            | Value::SequenceIsComplete(_)
+            | Value::SequenceIsReady(_)
+            | Value::WarlockIsAssignedCurse(_)
+            | Value::WarlockAssignedCurseIsActive(_)
+            | Value::BossCurrentTarget(_)
+            | Value::SelectedPotion(_)
+            | Value::SelectedConjured(_)
+            | Value::AllItemStatProcsActive(_)
+            | Value::AnyItemStatProcsActive(_)
+            | Value::AnyItemStatProcsAvailable(_)
+            | Value::AnyStatBuffCooldownsActive(_)
+            | Value::BossSpellIsCasting { .. }
+            | Value::MultipleCdUsages { .. }
+            | Value::DotIsActiveOnAllTargets(_) => ValueType::Bool,
+            Value::SequenceTimeToReady(_) | Value::BossSpellTimeToReady { .. } => {
+                ValueType::Duration
+            }
+            Value::ItemProcsMinRemainingTime(_) => ValueType::Duration,
+            Value::ItemProcsMaxRemainingIcd(_) => ValueType::Duration,
+            Value::AnyStatBuffCooldownsMinDuration(_) => ValueType::Duration,
+            Value::NumEquippedStatProcItems(_) => ValueType::Int,
+            Value::NumStatBuffCooldowns(_) => ValueType::Int,
+            Value::AuraInternalCooldown { .. }
+            | Value::AuraDuration { .. }
+            | Value::DotLowestRemainingTime(_)
+            | Value::DotTickFrequency(_) => ValueType::Duration,
+            Value::DotPercentIncrease(_) | Value::DotTickRatePercentIncrease(_) => ValueType::Float,
+            Value::MaxComboPoints => ValueType::Int,
+            Value::CurrentTimePercent
+            | Value::CurrentHealth
+            | Value::MaxHealth
+            | Value::MaxRage
+            | Value::CurrentManaRegen
+            | Value::UnitDistance => ValueType::Float,
+            Value::EnergyTimeToTarget(_)
+            | Value::GcdTimeToReady
+            | Value::AutoTimeSinceLast(_)
+            | Value::InputDelay
+            | Value::ChannelClipDelay => ValueType::Duration,
+            // Go never reads a value it did not build.
+            Value::Unbuilt(_) => ValueType::Int,
             // Unknown until a group's reference fills it; the checks that read the type of an
             // operand run again once it has.
             Value::Placeholder(_) => ValueType::Int,
@@ -443,8 +674,57 @@ pub enum Action {
     /// Go `APLActionStrictSequence`: casts that run in order once the first is ready.
     StrictSequence(Vec<Step>),
     /// Go `APLActionSequence`: casts that run one step at a time, each when it is ready, and
-    /// never again once done.
-    Sequence(Vec<Step>),
+    /// never again once done, until a reset sequence action of its name starts it over.
+    Sequence {
+        name: String,
+        steps: Vec<Step>,
+    },
+    /// Go `APLActionWait`: the rotation waits for the duration value; none when Go builds no
+    /// value.
+    Wait(Option<Value>),
+    /// Go `APLActionWaitUntil`: the rotation waits until the condition holds; none when Go
+    /// builds no value.
+    WaitUntil(Option<Value>),
+    /// Go `APLActionSchedule`: the inner action, ready at each of the times in turn. No times
+    /// when one fails to parse, which builds no action.
+    Schedule {
+        timings: Option<Vec<i64>>,
+        inner: Box<Item>,
+    },
+    /// Go `APLActionResetSequence`: starts the sequence of the name over.
+    ResetSequence(String),
+    /// Go `APLActionStrictMultidot`: the spell on each of up to `max_dots` targets whose dot
+    /// is down or runs out within `max_overlap`, or before the previous one's, in one strict
+    /// sequence.
+    StrictMultidot {
+        spell: ActionId,
+        max_dots: i32,
+        max_overlap: Option<Value>,
+    },
+    /// Go `APLActionCancelAura` of one of the player's auras.
+    CancelAura(ActionId),
+    /// Go `APLActionChangeTarget` to the unit, the player when it names none.
+    ChangeTarget(UnitRef),
+    /// Go sim/warlock/apl_values.go `APLActionCastWarlockAssignedCurse` on the unit.
+    CastAssignedCurse(UnitRef),
+    /// Go `APLActionCastAllStatBuffCooldowns`: the instant cooldowns whose buff moves one of
+    /// the stats, which leave the major cooldowns.
+    CastAllStatBuffCooldowns(Vec<i32>),
+    /// Go `APLActionActivateAllStatBuffProcAuras` of the stats and the set (Swap1 when true),
+    /// parsed only as a prepull action.
+    ActivateAllStatBuffProcAuras {
+        stats: Vec<i32>,
+        swap1: bool,
+    },
+    /// Go `APLActionActivateAuraWithStacks` of one of the player's auras, parsed only as a
+    /// prepull action.
+    ActivateAuraWithStacks {
+        id: ActionId,
+        stacks: i32,
+    },
+    /// Go `APLActionTriggerICD` of the player's aura with the ICD, parsed only as a prepull
+    /// action.
+    TriggerIcd(ActionId),
     /// Go `APLActionChannelSpell`: a channel the rotation may interrupt.
     ChannelSpell {
         spell: ActionId,
@@ -492,8 +772,17 @@ impl Action {
     pub fn values(&self) -> Vec<&Value> {
         match self {
             Action::ChannelSpell { interrupt_if, .. } => interrupt_if.iter().collect(),
-            Action::Multidot { max_overlap, .. } => max_overlap.iter().collect(),
+            Action::Multidot { max_overlap, .. } | Action::StrictMultidot { max_overlap, .. } => {
+                max_overlap.iter().collect()
+            }
             Action::Move(value) | Action::MoveDuration(value) => vec![value],
+            Action::Wait(value) | Action::WaitUntil(value) => value.iter().collect(),
+            // Go builds the inner action without the group's variables.
+            Action::Schedule { inner, .. } => {
+                let mut values: Vec<&Value> = inner.condition.iter().collect();
+                values.extend(inner.action.values());
+                values
+            }
             Action::GroupReference { variables, .. } => {
                 variables.iter().map(|(_, value)| value).collect()
             }
@@ -505,11 +794,12 @@ impl Action {
     /// target names no unit builds no action, and takes the whole of a strict sequence with it.
     pub fn reachable_spells(&self, targets: usize) -> Vec<&ActionId> {
         match self {
-            Action::Sequence(steps) => steps
+            Action::Sequence { steps, .. } => steps
                 .iter()
                 .filter(|step| step.target.resolve(targets).is_some())
                 .map(|step| &step.spell)
                 .collect(),
+            Action::Schedule { inner, .. } => inner.action.reachable_spells(targets),
             Action::StrictSequence(steps)
                 if steps
                     .iter()
@@ -521,19 +811,40 @@ impl Action {
         }
     }
 
+    /// The action a schedule runs, through any schedules around it; any other action itself.
+    pub fn scheduled(&self) -> &Action {
+        match self {
+            Action::Schedule { inner, .. } => inner.action.scheduled(),
+            other => other,
+        }
+    }
+
     /// The spells the action names, in order, as Go `GetAllActions` visits casts.
     pub fn spells(&self) -> Vec<&ActionId> {
         match self {
             Action::CastSpell { spell: id, .. } | Action::CastAtPlayer(id) => vec![id],
             Action::AutocastOtherCooldowns => Vec::new(),
-            Action::StrictSequence(steps) | Action::Sequence(steps) => {
+            Action::StrictSequence(steps) | Action::Sequence { steps, .. } => {
                 steps.iter().map(|step| &step.spell).collect()
             }
-            Action::ChannelSpell { spell, .. } | Action::Multidot { spell, .. } => vec![spell],
+            Action::Schedule { inner, .. } => inner.action.spells(),
+            Action::ChannelSpell { spell, .. }
+            | Action::Multidot { spell, .. }
+            | Action::StrictMultidot { spell, .. } => vec![spell],
             Action::ActivateAura(_)
             | Action::Move(_)
             | Action::MoveDuration(_)
             | Action::ItemSwap(_)
+            | Action::Wait(_)
+            | Action::WaitUntil(_)
+            | Action::ResetSequence(_)
+            | Action::CancelAura(_)
+            | Action::ChangeTarget(_)
+            | Action::CastAssignedCurse(_)
+            | Action::CastAllStatBuffCooldowns(_)
+            | Action::ActivateAllStatBuffProcAuras { .. }
+            | Action::ActivateAuraWithStacks { .. }
+            | Action::TriggerIcd(_)
             | Action::GroupReference { .. } => Vec::new(),
         }
     }
@@ -698,11 +1009,68 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
         }
     }
     VARIABLES.with(|scope| scope.borrow_mut().clear());
+    reasons.extend(group_sequence_reads(&parsed));
     if reasons.is_empty() {
         Ok(parsed)
     } else {
         Err(reasons)
     }
+}
+
+/// Go's reset sequence actions and sequence values find a sequence by name in the priority list's
+/// actions, then in the groups' configurations, which no reference runs. Rust finds those of the
+/// priority list; a name a group's sequence holds is refused.
+fn group_sequence_reads(rotation: &Rotation) -> Vec<String> {
+    fn sequence_names(item: &Item, out: &mut Vec<String>) {
+        match &item.action {
+            Action::Sequence { name, .. } => out.push(name.clone()),
+            Action::Schedule { inner, .. } => sequence_names(inner, out),
+            _ => {}
+        }
+    }
+    let mut in_groups = Vec::new();
+    for item in rotation.groups.iter().flat_map(|group| group.items.iter()) {
+        sequence_names(item, &mut in_groups);
+    }
+    let mut read = Vec::new();
+    let mut note = |value: &Value| match value {
+        Value::SequenceIsComplete(name)
+        | Value::SequenceIsReady(name)
+        | Value::SequenceTimeToReady(name) => read.push(name.clone()),
+        _ => {}
+    };
+    fn walk(item: &Item, note: &mut impl FnMut(&Value), read: &mut Vec<String>) {
+        if let Some(condition) = &item.condition {
+            condition.visit(note);
+        }
+        for value in item.action.values() {
+            value.visit(note);
+        }
+        match &item.action {
+            Action::ResetSequence(name) => read.push(name.clone()),
+            Action::Schedule { inner, .. } => walk(inner, note, read),
+            _ => {}
+        }
+    }
+    let mut names = Vec::new();
+    for item in rotation
+        .priority_list
+        .iter()
+        .chain(rotation.groups.iter().flat_map(|group| group.items.iter()))
+    {
+        walk(item, &mut note, &mut names);
+    }
+    names.extend(read);
+    let mut reasons = Vec::new();
+    for name in names {
+        if !name.is_empty() && in_groups.contains(&name) {
+            let reason = format!("a sequence {name:?} of a group read by name is unsupported");
+            if !reasons.contains(&reason) {
+                reasons.push(reason);
+            }
+        }
+    }
+    reasons
 }
 
 /// Go `newAPLRotation`'s group parsing: the group's variables and its actions, which are numbered
@@ -817,6 +1185,64 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         }
         ("move", config) => parse_move(config)?,
         ("moveDuration", config) => parse_move_duration(config)?,
+        ("castFriendlySpell", config) => parse_cast_friendly_spell(config)?,
+        ("changeTarget", config) => parse_change_target(config)?,
+        ("castAllStatBuffCooldowns", config) => parse_cast_all_stat_buff_cooldowns(config)?,
+        ("activateAllStatBuffProcAuras", config) => {
+            let object = config
+                .as_object()
+                .ok_or("activateAllStatBuffProcAuras must be an object")?;
+            if let Some(key) = object.keys().find(|key| {
+                !matches!(
+                    key.as_str(),
+                    "statType1" | "statType2" | "statType3" | "swapSet"
+                )
+            }) {
+                return Err(format!(
+                    "activateAllStatBuffProcAuras field {key} is unsupported"
+                ));
+            }
+            let swap1 = match object.get("swapSet").and_then(Json::as_str) {
+                None | Some("Main") => false,
+                Some("Swap1") => true,
+                Some(other) => {
+                    return Err(format!(
+                        "activateAllStatBuffProcAuras swap set {other} is unsupported"
+                    ))
+                }
+            };
+            Action::ActivateAllStatBuffProcAuras {
+                stats: parse_stat_types(config)?,
+                swap1,
+            }
+        }
+        ("channelSpell", config) => parse_channel_spell(config)?,
+        ("itemSwap", config) => Action::ItemSwap(parse_swap_set("itemSwap", config)?),
+        ("cancelAura", config) => Action::CancelAura(parse_aura_action("cancelAura", config)?),
+        ("triggerIcd", config) => Action::TriggerIcd(parse_aura_action("triggerIcd", config)?),
+        ("activateAuraWithStacks", config) => {
+            let object = config
+                .as_object()
+                .ok_or("activateAuraWithStacks must be an object")?;
+            if let Some(key) = object
+                .keys()
+                .find(|key| !matches!(key.as_str(), "auraId" | "numStacks"))
+            {
+                return Err(format!("activateAuraWithStacks field {key} is unsupported"));
+            }
+            Action::ActivateAuraWithStacks {
+                id: parse_action_id(
+                    object
+                        .get("auraId")
+                        .ok_or("activateAuraWithStacks has no auraId")?,
+                )?,
+                stacks: object
+                    .get("numStacks")
+                    .map(json_i32)
+                    .transpose()?
+                    .unwrap_or(0),
+            }
+        }
         (name, _) => return Err(format!("action {name} is unsupported")),
     };
     // A prepull action runs at a fixed time before the pull, where only a constant is read.
@@ -910,6 +1336,11 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         .get("action")
         .and_then(Json::as_object)
         .ok_or_else(|| vec!["item has no action".to_string()])?;
+    parse_action_object(action, position).map(Some)
+}
+
+/// A protojson `APLAction`: its condition and what it does.
+fn parse_action_object(action: &Map<String, Json>, position: usize) -> Result<Item, Vec<String>> {
     let mut reasons = Vec::new();
     let condition = match action.get("condition") {
         Some(condition) => match parse_value(condition) {
@@ -931,25 +1362,111 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("sequence", config)) => parse_sequence(config),
         Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok(("multidot", config)) => parse_multidot(config),
+        Ok(("strictMultidot", config)) => match parse_multidot(config) {
+            Ok(Action::Multidot {
+                spell,
+                max_dots,
+                max_overlap,
+            }) => Ok(Action::StrictMultidot {
+                spell,
+                max_dots,
+                max_overlap,
+            }),
+            other => other,
+        },
+        Ok(("cancelAura", config)) => {
+            parse_aura_action("cancelAura", config).map(Action::CancelAura)
+        }
+        Ok(("castWarlockAssignedCurse", config)) => parse_assigned_curse(config),
+        Ok(("changeTarget", config)) => parse_change_target(config),
+        Ok(("castAllStatBuffCooldowns", config)) => parse_cast_all_stat_buff_cooldowns(config),
         Ok(("move", config)) => parse_move(config),
         Ok(("moveDuration", config)) => parse_move_duration(config),
         Ok(("groupReference", config)) => parse_group_reference(config),
         Ok(("itemSwap", config)) => parse_swap_set("itemSwap", config).map(Action::ItemSwap),
+        Ok(("wait", config)) => parse_value_field("wait", config, "duration").map(Action::Wait),
+        Ok(("waitUntil", config)) => {
+            parse_value_field("waitUntil", config, "condition").map(Action::WaitUntil)
+        }
+        Ok(("schedule", config)) => parse_schedule(config, position),
+        Ok(("resetSequence", config)) => parse_sequence_name("resetSequence", config)
+            .map(|name| Action::ResetSequence(name.unwrap_or_default())),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
     match parsed {
-        Ok(action) if reasons.is_empty() => Ok(Some(Item {
+        Ok(action) if reasons.is_empty() => Ok(Item {
             position,
             condition,
             action,
-        })),
+        }),
         Ok(_) => Err(reasons),
         Err(reason) => {
             reasons.push(reason);
             Err(reasons)
         }
     }
+}
+
+/// An action's one value field, `None` when it is absent, which Go builds no value for.
+fn parse_value_field(name: &str, config: &Json, field: &str) -> Result<Option<Value>, String> {
+    let object = config
+        .as_object()
+        .ok_or_else(|| format!("{name} must be an object"))?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != field) {
+        return Err(format!("{name} field {key} is unsupported"));
+    }
+    object
+        .get(field)
+        .map(|value| parse_value(value).map_err(|reasons| reasons.join("; ")))
+        .transpose()
+}
+
+/// Go `newActionSchedule`: the inner action, then the comma separated times, each Go
+/// `time.ParseDuration` of its trimmed text. One that fails to parse builds no action.
+fn parse_schedule(config: &Json, position: usize) -> Result<Action, String> {
+    let object = config.as_object().ok_or("schedule must be an object")?;
+    if let Some(key) = object
+        .keys()
+        .find(|key| !matches!(key.as_str(), "schedule" | "innerAction"))
+    {
+        return Err(format!("schedule field {key} is unsupported"));
+    }
+    let inner = object
+        .get("innerAction")
+        .and_then(Json::as_object)
+        .ok_or("a schedule without an inner action is unsupported")?;
+    let inner = parse_action_object(inner, position).map_err(|reasons| reasons.join("; "))?;
+    if matches!(inner.action, Action::GroupReference { .. }) {
+        return Err("a schedule of a group reference is unsupported".into());
+    }
+    let text = object
+        .get("schedule")
+        .and_then(Json::as_str)
+        .unwrap_or_default();
+    let timings = text
+        .split(',')
+        .map(|timing| parse_go_duration(timing.trim()))
+        .collect::<Option<Vec<i64>>>();
+    Ok(Action::Schedule {
+        timings,
+        inner: Box::new(inner),
+    })
+}
+
+/// The sequence a reset sequence action or a sequence value names, `None` when it names none.
+fn parse_sequence_name(name: &str, config: &Json) -> Result<Option<String>, String> {
+    let object = config
+        .as_object()
+        .ok_or_else(|| format!("{name} must be an object"))?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != "sequenceName") {
+        return Err(format!("{name} field {key} is unsupported"));
+    }
+    Ok(object
+        .get("sequenceName")
+        .and_then(Json::as_str)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string))
 }
 
 /// The swap set an item swap action or value names: `true` for Swap1, `false` for Main. Go builds
@@ -1020,8 +1537,8 @@ fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
     Ok(Action::StrictSequence(spells))
 }
 
-/// Go `newActionSequence` for sequences of unconditional casts. The name only matters to a
-/// reset sequence action, which is unsupported.
+/// Go `newActionSequence` for sequences of unconditional casts, with the name reset sequence
+/// actions and sequence values find it by.
 fn parse_sequence(config: &Json) -> Result<Action, String> {
     let object = config.as_object().ok_or("sequence must be an object")?;
     for key in object.keys() {
@@ -1044,7 +1561,15 @@ fn parse_sequence(config: &Json) -> Result<Action, String> {
             (name, _) => return Err(format!("sequence action {name} is unsupported")),
         }
     }
-    Ok(Action::Sequence(spells))
+    let name = object
+        .get("name")
+        .and_then(Json::as_str)
+        .unwrap_or_default()
+        .to_string();
+    Ok(Action::Sequence {
+        name,
+        steps: spells,
+    })
 }
 
 /// Go `newActionChannelSpell`: the channel, the unit it is cast on and its interrupt condition.
@@ -1097,6 +1622,72 @@ fn parse_cast_friendly_spell(config: &Json) -> Result<Action, String> {
         UnitRef::Player => Action::CastAtPlayer(spell),
         target => Action::CastSpell { spell, target },
     })
+}
+
+/// Go `newActionChangeTarget`: the unit `GetSourceUnit` finds, the player itself without one.
+fn parse_change_target(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("changeTarget must be an object")?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != "newTarget") {
+        return Err(format!("changeTarget field {key} is unsupported"));
+    }
+    let unit = parse_unit_ref(object.get("newTarget"), UnitRef::Player)
+        .map_err(|()| unsupported_unit("changeTarget", "newTarget", object.get("newTarget")))?;
+    Ok(Action::ChangeTarget(unit))
+}
+
+/// Go `newActionCastAllStatBuffCooldowns`: the stats it matches.
+fn parse_cast_all_stat_buff_cooldowns(config: &Json) -> Result<Action, String> {
+    let object = config
+        .as_object()
+        .ok_or("castAllStatBuffCooldowns must be an object")?;
+    if let Some(key) = object
+        .keys()
+        .find(|key| !matches!(key.as_str(), "statType1" | "statType2" | "statType3"))
+    {
+        return Err(format!(
+            "castAllStatBuffCooldowns field {key} is unsupported"
+        ));
+    }
+    Ok(Action::CastAllStatBuffCooldowns(parse_stat_types(config)?))
+}
+
+/// Go `newActionWarlockAssignedCurseAction`: the unit the curse is cast on, which the runtime
+/// casts on the first target or on no unit.
+fn parse_assigned_curse(config: &Json) -> Result<Action, String> {
+    let object = config
+        .as_object()
+        .ok_or("castWarlockAssignedCurse must be an object")?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != "target") {
+        return Err(format!(
+            "castWarlockAssignedCurse field {key} is unsupported"
+        ));
+    }
+    match parse_unit_ref(object.get("target"), UnitRef::CurrentTarget) {
+        Ok(unit @ (UnitRef::CurrentTarget | UnitRef::Target(0) | UnitRef::Nobody)) => {
+            Ok(Action::CastAssignedCurse(unit))
+        }
+        _ => Err(unsupported_unit(
+            "castWarlockAssignedCurse",
+            "target",
+            object.get("target"),
+        )),
+    }
+}
+
+/// An action on one of the player's auras: its aura. Go builds no action without one, which Rust
+/// refuses rather than reproduce.
+fn parse_aura_action(name: &str, config: &Json) -> Result<ActionId, String> {
+    let object = config
+        .as_object()
+        .ok_or_else(|| format!("{name} must be an object"))?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != "auraId") {
+        return Err(format!("{name} field {key} is unsupported"));
+    }
+    parse_action_id(
+        object
+            .get("auraId")
+            .ok_or_else(|| format!("{name} has no auraId"))?,
+    )
 }
 
 /// Go `newActionMultidot`: its spell, dot count and overlap.
@@ -1327,6 +1918,132 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 rhs: Box::new(rhs),
             })
         }
+        "max" | "min" => {
+            only(&["vals"])?;
+            let mut values = Vec::new();
+            let mut reasons = Vec::new();
+            for value in config
+                .get("vals")
+                .and_then(Json::as_array)
+                .into_iter()
+                .flatten()
+            {
+                match parse_value(value) {
+                    Ok(value) => values.push(value),
+                    Err(mut value_reasons) => reasons.append(&mut value_reasons),
+                }
+            }
+            if !reasons.is_empty() {
+                return Err(reasons);
+            }
+            // Go has no boolean or string getter for them and panics where it reads one.
+            if matches!(highest_type(&values), ValueType::Bool | ValueType::String) {
+                return Err(vec![format!(
+                    "{name} of booleans or strings is unsupported"
+                )]);
+            }
+            Ok(if name == "max" {
+                Value::Max(values)
+            } else {
+                Value::Min(values)
+            })
+        }
+        "currentTimePercent" => {
+            only(&[])?;
+            Ok(Value::CurrentTimePercent)
+        }
+        "maxHealth" => {
+            only(&[])?;
+            Ok(Value::MaxHealth)
+        }
+        "maxRage" => {
+            only(&[])?;
+            Ok(Value::MaxRage)
+        }
+        "maxComboPoints" => {
+            only(&[])?;
+            Ok(Value::MaxComboPoints)
+        }
+        "currentManaRegen" => {
+            only(&[])?;
+            Ok(Value::CurrentManaRegen)
+        }
+        "gcdTimeToReady" => {
+            only(&[])?;
+            Ok(Value::GcdTimeToReady)
+        }
+        "inputDelay" => {
+            only(&[])?;
+            Ok(Value::InputDelay)
+        }
+        "channelClipDelay" => {
+            only(&[])?;
+            Ok(Value::ChannelClipDelay)
+        }
+        // Go reads the rotation's own unit whatever unit the value names.
+        "unitDistance" => {
+            only(&["sourceUnit"])?;
+            Ok(Value::UnitDistance)
+        }
+        "unitIsMoving" | "currentHealth" => {
+            only(&["sourceUnit"])?;
+            // Go `GetSourceUnit`: no unit reference means the player itself.
+            let unit =
+                parse_value_unit_ref(config.get("sourceUnit"), UnitRef::Player).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "sourceUnit",
+                        config.get("sourceUnit"),
+                    )]
+                })?;
+            match (name, unit) {
+                ("unitIsMoving", unit) => Ok(Value::UnitIsMoving(unit)),
+                (_, UnitRef::Player) => Ok(Value::CurrentHealth),
+                // A unit Go finds nothing for gives no value.
+                (_, UnitRef::Nobody) => Ok(Value::Unbuilt("currentHealth")),
+                _ => Err(vec!["currentHealth of a target is unsupported".to_string()]),
+            }
+        }
+        "energyTimeToTarget" => {
+            only(&["targetEnergy"])?;
+            match config.get("targetEnergy") {
+                Some(value) => Ok(Value::EnergyTimeToTarget(Box::new(parse_value(value)?))),
+                // Go builds no target energy, so no value.
+                None => Ok(Value::Unbuilt("energyTimeToTarget")),
+            }
+        }
+        "autoTimeSinceLast" => {
+            only(&["autoType"])?;
+            Ok(Value::AutoTimeSinceLast(parse_auto_attack_type(
+                name, config,
+            )?))
+        }
+        // Go's switch has no case for these, or the Balance druid's constructor sits in a file
+        // the build leaves out.
+        "currentGenericResource" => {
+            only(&[])?;
+            Ok(Value::Unbuilt("currentGenericResource"))
+        }
+        "currentSolarEnergy" => {
+            only(&[])?;
+            Ok(Value::Unbuilt("currentSolarEnergy"))
+        }
+        "currentLunarEnergy" => {
+            only(&[])?;
+            Ok(Value::Unbuilt("currentLunarEnergy"))
+        }
+        "druidCurrentEclipsePhase" => {
+            only(&["eclipsePhase"])?;
+            Ok(Value::Unbuilt("druidCurrentEclipsePhase"))
+        }
+        "protectionPaladinDamageTakenLastGlobal" => {
+            only(&[])?;
+            Ok(Value::Unbuilt("protectionPaladinDamageTakenLastGlobal"))
+        }
+        "dotCritPercentIncrease" => {
+            only(&["spellId", "targetUnit", "useBaseValue"])?;
+            Ok(Value::Unbuilt("dotCritPercentIncrease"))
+        }
         "and" | "or" => {
             only(&["vals"])?;
             let mut values = Vec::new();
@@ -1442,21 +2159,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
         }
         "autoTimeToNext" => {
             only(&["autoType"])?;
-            // protojson writes the enum by name and omits the zero value, UnknownAuto, which
-            // Go's switch reads as any auto attack.
-            let kind = match config.get("autoType").map(|kind| kind.as_str()) {
-                None | Some(Some("UnknownAuto" | "AnyAuto")) => AutoAttackType::Any,
-                Some(Some("MeleeAuto")) => AutoAttackType::Melee,
-                Some(Some("MainHandAuto")) => AutoAttackType::MainHand,
-                Some(Some("OffHandAuto")) => AutoAttackType::OffHand,
-                Some(Some("RangedAuto")) => AutoAttackType::Ranged,
-                Some(other) => {
-                    return Err(vec![format!(
-                        "autoTimeToNext autoType {other:?} is unsupported"
-                    )])
-                }
-            };
-            Ok(Value::AutoTimeToNext(kind))
+            Ok(Value::AutoTimeToNext(parse_auto_attack_type(name, config)?))
         }
         "autoSwingTime" => {
             only(&["autoType"])?;
@@ -1505,6 +2208,269 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 _ => Value::DotTimeToNextTick(dot),
             })
         }
+        "dotPercentIncrease" | "dotTickRatePercentIncrease" => {
+            only(&["spellId", "targetUnit", "useBaseValue"])?;
+            // Go registers an aura for the base value, which the preparation refuses.
+            if config.get("useBaseValue").and_then(Json::as_bool) == Some(true) {
+                return Err(vec![format!(
+                    "{name} against its base value is unsupported"
+                )]);
+            }
+            let spell = match config.get("spellId") {
+                Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
+                None => None,
+            };
+            let target = parse_value_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget)
+                .map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            let dot = DotRef { spell, target };
+            Ok(if name == "dotPercentIncrease" {
+                Value::DotPercentIncrease(dot)
+            } else {
+                Value::DotTickRatePercentIncrease(dot)
+            })
+        }
+        "dotTickFrequency" => {
+            only(&["spellId", "targetUnit"])?;
+            let spell = match config.get("spellId") {
+                Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
+                None => None,
+            };
+            let target = parse_value_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget)
+                .map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            Ok(Value::DotTickFrequency(DotRef { spell, target }))
+        }
+        "allItemStatProcsActive"
+        | "anyItemStatProcsActive"
+        | "anyItemStatProcsAvailable"
+        | "itemProcsMinRemainingTime"
+        | "itemProcsMaxRemainingIcd"
+        | "numEquippedStatProcItems"
+        | "numStatBuffCooldowns"
+        | "anyStatBuffCooldownsActive"
+        | "anyStatBuffCooldownsMinDuration" => {
+            only(&["statType1", "statType2", "statType3", "minIcdSeconds"])?;
+            let stats = parse_stat_types(config).map_err(|err| vec![err])?;
+            let cooldowns = matches!(
+                name,
+                "numStatBuffCooldowns"
+                    | "anyStatBuffCooldownsActive"
+                    | "anyStatBuffCooldownsMinDuration"
+            );
+            if cooldowns && config.get("minIcdSeconds").is_some() {
+                return Err(vec![format!("{name} field minIcdSeconds is unsupported")]);
+            }
+            let min_icd = match config.get("minIcdSeconds") {
+                None => 0,
+                Some(seconds) => duration_from_seconds(
+                    seconds
+                        .as_f64()
+                        .ok_or_else(|| vec!["minIcdSeconds must be a number".to_string()])?,
+                ),
+            };
+            let procs = StatProcs {
+                stats: stats.clone(),
+                min_icd,
+            };
+            Ok(match name {
+                "allItemStatProcsActive" => Value::AllItemStatProcsActive(procs),
+                "anyItemStatProcsActive" => Value::AnyItemStatProcsActive(procs),
+                "anyItemStatProcsAvailable" => Value::AnyItemStatProcsAvailable(procs),
+                "itemProcsMinRemainingTime" => Value::ItemProcsMinRemainingTime(procs),
+                "itemProcsMaxRemainingIcd" => Value::ItemProcsMaxRemainingIcd(procs),
+                "numEquippedStatProcItems" => Value::NumEquippedStatProcItems(procs),
+                "numStatBuffCooldowns" => Value::NumStatBuffCooldowns(stats),
+                "anyStatBuffCooldownsActive" => Value::AnyStatBuffCooldownsActive(stats),
+                "anyStatBuffCooldownsMinDuration" => Value::AnyStatBuffCooldownsMinDuration(stats),
+                _ => unreachable!("a stat proc value"),
+            })
+        }
+        "selectedPotion" | "selectedConjured" => {
+            let field = if name == "selectedPotion" {
+                "potionId"
+            } else {
+                "conjuredId"
+            };
+            only(&[field])?;
+            // Go gives no value without an item.
+            let item = match config.get(field) {
+                Some(id) => parse_action_id(id).map_err(|err| vec![err])?.item_id,
+                None => 0,
+            };
+            Ok(match (name, item) {
+                (_, 0) => Value::Unbuilt("selectedPotion"),
+                ("selectedPotion", item) => Value::SelectedPotion(item),
+                (_, item) => Value::SelectedConjured(item),
+            })
+        }
+        "bossSpellIsCasting" | "bossSpellTimeToReady" => {
+            only(&["spellId", "targetUnit"])?;
+            let Some(spell) = config.get("spellId") else {
+                return Ok(Value::Unbuilt("bossSpellIsCasting"));
+            };
+            let spell = parse_action_id(spell).map_err(|err| vec![err])?;
+            // Go `GetTargetUnit`: no unit reference means the current target.
+            let unit = parse_value_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget)
+                .map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            Ok(if name == "bossSpellIsCasting" {
+                Value::BossSpellIsCasting { spell, unit }
+            } else {
+                Value::BossSpellTimeToReady { spell, unit }
+            })
+        }
+        "multipleCdUsages" => {
+            only(&["baseSpellId", "targetSpellId", "offset", "alignCdEnd"])?;
+            let base = match config.get("baseSpellId") {
+                Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
+                None => None,
+            };
+            let Some(target) = config.get("targetSpellId") else {
+                return Ok(Value::Unbuilt("multipleCdUsages"));
+            };
+            let target = parse_action_id(target).map_err(|err| vec![err])?;
+            let offset = match config.get("offset") {
+                Some(value) => Some(Box::new(parse_value(value)?)),
+                None => None,
+            };
+            let align_cd_end = match config.get("alignCdEnd") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["alignCdEnd must be a boolean".to_string()])?,
+            };
+            Ok(Value::MultipleCdUsages {
+                base,
+                target,
+                offset,
+                align_cd_end,
+            })
+        }
+        "bossCurrentTarget" => {
+            only(&["targetUnit"])?;
+            // Go `GetSourceUnit`: no unit reference means the player itself.
+            let unit =
+                parse_value_unit_ref(config.get("targetUnit"), UnitRef::Player).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            Ok(Value::BossCurrentTarget(unit))
+        }
+        "warlockIsAssignedCurse" => {
+            only(&["curseType"])?;
+            // protojson omits the zero value, Agony.
+            Ok(Value::WarlockIsAssignedCurse(
+                config
+                    .get("curseType")
+                    .and_then(Json::as_str)
+                    .unwrap_or("Agony")
+                    .to_string(),
+            ))
+        }
+        "warlockAssignedCurseIsActive" => {
+            only(&["targetUnit"])?;
+            let unit = parse_value_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget)
+                .map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            Ok(Value::WarlockAssignedCurseIsActive(unit))
+        }
+        "sequenceIsComplete" | "sequenceIsReady" | "sequenceTimeToReady" => {
+            // Go gives no value without a sequence name.
+            let Some(sequence) = parse_sequence_name(name, config).map_err(|err| vec![err])? else {
+                return Ok(Value::Unbuilt(match name {
+                    "sequenceIsComplete" => "sequenceIsComplete",
+                    "sequenceIsReady" => "sequenceIsReady",
+                    _ => "sequenceTimeToReady",
+                }));
+            };
+            Ok(match name {
+                "sequenceIsComplete" => Value::SequenceIsComplete(sequence),
+                "sequenceIsReady" => Value::SequenceIsReady(sequence),
+                _ => Value::SequenceTimeToReady(sequence),
+            })
+        }
+        "dotIsActiveOnAllTargets" | "dotLowestRemainingTime" => {
+            only(&["spellId"])?;
+            // Go `GetAPLMultidotSpell`: no value without a spell.
+            let Some(id) = config.get("spellId") else {
+                return Ok(Value::Unbuilt(if name == "dotIsActiveOnAllTargets" {
+                    "dotIsActiveOnAllTargets"
+                } else {
+                    "dotLowestRemainingTime"
+                }));
+            };
+            let id = parse_action_id(id).map_err(|err| vec![err])?;
+            Ok(if name == "dotIsActiveOnAllTargets" {
+                Value::DotIsActiveOnAllTargets(id)
+            } else {
+                Value::DotLowestRemainingTime(id)
+            })
+        }
+        "auraInternalCooldown" | "auraIcdIsReady" | "auraDuration" => {
+            only(&["auraId", "sourceUnit", "includeReactionTime"])?;
+            if name != "auraIcdIsReady" && config.get("includeReactionTime").is_some() {
+                return Err(vec![format!(
+                    "{name} field includeReactionTime is unsupported"
+                )]);
+            }
+            // Go gives no value without an aura.
+            let Some(id) = config.get("auraId") else {
+                return Ok(Value::Unbuilt(match name {
+                    "auraInternalCooldown" => "auraInternalCooldown",
+                    "auraIcdIsReady" => "auraIcdIsReady",
+                    _ => "auraDuration",
+                }));
+            };
+            let id = parse_action_id(id).map_err(|err| vec![err])?;
+            // Go `GetSourceUnit`: no unit reference means the player itself.
+            let unit =
+                parse_value_unit_ref(config.get("sourceUnit"), UnitRef::Player).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "sourceUnit",
+                        config.get("sourceUnit"),
+                    )]
+                })?;
+            let include_reaction_time = match config.get("includeReactionTime") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
+            };
+            Ok(match name {
+                "auraInternalCooldown" => Value::AuraInternalCooldown { unit, id },
+                "auraIcdIsReady" => Value::AuraIcdIsReady {
+                    unit,
+                    id,
+                    include_reaction_time,
+                },
+                _ => Value::AuraDuration { unit, id },
+            })
+        }
         "dotBaseDuration" => {
             only(&["spellId"])?;
             // Go `GetAPLDot`: a dot value without a spell has no value.
@@ -1514,7 +2480,20 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             };
             Ok(Value::DotBaseDuration(id))
         }
-        "spellIsKnown" | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
+        "spellIsKnown"
+        | "spellIsReady"
+        | "spellCastTime"
+        | "spellTimeToReady"
+        | "spellCanCast"
+        | "spellTravelTime"
+        | "spellCpm"
+        | "spellIsChanneling"
+        | "spellChanneledTicks"
+        | "spellNumCharges"
+        | "spellTimeToCharge"
+        | "spellGcdHastedDuration"
+        | "spellFullCooldown"
+        | "spellInFlight" => {
             only(&["spellId"])?;
             let id = config
                 .get("spellId")
@@ -1525,7 +2504,16 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 "spellIsReady" => Value::SpellIsReady(id),
                 "spellTimeToReady" => Value::SpellTimeToReady(id),
                 "spellCanCast" => Value::SpellCanCast(id),
-                _ => Value::SpellCastTime(id),
+                "spellCastTime" => Value::SpellCastTime(id),
+                "spellTravelTime" => Value::SpellTravelTime(id),
+                "spellCpm" => Value::SpellCpm(id),
+                "spellIsChanneling" => Value::SpellIsChanneling(id),
+                "spellChanneledTicks" => Value::SpellChanneledTicks(id),
+                "spellNumCharges" => Value::SpellNumCharges(id),
+                "spellTimeToCharge" => Value::SpellTimeToCharge(id),
+                "spellGcdHastedDuration" => Value::SpellGcdHastedDuration(id),
+                "spellFullCooldown" => Value::SpellFullCooldown(id),
+                _ => Value::SpellInFlight(id),
             })
         }
         "not" => {
@@ -1727,6 +2715,35 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             })
         }
         other => Err(vec![format!("value {other} is unsupported")]),
+    }
+}
+
+/// Go `stats.IntTupleToStatsList` of `statType1` to `statType3`: the indices from zero up, a
+/// missing field reading Go's zero, Strength.
+fn parse_stat_types(config: &Json) -> Result<Vec<i32>, String> {
+    let mut stats = Vec::new();
+    for field in ["statType1", "statType2", "statType3"] {
+        let stat = match config.get(field) {
+            None => 0,
+            Some(value) => json_i32(value)?,
+        };
+        if stat >= 0 {
+            stats.push(stat);
+        }
+    }
+    Ok(stats)
+}
+
+/// An `APLValueAutoAttackType` field. protojson writes the enum by name and omits the zero
+/// value, UnknownAuto, which Go's switches read as any auto attack.
+fn parse_auto_attack_type(name: &str, config: &Json) -> Result<AutoAttackType, Vec<String>> {
+    match config.get("autoType").map(|kind| kind.as_str()) {
+        None | Some(Some("UnknownAuto" | "AnyAuto")) => Ok(AutoAttackType::Any),
+        Some(Some("MeleeAuto")) => Ok(AutoAttackType::Melee),
+        Some(Some("MainHandAuto")) => Ok(AutoAttackType::MainHand),
+        Some(Some("OffHandAuto")) => Ok(AutoAttackType::OffHand),
+        Some(Some("RangedAuto")) => Ok(AutoAttackType::Ranged),
+        Some(other) => Err(vec![format!("{name} autoType {other:?} is unsupported")]),
     }
 }
 
@@ -2002,6 +3019,89 @@ pub enum Compiled<R> {
     AutoTimeToNext(AutoAttackType),
     AutoSwingTime(SwingType),
     SpellCurrentCost(usize),
+    SpellTravelTime(usize),
+    SpellCpm(usize),
+    SpellIsChanneling(usize),
+    SpellChanneledTicks(usize),
+    SpellNumCharges(usize),
+    SpellTimeToCharge(usize),
+    SpellGcdHastedDuration(usize),
+    SpellFullCooldown(usize),
+    SpellInFlight(usize),
+    /// Go `APLValueMax` of values coerced to one type.
+    Max(Vec<Compiled<R>>),
+    /// Go `APLValueMin` of values coerced to one type.
+    Min(Vec<Compiled<R>>),
+    CurrentTimePercent,
+    CurrentHealth,
+    MaxHealth,
+    /// Go `APLValueMaxRage` with the maximum it read when built.
+    MaxRage(f64),
+    /// Go `APLValueMaxComboPoints` with the maximum it read when built.
+    MaxComboPoints(i32),
+    CurrentManaRegen,
+    /// Go `APLValueEnergyTimeToTarget` with the target coerced to a float.
+    EnergyTimeToTarget(Box<Compiled<R>>),
+    /// Go `APLValueUnitIsMoving` of the player.
+    PlayerIsMoving,
+    UnitDistance,
+    GcdTimeToReady,
+    AutoTimeSinceLast(AutoAttackType),
+    InputDelay,
+    ChannelClipDelay,
+    /// Go `APLValueAuraInternalCooldown` of the aura holding the ICD.
+    AuraInternalCooldown(R),
+    /// Go `APLValueAuraICDIsReady` of the aura holding the ICD.
+    AuraIcdIsReady {
+        aura: R,
+        include_reaction_time: bool,
+    },
+    /// Go `APLValueAuraDuration`.
+    AuraDuration(R),
+    /// Go `APLValueDotIsActiveOnAllTargets`: the dot on each target.
+    DotIsActiveOnAllTargets(Vec<DotAt>),
+    /// Go `APLValueDotLowestRemainingTime`: the dot on each target.
+    DotLowestRemainingTime(Vec<DotAt>),
+    DotTickFrequency(DotAt),
+    /// Go `APLValueDotPercentIncrease` of the spell holding the dot, on a target.
+    DotPercentIncrease(DotAt),
+    /// Go `APLValueDotTickRatePercentIncrease`.
+    DotTickRatePercentIncrease(DotAt),
+    /// A boolean whose state never changes during a fight, which Go reads each time without
+    /// folding: `APLValueWarlockIsAssignedCurse`, `APLValueBossCurrentTarget` and the selected
+    /// consumable values, and a target spell's hardcast, which no target without an AI starts.
+    Settled(bool),
+    /// A duration that never changes during a fight, which Go reads without folding: the time
+    /// until a target's spell without a cooldown is ready.
+    SettledDuration(i64),
+    /// An int that never changes during a fight, which Go reads without folding: the matching
+    /// stat buff cooldowns that are worn, and the matching proc buffs that can proc.
+    SettledInt(i32),
+    /// The item stat proc values over the matching proc buffs, each with whether it is
+    /// swapped out.
+    AllItemStatProcsActive(Vec<(R, bool)>),
+    AnyItemStatProcsActive(Vec<(R, bool)>),
+    AnyItemStatProcsAvailable(Vec<(R, bool)>),
+    ItemProcsMinRemainingTime(Vec<(R, bool)>),
+    ItemProcsMaxRemainingIcd(Vec<(R, bool)>),
+    /// The stat buff cooldown values over the matching cooldowns' buffs.
+    AnyStatBuffCooldownsActive(Vec<R>),
+    AnyStatBuffCooldownsMinDuration(Vec<R>),
+    /// Go `APLValueBossSpellIsCasting` of one of the player's own spells.
+    PlayerSpellCasting(usize),
+    /// Go `APLValueMultipleCdUsages`: the target spell and its buff, the base spell and its buff
+    /// when it has one, the offset as a duration and whether to align with the fight's end.
+    MultipleCdUsages {
+        target: usize,
+        target_buff: R,
+        base: Option<(usize, R)>,
+        offset: Box<Compiled<R>>,
+        align_cd_end: bool,
+    },
+    /// Go `APLValueSequenceIsComplete` of the sequence of the name.
+    SequenceIsComplete(String),
+    SequenceIsReady(String),
+    SequenceTimeToReady(String),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -2026,10 +3126,14 @@ impl<R> Compiled<R> {
             | Compiled::SpellCanCast(_)
             | Compiled::GroupUsed(_)
             | Compiled::ActiveItemSwapSet(_)
+            | Compiled::SpellIsChanneling(_)
+            | Compiled::SpellInFlight(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_)
             | Compiled::AuraNumStacksAfterReaction(_)
             | Compiled::NumberTargets
+            | Compiled::SpellChanneledTicks(_)
+            | Compiled::SpellNumCharges(_)
             | Compiled::CurrentComboPoints => ValueType::Int,
             Compiled::AuraRemainingTime(_)
             | Compiled::AutoTimeToNext(_)
@@ -2042,6 +3146,10 @@ impl<R> Compiled<R> {
             | Compiled::RemainingTime
             | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
+            | Compiled::SpellTravelTime(_)
+            | Compiled::SpellTimeToCharge(_)
+            | Compiled::SpellGcdHastedDuration(_)
+            | Compiled::SpellFullCooldown(_)
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
             Compiled::CurrentManaPercent
             | Compiled::CurrentHealthPercent
@@ -2051,9 +3159,49 @@ impl<R> Compiled<R> {
             | Compiled::CurrentRage
             | Compiled::MaxEnergy
             | Compiled::SpellCurrentCost(_)
+            | Compiled::SpellCpm(_)
             | Compiled::MaxMana => ValueType::Float,
             Compiled::FrontOfTarget | Compiled::AuraShouldRefresh { .. } => ValueType::Bool,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
+            // Go reads the first value's type, which coercion made every value's.
+            Compiled::Max(values) | Compiled::Min(values) => values[0].value_type(),
+            Compiled::PlayerIsMoving
+            | Compiled::AuraIcdIsReady { .. }
+            | Compiled::SequenceIsComplete(_)
+            | Compiled::SequenceIsReady(_)
+            | Compiled::Settled(_)
+            | Compiled::PlayerSpellCasting(_)
+            | Compiled::MultipleCdUsages { .. }
+            | Compiled::AllItemStatProcsActive(_)
+            | Compiled::AnyItemStatProcsActive(_)
+            | Compiled::AnyItemStatProcsAvailable(_)
+            | Compiled::AnyStatBuffCooldownsActive(_)
+            | Compiled::DotIsActiveOnAllTargets(_) => ValueType::Bool,
+            Compiled::SequenceTimeToReady(_)
+            | Compiled::SettledDuration(_)
+            | Compiled::ItemProcsMinRemainingTime(_)
+            | Compiled::ItemProcsMaxRemainingIcd(_)
+            | Compiled::AnyStatBuffCooldownsMinDuration(_) => ValueType::Duration,
+            Compiled::SettledInt(_) => ValueType::Int,
+            Compiled::DotPercentIncrease(_) | Compiled::DotTickRatePercentIncrease(_) => {
+                ValueType::Float
+            }
+            Compiled::AuraInternalCooldown(_)
+            | Compiled::AuraDuration(_)
+            | Compiled::DotLowestRemainingTime(_)
+            | Compiled::DotTickFrequency(_) => ValueType::Duration,
+            Compiled::MaxComboPoints(_) => ValueType::Int,
+            Compiled::CurrentTimePercent
+            | Compiled::CurrentHealth
+            | Compiled::MaxHealth
+            | Compiled::MaxRage(_)
+            | Compiled::CurrentManaRegen
+            | Compiled::UnitDistance => ValueType::Float,
+            Compiled::EnergyTimeToTarget(_)
+            | Compiled::GcdTimeToReady
+            | Compiled::AutoTimeSinceLast(_)
+            | Compiled::InputDelay
+            | Compiled::ChannelClipDelay => ValueType::Duration,
             Compiled::Coerced { to, .. } => *to,
         }
     }
@@ -2205,6 +3353,42 @@ pub struct Lookup<'a, R> {
     pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
     /// Go `ItemSwap.IsEnabled`: whether the character swaps items.
     pub item_swap: bool,
+    /// The player's resource bars as the rotation is built, which values of a bar the player
+    /// lacks give none for.
+    pub bars: Bars,
+    /// Go `GetIcdAuraByID` on a unit: the first aura with the action, or triggered by it, that
+    /// has an ICD.
+    pub icd_aura: &'a dyn Fn(Unit, &ActionId) -> Option<R>,
+    /// Go `GetAPLMultidotSpell`: whether the spell has a dot `Spell.CurDot` returns.
+    pub multidot: &'a dyn Fn(&ActionId) -> bool,
+    /// A Warlock's assigned curse: its option name and the action of the curse spell. Only a
+    /// Warlock builds the curse values.
+    pub assigned_curse: Option<(&'a str, &'a ActionId)>,
+    /// Whether the player tanks the targets, whose current target it then is.
+    pub tanked: bool,
+    /// What the rotation's values read that the rest of the input leaves out.
+    pub reads: Option<&'a crate::contracts::prepared_v2::RotationReads>,
+    /// Go `Unit.GetSpell` on the player: the spell of exactly the action.
+    pub exact_spell: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `Spell.RelatedSelfBuff` of the spell at a spellbook position, as `reads` names it.
+    pub self_buff: &'a dyn Fn(usize) -> Option<R>,
+    /// Go `GetMatchingItemProcAuras`: the item proc buffs moving one of the stats whose ICD
+    /// exceeds the minimum when there is one, each with whether it is swapped out.
+    pub item_procs: &'a dyn Fn(&StatProcs) -> Vec<(R, bool)>,
+    /// The player's aura of a label.
+    pub aura_by_label: &'a dyn Fn(&str) -> Option<R>,
+    /// Go `GetAPLSpell` of a spell with an `ExpectedTickDamage`, as the spellbook position of
+    /// the spell holding its dot.
+    pub expected_tick: &'a dyn Fn(&ActionId) -> Option<usize>,
+}
+
+/// The player's resource bars: Go `HasManaBar`, the rage bar's `MaximumRage` and the energy
+/// bar's `MaxComboPoints`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Bars {
+    pub mana: bool,
+    pub max_rage: Option<f64>,
+    pub max_combo_points: Option<i32>,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -2348,7 +3532,263 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
         Value::AutoSwingTime(kind) => Compiled::AutoSwingTime(*kind),
         // Go GetAPLSpell: an unknown spell gives no value.
         Value::SpellCurrentCost(id) => Compiled::SpellCurrentCost((lookup.spell)(id)?),
+        Value::SpellTravelTime(id) => Compiled::SpellTravelTime((lookup.spell)(id)?),
+        Value::SpellCpm(id) => Compiled::SpellCpm((lookup.spell)(id)?),
+        Value::SpellIsChanneling(id) => Compiled::SpellIsChanneling((lookup.spell)(id)?),
+        Value::SpellChanneledTicks(id) => Compiled::SpellChanneledTicks((lookup.spell)(id)?),
+        Value::SpellNumCharges(id) => Compiled::SpellNumCharges((lookup.spell)(id)?),
+        Value::SpellTimeToCharge(id) => Compiled::SpellTimeToCharge((lookup.spell)(id)?),
+        Value::SpellGcdHastedDuration(id) => Compiled::SpellGcdHastedDuration((lookup.spell)(id)?),
+        Value::SpellFullCooldown(id) => Compiled::SpellFullCooldown((lookup.spell)(id)?),
+        Value::SpellInFlight(id) => Compiled::SpellInFlight((lookup.spell)(id)?),
         Value::DotTimeToNextTick(dot) => Compiled::DotTimeToNextTick(dot_at(dot, lookup)?),
+        // Go `newValueMax` and `newValueMin`: values without a value drop out, the rest are
+        // coerced to their highest type, and one value stands for the operator.
+        Value::Max(values) | Value::Min(values) => {
+            let compiled: Vec<_> = values
+                .iter()
+                .filter_map(|value| compile_value(value, lookup))
+                .collect();
+            let to = compiled.iter().map(Compiled::value_type).max()?;
+            let mut compiled: Vec<_> = compiled.into_iter().map(|value| value.coerce(to)).collect();
+            if compiled.len() == 1 {
+                return compiled.pop();
+            }
+            if matches!(value, Value::Max(_)) {
+                Compiled::Max(compiled)
+            } else {
+                Compiled::Min(compiled)
+            }
+        }
+        Value::CurrentTimePercent => Compiled::CurrentTimePercent,
+        Value::CurrentHealth => Compiled::CurrentHealth,
+        Value::MaxHealth => Compiled::MaxHealth,
+        Value::MaxRage => Compiled::MaxRage(lookup.bars.max_rage?),
+        Value::MaxComboPoints => Compiled::MaxComboPoints(lookup.bars.max_combo_points?),
+        Value::CurrentManaRegen if lookup.bars.mana => Compiled::CurrentManaRegen,
+        Value::CurrentManaRegen => return None,
+        // Go `newValueEnergyTimeToTarget`: no value without an energy bar or a target.
+        Value::EnergyTimeToTarget(target) => {
+            lookup.bars.max_combo_points?;
+            let target = compile_value(target, lookup)?.coerce(ValueType::Float);
+            Compiled::EnergyTimeToTarget(Box::new(target))
+        }
+        // Only the player moves; a unit Go finds nothing for gives no value.
+        Value::UnitIsMoving(unit) => match unit.resolve(lookup.targets)? {
+            Unit::Player => Compiled::PlayerIsMoving,
+            Unit::Target(_) => bool_const(false),
+        },
+        Value::UnitDistance => Compiled::UnitDistance,
+        Value::GcdTimeToReady => Compiled::GcdTimeToReady,
+        Value::AutoTimeSinceLast(kind) => Compiled::AutoTimeSinceLast(*kind),
+        Value::InputDelay => Compiled::InputDelay,
+        Value::ChannelClipDelay => Compiled::ChannelClipDelay,
+        Value::Unbuilt(_) => return None,
+        // Go `GetAPLICDAura`: no value for a unit Go finds nothing for or without the aura.
+        Value::AuraInternalCooldown { unit, id } => {
+            Compiled::AuraInternalCooldown((lookup.icd_aura)(unit.resolve(lookup.targets)?, id)?)
+        }
+        Value::AuraIcdIsReady {
+            unit,
+            id,
+            include_reaction_time,
+        } => Compiled::AuraIcdIsReady {
+            aura: (lookup.icd_aura)(unit.resolve(lookup.targets)?, id)?,
+            include_reaction_time: *include_reaction_time,
+        },
+        // Go `GetAPLAura`: no value without the aura.
+        Value::AuraDuration { unit, id } => {
+            let found = match unit.resolve(lookup.targets)? {
+                Unit::Target(position) => (lookup.target_aura)(position, id),
+                Unit::Player => aura(id),
+            }?;
+            Compiled::AuraDuration(found.aura)
+        }
+        // Go reads `GetAPLDot` on each target, keeping those it finds; none gives no value.
+        Value::DotIsActiveOnAllTargets(id) | Value::DotLowestRemainingTime(id) => {
+            if !(lookup.multidot)(id) {
+                return None;
+            }
+            let dots: Vec<DotAt> = (0..lookup.targets)
+                .filter_map(|position| {
+                    let spell = (lookup.dot)(id, Unit::Target(position))?;
+                    Some(DotAt {
+                        spell,
+                        target: position,
+                    })
+                })
+                .collect();
+            if dots.is_empty() {
+                return None;
+            }
+            if matches!(value, Value::DotIsActiveOnAllTargets(_)) {
+                Compiled::DotIsActiveOnAllTargets(dots)
+            } else {
+                Compiled::DotLowestRemainingTime(dots)
+            }
+        }
+        Value::DotTickFrequency(dot) => Compiled::DotTickFrequency(dot_at(dot, lookup)?),
+        // Go `newDotIncreaseValue`: no value for a spell without an `ExpectedTickDamage`; a
+        // target that names no unit, or the player, has no dot to read.
+        Value::DotPercentIncrease(dot) | Value::DotTickRatePercentIncrease(dot) => {
+            let spell = (lookup.expected_tick)(dot.spell.as_ref()?)?;
+            let Unit::Target(target) = dot.target.resolve(lookup.targets)? else {
+                return None;
+            };
+            let at = DotAt { spell, target };
+            if matches!(value, Value::DotPercentIncrease(_)) {
+                Compiled::DotPercentIncrease(at)
+            } else {
+                Compiled::DotTickRatePercentIncrease(at)
+            }
+        }
+        // Go `newItemStatProcValue`: no value without a matching buff, except the count.
+        Value::AllItemStatProcsActive(procs)
+        | Value::AnyItemStatProcsActive(procs)
+        | Value::AnyItemStatProcsAvailable(procs)
+        | Value::ItemProcsMinRemainingTime(procs)
+        | Value::ItemProcsMaxRemainingIcd(procs)
+        | Value::NumEquippedStatProcItems(procs) => {
+            let found = (lookup.item_procs)(procs);
+            if let Value::NumEquippedStatProcItems(_) = value {
+                // Go `CanProc`: no custom condition of the fork's, so only a swapped out buff
+                // cannot proc.
+                return Some(Compiled::SettledInt(
+                    found.iter().filter(|(_, swapped)| !swapped).count() as i32,
+                ));
+            }
+            if found.is_empty() {
+                return None;
+            }
+            match value {
+                Value::AllItemStatProcsActive(_) => Compiled::AllItemStatProcsActive(found),
+                Value::AnyItemStatProcsActive(_) => Compiled::AnyItemStatProcsActive(found),
+                Value::AnyItemStatProcsAvailable(_) => Compiled::AnyItemStatProcsAvailable(found),
+                Value::ItemProcsMinRemainingTime(_) => Compiled::ItemProcsMinRemainingTime(found),
+                _ => Compiled::ItemProcsMaxRemainingIcd(found),
+            }
+        }
+        // Go `GetMatchingStatBuffSpells` as the rotation is built: the count of those worn,
+        // which no item swap changes, is a value even with none.
+        Value::NumStatBuffCooldowns(stats) => {
+            let count = lookup.reads.map_or(0, |reads| {
+                reads
+                    .cooldown_buffs
+                    .iter()
+                    .find(|entry| &entry.stats == stats)
+                    .map_or(0, |entry| entry.spells.len())
+            });
+            Compiled::SettledInt(count as i32)
+        }
+        // Go `GetMatchingStatBuffCooldownAuras`: no value without a matching cooldown.
+        Value::AnyStatBuffCooldownsActive(stats)
+        | Value::AnyStatBuffCooldownsMinDuration(stats) => {
+            let entry = lookup
+                .reads?
+                .cooldown_buffs
+                .iter()
+                .find(|entry| &entry.stats == stats)?;
+            if entry.auras.is_empty() {
+                return None;
+            }
+            let auras = entry
+                .auras
+                .iter()
+                .map(|label| (lookup.aura_by_label)(label))
+                .collect::<Option<Vec<R>>>()?;
+            if matches!(value, Value::AnyStatBuffCooldownsActive(_)) {
+                Compiled::AnyStatBuffCooldownsActive(auras)
+            } else {
+                Compiled::AnyStatBuffCooldownsMinDuration(auras)
+            }
+        }
+        // Go `newValueSelectedPotion` and `newValueSelectedConjured`: the consumables' choice.
+        Value::SelectedPotion(item) => Compiled::Settled(lookup.reads?.potion_id? == *item),
+        Value::SelectedConjured(item) => Compiled::Settled(lookup.reads?.conjured_id? == *item),
+        // Go `GetTargetSpell`: the unit's spell of the action, none when it knows none. A target
+        // without an AI never hardcasts, and its spells without a cooldown are always ready.
+        Value::BossSpellIsCasting { spell, unit } | Value::BossSpellTimeToReady { spell, unit } => {
+            let casting = matches!(value, Value::BossSpellIsCasting { .. });
+            match unit.resolve(lookup.targets)? {
+                Unit::Player => {
+                    let spell = (lookup.exact_spell)(spell)?;
+                    if casting {
+                        Compiled::PlayerSpellCasting(spell)
+                    } else {
+                        Compiled::SpellTimeToReady(spell)
+                    }
+                }
+                Unit::Target(_) => {
+                    lookup
+                        .reads?
+                        .target_spells
+                        .iter()
+                        .find(|known| &known.spell == spell)?;
+                    if casting {
+                        Compiled::Settled(false)
+                    } else {
+                        Compiled::SettledDuration(0)
+                    }
+                }
+            }
+        }
+        // Go `newValueMultipleCdUsages`: no value without a target spell with a related self
+        // buff; a base spell without one leaves only the offset.
+        Value::MultipleCdUsages {
+            base,
+            target,
+            offset,
+            align_cd_end,
+        } => {
+            let target = (lookup.spell)(target)?;
+            let target_buff = (lookup.self_buff)(target)?;
+            let base = base
+                .as_ref()
+                .and_then(|id| (lookup.spell)(id))
+                .and_then(|spell| (lookup.self_buff)(spell).map(|buff| (spell, buff)));
+            let offset = offset
+                .as_deref()
+                .and_then(|offset| compile_value(offset, lookup))
+                .map(|offset| offset.coerce(ValueType::Duration))
+                .unwrap_or_else(|| Compiled::Const(parse_const("0ms").expect("duration constant")));
+            Compiled::MultipleCdUsages {
+                target,
+                target_buff,
+                base,
+                offset: Box::new(offset),
+                align_cd_end: *align_cd_end,
+            }
+        }
+        // Go: the player's own current target is a target, and a target's is the player while
+        // the player tanks it.
+        Value::BossCurrentTarget(unit) => match unit.resolve(lookup.targets)? {
+            Unit::Player => Compiled::Settled(false),
+            Unit::Target(_) => Compiled::Settled(lookup.tanked),
+        },
+        Value::WarlockIsAssignedCurse(curse) => {
+            Compiled::Settled(lookup.assigned_curse?.0 == curse.as_str())
+        }
+        // Go reads the curse's aura of tag 1, else of tag 0, on the unit; Rust gives no value
+        // where Go would read an aura the unit lacks.
+        Value::WarlockAssignedCurseIsActive(unit) => {
+            let (_, curse) = lookup.assigned_curse?;
+            let tagged = |tag: i32| ActionId {
+                tag,
+                ..curse.clone()
+            };
+            let find = |id: &ActionId| match unit.resolve(lookup.targets) {
+                Some(Unit::Target(position)) => (lookup.target_aura)(position, id),
+                Some(Unit::Player) => aura(id),
+                None => None,
+            };
+            let found = find(&tagged(1)).or_else(|| find(&tagged(0)))?;
+            Compiled::AuraIsActiveAfterReaction(found.aura)
+        }
+        // Go finds the sequence when the rotation is finalized; one of no action reads as done
+        // nothing and never ready.
+        Value::SequenceIsComplete(name) => Compiled::SequenceIsComplete(name.clone()),
+        Value::SequenceIsReady(name) => Compiled::SequenceIsReady(name.clone()),
+        Value::SequenceTimeToReady(name) => Compiled::SequenceTimeToReady(name.clone()),
         Value::DotBaseDuration(id) => {
             Compiled::DotBaseDuration((lookup.dot_base_duration)(id.as_ref()?)?)
         }
@@ -2542,6 +3982,17 @@ mod tests {
             dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
             item_swap: false,
+            bars: Bars::default(),
+            icd_aura: &|_, _| None,
+            multidot: &|_| false,
+            assigned_curse: None,
+            tanked: false,
+            reads: None,
+            exact_spell: &|_| None,
+            self_buff: &|_| None,
+            item_procs: &|_| Vec::new(),
+            aura_by_label: &|_| None,
+            expected_tick: &|_| None,
         }
     }
 
@@ -2569,6 +4020,17 @@ mod tests {
         let lookup = Lookup {
             pet_aura_known: &known,
             item_swap: false,
+            bars: Bars::default(),
+            icd_aura: &|_, _| None,
+            multidot: &|_| false,
+            assigned_curse: None,
+            tanked: false,
+            reads: None,
+            exact_spell: &|_| None,
+            self_buff: &|_| None,
+            item_procs: &|_| Vec::new(),
+            aura_by_label: &|_| None,
+            expected_tick: &|_| None,
             ..only_auras(&none, &|_, _| None)
         };
         assert_eq!(
@@ -2835,16 +4297,16 @@ mod tests {
             "type": "TypeAPL",
             "priorityList": [
                 {"action": {"castSpell": {"spellId": {"spellId": 25304}},
-                            "condition": {"spellNumCharges": {"spellId": {"spellId": 1}}}}},
-                {"action": {"wait": {"duration": {"const": {"val": "1s"}}}}}
+                            "condition": {"notAValue": {"spellId": {"spellId": 1}}}}},
+                {"action": {"customRotation": {}}}
             ]
         });
         let reasons = parse(&rotation).unwrap_err();
         assert_eq!(
             reasons,
             [
-                "rotation item 1: value spellNumCharges is unsupported",
-                "rotation item 2: action wait is unsupported"
+                "rotation item 1: value notAValue is unsupported",
+                "rotation item 2: action customRotation is unsupported"
             ]
         );
     }
@@ -3081,16 +4543,19 @@ mod tests {
         let item = &rotation.priority_list[0];
         assert_eq!(
             item.action,
-            Action::Sequence(vec![
-                Step {
-                    spell: ActionId::spell(2458),
-                    target: UnitRef::CurrentTarget
-                },
-                Step {
-                    spell: ActionId::spell(1719),
-                    target: UnitRef::CurrentTarget
-                }
-            ])
+            Action::Sequence {
+                name: "Stance into Reck".to_string(),
+                steps: vec![
+                    Step {
+                        spell: ActionId::spell(2458),
+                        target: UnitRef::CurrentTarget
+                    },
+                    Step {
+                        spell: ActionId::spell(1719),
+                        target: UnitRef::CurrentTarget
+                    }
+                ]
+            }
         );
         let Some(Value::Compare { lhs, .. }) = &item.condition else {
             panic!("expected a comparison");
@@ -3193,6 +4658,17 @@ mod tests {
             dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
             item_swap: false,
+            bars: Bars::default(),
+            icd_aura: &|_, _| None,
+            multidot: &|_| false,
+            assigned_curse: None,
+            tanked: false,
+            reads: None,
+            exact_spell: &|_| None,
+            self_buff: &|_| None,
+            item_procs: &|_| Vec::new(),
+            aura_by_label: &|_| None,
+            expected_tick: &|_| None,
         })
     }
 
@@ -3320,10 +4796,13 @@ mod tests {
         ] {
             assert_eq!(
                 step(target),
-                Ok(Action::Sequence(vec![Step {
-                    spell: ActionId::spell(1),
-                    target: unit
-                }]))
+                Ok(Action::Sequence {
+                    name: String::new(),
+                    steps: vec![Step {
+                        spell: ActionId::spell(1),
+                        target: unit
+                    }]
+                })
             );
         }
         let prepull = parse(&serde_json::json!({"type": "TypeAPL", "prepullActions": [{
@@ -3685,6 +5164,17 @@ mod tests {
             dot_base_duration: &|id| (id.spell_id == 7).then_some(18_000_000_000),
             pet_aura_known: &|_, _| false,
             item_swap: false,
+            bars: Bars::default(),
+            icd_aura: &|_, _| None,
+            multidot: &|_| false,
+            assigned_curse: None,
+            tanked: false,
+            reads: None,
+            exact_spell: &|_| None,
+            self_buff: &|_| None,
+            item_procs: &|_| Vec::new(),
+            aura_by_label: &|_| None,
+            expected_tick: &|_| None,
         };
         let compare = |spell: i32| {
             let value = parse_value(&serde_json::json!({"cmp": {"op": "OpGt",

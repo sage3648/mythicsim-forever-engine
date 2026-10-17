@@ -7,7 +7,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::resolve_aura::dot_config;
 use crate::prepare::resolve_spell::{cast_requirement, flags, spell_config};
-use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, TimerId, UnitId, SECOND};
+use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, SpellId, TimerId, UnitId, SECOND};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig,
     SpellFlag, GCD_DEFAULT,
@@ -109,9 +109,11 @@ impl Priest {
         data.mind_blast.each(|_, rank| {
             Self::register_mind_blast_spell(sim, unit, rank, mind_blast_cd);
         });
+        let mut shadow_word_pain = Vec::new();
         data.shadow_word_pain.each(|_, rank| {
-            Self::register_shadow_word_pain_spell(sim, unit, rank);
+            shadow_word_pain.push(Self::register_shadow_word_pain_spell(sim, unit, rank));
         });
+        self.shadow_word_pain.extend(shadow_word_pain);
         data.shadow_word_death.each(|_, rank| {
             Self::register_shadow_word_death_spell(sim, unit, rank, shadow_word_death_cd);
         });
@@ -164,7 +166,7 @@ impl Priest {
         );
     }
 
-    fn register_shadow_word_pain_spell(sim: &mut Sim, unit: UnitId, rank: &Row) {
+    fn register_shadow_word_pain_spell(sim: &mut Sim, unit: UnitId, rank: &Row) -> SpellId {
         sim.register_spell(
             unit,
             SpellConfig {
@@ -172,7 +174,7 @@ impl Priest {
                 dot: rank_dot(rank, format!("ShadowWordPain-{}", rank.rank_number())),
                 ..rank_config(rank, masks::SHADOW_WORD_PAIN, SpellFlag::APL)
             },
-        );
+        )
     }
 
     fn register_shadow_word_death_spell(
@@ -185,7 +187,12 @@ impl Priest {
             unit,
             SpellConfig {
                 cast: CastConfig {
-                    cd: shared_cooldown(cd_timer, rank),
+                    // The 16 October 2026 beta notes raise the cooldown to 18 sec; the client row
+                    // still states 15.
+                    cd: Cooldown {
+                        timer: Some(cd_timer),
+                        duration: 18 * SECOND,
+                    },
                     ..default_cast(rank.gcd(), 0)
                 },
                 bonus_coefficient: rank.damage_effect().coeff(),
@@ -335,7 +342,12 @@ impl Priest {
             unit,
             SpellConfig {
                 cast: CastConfig {
-                    cd: shared_cooldown(cd_timer, rank),
+                    // The 16 October 2026 beta notes cut the cooldown to 24 sec; the client row still
+                    // states a 60 sec category cooldown.
+                    cd: Cooldown {
+                        timer: Some(cd_timer),
+                        duration: 24 * SECOND,
+                    },
                     ..default_cast(rank.gcd(), 0)
                 },
                 dot: rank_dot(rank, format!("DevouringPlague-{}", rank.rank_number())),

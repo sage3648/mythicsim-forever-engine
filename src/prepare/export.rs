@@ -329,6 +329,10 @@ pub(crate) fn export_spell_of(
     if spell.metric_splits > 1 {
         out.insert("metric_splits".into(), json!(spell.metric_splits));
     }
+    if !spell.rank_aliases.is_empty() {
+        let aliases: Vec<Value> = spell.rank_aliases.iter().map(spell_action_id).collect();
+        out.insert("rank_aliases".into(), Value::Array(aliases));
+    }
     Value::Object(out)
 }
 
@@ -1086,6 +1090,9 @@ pub(crate) fn export_state(
     }
     if !env.rotation_dot_base_durations.is_empty() {
         prepared["player"]["rotation_dot_base_durations"] = json!(env.rotation_dot_base_durations);
+    }
+    if let Some(reads) = &env.rotation_reads {
+        prepared["player"]["rotation_reads"] = json!(reads);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
     let pets = super::pet::export_pets(env, &mut timers, &mut unrepresented);

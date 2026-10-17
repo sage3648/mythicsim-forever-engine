@@ -111,9 +111,9 @@ fn innervate_clears_the_form_and_cat_spells_then_fail_with_a_log() {
         .expect("the first fight casts Innervate");
     let before = &log[..innervate];
     assert!(before.ends_with(
-        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[87.22] [feral-druid (#1)] "
+        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[86.72] [feral-druid (#1)] "
     ));
-    assert!(log[innervate..].contains("[87.22] Failed cast to spell {SpellID: 9830}, wrong form"));
+    assert!(log[innervate..].contains("[86.72] Failed cast to spell {SpellID: 9830}, wrong form"));
 }
 
 #[test]
@@ -718,7 +718,7 @@ fn a_potion_leaves_the_bear_in_form() {
     assert!(drops_form(&logged(old)));
 }
 
-/// Rake adds 5.26% of attack power to its hit and every tick (mythicsim patch 99), so its
+/// Rake adds 5% of attack power to its hit and every tick (community #769), so its
 /// projected tick falls without the share.
 #[test]
 fn rake_scales_with_attack_power() {
@@ -731,7 +731,7 @@ fn rake_scales_with_attack_power() {
             .and_then(|power| power.trim().parse().ok())
             .expect("the first fight applies Rake")
     };
-    let with = snapshot(0.0526);
+    let with = snapshot(0.05);
     let without = snapshot(0.0);
     assert!(with > without + 10.0, "{with} against {without}");
 }

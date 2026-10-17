@@ -49,6 +49,9 @@ impl Sim {
                 timings: Vec::new(),
             },
         );
+        self.character_mut(unit)
+            .cooldown_buff_auras
+            .push((spell, aura.clone()));
         aura
     }
 }

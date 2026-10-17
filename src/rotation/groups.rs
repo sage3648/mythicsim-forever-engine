@@ -328,6 +328,9 @@ impl Value {
                 values.iter_mut().for_each(|value| value.visit_mut(f))
             }
             Value::Not(value) => value.visit_mut(f),
+            Value::Max(values) | Value::Min(values) => {
+                values.iter_mut().for_each(|value| value.visit_mut(f))
+            }
             Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.visit_mut(f),
             Value::Variable { resolved, .. } => resolved.visit_mut(f),
             _ => {}
@@ -352,6 +355,9 @@ impl Value {
                 .iter_mut()
                 .for_each(|value| value.override_variables(scope)),
             Value::Not(value) => value.override_variables(scope),
+            Value::Max(values) | Value::Min(values) => values
+                .iter_mut()
+                .for_each(|value| value.override_variables(scope)),
             Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.override_variables(scope),
             _ => {}
         }
@@ -392,6 +398,8 @@ impl Value {
                     rhs: Box::new(rhs),
                 }
             }
+            Value::Max(values) => Value::Max(same_type_operands(values, provided)?),
+            Value::Min(values) => Value::Min(same_type_operands(values, provided)?),
             Value::And(values) => Value::And(logical_operands(values, provided)?),
             Value::Or(values) => Value::Or(logical_operands(values, provided)?),
             Value::Not(value) => {
@@ -402,6 +410,31 @@ impl Value {
             other => other,
         })
     }
+}
+
+/// The operands of a max or min after their placeholders are filled. Go coerces them only when
+/// none is a placeholder, so values a placeholder filled must already share a type.
+fn same_type_operands(
+    values: Vec<Value>,
+    provided: &BTreeMap<String, Value>,
+) -> Result<Vec<Value>, String> {
+    let filled = values.iter().any(value_has_placeholder);
+    let values = values
+        .into_iter()
+        .map(|value| value.replace_placeholders(provided))
+        .collect::<Result<Vec<_>, _>>()?;
+    if filled {
+        let first = values.first().map(Value::value_type);
+        if values
+            .iter()
+            .any(|value| Some(value.value_type()) != first && !matches!(value, Value::Const(_)))
+        {
+            return Err(
+                "a placeholder filled so that a max or min reads values of other types".into(),
+            );
+        }
+    }
+    Ok(values)
 }
 
 fn logical_operands(

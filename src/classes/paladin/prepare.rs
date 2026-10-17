@@ -30,6 +30,10 @@ use crate::prepare::Refusal;
 
 use self::spell_data::spell_data;
 
+/// Go `RighteousFuryHolyThreat`: the extra threat Righteous Fury puts on Holy attacks (16 October
+/// 2026 beta notes; was the row's 60%).
+pub(super) const RIGHTEOUS_FURY_HOLY_THREAT: f64 = 0.9;
+
 /// Go paladin.TalentTreeSizes.
 const TALENT_TREE_SIZES: [usize; 3] = [17, 16, 17];
 

@@ -265,10 +265,8 @@ fn spell_procs_and_mana_items_need_their_effects() {
 fn unsupported_rotation_operators_are_reported() {
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"spellNumCharges": {"spellId": {"spellId": 12579}}});
-    assert!(
-        reasons(value).contains(&"rotation item 4: value spellNumCharges is unsupported".into())
-    );
+        json!({"notAValue": {"spellId": {"spellId": 12579}}});
+    assert!(reasons(value).contains(&"rotation item 4: value notAValue is unsupported".into()));
 
     let mut prepull = reference_json();
     prepull["player"]["rotation"]["prepullActions"] = json!([{"action": {"castSpell": {"spellId": {"spellId": 25304}}}, "doAtValue": {"const": {"val": "-1s"}}}]);
@@ -646,7 +644,7 @@ fn refusals_carry_stable_codes() {
 
     let mut rotation = reference_json();
     rotation["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"spellNumCharges": {"spellId": {"spellId": 12579}}});
+        json!({"notAValue": {"spellId": {"spellId": 12579}}});
     assert_eq!(codes(rotation), ["rotation_unsupported"]);
 
     let mut listener = reference_json();

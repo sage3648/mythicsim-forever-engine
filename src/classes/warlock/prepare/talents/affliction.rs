@@ -22,7 +22,7 @@ impl Warlock {
         self.apply_improved_corruption(sim, unit);
 
         // Tier 2
-        self.apply_malediction(sim, unit);
+        self.apply_grim_reach(sim, unit);
         // Soul Harvest models nothing in Go either.
         self.apply_improved_drains(sim, unit);
 
@@ -107,28 +107,10 @@ impl Warlock {
         );
     }
 
-    /// Forever moved Malediction off the curse: the beta client's 1225177 is a flat 1% a point
-    /// on the warlock's own periodic damage. The mask names Hellfire, but its area hits are
-    /// Hellfire Effect (11682), a direct School Damage effect, so a dot modifier never reaches
-    /// them; only the self-burn is periodic.
-    fn apply_malediction(&self, sim: &mut Sim, unit: UnitId) {
-        let points = self.talents.i32("malediction");
-        if points == 0 {
-            return;
-        }
-        sim.add_static_mod(
-            unit,
-            SpellModConfig {
-                kind: SpellModType::DotDamageDonePct,
-                float_value: spell_data()
-                    .malediction
-                    .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DOT)
-                    .fraction_at(points),
-                class_mask: masks::ALL & !masks::HELLFIRE,
-                ..SpellModConfig::default()
-            },
-        );
-    }
+    /// Client 70425 replaced Malediction (1225177, +1% periodic damage a point) with Grim Reach
+    /// (18218), +10/20% range on Affliction spells and nothing for damage: the sim models no
+    /// spell range for it to extend.
+    fn apply_grim_reach(&self, _sim: &mut Sim, _unit: UnitId) {}
 
     /// Improved Drains: 7/13/20% more drain damage (403511, a dot modifier).
     fn apply_improved_drains(&self, sim: &mut Sim, unit: UnitId) {
@@ -240,10 +222,13 @@ impl Warlock {
         );
     }
 
-    /// Shadow Mastery is 1% a point on both damage and dot damage in Forever: 18271 kept its op
-    /// 0 and op 22 modifiers, so every shadow spell takes it the same way. Neither mask names
-    /// Life Tap, so its mana is left alone.
+    /// Shadow Mastery is a bonus on both damage and dot damage in Forever: 18271 kept its op 0
+    /// and op 22 modifiers, so every shadow spell takes it the same way. Neither mask names Life
+    /// Tap, so its mana is left alone. The 16 October 2026 beta notes double it to 2% a point
+    /// (was 1%); the client row still states 1%, so the notes' value stands in.
     fn apply_shadow_mastery(&self, sim: &mut Sim, unit: UnitId) {
+        /// Go `ShadowMasteryPerPoint`.
+        const SHADOW_MASTERY_PER_POINT: f64 = 0.02;
         let points = self.talents.i32("shadow_mastery");
         if points == 0 {
             return;
@@ -252,10 +237,7 @@ impl Warlock {
             unit,
             SpellModConfig {
                 kind: SpellModType::DamageDoneFlat,
-                float_value: spell_data()
-                    .shadow_mastery
-                    .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-                    .fraction_at(points),
+                float_value: SHADOW_MASTERY_PER_POINT * f64::from(points),
                 class_mask: masks::SHADOW_DAMAGE,
                 ..SpellModConfig::default()
             },

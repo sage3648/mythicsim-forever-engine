@@ -358,7 +358,11 @@ pub(crate) fn bind(fight: &mut Fight<PaladinAgent>, effects: &[Effect]) -> Resul
                     per_level: improved.per_level,
                     max_levels: improved.max_levels,
                     levels: improved.levels,
-                    metrics: fight.new_mana_metrics(improved.metrics_action_id.clone()),
+                    metrics: {
+                        let metrics = fight.new_mana_metrics(improved.metrics_action_id.clone());
+                        fight.resources[metrics].no_threat = improved.no_threat;
+                        metrics
+                    },
                 });
             }
         }

@@ -108,6 +108,7 @@ impl Mage {
         // Talent spells.
         self.register_presence_of_mind_spell(sim, unit);
         self.register_arcane_power_spell(sim, unit);
+        self.register_arcane_wrath_spell(sim, unit);
 
         self.register_blast_wave_spell(sim, unit);
         self.register_pyroblast_spell(sim, unit);
@@ -467,6 +468,34 @@ impl Mage {
                 },
             );
         });
+    }
+
+    /// Go `registerArcaneWrathSpell`: Arcane Wrath (1326079 to 1326082), an Arcane talent of
+    /// client 70425, a 3.5 sec Arcane bolt on a 6 sec cooldown whose spell damage adds 5% of the
+    /// mage's maximum mana at the damage effect's coefficient.
+    fn register_arcane_wrath_spell(&self, sim: &mut Sim, unit: UnitId) {
+        if !self.talents.bool("arcane_wrath") {
+            return;
+        }
+        let rank = spell_data().arcane_wrath.highest();
+        let timer = sim.new_timer(unit);
+        sim.register_spell(
+            unit,
+            SpellConfig {
+                cost: flat_cost(rank),
+                cast: CastConfig {
+                    cd: Cooldown {
+                        timer: Some(timer),
+                        duration: rank.cooldown(),
+                    },
+                    ..default_cast(rank.gcd(), rank.cast_time())
+                },
+                bonus_coefficient: rank.damage_effect().coeff(),
+                max_range: f64::from(rank.max_range),
+                missile_speed: f64::from(rank.speed),
+                ..damage_config(rank, rank.id, masks::ARCANE_WRATH, SpellFlag::APL)
+            },
+        );
     }
 
     fn register_fire_blast_spell(&self, sim: &mut Sim, unit: UnitId) {

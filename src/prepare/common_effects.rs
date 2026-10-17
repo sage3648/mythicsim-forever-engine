@@ -177,10 +177,11 @@ fn racial_effects(env: &mut Environment, _unrepresented: &mut Vec<String>) -> Ve
     use super::spell::ProcMask;
     let player = env.player;
     let mut effects = Vec::new();
+    // racials.go applyTouchOfTheGrave: Go literals, from the 16 October beta notes.
     if env.sim.get_aura(player, "Touch of the Grave").is_some() {
         let chance = match env.sim.character(player).class.as_str() {
-            "ClassWarrior" | "ClassPaladin" | "ClassRogue" => 0.05,
-            _ => 0.1,
+            "ClassWarrior" | "ClassPaladin" | "ClassRogue" => 0.2,
+            _ => 0.3,
         };
         effects.push(json!({
             "kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": 1260198,
@@ -253,7 +254,7 @@ fn racial_defensive_effects(env: &Environment) -> Vec<Value> {
     };
     if let Some(aura) = env.sim.get_aura(player, "Shatter Curse") {
         effects.push(json!({"kind": "shatter_curse", "spell_id": spell_id(aura), "aura": env.sim.aura(aura).label,
-            "school_damage_taken_multiplier": 0.85,
+            "school_damage_taken_multiplier": 0.95,
             "schools": ["arcane", "fire", "frost", "holy", "nature", "shadow"]}));
     }
     if let Some(aura) = env.sim.get_aura(player, "Stoneform") {
@@ -308,6 +309,30 @@ fn item_use_effects(env: &mut Environment, unrepresented: &mut Vec<String>) -> V
         effects.push(json!({
             "kind": "stacking_on_use", "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id),
             "aura": aura.label, "period_ns": 2 * SECOND, "ticks": 10,
+        }));
+    }
+    // items_70425.go Blade of Hanna: each landed main hand swing stacks Improving Form; at its
+    // most the stacks go, Perfected Form strikes the target for its row's flat Physical damage on
+    // the melee special table, and its stats aura comes up.
+    if let Some(trigger) = env.sim.get_aura(player, "Blade of Hanna") {
+        let perfected = super::spelldata::must_find(1325508);
+        let id = crate::contracts::prepared_v2::ActionId::spell(perfected.id);
+        let strike = env
+            .sim
+            .unit(player)
+            .spellbook
+            .iter()
+            .position(|spell| env.sim.spell(*spell).action_id == id);
+        let listener = super::aura_helpers::ProcTrigger {
+            proc_mask: super::spell::ProcMask::MELEE_MH_AUTO,
+            ..super::aura_helpers::ProcTrigger::default()
+        };
+        effects.push(json!({
+            "kind": "blade_of_hanna", "trigger_aura": env.sim.aura(trigger).label,
+            "stacks_aura": "Improving Form", "buff_aura": "Perfected Form",
+            "damage": perfected.effect_n(1).base_points,
+            "strike_spell": strike,
+            "trigger_spells": super::consumable_effects::proc_trigger_spells(env, &listener),
         }));
     }
     for spell in items {

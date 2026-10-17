@@ -1,9 +1,10 @@
 //! Stormstrike, from Go sim/shaman/stormstrike.go: the target debuff raises this shaman's
 //! Lightning Bolt, Chain Lightning, Earth Shock and overload damage through a damage done by
-//! caster multiplier, and each of their landed, damaging hits spends a charge.
+//! caster multiplier, and each landed, damaging hit of all but Earth Shock spends a charge
+//! (MythicSim patch 140).
 
 use crate::{
-    classes::shaman::masks::{is_class, STORMSTRIKE_SPELLS},
+    classes::shaman::masks::{is_class, STORMSTRIKE_CONSUMERS, STORMSTRIKE_SPELLS},
     core::fight::{melee::PhysicalOutcome, Agent, AuraRef, Fight, Side, SpellId, SpellResult},
 };
 
@@ -65,7 +66,11 @@ impl Stormstrike {
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if !Self::boosts(fight, spell) || !result.landed() || result.damage == 0.0 {
+        let spends = is_class(
+            fight.spells[spell].class_spell.as_deref(),
+            STORMSTRIKE_CONSUMERS,
+        );
+        if !spends || !result.landed() || result.damage == 0.0 {
             return;
         }
         fight.remove_stack(aura);

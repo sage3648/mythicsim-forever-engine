@@ -732,6 +732,10 @@ fn make_potion_activation_spell_internal(
         );
         env.sim.spell_mut(spell).related_self_buff = Some(aura.aura);
         mcd.cooldown_type = aura.infer_cd_type();
+        // Go `mcd.BuffAura = aura`.
+        let buffs = &mut env.sim.character_mut(unit).cooldown_buff_auras;
+        buffs.retain(|(known, _)| *known != spell);
+        buffs.push((spell, aura));
     }
 
     // Stats applied by triggered auras (e.g. Fel Mana Potion's spell damage reduction). These

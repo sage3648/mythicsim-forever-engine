@@ -261,6 +261,28 @@ pub(crate) fn eligible_slots_for_item(sim: &Sim, unit: UnitId, item_id: i32) -> 
         .collect()
 }
 
+/// Go `Character.AddStatProcBuff`: the buff joins the item proc buffs, swapped out unless the
+/// item, or the enchant, is in one of its slots.
+pub(crate) fn add_stat_proc_buff(
+    sim: &mut Sim,
+    unit: UnitId,
+    effect_id: i32,
+    mut buff: super::aura_helpers::StatBuffAura,
+    is_enchant: bool,
+    slots: &[usize],
+) {
+    let equipped = if is_enchant {
+        let equipment = &sim.character(unit).equipment;
+        slots
+            .iter()
+            .any(|slot| contains_enchant(&equipment[*slot], effect_id))
+    } else {
+        has_item_equipped(sim, unit, effect_id, slots)
+    };
+    buff.is_swapped = !equipped;
+    sim.character_mut(unit).item_proc_buffs.push(buff);
+}
+
 /// Go `Character.HasItemEquipped`.
 pub(crate) fn has_item_equipped(sim: &Sim, unit: UnitId, item_id: i32, slots: &[usize]) -> bool {
     let equipment = &sim.character(unit).equipment;
@@ -709,6 +731,15 @@ fn apply_spell_data_proc(env: &mut Environment, cfg: &SpellDataProc) {
     let icd = env.sim.aura(trigger_aura).icd;
     env.sim.aura_mut(proc_aura.aura).icd = icd;
     source.register_weapon_enchant_buff(env, proc_aura.aura);
+    let slots = source.eligible_slots(&env.sim, unit);
+    add_stat_proc_buff(
+        &mut env.sim,
+        unit,
+        source.id,
+        proc_aura,
+        source.is_enchant,
+        &slots,
+    );
 }
 
 /// Go `procDamageHandler`'s target is a fight matter. Go `applySpellDataDamageProc`: the spell

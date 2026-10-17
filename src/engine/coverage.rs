@@ -54,6 +54,22 @@ fn has_item_swap(prepared: &PreparedV2) -> bool {
     crate::core::fight::item_swap::item_swap_effect(prepared).is_some()
 }
 
+/// The player's resource bars as the runtime builds them from the prepared input.
+fn rotation_bars(prepared: &PreparedV2) -> crate::rotation::Bars {
+    crate::rotation::Bars {
+        mana: prepared.player.mana.max > 0.0,
+        max_rage: prepared.effects.iter().find_map(|effect| match effect {
+            Effect::RageBar { max_rage, .. } => Some(max_rage.max(100.0)),
+            _ => None,
+        }),
+        max_combo_points: prepared
+            .player
+            .energy
+            .as_ref()
+            .map(|energy| energy.max_combo_points),
+    }
+}
+
 /// A [`Limits`] check that finds nothing to refuse.
 pub(crate) fn no_limits(_: &PreparedV2, _: &[&Spell]) -> Vec<String> {
     Vec::new()
@@ -191,6 +207,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "force_reactive_disk",
     "stacking_on_use",
     "sulfuras_hand_of_ragnaros",
+    "blade_of_hanna",
     "energize_proc",
     "eureka",
     "exclusive_category",
@@ -449,6 +466,11 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             immolation_aura,
             ..
         } => vec![("player", trigger_aura), ("player", immolation_aura)],
+        Effect::BladeOfHanna {
+            trigger_aura,
+            stacks_aura,
+            ..
+        } => vec![("player", trigger_aura), ("player", stacks_aura)],
         Effect::StatProc {
             trigger_aura, aura, ..
         }
@@ -1099,6 +1121,8 @@ const INERT_STATS: &[&str] = &[
 /// inheritance carries only its tracked powers.
 const UNINHERITED_STATS: &[&str] = &[
     "Spirit",
+    "RangedCritPercent",
+    "ExpertisePercent",
     "ArcaneDamage",
     "FireDamage",
     "FrostDamage",
@@ -1130,6 +1154,19 @@ fn uninherited_stat_changes(prepared: &PreparedV2) -> Vec<String> {
     }
     let mut reasons = Vec::new();
     for pet in &prepared.pets {
+        // A hunter pet's crit offset follows the owner's ranged-only crit (patch 138), which
+        // the runtime holds fixed.
+        if changed.contains("RangedCritPercent")
+            && pet
+                .inheritance
+                .iter()
+                .any(|term| term.pet == "PhysicalCritPercent")
+        {
+            reasons.push(format!(
+                "pet {} takes a crit offset from RangedCritPercent, which changes during the fight",
+                pet.label
+            ));
+        }
         for term in &pet.inheritance {
             if UNINHERITED_STATS.contains(&term.owner.as_str())
                 && changed.contains(term.owner.as_str())
@@ -1519,6 +1556,12 @@ pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Opti
                 .iter()
                 .position(|spell| spell.action_id.as_ref() == Some(id))
         })
+        // Go `RankAliases`: an older rank a rotation names presses the known one.
+        .or_else(|| {
+            spells
+                .iter()
+                .position(|spell| spell.has_flag("SpellFlagAPL") && spell.has_rank_alias(id))
+        })
 }
 
 /// Go `Spell.Dot`: the spell holding the dot a spell names, its own or its related dot
@@ -1540,6 +1583,21 @@ pub(crate) fn rotation_dot(prepared: &PreparedV2, id: &ActionId, unit: Unit) -> 
     let owner = rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))?;
     let dot = prepared.player.spells[owner].dot.as_ref()?;
     (dot.unit == "self" || matches!(unit, Unit::Target(_))).then_some(owner)
+}
+
+/// Go `GetAPLMultidotSpell`: whether the spell has a dot `Spell.CurDot` returns, its own on a
+/// target or its related dot spell's.
+fn rotation_multidot(prepared: &PreparedV2, id: &ActionId) -> bool {
+    let Some(index) = rotation_spell_index(prepared, id) else {
+        return false;
+    };
+    let spells = &prepared.player.spells;
+    match &spells[index].dot {
+        Some(dot) if dot.unit != "self" => true,
+        _ => spells[index]
+            .related_dot_spell
+            .is_some_and(|related| spells.get(related).is_some_and(|s| s.dot.is_some())),
+    }
 }
 
 /// The base duration a `dotBaseDuration` value of the spell captured when Go built the rotation.
@@ -1803,6 +1861,18 @@ pub(crate) fn prepared_coverage(
             "aura_condition_unsupported",
             aura_refresh_conditions(prepared, rotation),
         ));
+        reasons.extend(coded(
+            "rotation_unsupported",
+            rotation_read_limits(prepared),
+        ));
+        reasons.extend(coded(
+            "rotation_unsupported",
+            dot_increase_limits(prepared, rotation),
+        ));
+        reasons.extend(coded(
+            "several_targets_unsupported",
+            change_target_limits(prepared, rotation),
+        ));
         if player.class != "ClassShaman" {
             for item in &rotation.priority_list {
                 let mut totems = false;
@@ -1832,6 +1902,9 @@ pub(crate) fn prepared_coverage(
         ));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
+        // The set the prepull's last item swap goes to: Go swaps back to Main before the pull
+        // when it is another.
+        let mut last_prepull_swap: Option<bool> = None;
         let mut prepull_moves = false;
         let mut rotation_moves = false;
         // Prepull parsing accepts casts, aura activations and moves.
@@ -1867,16 +1940,80 @@ pub(crate) fn prepared_coverage(
                     }
                 }
             }
-            // Go GetAPLAura on the player: a known aura registers the action.
-            if let Action::ActivateAura(id) = &prepull.action {
-                if player
-                    .auras
-                    .iter()
-                    .any(|aura| aura.action_id.as_ref() == Some(id))
-                {
-                    registered_prepull += 1;
+            // Go GetAPLAura on the player: a known aura registers the action, one that stacks
+            // for stacks, and GetAPLICDAura one with an ICD.
+            let known = |id: &ActionId, stacks: bool| {
+                player.auras.iter().any(|aura| {
+                    aura.action_id.as_ref() == Some(id) && (!stacks || aura.max_stacks != 0)
+                })
+            };
+            let targets = prepared.encounter.target_count.max(1) as usize;
+            let registers = match &prepull.action {
+                Action::ActivateAura(id) | Action::CancelAura(id) => known(id, false),
+                Action::ActivateAuraWithStacks { id, .. } => known(id, true),
+                Action::TriggerIcd(id) => find_icd_aura(prepared, Unit::Player, id).is_some(),
+                Action::CastAtPlayer(id) => {
+                    let spell = rotation_spell(prepared, id);
+                    reachable.extend(spell);
+                    spell.is_some()
                 }
+                // Go `newActionChannelSpell`: none for a target that names no unit, or with an
+                // interrupt condition for a spell that does not channel.
+                Action::ChannelSpell {
+                    spell: id,
+                    target,
+                    interrupt_if,
+                    ..
+                } => {
+                    let spell = rotation_spell(prepared, id).filter(|spell| {
+                        interrupt_if.is_none() || spell.has_flag("SpellFlagChanneled")
+                    });
+                    if target.resolve(targets).is_none() {
+                        false
+                    } else if !matches!(target.resolve(targets), Some(Unit::Target(0))) {
+                        reasons.push(Refusal::new(
+                            "several_targets_unsupported",
+                            format!(
+                                "prepull action {}: channelSpell of {id} at a unit other than the \
+                                 first target is unsupported",
+                                prepull.position
+                            ),
+                        ));
+                        spell.is_some()
+                    } else {
+                        reachable.extend(spell);
+                        spell.is_some()
+                    }
+                }
+                Action::ItemSwap(to_swapped) if has_item_swap(prepared) => {
+                    last_prepull_swap = Some(*to_swapped);
+                    true
+                }
+                Action::CastAllStatBuffCooldowns(stats) => {
+                    reachable.extend(cast_all_spells(prepared, stats));
+                    true
+                }
+                Action::ChangeTarget(unit) => unit.resolve(targets).is_some(),
+                // Go `newActionActivateAllStatBuffProcAuras`: none without a proc buff of the
+                // stats in the set, or for Swap1 without an item swap.
+                Action::ActivateAllStatBuffProcAuras { stats, swap1 } => {
+                    let procs = crate::rotation::StatProcs {
+                        stats: stats.clone(),
+                        min_icd: 0,
+                    };
+                    (!*swap1 || has_item_swap(prepared))
+                        && coverage_item_procs(prepared, &procs)
+                            .iter()
+                            .any(|(_, swapped)| swapped == swap1)
+                }
+                _ => false,
+            };
+            if registers {
+                registered_prepull += 1;
             }
+        }
+        if last_prepull_swap == Some(true) {
+            registered_prepull += 1;
         }
         if registered_prepull != player.prepull_actions {
             reasons.push(Refusal::new(
@@ -1927,6 +2064,19 @@ pub(crate) fn prepared_coverage(
                             continue;
                         }
                         reachable.extend(cooldown_spell(prepared, cooldown));
+                    }
+                }
+                Action::CastAllStatBuffCooldowns(stats) => {
+                    reachable.extend(cast_all_spells(prepared, stats));
+                }
+                // A Warlock's assigned curse reaches its curse spell.
+                Action::CastAssignedCurse(target)
+                    if target
+                        .resolve(prepared.encounter.target_count.max(1) as usize)
+                        .is_some() =>
+                {
+                    if let Some((_, id)) = assigned_curse(prepared) {
+                        reachable.extend(rotation_spell(prepared, &id));
                     }
                 }
                 // Go builds no cast for a target that names no unit, so it reaches no spell.
@@ -2126,7 +2276,7 @@ fn other_target_casts(
     let mut spells = Vec::new();
     for item in &rotation.priority_list {
         // The runtime casts a step of a sequence on the first target.
-        if let Action::Sequence(steps) | Action::StrictSequence(steps) = &item.action {
+        if let Action::Sequence { steps, .. } | Action::StrictSequence(steps) = &item.action {
             for step in steps {
                 if !matches!(step.target.resolve(targets), None | Some(Unit::Target(0)))
                     && rotation_spell(prepared, &step.spell).is_some()
@@ -2322,6 +2472,7 @@ fn flatten_groups(prepared: &PreparedV2, rotation: &Rotation) -> Result<Rotation
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let curse = assigned_curse(prepared);
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
@@ -2331,6 +2482,40 @@ fn flatten_groups(prepared: &PreparedV2, rotation: &Rotation) -> Result<Rotation
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
         item_swap: has_item_swap(prepared),
+        bars: rotation_bars(prepared),
+        icd_aura: &|unit: Unit, id: &ActionId| find_icd_aura(prepared, unit, id),
+        multidot: &|id: &ActionId| rotation_multidot(prepared, id),
+        assigned_curse: curse.as_ref().map(|(name, id)| (name.as_str(), id)),
+        tanked: prepared.enemy.is_some(),
+        reads: prepared.player.rotation_reads.as_ref(),
+        exact_spell: &|id: &ActionId| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .position(|spell| spell.action_id.as_ref() == Some(id))
+        },
+        item_procs: &|procs: &crate::rotation::StatProcs| coverage_item_procs(prepared, procs),
+        expected_tick: &|id: &ActionId| coverage_expected_tick(prepared, id),
+        aura_by_label: &|label: &str| {
+            prepared
+                .player
+                .auras
+                .iter()
+                .find(|aura| aura.label == label)
+                .and_then(|aura| aura.action_id.clone())
+        },
+        self_buff: &|spell: usize| {
+            let id = prepared.player.spells[spell].action_id.as_ref()?;
+            prepared
+                .player
+                .rotation_reads
+                .as_ref()?
+                .self_buffs
+                .iter()
+                .any(|buff| &buff.spell == id)
+                .then(|| id.clone())
+        },
     };
     let live = |index: usize| {
         compile_condition(rotation.priority_list[index].condition.as_ref(), &lookup)
@@ -2394,6 +2579,25 @@ fn flatten_groups(prepared: &PreparedV2, rotation: &Rotation) -> Result<Rotation
             )?;
         }
     }
+    // A schedule's inner action runs as an item of its own whose condition is both.
+    let mut index = 0;
+    while index < flat.priority_list.len() {
+        if let Action::Schedule { inner, .. } = &flat.priority_list[index].action {
+            let own = match (&flat.priority_list[index].condition, &inner.condition) {
+                (Some(outer), Some(inner)) => Some(Value::And(vec![outer.clone(), inner.clone()])),
+                (Some(only), None) | (None, Some(only)) => Some(only.clone()),
+                (None, None) => None,
+            };
+            position += 1;
+            let item = crate::rotation::Item {
+                position,
+                condition: own,
+                action: inner.action.clone(),
+            };
+            flat.priority_list.push(item);
+        }
+        index += 1;
+    }
     Ok(flat)
 }
 
@@ -2408,6 +2612,7 @@ fn moves_without_values(prepared: &PreparedV2, rotation: &Rotation) -> Vec<Strin
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let curse = assigned_curse(prepared);
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
@@ -2417,6 +2622,40 @@ fn moves_without_values(prepared: &PreparedV2, rotation: &Rotation) -> Vec<Strin
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
         item_swap: has_item_swap(prepared),
+        bars: rotation_bars(prepared),
+        icd_aura: &|unit: Unit, id: &ActionId| find_icd_aura(prepared, unit, id),
+        multidot: &|id: &ActionId| rotation_multidot(prepared, id),
+        assigned_curse: curse.as_ref().map(|(name, id)| (name.as_str(), id)),
+        tanked: prepared.enemy.is_some(),
+        reads: prepared.player.rotation_reads.as_ref(),
+        exact_spell: &|id: &ActionId| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .position(|spell| spell.action_id.as_ref() == Some(id))
+        },
+        item_procs: &|procs: &crate::rotation::StatProcs| coverage_item_procs(prepared, procs),
+        expected_tick: &|id: &ActionId| coverage_expected_tick(prepared, id),
+        aura_by_label: &|label: &str| {
+            prepared
+                .player
+                .auras
+                .iter()
+                .find(|aura| aura.label == label)
+                .and_then(|aura| aura.action_id.clone())
+        },
+        self_buff: &|spell: usize| {
+            let id = prepared.player.spells[spell].action_id.as_ref()?;
+            prepared
+                .player
+                .rotation_reads
+                .as_ref()?
+                .self_buffs
+                .iter()
+                .any(|buff| &buff.spell == id)
+                .then(|| id.clone())
+        },
     };
     rotation
         .priority_list
@@ -2446,6 +2685,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let curse = assigned_curse(prepared);
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
@@ -2455,6 +2695,40 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
         item_swap: has_item_swap(prepared),
+        bars: rotation_bars(prepared),
+        icd_aura: &|unit: Unit, id: &ActionId| find_icd_aura(prepared, unit, id),
+        multidot: &|id: &ActionId| rotation_multidot(prepared, id),
+        assigned_curse: curse.as_ref().map(|(name, id)| (name.as_str(), id)),
+        tanked: prepared.enemy.is_some(),
+        reads: prepared.player.rotation_reads.as_ref(),
+        exact_spell: &|id: &ActionId| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .position(|spell| spell.action_id.as_ref() == Some(id))
+        },
+        item_procs: &|procs: &crate::rotation::StatProcs| coverage_item_procs(prepared, procs),
+        expected_tick: &|id: &ActionId| coverage_expected_tick(prepared, id),
+        aura_by_label: &|label: &str| {
+            prepared
+                .player
+                .auras
+                .iter()
+                .find(|aura| aura.label == label)
+                .and_then(|aura| aura.action_id.clone())
+        },
+        self_buff: &|spell: usize| {
+            let id = prepared.player.spells[spell].action_id.as_ref()?;
+            prepared
+                .player
+                .rotation_reads
+                .as_ref()?
+                .self_buffs
+                .iter()
+                .any(|buff| &buff.spell == id)
+                .then(|| id.clone())
+        },
     };
     compile_condition(prepull.condition.as_ref(), &lookup)
         == crate::rotation::CompiledCondition::Pruned
@@ -2570,6 +2844,215 @@ fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>
     find_unit_aura(&prepared.player.auras, id)
 }
 
+/// sim/warlock/apl_values.go `GetAssignedCurse`: a Warlock's curse option, Agony when the
+/// options leave it out, and the action of the spell it names. Only a Warlock has one.
+pub(crate) fn assigned_curse(prepared: &PreparedV2) -> Option<(String, ActionId)> {
+    if prepared.player.class != "ClassWarlock" {
+        return None;
+    }
+    let option = prepared
+        .player
+        .class_options
+        .get("curseOptions")
+        .and_then(|value| value.as_str())
+        .unwrap_or("Agony")
+        .to_string();
+    let class_spell = match option.as_str() {
+        "Agony" => "bane_of_agony",
+        "Doom" => "bane_of_doom",
+        "Elements" => "curse_of_the_elements",
+        "Recklessness" => "curse_of_recklessness",
+        _ => return None,
+    };
+    let id = prepared
+        .player
+        .spells
+        .iter()
+        .find(|spell| spell.class_spell.as_deref() == Some(class_spell))?
+        .action_id
+        .clone()?;
+    Some((option, id))
+}
+
+/// Go `APLActionChangeTarget` moves the current target, which the runtime keeps on the first
+/// target: a change to another unit is refused.
+fn change_target_limits(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let targets = prepared.encounter.target_count.max(1) as usize;
+    let mut reasons = Vec::new();
+    let actions = rotation
+        .priority_list
+        .iter()
+        .map(|item| (item.position, &item.action, "rotation item"))
+        .chain(
+            rotation
+                .prepull
+                .iter()
+                .map(|prepull| (prepull.position, &prepull.action, "prepull action")),
+        );
+    for (position, action, kind) in actions {
+        if let Action::ChangeTarget(unit) = action.scheduled() {
+            if !matches!(unit.resolve(targets), None | Some(Unit::Target(0))) {
+                reasons.push(format!(
+                    "{kind} {position}: a change of target to a unit other than the first target is unsupported"
+                ));
+            }
+        }
+    }
+    reasons
+}
+
+/// Go's dot increase values of Penance read its bolt's damage, which the runtime does not
+/// compute, so they are refused rather than dropped.
+fn dot_increase_limits(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let mut reasons = Vec::new();
+    let mut visit = |value: &Value| {
+        if let Value::DotPercentIncrease(dot) | Value::DotTickRatePercentIncrease(dot) = value {
+            let penance = dot
+                .spell
+                .as_ref()
+                .and_then(|id| rotation_spell_index(prepared, id))
+                .and_then(|index| dot_owner(prepared, index))
+                .is_some_and(|holder| {
+                    prepared.player.spells[holder].class_spell.as_deref() == Some("penance")
+                });
+            let reason = "a dot increase value of Penance is unsupported".to_string();
+            if penance && !reasons.contains(&reason) {
+                reasons.push(reason);
+            }
+        }
+    };
+    for item in &rotation.priority_list {
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut visit);
+        }
+        for value in item.action.values() {
+            value.visit(&mut visit);
+        }
+    }
+    reasons
+}
+
+/// The spell holding the dot of a spell whose `ExpectedTickDamage` the runtime computes.
+fn coverage_expected_tick(prepared: &PreparedV2, id: &ActionId) -> Option<usize> {
+    let index = rotation_spell_index(prepared, id)?;
+    let holder = dot_owner(prepared, index)?;
+    let spell = &prepared.player.spells[holder];
+    let known = [
+        "rake",
+        "rip",
+        "shadow_word_pain",
+        "devouring_plague",
+        "mind_flay",
+        "starshards",
+        "bane_of_agony",
+        "flame_shock_dot",
+    ];
+    spell
+        .class_spell
+        .as_deref()
+        .is_some_and(|name| known.contains(&name))
+        .then_some(holder)
+}
+
+/// The spells a `castAllStatBuffCooldowns` of the stats casts, as the input names them.
+fn cast_all_spells<'a>(prepared: &'a PreparedV2, stats: &[i32]) -> Vec<&'a Spell> {
+    let Some(reads) = &prepared.player.rotation_reads else {
+        return Vec::new();
+    };
+    reads
+        .cast_cooldowns
+        .iter()
+        .filter(|entry| entry.stats == stats)
+        .flat_map(|entry| entry.spells.iter())
+        .filter_map(|id| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .find(|spell| spell.action_id.as_ref() == Some(id))
+        })
+        .collect()
+}
+
+/// The item proc buffs an item stat proc value matches, by their aura's action.
+fn coverage_item_procs(
+    prepared: &PreparedV2,
+    procs: &crate::rotation::StatProcs,
+) -> Vec<(ActionId, bool)> {
+    let Some(reads) = &prepared.player.rotation_reads else {
+        return Vec::new();
+    };
+    reads
+        .item_proc_buffs
+        .iter()
+        .filter(|buff| buff.stats.iter().any(|stat| procs.stats.contains(stat)))
+        .filter_map(|buff| {
+            let aura = prepared
+                .player
+                .auras
+                .iter()
+                .find(|aura| aura.label == buff.aura)?;
+            let long_enough = procs.min_icd <= 0
+                || aura
+                    .icd
+                    .as_ref()
+                    .is_some_and(|icd| icd.duration_ns > procs.min_icd);
+            long_enough.then(|| (aura.action_id.clone().unwrap_or_default(), buff.swapped))
+        })
+        .collect()
+}
+
+/// What the rotation's values read that Rust does not run: a target spell with a cooldown, which
+/// only a target AI starts, and a spell `multipleCdUsages` reads without a cooldown, whose
+/// division by it Go leaves to the platform or whose timer Go reads without one.
+fn rotation_read_limits(prepared: &PreparedV2) -> Vec<String> {
+    let Some(reads) = &prepared.player.rotation_reads else {
+        return Vec::new();
+    };
+    let mut reasons = Vec::new();
+    for spell in reads
+        .target_spells
+        .iter()
+        .filter(|spell| spell.has_cooldown)
+    {
+        reasons.push(format!(
+            "a boss value reads target spell {}, which has a cooldown",
+            spell.spell
+        ));
+    }
+    for buff in reads.self_buffs.iter().filter(|buff| !buff.has_cooldown) {
+        reasons.push(format!(
+            "multipleCdUsages reads spell {} without a cooldown",
+            buff.spell
+        ));
+    }
+    // An item swap swaps a proc buff, or a cooldown, in and out, which the reads leave out.
+    let stat_reads = !reads.item_proc_buffs.is_empty()
+        || !reads.cooldown_buffs.is_empty()
+        || !reads.cast_cooldowns.is_empty();
+    if stat_reads && has_item_swap(prepared) {
+        reasons.push("stat proc and stat buff cooldown values with an item swap".to_string());
+    }
+    reasons
+}
+
+/// Go `GetIcdAuraByID` on a unit's exported auras: the first with the action, or triggered by
+/// it, that has an ICD.
+fn find_icd_aura(prepared: &PreparedV2, unit: Unit, id: &ActionId) -> Option<ActionId> {
+    let auras = match unit {
+        Unit::Player => &prepared.player.auras,
+        Unit::Target(_) => &prepared.target.auras,
+    };
+    auras
+        .iter()
+        .any(|aura| {
+            aura.icd.is_some()
+                && (aura.action_id.as_ref() == Some(id)
+                    || aura.action_id_for_proc.as_ref() == Some(id))
+        })
+        .then(|| id.clone())
+}
+
 /// Go `GetAuraByID` on a unit's exported auras.
 fn find_unit_aura(
     auras: &[crate::contracts::prepared_v2::Aura],
@@ -2597,6 +3080,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let curse = assigned_curse(prepared);
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
@@ -2606,6 +3090,40 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
         item_swap: has_item_swap(prepared),
+        bars: rotation_bars(prepared),
+        icd_aura: &|unit: Unit, id: &ActionId| find_icd_aura(prepared, unit, id),
+        multidot: &|id: &ActionId| rotation_multidot(prepared, id),
+        assigned_curse: curse.as_ref().map(|(name, id)| (name.as_str(), id)),
+        tanked: prepared.enemy.is_some(),
+        reads: prepared.player.rotation_reads.as_ref(),
+        exact_spell: &|id: &ActionId| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .position(|spell| spell.action_id.as_ref() == Some(id))
+        },
+        item_procs: &|procs: &crate::rotation::StatProcs| coverage_item_procs(prepared, procs),
+        expected_tick: &|id: &ActionId| coverage_expected_tick(prepared, id),
+        aura_by_label: &|label: &str| {
+            prepared
+                .player
+                .auras
+                .iter()
+                .find(|aura| aura.label == label)
+                .and_then(|aura| aura.action_id.clone())
+        },
+        self_buff: &|spell: usize| {
+            let id = prepared.player.spells[spell].action_id.as_ref()?;
+            prepared
+                .player
+                .rotation_reads
+                .as_ref()?
+                .self_buffs
+                .iter()
+                .any(|buff| &buff.spell == id)
+                .then(|| id.clone())
+        },
     };
     rotation
         .priority_list

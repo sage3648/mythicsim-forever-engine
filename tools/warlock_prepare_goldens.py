@@ -28,11 +28,11 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "fixtures" / "mage" / "prepared-v2"
 OUT = ROOT / "tests" / "classes" / "warlock" / "prepare"
 
-AFFLICTION = "0555002013520005--0550005003"
+AFFLICTION = "0552032013520005--0550005003"
 DEMONOLOGY = "02-0025003231020301351-0550005003"
 DESTRUCTION = "2522-0050203001-155030510310005"
 # Every talent at its last rank, and every talent at one point.
-MAX_TALENTS = "25552323135211351-2355233231221331351-2555355133121351"
+MAX_TALENTS = "25522323135211351-2355233231221331351-2555355133121351"
 ONE_TALENT = "11111111111111111-1111111111111111111-1111111111111111"
 
 # name, fixture whose request is the base, talents string, options of the class (None keeps the

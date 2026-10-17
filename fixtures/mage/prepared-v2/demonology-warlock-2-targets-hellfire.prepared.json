@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "12ffe586e5c4b2e622e6ccad0d6146ff10c394d1",
+    "client_build": "1.60.1.70425",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "f2d81fca1764133494e92510a5e30c5d04560b233af44f2e5e32ed5079a56694",
@@ -499,7 +499,7 @@
       "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 13,
+      "PhysicalCritPercent": 10,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -515,7 +515,7 @@
       "SpellHitPercent": 7,
       "SpellHitRating": 50,
       "SpellPiercing": 0,
-      "Spirit": 202,
+      "Spirit": 204,
       "Stamina": 286,
       "Strength": 66
     },
@@ -596,14 +596,13 @@
         "action_id": {
           "spell_id": 1259821
         },
-        "duration_ns": 15000000000,
-        "max_stacks": 3,
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
         "active": false,
         "stacks": 0,
         "callbacks": [
           "on_gain",
-          "on_expire",
-          "on_cast_complete"
+          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -764,7 +763,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -782,7 +781,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1110,9 +1109,9 @@
     "mana": {
       "max": 7315.035,
       "base": 1373,
-      "spirit_regen_per_second": 27.700000000000003,
+      "spirit_regen_per_second": 27.900000000000002,
       "regen_per_second_casting": 15.4,
-      "regen_per_second_not_casting": 43.1,
+      "regen_per_second_not_casting": 43.300000000000004,
       "teardown_max": 5920.3725
     },
     "attack_table": {
@@ -3455,7 +3454,7 @@
         "ReducedCritTakenPercent": 0,
         "ShadowDamage": 0,
         "ShadowResistance": 0,
-        "SpellCritPercent": 14.1615,
+        "SpellCritPercent": 20.3615,
         "SpellCritRating": 0,
         "SpellDamage": 104.80000000000001,
         "SpellHasteRating": 0,
@@ -4079,10 +4078,10 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 104.800,\"Spirit\": 150.000,\"AttackPower\": 334.160,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"MP5\": 25.000,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 18.412,\"SpellCritPercent\": 14.162,}",
+        "Pet stats: {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 104.800,\"Spirit\": 150.000,\"AttackPower\": 334.160,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"MP5\": 25.000,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 18.412,\"SpellCritPercent\": 20.361,}",
         "Pet inherited stats: {\"SpellDamage\": 44.800,\"AttackPower\": 76.160,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 14.162,\"SpellCritPercent\": 14.162,}"
       ],
-      "dismiss_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
+      "dismiss_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,\"SpellCritPercent\": 6.200,}",
       "dynamic_stats": true,
       "inheritance": [
         {
@@ -4125,7 +4124,7 @@
         "Mana": 1066,
         "PhysicalCritPercent": 14.1615,
         "PhysicalHitPercent": 7,
-        "SpellCritPercent": 14.1615,
+        "SpellCritPercent": 20.3615,
         "SpellDamage": 104.80000000000001,
         "SpellHitPercent": 7,
         "Spirit": 150,
@@ -4296,7 +4295,7 @@
         },
         {
           "stat": "SpellCritPercent",
-          "value": 0
+          "value": 6.199999999999999
         },
         {
           "stat": "BlockPercent",
@@ -4895,26 +4894,6 @@
       ],
       "kind": "eureka",
       "spell_id": 1259821,
-      "spending_spells": [
-        10,
-        11,
-        12,
-        13,
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26,
-        27,
-        28,
-        29
-      ],
       "tick_cancel_percent": -0.09090909090909091,
       "tick_cancel_spells": [
         10,

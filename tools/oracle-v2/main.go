@@ -206,6 +206,8 @@ type classExport struct {
 	effects          func(agent core.Agent, character *core.Character) []map[string]any
 	// How many of the target's dynamic damage taken modifiers the class effects describe.
 	damageTakenModifiers func(agent core.Agent) int
+	// The damage done by caster handlers the class's effects describe, on every attack table.
+	casterDamageHandlers func(agent core.Agent) int
 	// Why a registered pet never acts in this build, or "" when it may.
 	inertPet func(agent core.Agent, pet *core.Pet) string
 	// Optional: stable names for class spells Go registers without a class mask, by action.
@@ -375,23 +377,23 @@ type DamageEffect struct {
 }
 
 type Spell struct {
-	ActionID                       *ActionID     `json:"action_id"`
-	Rank                           int32         `json:"rank"`
-	School                         uint8         `json:"school"`
-	DefenseType                    string        `json:"defense_type"`
-	ProcMask                       []string      `json:"proc_mask"`
-	Flags                          []string      `json:"flags"`
-	ClassSpell                     string        `json:"class_spell,omitempty"`
-	MissileSpeed                   float64       `json:"missile_speed"`
-	Cost                           *Cost         `json:"cost"`
-	DefaultCast                    Cast          `json:"default_cast"`
-	CastKind                       string        `json:"cast_kind"`
-	IgnoreHaste                    bool          `json:"ignore_haste"`
-	HasExtraCastCondition          bool          `json:"has_extra_cast_condition"`
-	HasCastRequirement             bool          `json:"has_cast_requirement"`
+	ActionID              *ActionID `json:"action_id"`
+	Rank                  int32     `json:"rank"`
+	School                uint8     `json:"school"`
+	DefenseType           string    `json:"defense_type"`
+	ProcMask              []string  `json:"proc_mask"`
+	Flags                 []string  `json:"flags"`
+	ClassSpell            string    `json:"class_spell,omitempty"`
+	MissileSpeed          float64   `json:"missile_speed"`
+	Cost                  *Cost     `json:"cost"`
+	DefaultCast           Cast      `json:"default_cast"`
+	CastKind              string    `json:"cast_kind"`
+	IgnoreHaste           bool      `json:"ignore_haste"`
+	HasExtraCastCondition bool      `json:"has_extra_cast_condition"`
+	HasCastRequirement    bool      `json:"has_cast_requirement"`
 	// The player auras whose form the cast requirement refuses, absent when Rust cannot
 	// represent the requirement.
-	RequirementAuras *[]string `json:"requirement_auras,omitempty"`
+	RequirementAuras               *[]string     `json:"requirement_auras,omitempty"`
 	MinRange                       float64       `json:"min_range"`
 	MaxRange                       float64       `json:"max_range"`
 	MaxCharges                     int           `json:"max_charges"`
@@ -420,6 +422,8 @@ type Spell struct {
 	RelatedDotSpell *int `json:"related_dot_spell,omitempty"`
 	// spell.go splitSpellMetrics: how many tagged metric entries the spell reports under.
 	MetricSplits int `json:"metric_splits,omitempty"`
+	// spell.go RankAliases: older rank IDs a rotation may still name, which GetAPLSpell reads.
+	RankAliases []ActionID `json:"rank_aliases,omitempty"`
 }
 
 type Aura struct {
@@ -693,6 +697,8 @@ type Player struct {
 	PrepullActions int `json:"prepull_actions"`
 	// The dot base durations the rotation captured when it was built.
 	RotationDotBaseDurations []RotationDotBaseDuration `json:"rotation_dot_base_durations,omitempty"`
+	// What the rotation's values read that the rest of the export leaves out.
+	RotationReads *RotationReads `json:"rotation_reads,omitempty"`
 	// The health a fight starts with, where it differs from the maximum: health.go resets to the
 	// maximum before the agent's reset, and a form the agent then enters raises the maximum.
 	HealthAtReset *float64 `json:"health_at_reset,omitempty"`
@@ -1001,7 +1007,16 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		CritMultiplierAdditive: spell.CritMultiplierAdditive, BonusBaseDamage: spell.BonusBaseDamage, BonusCoefficient: spell.BonusCoefficient,
 		ThreatMultiplier: spell.ThreatMultiplier, FlatThreatBonus: spell.FlatThreatBonus, PushbackResist: spell.PushbackResist, Dot: dot,
 		MetricSplits: map[bool]int{true: spell.GetMetricSplitCount(), false: 0}[spell.GetMetricSplitCount() > 1],
+		RankAliases:  rankAliases(spell),
 	}
+}
+
+func rankAliases(spell *core.Spell) []ActionID {
+	aliases := []ActionID{}
+	for _, id := range spell.RankAliases {
+		aliases = append(aliases, *actionID(id))
+	}
+	return aliases
 }
 
 // shapeshift.go castRequirementFailure, as the player auras whose form the requirement refuses.
@@ -1052,12 +1067,11 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 	if character.Class == proto.Class_ClassPriest {
 		procMask |= core.ProcMaskSpellHealing
 	}
-	spent := masks.Cost | masks.Damage | masks.Tick
 	directOnly := masks.Damage &^ masks.Tick
 	modded := func(spell *core.Spell, mask int64) bool {
 		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
 	}
-	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
+	cost, damage, ticks := []int{}, []int{}, []int{}
 	// The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
 	// mana otherwise, as applyEureka's ResourceType does.
 	paysClassResource := func(spell *core.Spell) bool {
@@ -1084,14 +1098,11 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 		if modded(spell, directOnly) {
 			ticks = append(ticks, i)
 		}
-		if spell.Matches(spent) && spell.ProcMask.Matches(procMask) {
-			spending = append(spending, i)
-		}
 	}
 	return map[string]any{
 		"kind": "eureka", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
 		"cost_percent": -0.1, "damage_percent": 0.1, "tick_cancel_percent": 1/1.1 - 1,
-		"cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks, "spending_spells": spending,
+		"cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks,
 	}
 }
 
@@ -1155,12 +1166,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		}
 	}
-	// racials.go applyTouchOfTheGrave: Go literals.
+	// racials.go applyTouchOfTheGrave: Go literals, from the 16 October beta notes.
 	if hasAura(&character.Unit, "Touch of the Grave") {
-		chance := 0.1
+		chance := 0.3
 		switch character.Class {
 		case proto.Class_ClassWarrior, proto.Class_ClassPaladin, proto.Class_ClassRogue:
-			chance = 0.05
+			chance = 0.2
 		}
 		effects = append(effects, map[string]any{
 			"kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": int32(1260198),
@@ -1244,7 +1255,7 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// literal on each magic school.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
-			"school_damage_taken_multiplier": 0.85, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
+			"school_damage_taken_multiplier": 0.95, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
 	}
 	// racials.go Dwarf Stoneform: its aura multiplies only the player's physical damage taken,
 	// a Go literal.
@@ -1268,6 +1279,18 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		effects = append(effects, map[string]any{
 			"kind": "stacking_on_use", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
 			"period_ns": nanos(2 * time.Second), "ticks": int32(10),
+		})
+	}
+	// items_70425.go Blade of Hanna: each landed main hand swing stacks Improving Form; at its most
+	// the stacks go, Perfected Form strikes the target for its row's flat Physical damage on the melee
+	// special table, and its stats aura comes up.
+	if trigger := character.GetAura("Blade of Hanna"); trigger != nil {
+		perfected := spelldata.MustFind(1325508)
+		effects = append(effects, map[string]any{
+			"kind": "blade_of_hanna", "trigger_aura": trigger.Label, "stacks_aura": "Improving Form",
+			"buff_aura": "Perfected Form", "damage": perfected.EffectN(1).BasePoints,
+			"strike_spell":   spellPosition(character, character.GetSpell(core.ActionID{SpellID: perfected.ID})),
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeMHAuto}),
 		})
 	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
@@ -1669,7 +1692,7 @@ func prepareSet(request *proto.RaidSimRequest, digest, scenario string, swapped 
 	note(privateField(simulation, "executePhaseCallbacks").Len() != describedCallbacks, "execute phase callbacks are unsupported")
 	note(simulation.Encounter.AllTargets[0].AI != nil, "target AI is unsupported")
 	table := character.AttackTables[target.UnitIndex]
-	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
+	note(table.DamageDoneByCasterMultiplier != nil || casterHandlers(table) > describedCasterHandlers(agent), "caster damage callbacks are unsupported")
 	class, exported := classExports[character.Class]
 	described := 0
 	if exported && class.damageTakenModifiers != nil {
@@ -1918,10 +1941,11 @@ func prepareSet(request *proto.RaidSimRequest, digest, scenario string, swapped 
 				BonusSpellCritPercent: table.BonusSpellCritPercent, CritMultiplier: table.CritMultiplier,
 				DamageDealtMultiplier: table.DamageDealtMultiplier, DamageTakenMultiplier: table.DamageTakenMultiplier},
 			Spells: spells, MajorCooldowns: mcds, Rotation: rotation,
-			PrepullActions:         privateField(simulation.Environment, "prepullActions").Len(),
+			PrepullActions:           privateField(simulation.Environment, "prepullActions").Len(),
 			RotationDotBaseDurations: rotationDotBaseDurations(request),
-			HealthAtReset:          healthAtReset(request),
-			HpPercentForDefensives: request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(),
+			RotationReads:            rotationReads(request, simulation, character),
+			HealthAtReset:            healthAtReset(request),
+			HpPercentForDefensives:   request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(),
 		},
 		Effects: effects, Unrepresented: unrepresented,
 	}
@@ -2396,4 +2420,24 @@ func main() {
 	default:
 		fail(fmt.Errorf("unsupported command %s", os.Args[1]))
 	}
+}
+
+// The damage done by caster handlers set on an attack table.
+func casterHandlers(table *core.AttackTable) int {
+	count := 0
+	for _, handler := range table.DamageDoneByCasterExtraMultiplier {
+		if handler != nil {
+			count++
+		}
+	}
+	return count
+}
+
+// The handlers on every attack table the class's effects describe.
+func describedCasterHandlers(agent core.Agent) int {
+	class, ok := classExports[agent.GetCharacter().Class]
+	if !ok || class.casterDamageHandlers == nil {
+		return 0
+	}
+	return class.casterDamageHandlers(agent)
 }

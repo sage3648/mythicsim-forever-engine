@@ -20,9 +20,11 @@ pub(crate) const GATE: ClassGate = ClassGate {
 
 /// Priest effect kinds implemented in Rust and validated against the pinned Go reference.
 const EFFECTS: &[&str] = &[
+    "dark_inspiration",
     "dark_sacrifice",
     "devouring_plague",
     "holy_fire",
+    "improved_mind_flay",
     "inner_focus",
     "mind_blast",
     "mind_flay",
@@ -82,8 +84,8 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
     match effect {
         Effect::ShadowWeaving {
             trigger_aura, aura, ..
-        }
-        | Effect::SearingLight {
+        } => vec![("player", trigger_aura), ("target", aura)],
+        Effect::SearingLight {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         Effect::Shadowfiend {
@@ -95,6 +97,14 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             ("player", aura),
             ("pet unit", pet),
             ("pet", mana_restore_aura),
+        ],
+        Effect::DarkInspiration {
+            mind_blast_trigger,
+            mind_flay_trigger,
+            ..
+        } => vec![
+            ("player", mind_blast_trigger),
+            ("player", mind_flay_trigger),
         ],
         Effect::Shadowform { aura, .. }
         | Effect::InnerFocus { aura, .. }
@@ -126,7 +136,6 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
             callbacks,
             outcome,
             trigger_spells,
-            damage_spells,
             ..
         } = effect
         {
@@ -141,11 +150,7 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
                 reasons.push(format!("Shadow Weaving procs on {outcome:?}"));
             }
             let count = prepared.player.spells.len();
-            if trigger_spells
-                .iter()
-                .chain(damage_spells)
-                .any(|&spell| spell >= count)
-            {
+            if trigger_spells.iter().any(|&spell| spell >= count) {
                 reasons.push("Shadow Weaving names a spell outside the spellbook".into());
             }
         }

@@ -59,8 +59,20 @@ fn crusader(env: &mut Environment) {
             Stats::from_pairs(&[(Stat::Strength, 100.0)]),
             duration,
         );
+        let slot = if tag == 1 {
+            super::items::slot::MAIN_HAND
+        } else {
+            super::items::slot::OFF_HAND
+        };
+        super::shared_items::add_stat_proc_buff(
+            &mut env.sim,
+            unit,
+            CRUSADER,
+            buff.clone(),
+            true,
+            &[slot],
+        );
         // RegisterWeaponEnchantBuff: the buff falls off once no weapon carries the enchant.
-        // AddStatProcBuff's callback only keeps the APL's bookkeeping.
         env.sim
             .register_weapon_enchant_buff(unit, buff.aura, CRUSADER);
     }
