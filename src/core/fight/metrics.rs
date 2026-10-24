@@ -257,6 +257,8 @@ pub(crate) struct ActionReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) crit_healing: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) overhealing: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) shielding: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) cast_time_ms: f64,
@@ -619,6 +621,7 @@ impl<A: Agent> Fight<A> {
             totals.ranges[3].merge(&metrics.crit_tick_range);
             totals.healing += metrics.total_healing;
             totals.crit_healing += metrics.total_crit_healing;
+            totals.overhealing += metrics.total_overhealing;
             totals.shielding += metrics.total_shielding;
             if !passive {
                 totals.cast_time += metrics.total_cast_time;

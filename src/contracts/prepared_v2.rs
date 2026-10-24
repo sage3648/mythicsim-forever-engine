@@ -865,6 +865,12 @@ pub struct Player {
     /// tick ignores the change until something else refreshes it.
     #[serde(default, skip_serializing_if = "is_false")]
     pub casting_regen_at_once: bool,
+    /// MythicSim's healer sims under Forever's rules: each heal's share that real healers
+    /// overheal, measured on foreverlogs.gg (`prepare::overheal`). Only the rest counts as
+    /// healing; the share counts as overhealing. Empty is the Go reference, which counts every
+    /// heal in full.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub overheal: Vec<Overheal>,
     /// Every prepull action Go registered: the rotation's, and any a class or item adds.
     pub prepull_actions: usize,
     /// The dot base durations the rotation's `dotBaseDuration` values captured when Go built
@@ -1299,6 +1305,15 @@ pub struct HealModifiers {
     pub healing_taken_multiplier: f64,
     pub table_healing_dealt_multiplier: f64,
     pub healing_power: f64,
+}
+
+/// One heal's overhealing share in MythicSim's healer sims: what real healers overheal of it.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Overheal {
+    pub spell_id: i32,
+    /// The share of each heal that is overhealing, from zero to below one.
+    pub fraction: f64,
 }
 
 /// One heal rank a healer casts on the player, in MythicSim's healer sims (Rust only, no Go

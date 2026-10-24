@@ -1101,6 +1101,12 @@ pub(crate) fn export_state(
         // The client's mana regeneration interrupt aura acts at once (README, Rust-only
         // mechanics); the reference's cached tick waits for another refresh.
         prepared["player"]["casting_regen_at_once"] = json!(true);
+        // A healer sim counts only the share of each heal real healers do not overheal
+        // (README, Rust-only mechanics); the reference counts every heal in full.
+        let overheal = super::overheal::export(&player_message, &prepared["player"]["spells"]);
+        if !overheal.is_empty() {
+            prepared["player"]["overheal"] = Value::Array(overheal);
+        }
     }
     if let Some(reads) = &env.rotation_reads {
         prepared["player"]["rotation_reads"] = json!(reads);

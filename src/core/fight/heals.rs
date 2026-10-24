@@ -269,12 +269,12 @@ impl<A: Agent> Fight<A> {
         if !state.flags.ignore_target_modifiers {
             amount = amount * healing.taken_multiplier * healing.table_multiplier;
         }
-        let amount = amount.max(0.0);
         let target = Side::Player.index();
+        let (amount, overhealing) = self.landed_healing(spell, target, amount.max(0.0));
         let result = super::SpellResult {
             armor_multiplier: 0.0,
             target: Side::Player,
-            attacker: state.caster,
+            attacker: self.spells[spell].caster,
             outcome: OUTCOME_HIT,
             damage: amount,
             threat: 0.0,
@@ -288,9 +288,10 @@ impl<A: Agent> Fight<A> {
         self.gain_health(amount, health);
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!(
-                "[{}] {} tick Hit for {amount:.3} healing. (Threat: {threat:.3})",
+                "[{}] {} tick Hit for {amount:.3} healing{}. (Threat: {threat:.3})",
                 self.config.player_label,
                 action_string(&self.spells[spell].id),
+                super::healing::overhealing_note(overhealing),
             );
             self.player_log(&line);
         }

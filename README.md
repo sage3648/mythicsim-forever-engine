@@ -45,8 +45,8 @@ Rust, or tells the worker to run it in Go and says why.
 MythicSim's Forever Quick Sims run in Rust, for every class and spec it offers: the Druid,
 Hunter, Mage, Paladin, Priest, Rogue, Shaman, Warlock and Warrior damage and tank specs, with
 their talents, gear, buffs, consumables, pets, tanking and 2 to 5 targets. Holy Paladin heal
-sims match Go too: heals cast on the player and counted in full, as Go counts them, so the
-healing per second is what the healer can put out with its mana.
+sims match Go too, under the reference's rules: heals cast on the player and counted in full, as
+Go counts them. Production prepares them with Forever's rules, which leave out overhealing.
 
 These still run in Go:
 
@@ -77,8 +77,8 @@ numbers instead: the client spell rows, Wowhead Forever tooltips and logs, with 
 that pin the expected heal, cost or timing from those numbers. A request that reaches one runs
 in Rust or is refused; it never falls back to Go, which would skip the spells it does not know.
 The healer sims are the first: every Holy Paladin, Priest, Restoration Shaman and Restoration
-Druid heal lands on a player who needs it and counts in full, so healing per second is what the
-healer can put out with its mana.
+Druid heal lands on a player who needs it, less the share real healers overheal (below), so
+healing per second is what the healer's mana heals in a dungeon.
 
 Where Rust departs from a mechanic the Go reference has, preparation follows Forever by default
 and the reference with `Rules::GoReference` (`prepare --go-rules`), which every comparison with
@@ -107,6 +107,16 @@ the Go goldens and exporter uses. The departures:
   MP5, Spirit or Intellect refreshes it, which on a Survival Hunter is almost never. Each one's
   mana lands in a resource row of its own, named after the aura, as Innervate's does. The
   prepared player carries `casting_regen_at_once`.
+- Overhealing, from Forever's level 30 beta logs on foreverlogs.gg (1 to 24 October 2026, 74
+  public reports): a healer sim counts each heal less the share real Holy and Discipline
+  Priests, Holy Paladins and Restoration Druids and Shamans overhealed of it, such as Flash Heal
+  1%, Holy Light 10%, Renew 16%, Prayer of Healing 23% and Healing Stream Totem 63%. Heals the
+  logs do not hold yet (Greater Heal, Chain Heal, Prayer of Mending and the other heals above
+  level 30) take the pooled share of their kind: 5.4% on one player at once, 16.7% over time,
+  24.6% on a group. Shields keep their whole absorb. The shares are dungeon play at level 30 and
+  will move with level 60 raids. The reference, like Go, counts every heal in full. The prepared
+  player carries `overheal`, and each heal's overhealing is reported beside its healing
+  (`src/prepare/overheal.rs`, `validation/2026-10-24-healer-overheal.json`).
 
 ## Repository layout
 

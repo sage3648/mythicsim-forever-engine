@@ -146,6 +146,7 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(caster, &line);
         }
+        let (amount, overhealing) = self.landed_healing(spell, index, amount);
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
@@ -175,7 +176,7 @@ impl<A: Agent> Fight<A> {
         }
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!(
-                "[{}] {} {} for {amount:.3} healing. (Threat: {:.3})",
+                "[{}] {} {} for {amount:.3} healing{}. (Threat: {:.3})",
                 self.label_of(target),
                 action_string(&self.spells[spell].id),
                 if outcome == OUTCOME_CRIT {
@@ -183,6 +184,7 @@ impl<A: Agent> Fight<A> {
                 } else {
                     "Hit"
                 },
+                overhealing_note(overhealing),
                 result.threat
             );
             self.unit_log(caster, &line);
@@ -254,6 +256,7 @@ impl<A: Agent> Fight<A> {
             );
             self.player_log(&line);
         }
+        let (amount, overhealing) = self.landed_healing(spell, target, amount);
         let result = SpellResult {
             armor_multiplier: 0.0,
             target: Side::Player,
@@ -281,10 +284,11 @@ impl<A: Agent> Fight<A> {
         self.gain_health(amount, health);
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!(
-                "[{}] {} {} for {amount:.3} healing. (Threat: {threat:.3})",
+                "[{}] {} {} for {amount:.3} healing{}. (Threat: {threat:.3})",
                 self.config.player_label,
                 action_string(&self.spells[spell].id),
                 if crit { "Crit" } else { "Hit" },
+                overhealing_note(overhealing),
             );
             self.player_log(&line);
         }
@@ -372,6 +376,7 @@ impl<A: Agent> Fight<A> {
             );
             self.player_log(&line);
         }
+        let (amount, overhealing) = self.landed_healing(spell, target, amount);
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target: Side::Player,
@@ -398,13 +403,44 @@ impl<A: Agent> Fight<A> {
         self.gain_health(amount, health);
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!(
-                "[{}] {}{} Hit for {amount:.3} healing. (Threat: {threat:.3})",
+                "[{}] {}{} Hit for {amount:.3} healing{}. (Threat: {threat:.3})",
                 self.config.player_label,
                 action_string(&self.spells[spell].id),
                 if periodic.is_some() { " tick" } else { "" },
+                overhealing_note(overhealing),
             );
             self.player_log(&line);
         }
         result
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// A heal of `amount` on `target` split into what counts as healing and what counts as
+    /// overhealing: all of it heals, unless the spell carries an overhealing share (MythicSim's
+    /// healer sims under Forever's rules), which goes to the spell's overhealing instead.
+    /// Healing, threat, the health gained and the log line then read what heals.
+    pub(crate) fn landed_healing(
+        &mut self,
+        spell: SpellId,
+        target: usize,
+        amount: f64,
+    ) -> (f64, f64) {
+        let fraction = self.spells[spell].overheal;
+        if fraction == 0.0 {
+            return (amount, 0.0);
+        }
+        let overhealing = amount * fraction;
+        self.spells[spell].metrics[target].total_overhealing += overhealing;
+        (amount - overhealing, overhealing)
+    }
+}
+
+/// What a heal's log line adds for its overhealing: nothing when it has none, as Go logs.
+pub(crate) fn overhealing_note(overhealing: f64) -> String {
+    if overhealing > 0.0 {
+        format!(", {overhealing:.3} overhealing")
+    } else {
+        String::new()
     }
 }

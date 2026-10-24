@@ -3,6 +3,10 @@
 //! Holy Paladin has Go goldens, in the fixture family). Each request in `fixtures/healers`
 //! prepares in Rust, passes the gate and heals.
 //!
+//! Under Forever's rules a healer sim counts only the share of each heal real healers do not
+//! overheal (`prepare::overheal`), so each heal line logs what heals and the overhealing beside
+//! it; their sum is the heal the client rows give.
+//!
 //! Two kinds of check:
 //!
 //! - The first fight's log lines below pin one heal of each kind to the amount its client rows
@@ -13,7 +17,7 @@
 //!   are. Regenerate it with `UPDATE_HEALER_GOLDENS=1 cargo test --test healers` after a change
 //!   that should move it, and say why in the commit.
 
-use forever_engine::{check_prepared, prepare, simulate_prepared};
+use forever_engine::{check_prepared, prepare, prepare_json_with, simulate_prepared, Rules};
 use serde_json::{json, Map, Value};
 use std::{fs, path::Path};
 
@@ -57,6 +61,7 @@ fn summary(result: &Value) -> Value {
             json!({
                 "casts": sum("casts"), "hits": sum("hits"), "crits": sum("crits"),
                 "ticks": sum("ticks"), "healing": sum("healing"), "shielding": sum("shielding"),
+                "overhealing": sum("overhealing"),
             }),
         );
     }
@@ -104,8 +109,9 @@ fn holy_priest_heals_as_its_rows_state() {
             "{SpellID: 401859} [DEBUG] HealingPower: 268.2, BaseHealing:287.1, AfterCasterMods:315.8",
             // Power Word: Shield rank 10 (10901): 928 + 0.1 x 268.2 = 954.82, then +20%.
             "{SpellID: 10901} Shield for 1145.790.",
-            // Renew rank 10 (25315): 166 + 0.2 x 268.2 = 219.64 a tick, then 1.10 x 1.15 x 1.05.
-            "{SpellID: 25315} tick Hit for 291.750 healing.",
+            // Renew rank 10 (25315): 166 + 0.2 x 268.2 = 219.64 a tick, then 1.10 x 1.15 x 1.05,
+            // 291.750, of which Renew's 16.06% is overhealing.
+            "{SpellID: 25315} tick Hit for 244.895 healing, 46.855 overhealing.",
         ],
     );
     let hits = player(&result)["actions"]
@@ -150,11 +156,11 @@ fn restoration_druid_heals_as_its_rows_state() {
         &result,
         &[
             // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then +10%, on
-            // each of five players.
-            "{SpellID: 1238215} tick Hit for 117.663 healing.",
+            // each of five players, 117.663, of which a group heal's 24.58% is overhealing.
+            "{SpellID: 1238215} tick Hit for 88.741 healing, 28.921 overhealing.",
             // Rejuvenation rank 11 (25299): 194 + 0.2 x 302 = 254.4 a tick, then 1.10 x 1.15 x
-            // 1.05.
-            "{SpellID: 25299} tick Hit for 337.907 healing.",
+            // 1.05, 337.907, of which Rejuvenation's 17.76% is overhealing.
+            "{SpellID: 25299} tick Hit for 277.895 healing, 60.012 overhealing.",
             // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1689.5,
             // then Gift of Nature's 10% on Swiftmend's own direct heal.
             "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1689.5, AfterCasterMods:1858.5",
@@ -209,4 +215,69 @@ fn restoration_shaman_heals_as_its_rows_state() {
         sum("casts")
     );
     golden("restoration-shaman", &result);
+}
+
+/// Under Forever's rules a healer sim names the overhealing share of each of its heals, and only
+/// what is left counts: the Holy Paladin's Flash of Light, Holy Light and Holy Shock heals lose
+/// their measured shares, so its healing per second falls by each heal's share of its healing.
+/// The Go reference's rules, which the Holy Paladin's Go goldens use, and a damage spec name none.
+#[test]
+fn forever_healer_sims_count_healing_less_overhealing() {
+    let family = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/fixtures/mage/prepared-v2"
+    ));
+    let request = |name: &str| fs::read(family.join(format!("{name}.request.json"))).unwrap();
+    let holy = request("holy-paladin-healing");
+    let forever = prepare_json_with(&holy, "rust", Rules::Forever).unwrap();
+    let reference = prepare_json_with(&holy, "rust", Rules::GoReference).unwrap();
+    let share = |spell: i64| {
+        forever["player"]["overheal"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["spell_id"] == spell)
+            .map(|entry| entry["fraction"].as_f64().unwrap())
+    };
+    // Flash of Light rank 6, Holy Light rank 9 and the Go reference's Holy Shock heal.
+    assert_eq!(share(19943), Some(0.0699));
+    assert_eq!(share(25292), Some(0.1024));
+    assert_eq!(share(25903), Some(0.0658));
+    // Holy Shock's damage is no heal.
+    assert_eq!(share(1311606), None);
+    assert!(reference["player"].get("overheal").is_none());
+    let shadow = request("shadow-priest-holy-nova");
+    let shadow = prepare_json_with(&shadow, "rust", Rules::Forever).unwrap();
+    assert!(shadow["player"].get("overheal").is_none());
+
+    // The heals draw the same rolls either way, so each heal's healing and overhealing add up
+    // to what the reference heals, split at its share.
+    let sim = |prepared: &Value| {
+        let prepared = serde_json::from_value(prepared.clone()).unwrap();
+        simulate_prepared(&prepared).unwrap().result
+    };
+    let (forever, reference) = (sim(&forever), sim(&reference));
+    let totals = |result: &Value, spell: i64, key: &str| -> f64 {
+        player(result)["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|action| action["id"]["spellId"] == spell)
+            .flat_map(|action| action["targets"].as_array().unwrap())
+            .map(|target| target[key].as_f64().unwrap_or(0.0))
+            .sum()
+    };
+    for (spell, fraction) in [(19943, 0.0699), (25292, 0.1024), (25903, 0.0658)] {
+        let whole = totals(&reference, spell, "healing");
+        let healing = totals(&forever, spell, "healing");
+        let overhealing = totals(&forever, spell, "overhealing");
+        assert!(whole > 0.0, "{spell} heals");
+        assert!(
+            ((healing + overhealing) / whole - 1.0).abs() < 1e-9,
+            "{spell}"
+        );
+        assert!((overhealing / whole - fraction).abs() < 1e-9, "{spell}");
+    }
+    let hps = |result: &Value| player(result)["hps"]["avg"].as_f64().unwrap();
+    assert!(hps(&forever) < hps(&reference));
 }

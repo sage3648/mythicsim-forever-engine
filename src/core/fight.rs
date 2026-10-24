@@ -753,6 +753,8 @@ pub(crate) struct SpellMetrics {
     pub(crate) total_cast_time: i64,
     pub(crate) total_healing: f64,
     pub(crate) total_crit_healing: f64,
+    /// The heals' overhealing share (see [`Spell::overheal`]), which healing leaves out.
+    pub(crate) total_overhealing: f64,
     /// Go `TotalShielding`: the absorb shields the spell put on the unit.
     pub(crate) total_shielding: f64,
     /// The spread of each kind of landed damage event (patch 92).
@@ -864,6 +866,9 @@ pub(crate) struct Spell<S> {
     pub(crate) health_metrics: Option<usize>,
     /// Go `Spell.HealthMetrics` for the player, registered at the spell's first heal.
     pub(crate) self_health_metrics: Option<usize>,
+    /// The share of each of the spell's heals that counts as overhealing, under Forever's
+    /// rules in MythicSim's healer sims; zero counts every heal in full, as Go does.
+    pub(crate) overheal: f64,
     /// Go `Spell.ResourceMetrics`: the rage metrics a white hit without a cost registers on
     /// its first landed hit.
     pub(crate) rage_metrics: Option<usize>,
@@ -2934,6 +2939,14 @@ impl<A: Agent> Fight<A> {
                 energy_metrics,
                 health_metrics,
                 self_health_metrics: None,
+                overheal: match caster {
+                    Side::Player => player
+                        .overheal
+                        .iter()
+                        .find(|overheal| overheal.spell_id == id.spell_id)
+                        .map_or(0.0, |overheal| overheal.fraction),
+                    _ => 0.0,
+                },
                 rage_metrics: None,
                 white_hand: match exported.proc_mask.as_slice() {
                     [mask] if mask == "ProcMaskMeleeMHAuto" => Some(melee::Hand::Main),
