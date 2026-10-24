@@ -2,6 +2,7 @@
 
 mod druid;
 mod external_cooldown;
+mod global_cooldown;
 mod hunter;
 mod item_effects;
 mod item_swap;

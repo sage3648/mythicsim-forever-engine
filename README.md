@@ -107,6 +107,12 @@ the Go goldens and exporter uses. The departures:
   MP5, Spirit or Intellect refreshes it, which on a Survival Hunter is almost never. Each one's
   mana lands in a resource row of its own, named after the aura, as Innervate's does. The
   prepared player carries `casting_regen_at_once`.
+- Conjured cooldown, from the client's item effects (1.60.1.70532, ItemEffect and
+  ItemXItemEffect): every mana gem (Agate, Jade, Citrine, Ruby) is in spell category 1153 with a
+  2 minute category cooldown, with Demonic and Dark Rune, the healthstones and Thistle Tea, so a
+  mage who uses a gem cannot use a rune for 2 minutes, and the reverse. The reference gives the
+  gems a category 30 timer of their own, which no Forever item has, so a gem and a rune went back
+  to back. Forever preparation puts the gems on the category 1153 timer.
 
 ## Repository layout
 

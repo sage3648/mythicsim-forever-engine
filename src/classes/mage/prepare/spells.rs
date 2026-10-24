@@ -596,7 +596,8 @@ impl Mage {
         );
     }
 
-    /// One of each gem is carried and all four share the conjured cooldown.
+    /// One of each gem is carried and all four share the conjured cooldown, which under Forever
+    /// rules is also the Demonic Rune's and the healthstones' (category 1153).
     fn register_mana_gems(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
         let gems: [(i32, &Row); 4] = [

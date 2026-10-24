@@ -9,11 +9,15 @@ use crate::contracts::request::Message;
 
 use super::items::{self, Equipment};
 use super::sim::{
-    AuraConfig, AuraId, BuildPhase, Duration, Sim, SpellId, TimerId, Unit, UnitId, UnitType,
+    AuraConfig, AuraId, BuildPhase, Duration, Rules, Sim, SpellId, TimerId, Unit, UnitId, UnitType,
     MILLISECOND,
 };
 use super::stats::{PseudoStats, Stat, Stats};
 use super::Refusal;
+
+/// The spell category of Forever's conjured items: mana gems, healthstones, Demonic and Dark
+/// Rune and Thistle Tea all share its 2 minute cooldown (client 1.60.1.70532, ItemEffect).
+pub(crate) const CONJURED_CATEGORY: i32 = 1153;
 
 /// Go constants from constants.go and base_stats_auto_gen.go.
 pub(crate) mod constants {
@@ -618,9 +622,16 @@ impl Sim {
         self.category_timer(unit, 1141)
     }
 
-    /// Go `Character.GetConjuredCD`.
+    /// Go `Character.GetConjuredCD`, the timer the mana gems share. The reference gives it
+    /// category 30, which no Forever item has: Forever's client (1.60.1.70532, ItemEffect)
+    /// puts every mana gem in spell category 1153, with the healthstones, Demonic and Dark Rune
+    /// and Thistle Tea, so under Forever rules the gems share the timer of the conjured items
+    /// consumes register (README, Rust-only mechanics).
     pub(crate) fn get_conjured_cd(&mut self, unit: UnitId) -> TimerId {
-        self.category_timer(unit, 30)
+        match self.rules {
+            Rules::Forever => self.category_timer(unit, CONJURED_CATEGORY),
+            Rules::GoReference => self.category_timer(unit, 30),
+        }
     }
 
     /// Go `Character.GetPotionCD`.
