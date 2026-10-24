@@ -1,0 +1,33 @@
+{
+  "purpose": "Whether heal over time ticks crit in WoW Forever, for MythicSim's healer sims under Forever's rules (core::fight::heals, prepare::heals)",
+  "source": "foreverlogs.gg /api/reports/{r}/encounters/{e}/timeline?event_types=heal,overheal&sourceCharacterIds={id}&limit=5000 (per event) and /api/reports/{r}/character_spell_healing?scope=report&format=flat (pooled rows)",
+  "fetched": "2026-10-25",
+  "method": "Per event: each heal and overheal event of the spell on the same encounter, timestamp and target is one tick; its amount is the heal plus the overheal. crit_flagged counts ticks with is_critical on the heal event. A tick that wholly overheals logs only an overheal event, which never carries the crit flag, so unflagged_at_1_5x counts ticks of at least 1.35 times the median tick without the flag: crits the flag misses. Pooled: report rows of healer specs (Healing Stream Totem rows carry no spec and are pooled by name), report 2807 excluded as a TBC-level upload. foreverlogs.gg is behind Cloudflare: fetch from a page on the site with same-origin fetch.",
+  "client_rows": {
+    "note": "data/spells.jsonl Attr[8] (ATTR_INDEX_EX_8); 0x200 is ATTR_EX_8_PERIODIC_CAN_CRIT, the bit the engine already reads for damage ticks",
+    "Renew 139, 6076, 25315": 16777728,
+    "Rejuvenation 1430, 2091": 16777728,
+    "Regrowth 8940, 9858": 16777728,
+    "Healing Stream 5672, 6371": 16781824,
+    "Corruption 172, Shadow Word: Pain 589 (damage, for comparison)": 512,
+    "Heal 2054 (direct, no periodic part)": 16777216
+  },
+  "per_event": [
+    {"report": 2806, "character_id": 163804, "spec": "Holy Priest", "spell": "Renew", "spell_id": 6076, "tick_events": 229, "median_tick": 97, "crit_flagged": 13, "crit_flagged_amounts": {"145": 9, "146": 2, "150": 2}, "unflagged_at_1_5x": 3},
+    {"report": 2808, "character_id": 171450, "spec": "Restoration Druid", "spell": "Rejuvenation", "spell_id": 2091, "tick_events": 57, "median_tick": 95, "crit_flagged": 4, "crit_flagged_amounts": {"141": 2, "142": 2}, "unflagged_at_1_5x": 2},
+    {"report": 2790, "character_id": 162520, "spec": "Restoration Druid", "spell": "Rejuvenation", "spell_id": 1430, "tick_events": 74, "median_tick": 23, "crit_flagged": 3, "crit_flagged_amounts": {"34": 2, "35": 1}, "unflagged_at_1_5x": 0},
+    {"report": 2764, "character_id": 148173, "spec": "Shaman", "spell": "Healing Stream Totem", "spell_id": 5672, "tick_events": 267, "median_tick": 5, "crit_flagged": 7, "crit_flagged_amounts": {"7": 1, "8": 6}, "unflagged_at_1_5x": 9}
+  ],
+  "per_event_note": "The crits fall mid-sequence on the 3 second (Renew, Rejuvenation) and 2 second (Healing Stream) cadence, between normal ticks on the same player, at 1.5 times the tick: Renew 97 to 145 and 146, 100 to 150 on more healing power; Rejuvenation 95 to 141 and 142, 23 to 34 and 35; Healing Stream 5 to 7 and 8. They are ticks, not a direct part. Report 2790's Regrowth (8936) ticks crit the same way (13 to 19 and 20).",
+  "pooled_report_rows": {
+    "reports": {"count": 104, "first": 2650, "last": 2809},
+    "Priest Renew": {"hits": 8245, "crits": 581, "crit_share": 0.0705},
+    "Priest direct heals (Lesser Heal, Heal, Greater Heal, Flash Heal)": {"hits": 1964, "crits": 184, "crit_share": 0.0937},
+    "Druid Rejuvenation": {"hits": 7171, "crits": 410, "crit_share": 0.0572},
+    "Druid Healing Touch": {"hits": 680, "crits": 40, "crit_share": 0.0588},
+    "Healing Stream Totem": {"hits": 44919, "crits": 1486, "crit_share": 0.0331},
+    "Shaman direct heals (Healing Wave, Lesser Healing Wave)": {"hits": 1168, "crits": 110, "crit_share": 0.0942}
+  },
+  "pooled_note": "Ticks crit at about the caster's direct heal crit share; they come out lower where a heal over time overheals a lot (Renew 16%, Healing Stream Totem 63%), since a wholly overhealed crit loses its flag. Report 2807, a TBC-level upload of the same parser, logs 2,707 Rejuvenation (26982) ticks with no crit, so the parser does not invent tick crits.",
+  "conclusion": "Heal over time ticks crit in Forever on the healing crit chance at the healing crit multiplier (1.5), as their client rows state Periodic Can Crit. The engine rolls it under Rules::Forever; the Go reference's heal ticks never crit."
+}

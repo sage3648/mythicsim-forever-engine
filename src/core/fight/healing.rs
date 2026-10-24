@@ -110,20 +110,9 @@ impl<A: Agent> Fight<A> {
             amount = amount * healing.taken_multiplier * healing.table_multiplier;
         }
         let after_target = amount;
-        // Go outcomeHealingCrit: spell crit and the spell's bonus, without an attack table.
-        let chance = (self.unit(caster).powers.spell_crit_percent
-            + self.spells[spell].bonus_crit_percent)
-            / 100.0;
         let index = target.index();
-        let outcome = if self.random("Healing Crit Roll") < chance {
-            let state = &self.spells[spell];
-            amount *= crit_damage_multiplier(
-                state.magic_defense,
-                state.crit_multiplier_pct,
-                self.unit_config(caster).crit_damage_multiplier,
-                1.0,
-                state.crit_multiplier_additive,
-            );
+        let outcome = if self.random("Healing Crit Roll") < self.heal_crit_chance(spell) {
+            amount *= self.heal_crit_multiplier(spell);
             self.spells[spell].metrics[index].crits += 1;
             OUTCOME_CRIT
         } else {
@@ -416,6 +405,37 @@ impl<A: Agent> Fight<A> {
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go outcomeHealingCrit's chance: spell crit and the spell's bonus, without an attack table.
+    pub(crate) fn heal_crit_chance(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        (self.unit(state.caster).powers.spell_crit_percent + state.bonus_crit_percent) / 100.0
+    }
+
+    /// [`Self::heal_crit_chance`] for a heal over time's tick under Forever's rules, less the crit
+    /// a dot's tick does not take (Inner Focus), as a damage tick's.
+    pub(crate) fn heal_tick_crit_chance(&self, spell: SpellId) -> f64 {
+        let mut chance = self.heal_crit_chance(spell);
+        for (id, spells, value) in &self.tick_crit_takebacks {
+            if spells[spell] && self.mod_active(*id) {
+                chance = (chance - value).max(0.0);
+            }
+        }
+        chance
+    }
+
+    /// Go outcomeHealingCrit's multiplier: a magic crit's, or a physical one's, with the
+    /// spell's and the caster's crit modifiers and no attack table.
+    pub(crate) fn heal_crit_multiplier(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        crit_damage_multiplier(
+            state.magic_defense,
+            state.crit_multiplier_pct,
+            self.unit_config(state.caster).crit_damage_multiplier,
+            1.0,
+            state.crit_multiplier_additive,
+        )
+    }
+
     /// A heal of `amount` on `target` split into what counts as healing and what counts as
     /// overhealing: all of it heals, unless the spell carries an overhealing share (MythicSim's
     /// healer sims under Forever's rules), which goes to the spell's overhealing instead.

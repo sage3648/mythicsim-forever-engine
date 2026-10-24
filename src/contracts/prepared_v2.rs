@@ -1337,6 +1337,10 @@ pub struct HealSpell {
     /// A heal over time's client amount per tick at the caster level.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tick: Option<f64>,
+    /// Forever's rule: each tick of the heal over time rolls the healing crit, as its row
+    /// states Periodic Can Crit. False is the Go reference, whose heal ticks never crit.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub tick_can_crit: bool,
     /// A shield's client absorb at the caster level, counted as shielding when it goes up.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub absorb: Option<f64>,

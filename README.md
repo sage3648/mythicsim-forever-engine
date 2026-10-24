@@ -117,6 +117,19 @@ the Go goldens and exporter uses. The departures:
   will move with level 60 raids. The reference, like Go, counts every heal in full. The prepared
   player carries `overheal`, and each heal's overhealing is reported beside its healing
   (`src/prepare/overheal.rs`, `validation/2026-10-24-healer-overheal.json`).
+- Heal over time crits, from Forever's level 30 beta logs on foreverlogs.gg (1 to 24 October
+  2026) and the client rows: Renew, Rejuvenation, Regrowth and Healing Stream Totem ticks crit
+  for 1.5 times the tick, between normal ticks on the same player (a Holy Priest's Renew ticks
+  97 and crits 145 and 146, a Restoration Druid's Rejuvenation ticks 95 and crits 141 and 142).
+  Pooled over 104 reports, 7.0% of 8,245 Renew ticks and 5.7% of 7,171 Rejuvenation ticks crit,
+  near the casters' direct heal crit (9.4% and 5.9%); a tick that wholly overheals loses its crit
+  flag, so heavy overhealers read low. Every heal over time row the healer sims use states
+  Periodic Can Crit, the client bit damage ticks already follow. A tick rolls the healing crit on
+  spell crit and the spell's crit bonus, as a direct heal does (Improved Regrowth's reaches
+  Regrowth's ticks, as the talent names the whole spell), less what a damage tick does not take
+  (Inner Focus). The reference, like Go, never crits a heal tick. Each prepared heal over time
+  whose row says so carries `tick_can_crit`
+  (`validation/2026-10-25-heal-tick-crits.json`).
 
 ## Repository layout
 

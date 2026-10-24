@@ -4,7 +4,8 @@
 //!
 //! A rank is a helpful spell on the healing proc mask, costed, cast and cooled down as its row
 //! states, with the direct heal's or the shield's coefficient on healing power. A heal over time
-//! carries a dot on the player: the row's ticks and period, each tick's coefficient. A talent's
+//! carries a dot on the player: the row's ticks and period, each tick's coefficient, and under
+//! Forever's rules a crit roll on each tick where the row states Periodic Can Crit. A talent's
 //! client spell modifier lands on the spells its own client mask names, so a heal registers with
 //! the client flags of its row.
 
@@ -16,7 +17,7 @@ use super::dbcenums::{
     SPELLMOD_GLOBAL_COOLDOWN,
 };
 use super::env::Environment;
-use super::sim::{Cooldown, Duration, Sim, SpellId, TimerId, UnitId};
+use super::sim::{Cooldown, Duration, Rules, Sim, SpellId, TimerId, UnitId};
 use super::spell::{Cast, CastConfig, CostOptions, DotConfig, ProcMask, SpellConfig, SpellFlag};
 use super::spell_mod::{SpellModConfig, SpellModType};
 use super::spelldata::{Effect, Ladder, Spell as Row};
@@ -61,6 +62,8 @@ pub(crate) struct HealRank {
     pub direct: Option<(f64, f64)>,
     /// Each tick's amount, when the rank heals over time.
     pub tick: Option<f64>,
+    /// The heal's row states Periodic Can Crit, which Forever's rules follow for its ticks.
+    pub tick_can_crit: bool,
     /// The shield's absorb, when the rank shields.
     pub absorb: Option<f64>,
 }
@@ -174,6 +177,7 @@ pub(crate) fn register_heal_from(
         shape,
         direct,
         tick,
+        tick_can_crit: tick.is_some() && row.periodic_can_crit(),
         absorb: shield,
     }
 }
@@ -248,6 +252,7 @@ pub(crate) fn register_totem_heal(
         shape,
         direct: None,
         tick: Some(tick),
+        tick_can_crit: heal.periodic_can_crit(),
         absorb: None,
     }
 }
@@ -383,6 +388,11 @@ pub(crate) fn heals_effect(env: &Environment, ranks: &[HealRank]) -> Value {
             }
             if let Some(tick) = rank.tick {
                 heal["tick"] = json!(tick);
+                // Forever's heal ticks crit where the row says so (README, Rust-only
+                // mechanics); the reference's never do.
+                if rank.tick_can_crit && env.rules == Rules::Forever {
+                    heal["tick_can_crit"] = json!(true);
+                }
             }
             if let Some(absorb) = rank.absorb {
                 heal["absorb"] = json!(absorb);

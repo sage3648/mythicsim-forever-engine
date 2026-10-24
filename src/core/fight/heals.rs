@@ -8,14 +8,19 @@
 //! A party heal lands that roll on each player of the party, a chain heal on each jump at the
 //! falloff's share of the one before, each with its own roll and crit. A heal over time
 //! snapshots its tick and the caster's multipliers when it goes up, as Go `Dot.SnapshotHeal`
-//! does, and its ticks do not crit. Cast again while it runs, it goes on another player: the
+//! does. Under Forever's rules each tick rolls the healing crit where the row states Periodic
+//! Can Crit (README, Rust-only mechanics); the Go reference's ticks never crit. Cast again while
+//! it runs, it goes on another player: the
 //! one running is not cut short, and its ticks left are counted when the new one goes up. A shield counts its absorb, with its coefficient and the
 //! caster's multipliers, as shielding when it goes up; nothing in the fight hits the shield.
 
 use crate::contracts::prepared_v2::{HealModifiers, HealSpell};
 
 use super::{
-    damage::OUTCOME_HIT, healing::Healing, log::action_string, Agent, DotId, Fight, Side, SpellId,
+    damage::{OUTCOME_CRIT, OUTCOME_HIT},
+    healing::Healing,
+    log::action_string,
+    Agent, DotId, Fight, Side, SpellId,
 };
 
 /// One heal rank, bound to its spell and, for a heal over time, its dot on the player.
@@ -26,6 +31,7 @@ pub(crate) struct BoundHeal {
     targets: u32,
     jump_multiplier: f64,
     tick: Option<f64>,
+    tick_can_crit: bool,
     pub(crate) dot: Option<DotId>,
     absorb: Option<f64>,
 }
@@ -67,6 +73,7 @@ impl HealBook {
                     targets: heal.targets,
                     jump_multiplier: heal.jump_multiplier,
                     tick: heal.tick,
+                    tick_can_crit: heal.tick_can_crit,
                     dot: heal.tick.and(dot),
                     absorb: heal.absorb,
                 })
@@ -128,7 +135,7 @@ impl HealBook {
                 let snapshot = fight.dots[dot].snapshot_base;
                 for _ in 0..left {
                     for _ in 0..self.tick_players(dot) {
-                        fight.deal_heal_tick(heal.spell, snapshot, healing);
+                        fight.deal_heal_tick(heal.spell, snapshot, healing, heal.tick_can_crit);
                     }
                 }
             }
@@ -210,8 +217,9 @@ impl HealBook {
         let caster = fight.spells[spell].caster;
         let healing = self.healing(fight, caster);
         let snapshot = fight.dots[dot].snapshot_base;
+        let can_crit = self.tick_can_crit(dot);
         for _ in 0..self.tick_players(dot) {
-            fight.deal_heal_tick(spell, snapshot, healing);
+            fight.deal_heal_tick(spell, snapshot, healing, can_crit);
         }
     }
 
@@ -221,6 +229,13 @@ impl HealBook {
             .iter()
             .find(|heal| heal.dot == Some(dot) && heal.direct.is_none())
             .map_or(1, |heal| heal.targets)
+    }
+
+    /// Whether the ticks of a heal over time roll the healing crit.
+    fn tick_can_crit(&self, dot: DotId) -> bool {
+        self.heals
+            .iter()
+            .any(|heal| heal.dot == Some(dot) && heal.tick_can_crit)
     }
 
     /// A direct heal of `amount`, which already holds the caster's healing multipliers: the
@@ -263,11 +278,23 @@ impl HealBook {
 impl<A: Agent> Fight<A> {
     /// Go `CalcAndDealPeriodicSnapshotHealing` with `OutcomeTick` on the player: the snapshot
     /// times the player's healing taken, the tick counted, the health gained and the log line.
-    pub(crate) fn deal_heal_tick(&mut self, spell: SpellId, snapshot: f64, healing: Healing) {
+    pub(crate) fn deal_heal_tick(
+        &mut self,
+        spell: SpellId,
+        snapshot: f64,
+        healing: Healing,
+        can_crit: bool,
+    ) {
         let state = &self.spells[spell];
         let mut amount = snapshot;
         if !state.flags.ignore_target_modifiers {
             amount = amount * healing.taken_multiplier * healing.table_multiplier;
+        }
+        // Forever's ticks roll the healing crit the direct heal does: spell crit and the spell's
+        // bonus, less what a dot's tick does not take, at the heal's crit multiplier.
+        let crit = can_crit && self.random("Healing Crit Roll") < self.heal_tick_crit_chance(spell);
+        if crit {
+            amount *= self.heal_crit_multiplier(spell);
         }
         let target = Side::Player.index();
         let (amount, overhealing) = self.landed_healing(spell, target, amount.max(0.0));
@@ -275,22 +302,28 @@ impl<A: Agent> Fight<A> {
             armor_multiplier: 0.0,
             target: Side::Player,
             attacker: self.spells[spell].caster,
-            outcome: OUTCOME_HIT,
+            outcome: if crit { OUTCOME_CRIT } else { OUTCOME_HIT },
             damage: amount,
             threat: 0.0,
         };
         let threat = self.threat_of(spell, &result);
         let metrics = &mut self.spells[spell].metrics[target];
-        metrics.ticks += 1;
+        if crit {
+            metrics.crit_ticks += 1;
+            metrics.total_crit_healing += amount;
+        } else {
+            metrics.ticks += 1;
+        }
         metrics.total_healing += amount;
         metrics.total_threat += threat;
         let health = self.self_health_metrics_of(spell);
         self.gain_health(amount, health);
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!(
-                "[{}] {} tick Hit for {amount:.3} healing{}. (Threat: {threat:.3})",
+                "[{}] {} tick {} for {amount:.3} healing{}. (Threat: {threat:.3})",
                 self.config.player_label,
                 action_string(&self.spells[spell].id),
+                if crit { "Crit" } else { "Hit" },
                 super::healing::overhealing_note(overhealing),
             );
             self.player_log(&line);

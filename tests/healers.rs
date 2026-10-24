@@ -5,7 +5,8 @@
 //!
 //! Under Forever's rules a healer sim counts only the share of each heal real healers do not
 //! overheal (`prepare::overheal`), so each heal line logs what heals and the overhealing beside
-//! it; their sum is the heal the client rows give.
+//! it; their sum is the heal the client rows give. A heal over time's tick rolls the healing crit
+//! there too, as its row states Periodic Can Crit.
 //!
 //! Two kinds of check:
 //!
@@ -60,7 +61,8 @@ fn summary(result: &Value) -> Value {
             action["id"].to_string(),
             json!({
                 "casts": sum("casts"), "hits": sum("hits"), "crits": sum("crits"),
-                "ticks": sum("ticks"), "healing": sum("healing"), "shielding": sum("shielding"),
+                "ticks": sum("ticks"), "crit_ticks": sum("critTicks"),
+                "healing": sum("healing"), "shielding": sum("shielding"),
                 "overhealing": sum("overhealing"),
             }),
         );
@@ -208,10 +210,10 @@ fn restoration_shaman_heals_as_its_rows_state() {
             .map(|t| t[key].as_f64().unwrap_or(0.0))
             .sum()
     };
+    let ticks = sum("ticks") + sum("critTicks");
     assert!(
-        sum("ticks") > 4.5 * sum("casts"),
-        "{} ticks for {} casts",
-        sum("ticks"),
+        ticks > 4.5 * sum("casts"),
+        "{ticks} ticks for {} casts",
         sum("casts")
     );
     golden("restoration-shaman", &result);
@@ -280,4 +282,72 @@ fn forever_healer_sims_count_healing_less_overhealing() {
     }
     let hps = |result: &Value| player(result)["hps"]["avg"].as_f64().unwrap();
     assert!(hps(&forever) < hps(&reference));
+}
+
+/// Heal over time ticks crit in Forever: foreverlogs.gg's level 30 beta logs flag Renew,
+/// Rejuvenation, Regrowth and Healing Stream Totem ticks as crits at 1.5 times the tick, mid-way
+/// between normal ticks on the same player, at about the caster's direct heal crit share
+/// (`validation/2026-10-25-heal-tick-crits.json`), and their client rows state Periodic Can Crit.
+/// Under Forever's rules each tick rolls the healing crit on spell crit; the Go reference's
+/// ticks never crit.
+#[test]
+fn forever_heal_ticks_crit_as_their_rows_state() {
+    let request = fs::read(fixtures().join("restoration-druid.request.json")).unwrap();
+    let forever = prepare_json_with(&request, "rust", Rules::Forever).unwrap();
+    let reference = prepare_json_with(&request, "rust", Rules::GoReference).unwrap();
+    let flagged = |prepared: &Value, spell: i64| -> bool {
+        prepared["effects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|effect| effect["kind"] == "heals")
+            .flat_map(|effect| effect["heals"].as_array().unwrap())
+            .find(|heal| heal["spell_id"] == spell)
+            .map(|heal| heal["tick_can_crit"] == true)
+            .unwrap()
+    };
+    // Rejuvenation rank 11, Regrowth rank 9 and Wild Growth rank 3; Healing Touch has no tick.
+    for spell in [25299, 9858, 1238215] {
+        assert!(flagged(&forever, spell), "{spell} ticks crit under Forever");
+        assert!(
+            !flagged(&reference, spell),
+            "{spell} ticks never crit in Go"
+        );
+    }
+    assert!(!flagged(&forever, 25297));
+
+    let sim = |prepared: &Value| {
+        let prepared = serde_json::from_value(prepared.clone()).unwrap();
+        simulate_prepared(&prepared).unwrap().result
+    };
+    let (forever, reference) = (sim(&forever), sim(&reference));
+    let totals = |result: &Value, spell: i64, key: &str| -> f64 {
+        player(result)["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|action| action["id"]["spellId"] == spell)
+            .flat_map(|action| action["targets"].as_array().unwrap())
+            .map(|target| target[key].as_f64().unwrap_or(0.0))
+            .sum()
+    };
+    // The druid's spell crit, 15.86% and 25.86% while Elune's Light is up: Rejuvenation takes
+    // no crit bonus of its own.
+    let crits = totals(&forever, 25299, "critTicks");
+    let share = crits / (crits + totals(&forever, 25299, "ticks"));
+    assert!(
+        (0.15..0.2586).contains(&share),
+        "Rejuvenation crits {share}"
+    );
+    for spell in [25299, 9858, 1238215] {
+        assert_eq!(totals(&reference, spell, "critTicks"), 0.0, "{spell}");
+        assert!(totals(&forever, spell, "critTicks") > 0.0, "{spell}");
+    }
+    // A crit tick heals 1.5 times the 337.907 a tick of Rejuvenation rank 11 heals (above),
+    // 506.860, of which Rejuvenation's 17.76% is overhealing.
+    logs(
+        "restoration-druid",
+        &forever,
+        &["{SpellID: 25299} tick Crit for 416.842 healing, 90.018 overhealing."],
+    );
 }
