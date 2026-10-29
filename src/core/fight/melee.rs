@@ -929,6 +929,21 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
+    /// Note, in the logged fight, a queued strike that went out on an extra attack in its
+    /// place. Go logs only the strike's cast, so the application could not tell it from a
+    /// strike that took a regular swing.
+    pub(crate) fn note_extra_attack_strike(&mut self, extra: SpellId, strike: SpellId) {
+        if self.log.is_none() || strike == extra {
+            return;
+        }
+        let entry = serde_json::json!({
+            "time": crate::core::time::seconds(self.now),
+            "strike": super::log::action_string(&self.spells[strike].id),
+            "extraAttack": super::log::action_string(&self.spells[extra].id),
+        });
+        self.extra_attack_strikes.push(entry);
+    }
+
     /// Go `AutoAttacks.ExtraMHAttacks`: the main hand swings now, then again for each extra
     /// attack still owed.
     pub(crate) fn extra_mh_attacks(&mut self, count: i32) {

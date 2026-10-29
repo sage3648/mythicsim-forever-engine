@@ -1637,11 +1637,13 @@ impl<A: Agent> Fight<A> {
         }
         self.set_stacks(proc_aura, charges);
         // Go MaybeReplaceMHSwing: a queued Heroic Strike replaces the extra swing too.
-        let mut extra = extra.expect("a Windfury Totem a spell triggers has an extra attack");
+        let extra = extra.expect("a Windfury Totem a spell triggers has an extra attack");
+        let mut attack = extra;
         if self.config.melee.replace_main_hand_swing {
-            extra = A::replace_mh_swing(self, extra);
+            attack = A::replace_mh_swing(self, extra);
+            self.note_extra_attack_strike(extra, attack);
         }
-        self.cast(extra, result.target);
+        self.cast(attack, result.target);
     }
 
     /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the
