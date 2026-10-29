@@ -359,6 +359,12 @@ the Go goldens and exporter uses. The departures:
   and one a missile carries goes on as the hit lands, its flight not modelled.
   `docs/forever-chance-on-hit.md` lists the items by kind and those left out with the reason
   (crowd control, threat, mana, heals, debuffs only a tank feels).
+- Forever's Engineering ammo, from the Wowhead Forever tooltips: Swiftfeather Arrow (274387) and
+  Swiftstrike Shot (274388), item level 65 and requiring level 60, each "Adds 24.5 damage per
+  second". The reference's ammo stops at Miniature Cannon Balls, so the request schema adds them
+  to `HunterOptions.Ammo` as `SwiftfeatherArrow` (13) and `SwiftstrikeShot` (14)
+  (`src/contracts/request/schema.rs`), leaving `data/proto-schema.json` as the pinned reference
+  wrote it. They are data, not a departure, so both rule sets add the 24.5.
 
 ## Repository layout
 

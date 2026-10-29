@@ -10,6 +10,14 @@ use serde::Deserialize;
 
 const SCHEMA: &str = include_str!("../../../data/proto-schema.json");
 
+/// Enum values Forever has that the pinned reference schema lacks, each added unless the schema
+/// already holds its name or number (README, Rust-only mechanics): Forever's Engineering ammo,
+/// Swiftfeather Arrow (274387) and Swiftstrike Shot (274388).
+const FOREVER_ENUM_VALUES: [(&str, &str, i32); 2] = [
+    ("proto.HunterOptions.Ammo", "SwiftfeatherArrow", 13),
+    ("proto.HunterOptions.Ammo", "SwiftstrikeShot", 14),
+];
+
 /// A field's protobuf kind, by Go's `protoreflect.Kind` name.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -148,7 +156,23 @@ struct Schema {
 fn schema() -> &'static Schema {
     static SCHEMA_CELL: OnceLock<Schema> = OnceLock::new();
     SCHEMA_CELL.get_or_init(|| {
-        let raw: RawSchema = serde_json::from_str(SCHEMA).expect("data/proto-schema.json parses");
+        let mut raw: RawSchema =
+            serde_json::from_str(SCHEMA).expect("data/proto-schema.json parses");
+        for (enum_name, name, number) in FOREVER_ENUM_VALUES {
+            let values = raw
+                .enums
+                .get_mut(enum_name)
+                .expect("the schema has the enum");
+            if values
+                .iter()
+                .all(|value| value.name != name && value.number != number)
+            {
+                values.push(RawEnumValue {
+                    name: name.to_string(),
+                    number,
+                });
+            }
+        }
         let messages = raw
             .messages
             .into_iter()
