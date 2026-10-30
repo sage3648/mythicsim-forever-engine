@@ -51,6 +51,11 @@ fn log(rules: Rules, rotation: Vec<Value>, seconds: f64) -> (Value, Vec<String>)
     request["encounter"]["duration"] = seconds.into();
     request["encounter"]["durationVariation"] = 0.into();
     let player = &mut request["raid"]["parties"][0]["players"][0];
+    if rules == Rules::Forever {
+        // The fixture's talents in client 1.60.1.70707's order: Arcane Focus's points on
+        // Improved Channeling, which takes its square.
+        player["talentsString"] = json!("050205103-3-053500000101331251");
+    }
     player["rotation"] = json!({"type": "TypeAPL", "priorityList": rotation});
     // Cone of Cold is a point blank spell.
     player["distanceFromTarget"] = 5.into();

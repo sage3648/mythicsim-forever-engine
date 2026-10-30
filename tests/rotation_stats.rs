@@ -37,6 +37,13 @@ fn run(name: &str, rotation_stats: bool) -> Value {
     };
     let mut request: Value = serde_json::from_str(&fs::read_to_string(request).unwrap()).unwrap();
     request["simOptions"] = serde_json::json!({"iterations": 1, "randomSeed": "1"});
+    if name == "fire-mage-3-targets-multidot-flamestrike" {
+        // The fixture's talents in client 1.60.1.70707's order, which the sim's Forever rules
+        // read: Arcane Focus's points on Improved Channeling, which takes its square, and
+        // Critical Mass at its 3 ranks. The rotation knows the same spells.
+        request["raid"]["parties"][0]["players"][0]["talentsString"] =
+            "050205103-35500001130133031-003".into();
+    }
     let directory = std::env::temp_dir().join(format!(
         "forever-rotation-stats-{}-{name}-{rotation_stats}",
         std::process::id()

@@ -225,3 +225,37 @@ pub(crate) fn fill_talents(
     }
     Message::from_json_text(type_name, &Value::Object(object).to_string())
 }
+
+/// [`fill_talents`] for a string in a client's own talent order rather than Go's field numbering:
+/// `field` names the field at a tree's position (both counted from 0). A client build that moves
+/// or removes talents changes that order while the proto's numbers stay Go's.
+pub(crate) fn fill_talents_by_layout(
+    type_name: &str,
+    talents: &str,
+    field: impl Fn(usize, usize) -> Option<&'static str>,
+) -> Result<Message, String> {
+    use serde_json::{Map, Value};
+    let mut object = Map::new();
+    for (tree, digits) in talents.split('-').enumerate() {
+        for (i, digit) in digits.chars().enumerate() {
+            // As Go reads a non-digit: 0.
+            let points = digit.to_digit(10).map_or(0, i64::from);
+            let field = field(tree, i).ok_or_else(|| {
+                format!(
+                    "no talent at tree {} position {}, full string: {talents}",
+                    tree + 1,
+                    i + 1
+                )
+            })?;
+            let (name, is_bool) = crate::contracts::request::field_by_name(type_name, field)
+                .ok_or_else(|| format!("{type_name} has no field {field}"))?;
+            let value = if is_bool {
+                Value::Bool(points == 1)
+            } else {
+                Value::from(points)
+            };
+            object.insert(name, value);
+        }
+    }
+    Message::from_json_text(type_name, &Value::Object(object).to_string())
+}
