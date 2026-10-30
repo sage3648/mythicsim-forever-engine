@@ -276,24 +276,16 @@ impl Paladin {
                     == 0
                 && !retribution_aura.contains(&spell.action_id.spell_id)
         };
-        let takes_on = Rc::new(takes_it);
-        let takes_off = takes_on.clone();
+        // A damage done mod over the spells it takes rather than a custom one: an item swap (the
+        // Manual Crowd Pummeler opener) carries every hand mod, and it carries only built-in kinds.
         let weapon_mod = sim.add_dynamic_mod(
             unit,
             SpellModConfig {
                 // Go SpellSchoolPhysical | SpellSchoolChaos: every school.
                 school: 0x7f,
-                kind: SpellModType::Custom,
-                apply_custom: Some(Rc::new(move |sim: &mut Sim, _, spell| {
-                    if takes_on(sim, spell) {
-                        sim.spell_mut(spell).damage_multiplier *= 1.0 + bonus;
-                    }
-                })),
-                remove_custom: Some(Rc::new(move |sim: &mut Sim, _, spell| {
-                    if takes_off(sim, spell) {
-                        sim.spell_mut(spell).damage_multiplier /= 1.0 + bonus;
-                    }
-                })),
+                kind: SpellModType::DamageDonePct,
+                float_value: bonus,
+                spell_filter: Some(Rc::new(takes_it)),
                 ..SpellModConfig::default()
             },
         );

@@ -642,3 +642,39 @@ fn a_druids_own_thorns_strikes_back() {
     assert_eq!(action(&player, 9910, 0).0, 1634.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
+
+/// A Shockadin's Manual Crowd Pummeler opener onto Blade of Hanna: the swap carries One-Handed
+/// Weapon Specialization (3/3), off under both two-handers, as a damage done mod over the spells
+/// it takes, which leave out Holy Shock (20473), Consecration (26573) and Retribution Aura (7294).
+#[test]
+fn a_swap_carries_one_handed_weapon_specialization() {
+    let (value, _) = run("shockadin-paladin-mcp-swap-one-hand-specialization");
+    let swap = effects(&value, "item_swap");
+    let mods: Vec<&Value> = swap[0]["callbacks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|callback| callback["kind"] == "spell_mod")
+        .collect();
+    assert_eq!(mods.len(), 1, "{mods:?}");
+    let (callback, modifier) = (mods[0], &mods[0]["mod"]);
+    assert_eq!(modifier["kind"], "damage_done_pct");
+    assert_eq!(modifier["value"].as_f64(), Some(0.1));
+    assert_eq!(
+        (&callback["main"], &callback["swapped"]),
+        (&Value::Bool(false), &Value::Bool(false))
+    );
+    let spells = value["player"]["spells"].as_array().unwrap();
+    let taken: Vec<i64> = modifier["spells"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|index| {
+            spells[index.as_u64().unwrap() as usize]["action_id"]["spell_id"].as_i64()
+        })
+        .collect();
+    assert!(!taken.is_empty());
+    for skipped in [20473, 26573, 7294] {
+        assert!(!taken.contains(&skipped), "{skipped} takes the mod");
+    }
+}
