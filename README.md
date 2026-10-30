@@ -266,6 +266,25 @@ the Go goldens and exporter uses. The departures:
   of that build (Ice Barrier and Frigid Power, Frost Warding's absorb, Frost Blast's 0.271
   coefficient, Arcane Wrath's 6 second cooldown, Missile Barrage ignoring missiles and hearing
   Frost Blast) were already in the imported data and the code through hotfix push 112753.
+- The rows of client 1.60.1.70707 (30 October 2026, which also carries the 28 October hotfix) that
+  change a number (Forever preparation; the data is 1.60.1.70425 and the reference keeps its
+  values). Trueshot Aura ranks 1 to 4 fall to 15, 22, 30 and 40 ranged Attack Power (rank 4, 20905,
+  SpellEffect 698474, was 75), below rank 5's (20906) 50, so the aura is rank 5. Improved Fireball
+  (11069, SpellEffect 688786) also shortens Arcane Wrath and Arcane Barrage (bit 32768 of the second
+  mask word). Efficiency (19416, SpellEffect 696992) also cheapens Flanking Strike and Strider Kick
+  (bit 2097152 of the third word). Every "Increased Hit Chance" row (15464 to 15468, 18066) gains a
+  spell hit effect beside its melee hit, which gear hit already is under Forever's rules; Black
+  Dragon Mail's two piece bonus (15464) now gives both. Precision (29438, SpellEffect 704780) turns
+  into spell hit chance for every school, which goes with 70707's Mage tree (Arcane Focus removed,
+  Critical Mass at 3 ranks, Incineration at 5) and waits for it. Rows that need nothing: Aspect of
+  the Hawk ranks 1 to 5 fall to 15, 22, 30, 38 and 47 but the engine casts rank 7 (25296, unchanged
+  120); Missile Barrage's channel time effect and Fengus' Ferocity's effects become dummy auras that
+  keep their amounts (a server script), Lesser Intellect (Elixir of Wisdom, 6 to 3) and Well Fed
+  (1249521) are not consumables the engine offers, Tauren Endurance's crit damage row names every
+  school (the racial follows Blizzard's 16 October notes, health only), and the Bane of Agony
+  marker, Surefooted's new row id and the creature, transmute and event rows are read by nothing the
+  engine computes. Ice Lance's new 8 second cooldown is on rank 1 (1312002) alone, not the rank cast
+  at level 60.
 - A damage bonus applied after the calculation is threat too (`threat_follows_damage_bonus`,
   Forever preparation), from MythicSim's Discord (26 October 2026, Vrelk: a Shadow Priest with
   no threat talents had less threat than damage). Improved Mind Flay's ramp, Ice Lance on a
