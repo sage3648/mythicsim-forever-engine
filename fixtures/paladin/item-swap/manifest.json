@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "source": "A production Shockadin request (Holy/Retribution, Manual Crowd Pummeler opener) with Brutality Blade in its Swap1 set and One-Handed Weapon Specialization taken out; the Go golden is the pinned Go engine's DPS for every iteration (forever-go sim at a667dce8492bd9fb94269a9f864289cb74006775, 300 iterations, seed 42).",
+  "note": "Rust prepares it under Rules::GoReference and must give Go's DPS for every iteration.",
+  "cases": [
+    {
+      "id": "shockadin-mcp-to-one-hander",
+      "description": "Manual Crowd Pummeler at the pull, swapped for Brutality Blade once its haste fades and its charges are spent: Seal of Righteousness's hit takes the one-hander's hand multiplier, speed and spell power share (0.10 a point at rank 8, against the two-hander's 0.12)."
+    }
+  ]
+}
