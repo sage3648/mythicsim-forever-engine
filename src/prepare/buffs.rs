@@ -178,6 +178,12 @@ impl Meta {
         talent_points: i32,
         count: f64,
     ) -> AuraId {
+        if sim.rules == Rules::Forever {
+            if let Some(spell) = forever_buff_rank(self.spell) {
+                let meta = Meta { spell, ..*self };
+                return meta.aura(sim, unit, is_player, talent_points, count);
+            }
+        }
         match self.kind {
             MetaKind::Buff => self.buff(
                 sim,
@@ -333,6 +339,19 @@ fn forever_amounts(spell: i32) -> Vec<(i32, f64)> {
     match spell {
         14325 => vec![(2, 143.0)],
         _ => Vec::new(),
+    }
+}
+
+/// Buffs whose reference row is not the rank a level 60 caster has under Forever's rules, as the
+/// row to read instead. The Go reference keeps its row.
+///
+/// Trueshot Aura: the reference reads rank 4 (20905, level 50). Its 75 ranged Attack Power was
+/// above rank 5's (20906, level 60, 50) until client 1.60.1.70707 lowered ranks 1 to 4 to 15, 22,
+/// 30 and 40 (SpellEffect 698474 for rank 4), so a level 60 Hunter's aura is rank 5's 50.
+fn forever_buff_rank(spell: i32) -> Option<i32> {
+    match spell {
+        20905 => Some(20906),
+        _ => None,
     }
 }
 

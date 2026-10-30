@@ -277,10 +277,16 @@ fn defias_leather_5(env: &mut Environment, aura: AuraId) {
 // item_sets_classic.go: crafted, PvP and dungeon sets.
 // ---------------------------------------------------------------------------------------------
 
-set_stats!(
-    black_dragon_mail_2,
-    Stats::from_pairs(&[(Stat::PhysicalHitPercent, 1.0)])
-);
+/// Increased Hit Chance 01 (15464). Client 1.60.1.70707 gives the row a spell hit effect beside
+/// its melee hit (SpellEffect 1366108, aura 55, 1%), as every "Increased Hit Chance" row; the Go
+/// reference keeps melee hit alone.
+fn black_dragon_mail_2(env: &mut Environment, aura: AuraId) {
+    let stats = match env.sim.rules {
+        super::sim::Rules::Forever => set_hit_percent(1.0),
+        super::sim::Rules::GoReference => Stats::from_pairs(&[(Stat::PhysicalHitPercent, 1.0)]),
+    };
+    env.sim.attach_stats_buff(aura, stats);
+}
 set_stats!(
     black_dragon_mail_3,
     Stats::from_pairs(&[(Stat::PhysicalCritPercent, 2.0)])
