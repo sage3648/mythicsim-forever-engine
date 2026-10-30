@@ -138,9 +138,24 @@ impl Mage {
             return;
         }
         let hit = spell_data().elemental_precision.value_at(rank);
+        // Client 1.60.1.70707 turns the talent (Precision, 29438, SpellEffect 704780) from a
+        // miss chance modifier on Fire and Frost spells into spell hit chance (aura 55) for every
+        // school, Arcane included. The Go reference keeps Fire and Frost.
+        let schools: &[SchoolIndex] = match sim.rules {
+            Rules::Forever => &[
+                SchoolIndex::Arcane,
+                SchoolIndex::Fire,
+                SchoolIndex::Frost,
+                SchoolIndex::Holy,
+                SchoolIndex::Nature,
+                SchoolIndex::Shadow,
+            ],
+            Rules::GoReference => &[SchoolIndex::Fire, SchoolIndex::Frost],
+        };
         let pseudo = &mut sim.unit_mut(unit).pseudo_stats;
-        pseudo.school_bonus_hit_chance[SchoolIndex::Fire as usize] += hit;
-        pseudo.school_bonus_hit_chance[SchoolIndex::Frost as usize] += hit;
+        for &school in schools {
+            pseudo.school_bonus_hit_chance[school as usize] += hit;
+        }
     }
 
     fn register_ice_shards(&self, sim: &mut Sim, unit: UnitId) {

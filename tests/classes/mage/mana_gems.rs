@@ -20,7 +20,14 @@ fn arcane(rules: Rules) -> Value {
             .join("fixtures/mage/prepared-v2/arcane-reference.request.json"),
     )
     .unwrap();
-    forever_engine::prepare_json_with(&request, "gems", rules).unwrap()
+    let mut request: Value = serde_json::from_slice(&request).unwrap();
+    if rules == Rules::Forever {
+        // The fixture's talents in client 1.60.1.70707's order, Arcane Focus's points dropped.
+        request["raid"]["parties"][0]["players"][0]["talentsString"] =
+            json!("050205103100301531-305000012-003");
+    }
+    forever_engine::prepare_json_with(&serde_json::to_vec(&request).unwrap(), "gems", rules)
+        .unwrap()
 }
 
 fn item_spell(prepared: &Value, item: i64) -> &Value {
