@@ -67,3 +67,4 @@ checks the gate passes and runs it.
 | `hunter-freezing-trap` | Freezing Trap in a Hunter's rotation |
 | `feral-bear-druid-thorns` | a tank druid's own Thorns, first in the Bear reference build's rotation (its Crusader enchant and Swap1 set taken out), striking back a batch window after each swing it takes |
 | `balance-druid-thorns` | Thorns first in a Balance Druid's rotation, off the target's threat |
+| `shockadin-paladin-mcp-swap-one-hand-specialization` | One-Handed Weapon Specialization on a Shockadin whose Manual Crowd Pummeler opener swaps back to a two-hander (31 October 2026) |
