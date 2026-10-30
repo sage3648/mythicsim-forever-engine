@@ -351,7 +351,7 @@ pub struct SealOfRighteousnessRank {
     pub proc_spell_id: i32,
     pub per_hit_value: f64,
     /// The damage spell's spell power share with the weapon in the hand, given when an item swap
-    /// moves it between a one-hander and a two-hander: Go reads the hand at each hit.
+    /// moves it between a one-hander and a two-hander: each hit reads the hand as it lands.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hit_coefficient: Option<f64>,
 }

@@ -182,7 +182,8 @@ impl SealWeapon {
 
 /// Go seal_of_righteousness.go and seal_of_command.go read the weapon in the hand: once a swap
 /// put a set's weapon in it, the seals take that set's values. Seal of Righteousness's hit takes
-/// the hand's spell power share too (Go `SealOfRighteousnessFollowsSwappedWeapon`).
+/// the hand's spell power share too: the seal's aura holds only the per-hit value, and each hit
+/// is computed from the weapon in the hand as it lands.
 pub(crate) fn on_item_swap(fight: &mut Fight<PaladinAgent>, worn: bool) {
     let Some(by_set) = fight.agent.seals.by_set.as_ref() else {
         return;

@@ -278,10 +278,11 @@ impl Paladin {
             } else {
                 0.85
             };
-            // Go `SealOfRighteousnessFollowsSwappedWeapon` (MythicSim patch 129): each hit takes
-            // its spell power share from the main hand's type as well, which the registered
-            // spell holds for the weapon worn at the pull. Only a swap between a one-hander and a
-            // two-hander moves it, so only then does each rank carry the share of this weapon.
+            // The seal's aura holds only the per-hit value (a dummy aura); each hit is computed as
+            // it lands from the weapon in the hand, its spell power share too ($<1h> or $<2h> in
+            // the tooltip), which the registered spell holds for the weapon worn at the pull.
+            // Only a swap between a one-hander and a two-hander moves it, so only then does each
+            // rank carry the share of this weapon.
             let two_hand = |item: &crate::prepare::items::Item| item.hand_type == "HandTypeTwoHand";
             let share_follows_swap = sim.item_swap(unit).is_some_and(|swap| {
                 let main_hand = crate::prepare::items::slot::MAIN_HAND;
