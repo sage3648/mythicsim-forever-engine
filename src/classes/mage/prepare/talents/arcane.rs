@@ -66,6 +66,9 @@ impl Mage {
         );
     }
 
+    /// Client 1.60.1.70707 removed Arcane Focus (11222, TraitNode 105814). Forever's talent
+    /// layout has no position for it, so under Forever's rules the field is never set and this
+    /// registers nothing; Precision gives Arcane spells their talent hit instead.
     fn register_arcane_focus(&self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("arcane_focus");
         if rank == 0 {

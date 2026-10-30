@@ -274,17 +274,29 @@ the Go goldens and exporter uses. The departures:
   mask word). Efficiency (19416, SpellEffect 696992) also cheapens Flanking Strike and Strider Kick
   (bit 2097152 of the third word). Every "Increased Hit Chance" row (15464 to 15468, 18066) gains a
   spell hit effect beside its melee hit, which gear hit already is under Forever's rules; Black
-  Dragon Mail's two piece bonus (15464) now gives both. Precision (29438, SpellEffect 704780) turns
-  into spell hit chance for every school, which goes with 70707's Mage tree (Arcane Focus removed,
-  Critical Mass at 3 ranks, Incineration at 5) and waits for it. Rows that need nothing: Aspect of
-  the Hawk ranks 1 to 5 fall to 15, 22, 30, 38 and 47 but the engine casts rank 7 (25296, unchanged
-  120); Missile Barrage's channel time effect and Fengus' Ferocity's effects become dummy auras that
-  keep their amounts (a server script), Lesser Intellect (Elixir of Wisdom, 6 to 3) and Well Fed
-  (1249521) are not consumables the engine offers, Tauren Endurance's crit damage row names every
-  school (the racial follows Blizzard's 16 October notes, health only), and the Bane of Agony
-  marker, Surefooted's new row id and the creature, transmute and event rows are read by nothing the
-  engine computes. Ice Lance's new 8 second cooldown is on rank 1 (1312002) alone, not the rank cast
-  at level 60.
+  Dragon Mail's two piece bonus (15464) now gives both. The Mage tree (TraitTree 1112) moves: Arcane
+  Focus (11222, TraitNode 105814) is removed, so the Arcane tree has 18 talents; Improved Channeling
+  (105813) takes its square and Arcane Resilience (105802) Improved Channeling's, and Missile
+  Barrage and Arcane Resilience swap TraitDefinitions 135332 and 135339, which puts Missile Barrage
+  in the second row. Improved Fire Blast (105797) moves from the Fire tree's first row to the third,
+  after Pyroblast. Forever preparation reads the talent string in that order (a 19 digit Arcane tree
+  is refused) and the reference in Go's. Critical Mass (11115) falls to 3 ranks (TraitNodeEntry
+  130513) and Incineration (18459) rises to 5 (130525); their curves (83083, 83095) keep 2% a rank.
+  A string with a talent above its ranks in this build is refused, since an old string read in the
+  new order can put five points in a two rank talent. Precision (29438, Elemental Precision until
+  this build; SpellEffect 704780) turns from a miss chance modifier on Fire and Frost spells into
+  spell hit chance (aura 55) for every school, Arcane included. Improved Fireball is renamed
+  Accelerant. Frost Blast's three SkillLineAbility rows (1326053 to 1326055) leave the Frost skill
+  line without reaching another skill line or the trait tables, while its spell rows and the talent
+  tooltips naming it stay; the engine keeps it until the data says whether a level 60 mage still
+  learns it. Rows that need nothing: Aspect of the Hawk ranks 1 to 5 fall to 15, 22, 30, 38 and 47
+  but the engine casts rank 7 (25296, unchanged 120); Missile Barrage's channel time effect and
+  Fengus' Ferocity's effects become dummy auras that keep their amounts (a server script), Lesser
+  Intellect (Elixir of Wisdom, 6 to 3) and Well Fed (1249521) are not consumables the engine offers,
+  Tauren Endurance's crit damage row names every school (the racial follows Blizzard's 16 October
+  notes, health only), and the Bane of Agony marker, Surefooted's new row id and the creature,
+  transmute and event rows are read by nothing the engine computes. Ice Lance's new 8 second
+  cooldown is on rank 1 (1312002) alone, not the rank cast at level 60.
 - A damage bonus applied after the calculation is threat too (`threat_follows_damage_bonus`,
   Forever preparation), from MythicSim's Discord (26 October 2026, Vrelk: a Shadow Priest with
   no threat talents had less threat than damage). Improved Mind Flay's ramp, Ice Lance on a

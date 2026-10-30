@@ -94,12 +94,18 @@ impl Mage {
         );
     }
 
-    /// Arcane Blast and Ice Lance as well as TBC's Fire Blast and Scorch.
+    /// Arcane Blast and Ice Lance as well as TBC's Fire Blast and Scorch. Five ranks under
+    /// Forever's rules since client 1.60.1.70707, three in the Go reference.
     fn register_incineration(&self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("incineration");
         if rank == 0 {
             return;
         }
+        let data = spell_data();
+        let ladder = match sim.rules {
+            Rules::Forever => &data.incineration_70707,
+            Rules::GoReference => &data.incineration,
+        };
         sim.add_static_mod(
             unit,
             SpellModConfig {
@@ -107,7 +113,7 @@ impl Mage {
                     | masks::FIRE_BLAST
                     | masks::ICE_LANCE
                     | masks::SCORCH,
-                float_value: spell_data().incineration.value_at(rank),
+                float_value: ladder.value_at(rank),
                 kind: SpellModType::BonusCritPercent,
                 ..SpellModConfig::default()
             },
@@ -340,17 +346,24 @@ impl Mage {
         );
     }
 
+    /// Three ranks under Forever's rules since client 1.60.1.70707, five in the Go reference;
+    /// the first three keep their 2/4/6.
     fn register_critical_mass(&self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("critical_mass");
         if rank == 0 {
             return;
         }
+        let data = spell_data();
+        let ladder = match sim.rules {
+            Rules::Forever => &data.critical_mass_70707,
+            Rules::GoReference => &data.critical_mass,
+        };
         sim.add_static_mod(
             unit,
             SpellModConfig {
                 class_mask: masks::ALL,
                 school: school::FIRE,
-                float_value: spell_data().critical_mass.value_at(rank),
+                float_value: ladder.value_at(rank),
                 kind: SpellModType::BonusCritPercent,
                 ..SpellModConfig::default()
             },

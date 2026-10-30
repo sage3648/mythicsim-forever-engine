@@ -3,7 +3,7 @@
 
 use std::{fs, path::PathBuf};
 
-use forever_engine::PrepareError;
+use forever_engine::{PrepareError, Rules};
 use serde_json::Value;
 
 fn frost_request(talents: &str) -> Vec<u8> {
@@ -15,7 +15,9 @@ fn frost_request(talents: &str) -> Vec<u8> {
 }
 
 /// Go `checkTalentsString` and NewMage's Elemental Precision check panic, so the sim fails;
-/// Rust refuses the same strings under `talents`, and the request falls back to Go's error.
+/// Rust refuses the same strings under `talents`, and the request falls back to Go's error. The
+/// strings are in Go's order, which the reference reads (Forever's rules read client
+/// 1.60.1.70707's, tests/client_70707_mage.rs).
 #[test]
 fn pre_hotfix_mage_talent_strings_are_refused() {
     for (talents, reason) in [
@@ -34,7 +36,11 @@ fn pre_hotfix_mage_talent_strings_are_refused() {
         ),
         ("0-0-0-0", "4 trees, a mage has 3"),
     ] {
-        match forever_engine::prepare_json(&frost_request(talents), "talents") {
+        match forever_engine::prepare_json_with(
+            &frost_request(talents),
+            "talents",
+            Rules::GoReference,
+        ) {
             Err(PrepareError::Refused(refusal)) => {
                 assert_eq!(refusal.code, "talents", "{talents}");
                 assert!(
@@ -46,21 +52,23 @@ fn pre_hotfix_mage_talent_strings_are_refused() {
             other => panic!("{talents}: {:?}", other.map(|_| ())),
         }
     }
-    forever_engine::prepare_json(
+    forever_engine::prepare_json_with(
         &frost_request("0502105003-03-053502030101301251"),
         "talents",
+        Rules::GoReference,
     )
     .expect("the re-encoded reference prepares");
 }
 
 /// Preparation describes Ice Barrier as Go's exporter does: the level 60 absorb of rank 4, Frost
-/// Warding's 10% a point on it, and 3% Frost damage on both auras.
+/// Warding's 10% a point on it, and 3% Frost damage on both auras. The talents are in client
+/// 1.60.1.70707's order, which Forever's rules read.
 #[test]
 fn ice_barrier_effect_reads_the_hotfix_rows() {
     for (talents, warding) in [
-        ("0502105003-03-053502030101301251", 1.0),
-        ("0502105003-03-153502030101301251", 1.1),
-        ("0502105003-03-253502030101301251", 1.2),
+        ("050105203-3-053502030101301251", 1.0),
+        ("050105203-3-153502030101301251", 1.1),
+        ("050105203-3-253502030101301251", 1.2),
     ] {
         let prepared =
             forever_engine::prepare_json(&frost_request(talents), "ice-barrier").unwrap();
@@ -81,7 +89,7 @@ fn ice_barrier_effect_reads_the_hotfix_rows() {
     }
     // Without the talent there is no shield to describe.
     let prepared = forever_engine::prepare_json(
-        &frost_request("0502105003-03-05350203010130125"),
+        &frost_request("050105203-3-05350203010130125"),
         "no-barrier",
     )
     .unwrap();
