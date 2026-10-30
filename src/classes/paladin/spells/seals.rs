@@ -123,8 +123,8 @@ pub(crate) struct Seals {
     pub(crate) swing_speed: f64,
     pub(crate) deal_delay: i64,
     /// With an item swap, the weapon values of each set, Main then Swap1: Seal of
-    /// Righteousness's hand multiplier and swing speed, and Seal of Command's chance, which its
-    /// proc manager rebuilds for the weapon in the hand.
+    /// Righteousness's hand multiplier, swing speed and spell power shares, and Seal of
+    /// Command's chance, which its proc manager rebuilds for the weapon in the hand.
     pub(crate) by_set: Option<[SealWeapon; 2]>,
     /// Seal of Fury's shield needs one equipped.
     pub(crate) fury_can_block: bool,
@@ -145,10 +145,12 @@ pub(crate) struct LightProc {
 }
 
 /// The seals' values that follow the main hand weapon.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub(crate) struct SealWeapon {
     pub(crate) hand_multiplier: f64,
     pub(crate) swing_speed: f64,
+    /// Each Seal of Righteousness rank's spell power share, when the swap moves it.
+    pub(crate) hit_coefficients: Vec<f64>,
     pub(crate) command_chance: f64,
 }
 
@@ -158,12 +160,17 @@ impl SealWeapon {
         for effect in effects {
             match effect {
                 Effect::SealOfRighteousness {
+                    ranks,
                     hand_multiplier,
                     swing_speed,
                     ..
                 } => {
                     weapon.hand_multiplier = *hand_multiplier;
                     weapon.swing_speed = *swing_speed;
+                    weapon.hit_coefficients = ranks
+                        .iter()
+                        .filter_map(|rank| rank.hit_coefficient)
+                        .collect();
                 }
                 Effect::SealOfCommand { proc_chance, .. } => weapon.command_chance = *proc_chance,
                 _ => {}
@@ -174,17 +181,28 @@ impl SealWeapon {
 }
 
 /// Go seal_of_righteousness.go and seal_of_command.go read the weapon in the hand: once a swap
-/// put a set's weapon in it, the seals take that set's values.
+/// put a set's weapon in it, the seals take that set's values. Seal of Righteousness's hit takes
+/// the hand's spell power share too: the seal's aura holds only the per-hit value, and each hit
+/// is computed from the weapon in the hand as it lands.
 pub(crate) fn on_item_swap(fight: &mut Fight<PaladinAgent>, worn: bool) {
-    let Some(by_set) = fight.agent.seals.by_set else {
+    let Some(by_set) = fight.agent.seals.by_set.as_ref() else {
         return;
     };
-    let weapon = by_set[usize::from(worn)];
+    let weapon = by_set[usize::from(worn)].clone();
     let seals = &mut fight.agent.seals;
     seals.hand_multiplier = weapon.hand_multiplier;
     seals.swing_speed = weapon.swing_speed;
     if let Some(command) = seals.command.as_mut() {
         command.chance = weapon.command_chance;
+    }
+    let procs: Vec<SpellId> = seals
+        .seals
+        .iter()
+        .filter(|seal| seal.kind == SealKind::Righteousness)
+        .map(|seal| seal.proc_spell)
+        .collect();
+    for (spell, coefficient) in procs.into_iter().zip(weapon.hit_coefficients) {
+        fight.spells[spell].bonus_coefficient = coefficient;
     }
 }
 

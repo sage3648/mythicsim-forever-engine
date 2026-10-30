@@ -350,6 +350,10 @@ pub struct SealOfRighteousnessRank {
     pub judgement_spell_id: i32,
     pub proc_spell_id: i32,
     pub per_hit_value: f64,
+    /// The damage spell's spell power share with the weapon in the hand, given when an item swap
+    /// moves it between a one-hander and a two-hander: each hit reads the hand as it lands.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hit_coefficient: Option<f64>,
 }
 
 /// What an item swap callback leaves its aura in under one set: activated if inactive (`on`),
