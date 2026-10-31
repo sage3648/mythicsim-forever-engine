@@ -37,6 +37,7 @@ pub(crate) mod forever_set_spells_generated;
 pub(crate) mod frost_oil;
 pub(crate) mod healer_gear;
 pub(crate) mod heals;
+pub(crate) mod hotfix_113554;
 pub(crate) mod incapacitate;
 pub(crate) mod item_aura;
 pub(crate) mod item_effects;
@@ -76,6 +77,7 @@ pub(crate) mod spell_mod;
 pub(crate) mod spelldata;
 pub(crate) mod stat_auras;
 pub(crate) mod stats;
+pub(crate) mod talent_layout;
 pub(crate) mod target;
 pub(crate) mod weapon_skill;
 

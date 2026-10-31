@@ -297,6 +297,32 @@ the Go goldens and exporter uses. The departures:
   notes, health only), and the Bane of Agony marker, Surefooted's new row id and the creature,
   transmute and event rows are read by nothing the engine computes. Ice Lance's new 8 second
   cooldown is on rank 1 (1312002) alone, not the rank cast at level 60.
+- Live server hotfix pushes 113531 and 113554, which reached client 1.60.1.70707 on 30 October
+  2026 through the DBCache rather than a client build, for every class but Paladin and Priest
+  (Forever preparation, `prepare::hotfix_113554`; the reference keeps the frozen rows). The rows
+  are wowsims/forever #769 and #770's, regenerated from Raidbots' `forever` DBCache.bin, and the
+  trees agree with Wowhead's Forever talent data. The Druid tree is read in the hotfix's order:
+  Berserk (417141), Improved Shifting Power (1322670) and Gift of the Earthmother (414673) are
+  gone, Furor and Heart of the Wild swap trees, Reflection and Subtlety swap, and the new
+  Lacerate (1328617), Predatory Discipline (1328613) and Bloom (1328621) are talents the pinned
+  proto has no field for (`prepare::talent_layout` reads them aside). Lacerate needs the talent;
+  with Predatory Discipline a landed Ferocious Bite keeps the energy left after its cost; Primal
+  Bite's level 60 rank is 1238070 (1238073 is gone, same 77 flat damage); Shifting Power's
+  cooldown is 8 seconds; Wild Growth takes a 3 second cast that Naturalist shortens; Naturalist's
+  damage and Genesis are 2% a rank. Bloom models nothing (its heal row is not in the store).
+  Moonkin Aura and Leader of the Pack are both 3% of every kind of crit, and one counts (the
+  `RaidCrit` category, as #769 rules). Mage: Arcane Resilience has 3 ranks, Ice Lance's Frozen
+  bonus is 300% and every rank has an 8 second cooldown on Fire Blast's category 19, Winter's
+  Chill is 20% a stack, Arcane Blast's buff is 12% of Intellect, 100% more cost and 18 seconds,
+  Ice Barrier's Frost damage is 5% and Frigid Power's 15%, and Arctic Reach lengthens Ice Lance.
+  Hunter: Pathfinding and Improved Revive Pet swap squares in Beast Mastery, and Freezing Trap
+  shares Explosive and Immolation Trap's category 411. Warlock: Improved Drains leaves Wrack out
+  (its second effect raises Drain Mana, which the engine does not cast). Greater Blessing of
+  Salvation and Greater Blessing of Light are gone from the game and apply nothing. Rows that
+  need nothing: Boosted Critical Chance (1229519) and the Minor Speed and Speed boot enchants
+  (911, 8737) are not read by the engine, Summon Arcane Elemental's middle spell is not modelled,
+  Ferocious Bite's new rank 1 and the two low Lacerate ranks leave the level 60 ranks, and about
+  1,400 rows only gain Attributes_14 bit 64.
 - A damage bonus applied after the calculation is threat too (`threat_follows_damage_bonus`,
   Forever preparation), from MythicSim's Discord (26 October 2026, Vrelk: a Shadow Priest with
   no threat talents had less threat than damage). Improved Mind Flay's ramp, Ice Lance on a

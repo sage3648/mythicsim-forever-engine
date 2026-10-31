@@ -10,6 +10,7 @@ use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE, MIN_RANGED_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
+use crate::prepare::hotfix_113554;
 use crate::prepare::sim::SpellId;
 use crate::prepare::sim::{
     AuraConfig, AuraId, Cooldown, Duration, EventCallbacks, Rules, Sim, MILLISECOND, NEVER_EXPIRES,
@@ -780,8 +781,10 @@ impl Hunter {
 
     /// Go `registerFreezingTrapSpell`: Freezing Trap deals no damage; it is registered so the
     /// trap talents and the shared cooldown have something to act on.
+    /// Hotfix push 113554 moves it from category 2183 to Explosive and Immolation Trap's 411
+    /// under Forever's rules, so the three share one cooldown.
     fn register_freezing_trap_spell(&mut self, sim: &mut Sim) {
-        let rank = spell_data().freezing_trap.rank(1);
+        let rank = hotfix_113554::row(sim.rules, spell_data().freezing_trap.rank(1).id);
         let cd = self.trap_cooldown(sim, rank);
         self.freezing_trap = Some(sim.register_spell(
             self.unit,

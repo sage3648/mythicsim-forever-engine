@@ -23,6 +23,9 @@ pub(super) struct SpellData {
     pub arcane_missiles_triggered: Ladder,
     pub arcane_power: Ladder,
     pub arcane_resilience: Ladder,
+    /// Arcane Resilience after hotfix push 113531 (Forever's rules): three ranks, 25/50/75% of
+    /// Intellect as armor (the store's curve for 28574).
+    pub arcane_resilience_113531: Ladder,
     pub arcane_subtlety: Ladder,
     pub arctic_reach: Ladder,
     pub blast_wave: Ladder,
@@ -118,6 +121,7 @@ pub(super) fn spell_data() -> &'static SpellData {
             ]),
             arcane_power: Ladder::ranked(&[12042]),
             arcane_resilience: Ladder::talent(28574, 2),
+            arcane_resilience_113531: Ladder::talent_with_curve(28574, &[vec![25.0, 50.0, 75.0]]),
             arcane_subtlety: Ladder::talent(11210, 2),
             arctic_reach: Ladder::talent(16757, 2),
             blast_wave: Ladder::ranked(&[11113, 13018, 13019, 13020, 13021]),

@@ -386,6 +386,16 @@ pub(crate) fn apply_buff_effects(
     individual: &Message,
 ) -> Result<(), Refusal> {
     let unit = env.player;
+    if env.sim.rules == Rules::Forever {
+        // Hotfix push 113554 removes Greater Blessing of Salvation (25895) and Greater Blessing of
+        // Light (25890) from the game, so under Forever's rules saved settings that still ask for
+        // them get nothing, as wowsims/forever #770 keeps the fields as inert flags.
+        let mut individual = individual.clone();
+        for removed in ["greater_blessing_of_salvation", "greater_blessing_of_light"] {
+            individual.set_bool(removed, false);
+        }
+        return apply_generated_buffs(env, unit, raid_buffs, party_buffs, &individual);
+    }
     apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)
 }
 

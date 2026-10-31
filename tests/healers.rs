@@ -26,9 +26,22 @@ fn fixtures() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures/healers"))
 }
 
+/// A healer request as Forever's rules read it: the Restoration druid's talents in hotfix push
+/// 113531's order (Reflection and Subtlety swap, Bloom takes Gift of the Earthmother's square).
+fn forever_request(name: &str) -> Vec<u8> {
+    let request = fs::read(fixtures().join(format!("{name}.request.json"))).unwrap();
+    if name != "restoration-druid" {
+        return request;
+    }
+    let mut value: Value = serde_json::from_slice(&request).unwrap();
+    value["raid"]["parties"][0]["players"][0]["talentsString"] =
+        json!("05002001--5053005153113051");
+    serde_json::to_vec(&value).unwrap()
+}
+
 /// The fight's result for a healer request: prepared in Rust, gated and simulated.
 fn run(name: &str) -> Value {
-    let request = fs::read(fixtures().join(format!("{name}.request.json"))).unwrap();
+    let request = forever_request(name);
     let prepared = prepare(&request, "rust").unwrap_or_else(|err| panic!("{name}: {err:?}"));
     check_prepared(&prepared).unwrap_or_else(|err| panic!("{name}: {err:?}"));
     simulate_prepared(&prepared)
@@ -168,7 +181,8 @@ fn holy_priest_heals_as_its_rows_state() {
 }
 
 /// The 46-point Restoration druid: Gift of Nature 5 (10% direct and periodic), Improved
-/// Rejuvenation 3 (15%), Genesis 5 (5% periodic), Nature's Splendor, on 302 healing power.
+/// Rejuvenation 3 (15%), Genesis 5 (10% periodic since hotfix push 113531, which also gives Wild
+/// Growth a cast), Nature's Splendor, on 302 healing power.
 #[test]
 fn restoration_druid_heals_as_its_rows_state() {
     let result = run("restoration-druid");
@@ -180,11 +194,12 @@ fn restoration_druid_heals_as_its_rows_state() {
             // each of five players, 117.663, of which a group heal's 24.58% is overhealing.
             "{SpellID: 1238215} tick Hit for 88.741 healing, 28.921 overhealing.",
             // Rejuvenation rank 11 (25299): 194 + 0.2 x 302 = 254.4 a tick, then 1.10 x 1.15 x
-            // 1.05, 337.907, of which Rejuvenation's 17.76% is overhealing.
-            "{SpellID: 25299} tick Hit for 277.895 healing, 60.012 overhealing.",
-            // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1689.5,
+            // 1.10 (Genesis 5/5 at 2% a rank since hotfix push 113531), 353.999, of which
+            // Rejuvenation's 17.76% is overhealing.
+            "{SpellID: 25299} tick Hit for 291.128 healing, 62.870 overhealing.",
+            // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1770.0,
             // then Gift of Nature's 10% on Swiftmend's own direct heal.
-            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1689.5, AfterCasterMods:1858.5",
+            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:1947.0",
         ],
     );
     golden("restoration-druid", &result);
@@ -335,7 +350,12 @@ fn forever_healer_sims_count_healing_less_overhealing() {
 #[test]
 fn forever_heal_ticks_crit_as_their_rows_state() {
     let request = fs::read(fixtures().join("restoration-druid.request.json")).unwrap();
-    let forever = prepare_json_with(&request, "rust", Rules::Forever).unwrap();
+    let forever = prepare_json_with(
+        &forever_request("restoration-druid"),
+        "rust",
+        Rules::Forever,
+    )
+    .unwrap();
     let reference = prepare_json_with(&request, "rust", Rules::GoReference).unwrap();
     let flagged = |prepared: &Value, spell: i64| -> bool {
         prepared["effects"]
@@ -385,12 +405,12 @@ fn forever_heal_ticks_crit_as_their_rows_state() {
         assert_eq!(totals(&reference, spell, "critTicks"), 0.0, "{spell}");
         assert!(totals(&forever, spell, "critTicks") > 0.0, "{spell}");
     }
-    // A crit tick heals 1.5 times the 337.907 a tick of Rejuvenation rank 11 heals (above),
-    // 506.860, of which Rejuvenation's 17.76% is overhealing.
+    // A crit tick heals 1.5 times the 353.999 a tick of Rejuvenation rank 11 heals (above),
+    // 530.996, of which Rejuvenation's 17.76% is overhealing.
     logs(
         "restoration-druid",
         &forever,
-        &["{SpellID: 25299} tick Crit for 416.842 healing, 90.018 overhealing."],
+        &["{SpellID: 25299} tick Crit for 436.691 healing, 94.305 overhealing."],
     );
 }
 

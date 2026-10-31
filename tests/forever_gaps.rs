@@ -17,8 +17,22 @@ fn request(name: &str) -> Value {
     serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
 }
 
+/// The fixtures' Druid talents in hotfix push 113531's order, which Forever's rules read: the
+/// recorded strings are refused there (tests/hotfix_113554.rs).
+fn forever_talents(name: &str) -> Option<&'static str> {
+    match name {
+        "feral-bear-druid-thorns" => Some("-5500033212310212551-055"),
+        "feral-druid-swap-heart-of-wyrmthalak" => Some("050022-55000032023012125001-055"),
+        _ => None,
+    }
+}
+
 fn prepared(name: &str, rules: Rules) -> Value {
-    prepare_json_with(request(name).to_string().as_bytes(), "rust", rules).unwrap()
+    let mut request = request(name);
+    if let (Rules::Forever, Some(talents)) = (rules, forever_talents(name)) {
+        request["raid"]["parties"][0]["players"][0]["talentsString"] = Value::from(talents);
+    }
+    prepare_json_with(request.to_string().as_bytes(), "rust", rules).unwrap()
 }
 
 fn kinds(prepared: &Value) -> Vec<&str> {
@@ -613,7 +627,8 @@ fn warrior_strikes_and_freezing_trap_run() {
         ("protection-warrior-disarm", 676, 129.0),
         ("warrior-intercept", 20617, 50.0),
         ("arms-warrior-revenge", 25288, 0.0),
-        ("hunter-freezing-trap", 1499, 216.0),
+        // Hotfix push 113554 puts Freezing Trap on Explosive Trap's cooldown (category 411).
+        ("hunter-freezing-trap", 1499, 213.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");

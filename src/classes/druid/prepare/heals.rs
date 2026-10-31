@@ -9,12 +9,17 @@
 
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::heals::{
-    apply_heal_talent, register_channel_heal, register_heal, ChannelHeal, HealShape,
+    apply_heal_talent, heal_talent_mod, register_channel_heal, register_heal, ChannelHeal,
+    HealShape,
 };
-use crate::prepare::sim::{AuraConfig, Cooldown, EventCallbacks, Sim, NEVER_EXPIRES, SECOND};
+use crate::prepare::hotfix_113554;
+use crate::prepare::sim::{
+    AuraConfig, Cooldown, EventCallbacks, Rules, Sim, NEVER_EXPIRES, SECOND,
+};
 use crate::prepare::spell::{CastConfig, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::store::must_find;
+use crate::prepare::spelldata::Ladder;
 
 use super::masks;
 use super::Druid;
@@ -37,7 +42,8 @@ const PARTY: u32 = 5;
 
 /// The heal talents, as (talent, client row, ranks): Gift of Nature's direct and periodic
 /// healing, Tranquil Spirit's cost, Improved Rejuvenation, Improved Regrowth's crit, Naturalist's
-/// Healing Touch cast time and Gift of the Earthmother's global cooldown.
+/// Healing Touch cast time and Gift of the Earthmother's global cooldown. Gift of the Earthmother
+/// is gone from Forever's tree since hotfix push 113531, so only the reference sets it.
 const HEAL_TALENTS: &[(&str, i32, i32)] = &[
     ("gift_of_nature", 17104, 5),
     ("tranquil_spirit", 24968, 5),
@@ -60,7 +66,9 @@ impl Druid {
             |sim: &mut Sim, ids: &[i32], mask: i64, shape: HealShape, shared_cd: bool| {
                 let timer = shared_cd.then(|| sim.new_timer(unit));
                 for &id in ids {
-                    ranks.push(register_heal(sim, unit, must_find(id), mask, shape, timer));
+                    // Hotfix push 113531 gives Wild Growth a 3 sec cast under Forever's rules.
+                    let row = hotfix_113554::row(sim.rules, id);
+                    ranks.push(register_heal(sim, unit, row, mask, shape, timer));
                 }
             };
         each(
@@ -186,7 +194,21 @@ impl Druid {
     pub(super) fn apply_heal_talents(&self, sim: &mut Sim) {
         for &(name, spell_id, max_ranks) in HEAL_TALENTS {
             let rank = crate::prepare::heals::talent_rank(&self.talents, name);
-            apply_heal_talent(sim, self.unit, spell_id, max_ranks, rank);
+            match hotfix_113554::hotfixed(spell_id) {
+                // Hotfix push 113531: Naturalist's cast time effect covers Wild Growth instead of
+                // its old second mask bit, under Forever's rules. The ranks keep their curve.
+                Some(hotfixed) if sim.rules == Rules::Forever && rank > 0 => {
+                    let row = Ladder::talent(spell_id, max_ranks).rank(rank);
+                    for effect in &row.effects {
+                        let mut effect = effect.clone();
+                        if let Some(fixed) = hotfixed.effects.iter().find(|e| e.id == effect.id) {
+                            effect.class_flags = fixed.class_flags;
+                        }
+                        heal_talent_mod(sim, self.unit, &effect);
+                    }
+                }
+                _ => apply_heal_talent(sim, self.unit, spell_id, max_ranks, rank),
+            }
         }
         if self.tal.natures_splendor {
             for &(mask, ticks) in NATURES_SPLENDOR_TICKS {
