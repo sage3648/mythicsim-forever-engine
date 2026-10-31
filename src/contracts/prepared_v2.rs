@@ -2014,6 +2014,10 @@ pub enum Effect {
         damage_per_energy: f64,
         damage_per_combo_point: f64,
         attack_power_per_combo_point: f64,
+        /// Predatory Discipline (1328613, hotfix push 113531): a landed bite keeps the energy
+        /// left after its cost and still deals the damage it is worth.
+        #[serde(default, skip_serializing_if = "is_false")]
+        keeps_energy: bool,
     },
     /// Shifting Power: mana into energy.
     ShiftingPower {

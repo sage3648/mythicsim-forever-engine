@@ -61,8 +61,9 @@ fn pre_hotfix_mage_talent_strings_are_refused() {
 }
 
 /// Preparation describes Ice Barrier as Go's exporter does: the level 60 absorb of rank 4, Frost
-/// Warding's 10% a point on it, and 3% Frost damage on both auras. The talents are in client
-/// 1.60.1.70707's order, which Forever's rules read.
+/// Warding's 10% a point on it, and Frost damage on both auras: 3% in hotfix push 112753's rows,
+/// 5% on the shield and 15% on Frigid Power since push 113531 (tests/hotfix_113554.rs). The
+/// talents are in client 1.60.1.70707's order, which Forever's rules read.
 #[test]
 fn ice_barrier_effect_reads_the_hotfix_rows() {
     for (talents, warding) in [
@@ -83,8 +84,13 @@ fn ice_barrier_effect_reads_the_hotfix_rows() {
         assert_eq!(effect["frigid_power_aura"], "Frigid Power");
         assert_eq!(effect["absorb_base"], 819.0);
         assert!((effect["warding"].as_f64().unwrap() - warding).abs() < 1e-12);
-        for share in ["hit", "dot", "frigid_hit", "frigid_dot"] {
-            assert_eq!(effect[share], 0.03, "{share}");
+        for (share, value) in [
+            ("hit", 0.05),
+            ("dot", 0.05),
+            ("frigid_hit", 0.15),
+            ("frigid_dot", 0.15),
+        ] {
+            assert_eq!(effect[share], value, "{share}");
         }
     }
     // Without the talent there is no shield to describe.

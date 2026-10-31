@@ -713,12 +713,14 @@ impl DruidAgent {
                     damage_per_energy,
                     damage_per_combo_point,
                     attack_power_per_combo_point,
+                    keeps_energy,
                     ..
                 } => {
                     fight.agent.ferocious_bite = Some(FerociousBite {
                         damage_per_energy: *damage_per_energy,
                         damage_per_combo_point: *damage_per_combo_point,
                         attack_power_per_combo_point: *attack_power_per_combo_point,
+                        keeps_energy: *keeps_energy,
                     });
                 }
                 Effect::ShiftingPower { spell, energy } => {

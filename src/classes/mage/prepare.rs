@@ -38,11 +38,12 @@ const fn talent(field: &'static str, name: &'static str, max_ranks: u32) -> Fore
 /// talents in the client's order (row, then column). Arcane Focus (TraitNode 105814) is gone and
 /// Improved Channeling (105813) takes its square, Arcane Resilience (105802) takes Improved
 /// Channeling's, and Missile Barrage and Arcane Resilience swap TraitDefinitions 135332 and
-/// 135339, so Missile Barrage sits in the second row.
+/// 135339, so Missile Barrage sits in the second row. Hotfix push 113531 gives Arcane Resilience a
+/// third rank.
 const FOREVER_ARCANE: &[ForeverTalent] = &[
     talent("wand_specialization", "Wand Specialization", 2),
     talent("improved_channeling", "Improved Channeling", 5),
-    talent("arcane_resilience", "Arcane Resilience", 2),
+    talent("arcane_resilience", "Arcane Resilience", 3),
     talent("arcane_subtlety", "Arcane Subtlety", 2),
     talent("magic_absorption", "Magic Absorption", 2),
     talent("arcane_concentration", "Arcane Concentration", 5),
@@ -501,6 +502,10 @@ mod tests {
         };
         assert_eq!(ranks("critical_mass"), data.critical_mass_70707.len());
         assert_eq!(ranks("incineration"), data.incineration_70707.len());
+        assert_eq!(
+            ranks("arcane_resilience"),
+            data.arcane_resilience_113531.len()
+        );
         assert_eq!(ranks("elemental_precision"), data.elemental_precision.len());
         assert!(FOREVER_TREES
             .iter()

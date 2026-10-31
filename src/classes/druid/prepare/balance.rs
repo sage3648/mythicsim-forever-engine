@@ -554,7 +554,8 @@ impl Druid {
         );
     }
 
-    /// Genesis, new in Forever: +1% periodic damage and healing a rank.
+    /// Genesis, new in Forever: +1% periodic damage and healing a rank, +2% under Forever's rules
+    /// since hotfix push 113531.
     fn apply_genesis(&mut self, sim: &mut Sim) {
         if self.tal.genesis == 0 {
             return;
@@ -570,7 +571,7 @@ impl Druid {
                     | masks::REJUVENATION
                     | masks::REGROWTH,
                 kind: SpellModType::DotDamageDonePct,
-                float_value: Ladder::talent(1223081, 5)
+                float_value: super::talents::genesis(sim.rules)
                     .effect(A_ADD_PCT_MODIFIER, SPELLMOD_DOT)
                     .fraction_at(self.tal.genesis),
                 ..SpellModConfig::default()
