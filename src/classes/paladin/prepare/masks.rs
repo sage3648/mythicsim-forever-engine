@@ -53,6 +53,11 @@ pub const FIRE_RESISTANCE_AURA: i64 = 1 << 43;
 pub const FROST_RESISTANCE_AURA: i64 = 1 << 44;
 pub const SHADOW_RESISTANCE_AURA: i64 = 1 << 45;
 
+/// Swift Judgement under Forever's rules since push 113554: a second Judgement, which carries
+/// Swift Judgement's bit as well for the mods that name it (Sentinel's Libram). Go has no such
+/// bit; it is Rust's, past the reference's.
+pub const SECOND_JUDGEMENT: i64 = 1 << 46;
+
 pub const ALL_SEALS: i64 = SEAL_OF_RIGHTEOUSNESS
     | SEAL_OF_COMMAND
     | SEAL_OF_LIGHT

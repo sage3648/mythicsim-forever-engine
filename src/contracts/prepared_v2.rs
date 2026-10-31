@@ -2494,6 +2494,10 @@ pub enum Effect {
         threat_percent: f64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         instrument_of_law: Option<AuraMultiplier>,
+        /// Push 113554 under Forever's rules: the multiplier on all the paladin's threat while
+        /// the aura holds (effect 1367626, +33%).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        all_threat_multiplier: Option<f64>,
     },
     /// Paladin swift_judgement.go: a major cooldown that finishes Judgement's cooldown and
     /// makes the next Judgement free.
@@ -2802,7 +2806,9 @@ pub enum Effect {
     Vindication {
         trigger_aura: String,
         proc_chance: f64,
-        aura: String,
+        /// The paladin's attack power aura, which push 113554 removes under Forever's rules.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        aura: Option<String>,
         target_aura: String,
     },
     /// Paladin talents_retribution.go Sanctified Judgement: Judgement returns part of the
@@ -2825,6 +2831,22 @@ pub enum Effect {
         trigger_aura: String,
         echoes: Vec<SealEcho>,
     },
+    /// Paladin Unsealed Wrath (push 113554, Forever's rules): landed melee autos store the
+    /// active seal in its Echo, up to the Echo's stacks; one landed with a different seal spends
+    /// every other Echo's stacks, each a roll of the stored seal.
+    UnsealedWrath {
+        trigger_aura: String,
+        echoes: Vec<SealEcho>,
+    },
+    /// Paladin Swift Judgement (push 113554, Forever's rules): a second Judgement on its own
+    /// cooldown, which unleashes the active seal's judgement, free and off the global cooldown.
+    SecondJudgement {
+        spell_id: i32,
+    },
+    /// Paladin Shieldsworn (push 113554, Forever's rules): a landed Holy Strike triggers the
+    /// active Holy Shield's damage without a charge and Shield Specialization's mana chance
+    /// without its cooldown.
+    Shieldsworn {},
     /// Every Mind Blast rank's direct hit.
     MindBlast {},
     /// Every Shadow Word: Death rank's direct hit; Early Demise adds crit in the 20% execute
@@ -5128,6 +5150,9 @@ impl Effect {
             Effect::SanctifiedJudgement { .. } => "sanctified_judgement",
             Effect::SacredArbiter { .. } => "sacred_arbiter",
             Effect::TwistOfLight { .. } => "twist_of_light",
+            Effect::UnsealedWrath { .. } => "unsealed_wrath",
+            Effect::SecondJudgement { .. } => "second_judgement",
+            Effect::Shieldsworn { .. } => "shieldsworn",
             Effect::HolyShock { .. } => "holy_shock",
             Effect::LightsVigil { .. } => "lights_vigil",
             Effect::StatProc { .. } => "stat_proc",

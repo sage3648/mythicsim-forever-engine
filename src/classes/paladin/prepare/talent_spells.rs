@@ -14,6 +14,7 @@ use crate::prepare::spelldata::Spell as Row;
 use crate::prepare::stats::Stat;
 use std::rc::Rc;
 
+use super::hotfix_113554 as hotfix;
 use super::masks;
 use super::spell_data::spell_data;
 use super::util::{
@@ -322,6 +323,10 @@ impl Paladin {
     /// Go `registerSwiftJudgement`: finishes the remaining cooldown on your Judgement ability
     /// and reduces the Mana cost of your next Judgement by 100%.
     fn register_swift_judgement(&mut self, sim: &mut Sim, unit: UnitId) {
+        if sim.rules == crate::prepare::sim::Rules::Forever {
+            self.register_second_judgement(sim, unit);
+            return;
+        }
         let rank = spell_data().swift_judgement.highest();
         let action_id = spell_action(rank.id);
         let label = sim.unit(unit).label.clone();
@@ -384,6 +389,55 @@ impl Paladin {
 
         // Our sim fires it as a cooldown, whenever there is a Judgement to finish and a seal
         // to spend the free cast on.
+        sim.add_major_cooldown(
+            unit,
+            MajorCooldown {
+                spell,
+                priority: 0,
+                cooldown_type: cooldown_type::DPS,
+                allow_spell_queueing: false,
+                timings: Vec::new(),
+            },
+        );
+    }
+
+    /// Swift Judgement under Forever's rules since push 113554 (1310994, upstream #772's
+    /// swift_judgement.go): unleash the energy of a Seal spell upon an enemy, without consuming
+    /// the Seal, on a 60 sec cooldown of its own. It casts the active seal's judgement as
+    /// Judgement does, free and off the global cooldown, and fires no on-cast callbacks, so
+    /// listeners hear the judgement. Upstream leaves it to the rotation; MythicSim fires it as a
+    /// major cooldown whenever a seal is up, as it fired the old talent.
+    fn register_second_judgement(&mut self, sim: &mut Sim, unit: UnitId) {
+        let rank = spell_data().swift_judgement.highest();
+        let timer = sim.new_timer(unit);
+        let spell = sim.register_spell(
+            unit,
+            SpellConfig {
+                action_id: spell_action(rank.id),
+                spell_school: school::HOLY,
+                defense_type: DefenseType::None,
+                proc_mask: ProcMask::EMPTY,
+                flags: SpellFlag::APL | SpellFlag::PASSIVE_SPELL | SpellFlag::NO_ON_CAST_COMPLETE,
+                class_spell_mask: masks::SWIFT_JUDGEMENT | masks::SECOND_JUDGEMENT,
+                // 10 yards, push 113554's row.
+                max_range: 10.0,
+                damage_multiplier: 1.0,
+                threat_multiplier: 1.0,
+                cast: CastConfig {
+                    default_cast: Cast {
+                        non_empty: true,
+                        ..Cast::default()
+                    },
+                    cd: Cooldown {
+                        timer: Some(timer),
+                        duration: 60 * SECOND,
+                    },
+                    ..CastConfig::default()
+                },
+                has_extra_cast_condition: true,
+                ..SpellConfig::default()
+            },
+        );
         sim.add_major_cooldown(
             unit,
             MajorCooldown {
@@ -526,7 +580,7 @@ impl Paladin {
                 flags: SpellFlag::APL | SpellFlag::HELPFUL,
                 class_spell_mask: masks::HOLY_SHIELD,
                 rank: rank.rank_number(),
-                cost: mana_cost(rank),
+                cost: holy_shield_cost(sim, rank),
                 cast: gcd_cast(rank.gcd(), 0, Some((timer, cooldown(rank)))),
                 has_extra_cast_condition: true,
                 related_self_buff: Some(aura),
@@ -534,4 +588,16 @@ impl Paladin {
             },
         );
     }
+}
+
+/// A Holy Shield rank's mana cost: push 113554's under Forever's rules, where each rank costs
+/// what the rank below did (hotfix_113554.rs), the row's in the reference.
+fn holy_shield_cost(sim: &Sim, rank: &Row) -> crate::prepare::spell::CostOptions {
+    let mut cost = mana_cost(rank);
+    if sim.rules == crate::prepare::sim::Rules::Forever {
+        if let Some(&(_, _, mana)) = hotfix::HOLY_SHIELD.iter().find(|(id, _, _)| *id == rank.id) {
+            cost.mana_flat_cost = mana;
+        }
+    }
+    cost
 }

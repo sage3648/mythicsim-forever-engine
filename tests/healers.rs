@@ -287,9 +287,22 @@ fn forever_healer_sims_count_healing_less_overhealing() {
     // overhealing split alone.
     let mut holy: Value = serde_json::from_slice(&request("holy-paladin-healing")).unwrap();
     holy["raid"]["parties"][0]["players"][0]["disableRacials"] = true.into();
+    // Talents that mean the same in the reference's tree and push 113554's, which Forever's
+    // rules read, so both draw the same rolls: Divine Strength 5, Healing Light 3, Infusion of
+    // Light 2, Illumination 5, Divine Favor and Holy Shock; Precision 3, Guardian's Favor 2,
+    // Toughness 5 and Anticipation 3.
+    holy["raid"]["parties"][0]["players"][0]["talentsString"] = "50300000025101-50323".into();
+    let reference = prepare_json_with(
+        &serde_json::to_vec(&holy).unwrap(),
+        "rust",
+        Rules::GoReference,
+    )
+    .unwrap();
+    holy["raid"]["parties"][0]["players"][0]["talentsString"] =
+        "05300015002001-003200005003".into();
     let holy = serde_json::to_vec(&holy).unwrap();
     let forever = prepare_json_with(&holy, "rust", Rules::Forever).unwrap();
-    let reference = prepare_json_with(&holy, "rust", Rules::GoReference).unwrap();
+    assert_eq!(forever["player"]["talents"], reference["player"]["talents"]);
     let share = |spell: i64| {
         forever["player"]["overheal"]
             .as_array()

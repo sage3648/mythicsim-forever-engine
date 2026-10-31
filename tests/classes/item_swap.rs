@@ -328,6 +328,8 @@ fn prepared_forever(name: &str) -> Value {
         .join(format!("fixtures/mage/prepared-v2/{name}.request.json"));
     let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     request["simOptions"]["iterations"] = json!(20);
+    // A paladin's talents read in push 113554's tree, which Forever's rules prepare.
+    crate::paladin_113554::forever_request(&mut request);
     forever_engine::prepare_json_with(
         request.to_string().as_bytes(),
         name,

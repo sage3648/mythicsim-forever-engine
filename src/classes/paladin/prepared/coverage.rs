@@ -44,6 +44,7 @@ const EFFECTS: &[&str] = &[
     "righteous_fury",
     "sacred_arbiter",
     "sanctified_judgement",
+    "second_judgement",
     "seal_of_command",
     "seal_of_fury",
     "seal_of_justice",
@@ -52,9 +53,11 @@ const EFFECTS: &[&str] = &[
     "seal_of_the_crusader",
     "seal_of_wisdom",
     "shield_specialization",
+    "shieldsworn",
     "swift_judgement",
     "templars_bulwark",
     "twist_of_light",
+    "unsealed_wrath",
     "vengeance",
     "vindication",
 ];
@@ -85,6 +88,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "divine_favor" => Some("divine_favor"),
         "righteous_fury" => Some("righteous_fury"),
         "swift_judgement" => Some("swift_judgement"),
+        "second_judgement" => Some("second_judgement"),
         "templars_bulwark" => Some("templars_bulwark"),
         "holy_shield" | "holy_shield_proc" => Some("holy_shield"),
         "holy_light" | "flash_of_light" | "holy_shock_heal" => Some("paladin_heals"),
@@ -135,11 +139,13 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             aura,
             target_aura,
             ..
-        } => vec![
-            ("player", trigger_aura),
-            ("player", aura),
-            ("target", target_aura),
-        ],
+        } => {
+            let mut claimed = vec![("player", trigger_aura.as_str()), ("target", target_aura)];
+            if let Some(aura) = aura {
+                claimed.push(("player", aura));
+            }
+            claimed
+        }
         Effect::Reckoning {
             block_aura,
             crit_aura,
@@ -166,6 +172,10 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             ..
         } => vec![("target", ground.aura.as_str())],
         Effect::TwistOfLight {
+            trigger_aura,
+            echoes,
+        }
+        | Effect::UnsealedWrath {
             trigger_aura,
             echoes,
         } => std::iter::once(("player", trigger_aura.as_str()))

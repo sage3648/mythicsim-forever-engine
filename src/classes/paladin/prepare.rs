@@ -10,6 +10,7 @@ mod auras;
 mod export;
 mod export_tank;
 mod heals;
+pub(crate) mod hotfix_113554;
 pub(crate) mod items;
 pub(crate) mod masks;
 mod seals;
@@ -20,11 +21,13 @@ mod talents;
 mod util;
 
 use crate::contracts::request::Message;
-use crate::prepare::agent::{fill_talents, ClassSpellName, PrepAgent};
+use crate::prepare::agent::{
+    fill_talents, fill_talents_by_layout_with_extras, ClassSpellName, PrepAgent,
+};
 use crate::prepare::attack::{AutoAttackOptions, Weapon};
 use crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT;
 use crate::prepare::env::Environment;
-use crate::prepare::sim::{AuraId, Duration, Sim, SpellId, TimerId, UnitId};
+use crate::prepare::sim::{AuraId, Duration, Rules, Sim, SpellId, TimerId, UnitId};
 use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
 
@@ -106,6 +109,10 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
     ClassSpellName {
         mask: masks::SWIFT_JUDGEMENT,
         name: "swift_judgement",
+    },
+    ClassSpellName {
+        mask: masks::SWIFT_JUDGEMENT | masks::SECOND_JUDGEMENT,
+        name: "second_judgement",
     },
     ClassSpellName {
         mask: masks::TEMPLARS_BULWARK,
@@ -226,6 +233,9 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
 #[derive(Clone)]
 pub(crate) struct Paladin {
     talents: Message,
+    /// Under Forever's rules, the points of the talents push 113554 adds, which the pinned proto
+    /// does not have, by upstream #772's field name.
+    new_talents: std::collections::BTreeMap<&'static str, i64>,
     /// Go `Paladin.Judgement`.
     judgement: Option<SpellId>,
     /// Go `Paladin.Forbearance`.
@@ -294,11 +304,23 @@ pub(crate) fn new_paladin(
             "a paladin without its options".to_string(),
         ));
     }
-    let talents = fill_talents(
-        "proto.PaladinTalents",
-        player.str("talents_string"),
-        TALENT_TREE_SIZES,
-    )
+    let talents_string = player.str("talents_string");
+    let (talents, new_talents) = match sim.rules {
+        // Push 113554's tree, read in the client's order (hotfix_113554.rs).
+        Rules::Forever => check_talents_string(talents_string)
+            .and_then(|()| hotfix_113554::check_ranks(talents_string))
+            .and_then(|()| {
+                fill_talents_by_layout_with_extras(
+                    "proto.PaladinTalents",
+                    talents_string,
+                    |tree, i| Some(hotfix_113554::TREES.get(tree)?.get(i)?.field),
+                )
+            }),
+        Rules::GoReference => {
+            fill_talents("proto.PaladinTalents", talents_string, TALENT_TREE_SIZES)
+                .map(|talents| (talents, Default::default()))
+        }
+    }
     .map_err(|err| Refusal::new("talents", err))?;
 
     // The attack table already holds the base 5% parry and block (sim/core/target.go); the
@@ -339,6 +361,7 @@ pub(crate) fn new_paladin(
 
     Ok(Box::new(Paladin {
         talents,
+        new_talents,
         judgement: None,
         forbearance: None,
         righteous_fury_aura: None,
@@ -352,6 +375,40 @@ pub(crate) fn new_paladin(
         timers: Timers::default(),
         post_finalize: Vec::new(),
     }))
+}
+
+/// Under Forever's rules, a string with more trees than three or a tree longer than push
+/// 113554's 17 talents is refused, as Go refuses a talent past its proto.
+fn check_talents_string(talents: &str) -> Result<(), String> {
+    let trees: Vec<&str> = talents.split('-').collect();
+    if trees.len() > hotfix_113554::TREES.len() {
+        return Err(format!(
+            "paladin talents {talents:?}: {} trees, the paladin has {}",
+            trees.len(),
+            hotfix_113554::TREES.len()
+        ));
+    }
+    for (tree, digits) in trees.iter().enumerate() {
+        let size = hotfix_113554::TREES[tree].len();
+        if digits.chars().count() > size {
+            return Err(format!(
+                "paladin talents {talents:?}: tree {} has {size} talents, the string gives {}",
+                tree + 1,
+                digits.chars().count()
+            ));
+        }
+    }
+    Ok(())
+}
+
+impl Paladin {
+    /// The points in a talent push 113554 adds (`hotfix_113554`), which only Forever's rules
+    /// read: 0 under the reference.
+    pub(super) fn new_talent(&self, field: &str) -> i32 {
+        self.new_talents
+            .get(field)
+            .map_or(0, |&points| points as i32)
+    }
 }
 
 impl PrepAgent for Paladin {

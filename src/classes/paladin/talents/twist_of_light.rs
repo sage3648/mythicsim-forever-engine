@@ -16,7 +16,7 @@ use super::super::{
 pub(crate) struct Echo {
     pub(crate) aura: AuraRef,
     /// The seal the Echo stands for, by class spell name.
-    seal_name: String,
+    pub(crate) seal_name: String,
     /// Go `sealEcho.seal`.
     pub(crate) seal: Option<usize>,
 }

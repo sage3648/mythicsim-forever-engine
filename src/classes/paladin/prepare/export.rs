@@ -261,11 +261,11 @@ impl Paladin {
             effects.push(json!({
                 "kind": "seal_of_command", "ranks": ranks, "proc_spell_id": proc_rank.id,
                 "weapon_percent": proc_effect.percent()
-                    * data.improved_seals.multiplier_at(talents.i32("improved_seals")),
+                    * (1.0 + Self::improved_seals_bonus(sim, talents.i32("improved_seals"))),
                 "coefficient": proc_effect.coeff(),
                 // Go `SealOfCommandBonusTakesImprovedSeals` (MythicSim patch 169).
                 "target_bonus_coefficient": proc_effect.coeff()
-                    * data.improved_seals.multiplier_at(talents.i32("improved_seals")),
+                    * (1.0 + Self::improved_seals_bonus(sim, talents.i32("improved_seals"))),
                 "proc_chance": dpm.chance(ProcMask::MELEE_MH_AUTO),
                 "rng_label": "Seal of Command", "icd_ns": SECOND, "deal_delay_ns": deal_delay,
             }));
@@ -461,7 +461,21 @@ impl Paladin {
                 .collect();
             effects.push(json!({"kind": "holy_shock", "ranks": ranks}));
         }
-        if talents.bool("lights_vigil") {
+        let vigil_reached = {
+            let mut reached = false;
+            data.lights_vigil.each(|_, rank| {
+                reached |= rotation_spells.contains(&i64::from(rank.id));
+            });
+            reached
+        };
+        if sim.rules == crate::prepare::sim::Rules::Forever {
+            // Push 113554 makes the vigil friendly only: the next Holy Shock heal on the ally
+            // heals its party, and the enemy strike and refund are gone. The party heal is not
+            // modelled yet.
+            if talents.bool("lights_vigil") && vigil_reached {
+                notes.push("Light's Vigil on an ally (push 113554) is unsupported".to_string());
+            }
+        } else if talents.bool("lights_vigil") {
             // lights_vigil.go: the vigil, its strike and its refund per rank.
             let mut ranks = Vec::new();
             data.lights_vigil.each(|_, rank| {
@@ -506,12 +520,16 @@ impl Paladin {
             }));
         }
         if talents.i32("vindication") > 0 {
-            // talents_retribution.go applyVindication: the chance is a Go literal.
-            effects.push(json!({
+            // talents_retribution.go applyVindication: the chance is a Go literal. Push 113554
+            // takes the paladin's aura away under Forever's rules.
+            let mut vindication = json!({
                 "kind": "vindication", "trigger_aura": format!("Vindication - Trigger{label}"),
-                "proc_chance": 1.0, "aura": format!("Vindication{label}"),
-                "target_aura": format!("Vindication{label}"),
-            }));
+                "proc_chance": 1.0, "target_aura": format!("Vindication{label}"),
+            });
+            if sim.rules == crate::prepare::sim::Rules::GoReference {
+                vindication["aura"] = json!(format!("Vindication{label}"));
+            }
+            effects.push(vindication);
         }
         let sanctified = talents.i32("sanctified_judgement");
         if sanctified > 0 {
@@ -550,6 +568,23 @@ impl Paladin {
             .collect();
             effects.push(json!({
                 "kind": "twist_of_light", "trigger_aura": format!("Twist of Light{label}"),
+                "echoes": echoes,
+            }));
+        }
+        if self.new_talent("unsealed_wrath") > 0 {
+            // Push 113554's Unsealed Wrath, under Forever's rules: the Echoes in upstream #772's
+            // order.
+            let echoes: Vec<Value> = [
+                (1311703, "seal_of_command"),
+                (1311701, "seal_of_fury"),
+                (1311704, "seal_of_righteousness"),
+                (1311705, "seal_of_justice"),
+            ]
+            .iter()
+            .map(|(id, seal)| json!({"aura": format!("Echo ({id}){label}"), "seal": seal}))
+            .collect();
+            effects.push(json!({
+                "kind": "unsealed_wrath", "trigger_aura": format!("Unsealed Wrath{label}"),
                 "echoes": echoes,
             }));
         }
@@ -763,7 +798,8 @@ impl Paladin {
         let rotation_spells = rotation_spells(sim, unit);
         let data = spell_data();
         let mut labels = Vec::new();
-        if talents.i32("vindication") > 0 {
+        // Push 113554 takes the paladin's Vindication aura away under Forever's rules.
+        if talents.i32("vindication") > 0 && sim.rules == crate::prepare::sim::Rules::GoReference {
             labels.push(format!("Vindication{label}"));
         }
         // seal_of_the_crusader.go: the attack power of each rank the rotation names.
