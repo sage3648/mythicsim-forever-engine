@@ -944,6 +944,8 @@ fn item_swap_limits(
     let mut crit_mods: Vec<(&[usize], f64, bool, bool)> = Vec::new();
     // The damage modifiers it switches, as Two-Handed Weapon Specialization's for a one-hander.
     let mut damage_mods: Vec<(&[usize], f64, bool, bool)> = Vec::new();
+    // The threat modifiers it switches, as push 113554's Two-Handed Weapon Specialization's.
+    let mut threat_mods: Vec<(&[usize], f64, bool, bool)> = Vec::new();
     for callback in callbacks {
         let (label, toggles) = match callback {
             SwapCallback::Aura {
@@ -968,7 +970,7 @@ fn item_swap_limits(
             SwapCallback::SpellMod { modifier, .. } => {
                 if !matches!(
                     modifier.kind.as_str(),
-                    "damage_done_pct" | "bonus_crit_percent"
+                    "damage_done_pct" | "bonus_crit_percent" | "threat_multiplier_pct"
                 ) {
                     reasons.push(format!(
                         "an item swap switches a spell modifier of kind {}",
@@ -983,10 +985,14 @@ fn item_swap_limits(
                     reasons.push("an item swap's spell modifier names an unknown spell".into());
                 }
                 if let SwapCallback::SpellMod { main, swapped, .. } = callback {
-                    if modifier.kind == "bonus_crit_percent" {
-                        crit_mods.push((&modifier.spells, modifier.value, *main, *swapped));
-                    } else {
-                        damage_mods.push((&modifier.spells, modifier.value, *main, *swapped));
+                    match modifier.kind.as_str() {
+                        "bonus_crit_percent" => {
+                            crit_mods.push((&modifier.spells, modifier.value, *main, *swapped))
+                        }
+                        "threat_multiplier_pct" => {
+                            threat_mods.push((&modifier.spells, modifier.value, *main, *swapped))
+                        }
+                        _ => damage_mods.push((&modifier.spells, modifier.value, *main, *swapped)),
                     }
                 }
                 continue;
@@ -1092,6 +1098,7 @@ fn item_swap_limits(
             &item_spells,
             &crit_mods,
             &damage_mods,
+            &threat_mods,
             aura_effects,
             &displaced_totem,
         ) {
@@ -1150,6 +1157,7 @@ fn swap_change_limit(
     item_spells: &[usize],
     crit_mods: &[(&[usize], f64, bool, bool)],
     damage_mods: &[(&[usize], f64, bool, bool)],
+    threat_mods: &[(&[usize], f64, bool, bool)],
     aura_effects: &[crate::contracts::prepared_v2::SwapAuraEffect],
     displaced_totem: &[&str],
 ) -> Option<String> {
@@ -1311,10 +1319,15 @@ fn swap_change_limit(
             }
         }
         // A spell's damage multiplier as the damage modifiers the swap switches leave it.
-        ["player", "spells", index, "damage_multiplier"] => {
+        ["player", "spells", index, field @ ("damage_multiplier" | "threat_multiplier")] => {
             let index: usize = index.parse().ok()?;
-            let mut multiplier = prepared.player.spells.get(index)?.damage_multiplier;
-            for (spells, value, main, swapped) in damage_mods {
+            let spell = prepared.player.spells.get(index)?;
+            let (mut multiplier, mods) = if *field == "damage_multiplier" {
+                (spell.damage_multiplier, damage_mods)
+            } else {
+                (spell.threat_multiplier, threat_mods)
+            };
+            for (spells, value, main, swapped) in mods {
                 if !spells.contains(&index) || main == swapped {
                     continue;
                 }

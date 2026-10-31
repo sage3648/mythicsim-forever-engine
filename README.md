@@ -304,6 +304,33 @@ the Go goldens and exporter uses. The departures:
   Incinerate on an Immolated target raise a hit's damage after its threat is worked out; the
   reference keeps the threat of the damage before the bonus, so Mind Flay made about 0.82
   threat per damage with no threat talents.
+- The Paladin tree and Holy Binding of live server hotfix push 113554 (30 October 2026, applied
+  to client 1.60.1.70707 by DBCache, which wago.tools' tables do not carry), from upstream
+  wowsims/forever #772 and #773's regenerated rows and Wowhead's Forever talent data (Forever
+  preparation; the reference keeps the 70425 tree). The Paladin string reads in the client's order,
+  17 talents a tree (`src/classes/paladin/prepare/hotfix_113554.rs`), and a talent above its new
+  ranks or a longer tree is refused, so every 70707 string is. Twist of Light, Instrument of Law,
+  One-Handed Weapon Specialization, Improved Seal of Fury and Voice of Truth are gone. Unsealed
+  Wrath (1310735) stores the active seal in its Echo on each landed melee auto (15 sec, 3 stacks)
+  and a swing under a different seal spends every other Echo, each stack a roll of its seal.
+  Swift Judgement is a second Judgement on its own 60 sec cooldown. Shieldsworn takes 4 sec off
+  Holy Strike, whose landed hits fire the active Holy Shield without a charge and Shield
+  Specialization's mana without its cooldown. Conviction is 2/4/6% crit with every spell and
+  attack; Holy Power is 10-50% more crit healing; Two-Handed Weapon Specialization also cuts all
+  threat 7/14/20% with a two-hander; Champion of the Light is 5 ranks of 12% of Intellect and 0.2
+  sec off Hammer of Wrath; Righteous Fury adds 33% to all threat; Vindication gives the paladin no
+  attack power; Sacred Duty's Stamina becomes 5/10 sec off Forbearance; Holy Shield's ranks deal
+  and cost what the rank below did (Rank 3: 153 damage for 195 mana). Divine Precision 4/8%,
+  Improved Seals 3-15%, Reverence 15/30%, Spiritual Focus 14-70%, Redoubt 6-30%, Shield
+  Specialization 15/30% and 50/100%, Improved Righteous Fury 3/6/9%, Iron Creed 10-30% and
+  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is not registered (its ally
+  aura needs heal targets the sim does not have), so Boundless Light holds on every Holy Shock
+  heal; Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
+  heal is not modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing
+  the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
+  heals the priest for half as much, as a second jump, and Binding Heal's ranks leave the tree.
+  Shadow Word: Death's backlash (10% to 30% of maximum health) is self damage the sim does not
+  deal.
 - Party damage for heals that follow it, an assumption until the logs hold them: Forever's level
   30 beta logs have no Prayer of Mending or Chain Heal yet. A healer's party of five takes hits
   at random, the tank about once a second and each of the other four about once every five

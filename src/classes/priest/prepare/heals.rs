@@ -18,7 +18,7 @@ use crate::prepare::heals::{
     apply_heal_talent, register_channel_heal, register_heal, register_heal_from, talent_rank,
     ChannelHeal, HealShape,
 };
-use crate::prepare::sim::{Duration, Sim, UnitId};
+use crate::prepare::sim::{Duration, Rules, Sim, UnitId};
 use crate::prepare::spelldata::store::must_find;
 use crate::prepare::spelldata::Spell as Row;
 
@@ -36,6 +36,8 @@ const PRAYER_OF_HEALING: &[i32] = &[596, 996, 10960, 10961, 25316];
 const POWER_WORD_SHIELD: &[i32] = &[17, 592, 600, 3747, 6065, 6066, 10898, 10899, 10900, 10901];
 /// Binding Heal, a Forever talent: Flash Heal's numbers on the target and the priest.
 const BINDING_HEAL: &[i32] = &[401937, 1240770, 1240771, 1240772, 1240773, 1240774];
+/// Holy Binding (1328569, push 113554): the priest's heal is 50% of the Flash Heal.
+const HOLY_BINDING_SHARE: f64 = 0.5;
 /// Prayer of Mending, a Forever talent: the heal is the cast row's dummy effect, and the buff's
 /// five charges each heal a player.
 const PRAYER_OF_MENDING: &[i32] = &[401859, 1240826, 1240827];
@@ -95,11 +97,26 @@ impl Priest {
         each(sim, LESSER_HEAL, HealShape::SINGLE, false);
         each(sim, HEAL, HealShape::SINGLE, false);
         each(sim, GREATER_HEAL, HealShape::SINGLE, false);
-        each(sim, FLASH_HEAL, HealShape::SINGLE, false);
+        // Push 113554 under Forever's rules replaces the Binding Heal talent with Holy Binding
+        // (1328569) in the same field: each Flash Heal on another player heals the priest for
+        // 50% as much (1328570), outside Shadowform, which a healer never takes. The healer's
+        // Flash Heal lands on a player who needs it, so the priest's half is a second jump at
+        // half the heal. Binding Heal's ranks leave the tree.
+        let holy_binding = sim.rules == Rules::Forever && self.talents.bool("binding_heal");
+        let flash_heal = if holy_binding {
+            HealShape {
+                targets: 2,
+                jump_multiplier: HOLY_BINDING_SHARE,
+                smart: None,
+            }
+        } else {
+            HealShape::SINGLE
+        };
+        each(sim, FLASH_HEAL, flash_heal, false);
         each(sim, RENEW, HealShape::SINGLE, false);
         each(sim, PRAYER_OF_HEALING, HealShape::party(PARTY), false);
         each(sim, POWER_WORD_SHIELD, HealShape::SINGLE, true);
-        if self.talents.bool("binding_heal") {
+        if self.talents.bool("binding_heal") && sim.rules == Rules::GoReference {
             each(sim, BINDING_HEAL, HealShape::party(2), false);
         }
         // Penance on a friend, a Discipline talent: its heal bolt with the cast and on each of

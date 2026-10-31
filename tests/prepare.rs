@@ -6,6 +6,9 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::{fs, path::Path};
 
+#[path = "support/paladin_113554.rs"]
+mod paladin_113554;
+
 #[derive(Deserialize)]
 struct Manifest {
     cases: Vec<Case>,
@@ -193,6 +196,8 @@ fn the_ui_default_fields_prepare_as_without_them() {
             .find(|case| case.id == id)
             .expect("a fixture case");
         let mut request: Value = serde_json::from_slice(&request_bytes(case)).unwrap();
+        // A paladin's talents read in push 113554's tree, which Forever's rules prepare.
+        paladin_113554::forever_request(&mut request);
         if id == "frost-reference" {
             // The fixture's talents in client 1.60.1.70707's order, which Forever's rules read:
             // Arcane Focus's points on Improved Channeling, which takes its square.

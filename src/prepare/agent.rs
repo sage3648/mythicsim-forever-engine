@@ -259,3 +259,44 @@ pub(crate) fn fill_talents_by_layout(
     }
     Message::from_json_text(type_name, &Value::Object(object).to_string())
 }
+
+/// [`fill_talents_by_layout`] for a layout that also names talents the pinned proto does not
+/// have, such as those a client hotfix adds after the reference: a field the proto lacks is
+/// returned with its points beside the message instead of being refused.
+pub(crate) fn fill_talents_by_layout_with_extras(
+    type_name: &str,
+    talents: &str,
+    field: impl Fn(usize, usize) -> Option<&'static str>,
+) -> Result<(Message, std::collections::BTreeMap<&'static str, i64>), String> {
+    use serde_json::{Map, Value};
+    let mut object = Map::new();
+    let mut extras = std::collections::BTreeMap::new();
+    for (tree, digits) in talents.split('-').enumerate() {
+        for (i, digit) in digits.chars().enumerate() {
+            // As Go reads a non-digit: 0.
+            let points = digit.to_digit(10).map_or(0, i64::from);
+            let field = field(tree, i).ok_or_else(|| {
+                format!(
+                    "no talent at tree {} position {}, full string: {talents}",
+                    tree + 1,
+                    i + 1
+                )
+            })?;
+            match crate::contracts::request::field_by_name(type_name, field) {
+                Some((name, is_bool)) => {
+                    let value = if is_bool {
+                        Value::Bool(points == 1)
+                    } else {
+                        Value::from(points)
+                    };
+                    object.insert(name, value);
+                }
+                None => {
+                    extras.insert(field, points);
+                }
+            }
+        }
+    }
+    let message = Message::from_json_text(type_name, &Value::Object(object).to_string())?;
+    Ok((message, extras))
+}

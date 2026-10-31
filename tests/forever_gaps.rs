@@ -8,13 +8,19 @@ use forever_engine::{
 use serde_json::Value;
 use std::{fs, path::Path};
 
+#[path = "support/paladin_113554.rs"]
+mod paladin_113554;
+
 fn request(name: &str) -> Value {
     let path = Path::new(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/fixtures/forever-gaps"
     ))
     .join(format!("{name}.request.json"));
-    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+    let mut request = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    // A paladin's talents read in push 113554's tree, which Forever's rules prepare.
+    paladin_113554::forever_request(&mut request);
+    request
 }
 
 fn prepared(name: &str, rules: Rules) -> Value {
@@ -64,7 +70,12 @@ fn action(player: &Value, spell_id: i64, tag: i64) -> (f64, f64, f64) {
 #[test]
 fn seal_of_light_heals_a_tank_and_judges_light() {
     let name = "protection-paladin-seal-of-light";
-    assert!(!kinds(&prepared(name, Rules::GoReference)).contains(&"seal_of_light"));
+    // The recorded talents, which the reference reads in Go's order.
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/forever-gaps/{name}.request.json"));
+    let recorded = fs::read(path).unwrap();
+    let reference = prepare_json_with(&recorded, "rust", Rules::GoReference).unwrap();
+    assert!(!kinds(&reference).contains(&"seal_of_light"));
     let (value, player) = run(name);
     let kinds = kinds(&value);
     assert!(kinds.contains(&"seal_of_light"), "{kinds:?}");
@@ -162,7 +173,46 @@ fn fourteen_stat_auras_prepare() {
 /// to leave to the Go exporter.
 #[test]
 fn spell_values_fold_as_go_builds_them() {
-    run("retribution-paladin-spell-value-fold");
+    // The rotation's conditions read Light's Vigil on the enemy, which push 113554 makes friendly
+    // only; Forever's rules do not model its party heal yet and refuse the rotation that reaches
+    // it, so the fold is checked under the reference's rules.
+    let name = "retribution-paladin-spell-value-fold";
+    // Without the Manual Crowd Pummeler opener, an item swap the reference does not prepare.
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/forever-gaps/{name}.request.json"));
+    let mut request_without_swap: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let player = &mut request_without_swap["raid"]["parties"][0]["players"][0];
+    player.as_object_mut().unwrap().remove("itemSwap");
+    player["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .drain(..2);
+    let value = prepare_json_with(
+        request_without_swap.to_string().as_bytes(),
+        "rust",
+        Rules::GoReference,
+    )
+    .unwrap();
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    check_prepared(&prepared).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+    let result = simulate_prepared(&prepared).unwrap().result;
+    assert!(
+        result["raidMetrics"]["parties"][0]["players"][0]["dps"]["avg"]
+            .as_f64()
+            .unwrap()
+            > 0.0
+    );
+
+    match prepare_json_with(request(name).to_string().as_bytes(), "rust", Rules::Forever) {
+        Err(forever_engine::PrepareError::Refused(refusal)) => assert!(
+            refusal
+                .reason
+                .contains("Light's Vigil on an ally (push 113554) is unsupported"),
+            "{}",
+            refusal.reason
+        ),
+        other => panic!("{:?}", other.map(|_| ())),
+    }
 }
 
 /// A demon's mana percent and aura time read in the warlock's rotation, and an aura time
@@ -579,7 +629,8 @@ fn hammer_of_the_righteous_cleaves() {
     assert_eq!(effect["weapon_dps"], 3.0);
     assert_eq!(effect["max_targets"], 4);
     let (casts, damage, _) = action(&player, 407632, 0);
-    assert_eq!(casts, 978.0);
+    // 980 since push 113554's tree (978 before): the fixture's talents read in it.
+    assert_eq!(casts, 980.0);
     assert!(damage > 0.0);
 }
 
@@ -599,8 +650,9 @@ fn seal_of_wisdom_restores_mana_beside_the_raids_judgement() {
 fn seal_of_justice_judges_justice() {
     let (value, player) = run("retribution-paladin-seal-of-justice");
     assert!(!effects(&value, "seal_of_justice").is_empty());
-    assert_eq!(action(&player, 20164, 0).0, 3983.0);
-    assert_eq!(action(&player, 20184, 0).0, 773.0);
+    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it.
+    assert_eq!(action(&player, 20164, 0).0, 3298.0);
+    assert_eq!(action(&player, 20184, 0).0, 754.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -643,38 +695,51 @@ fn a_druids_own_thorns_strikes_back() {
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
-/// A Shockadin's Manual Crowd Pummeler opener onto Blade of Hanna: the swap carries One-Handed
-/// Weapon Specialization (3/3), off under both two-handers, as a damage done mod over the spells
-/// it takes, which leave out Holy Shock (20473), Consecration (26573) and Retribution Aura (7294).
+/// A Shockadin's Manual Crowd Pummeler opener onto Blade of Hanna. Push 113554 removes One-Handed
+/// Weapon Specialization, which the swap used to carry, so the fixture's talents read in its tree
+/// carry no mod. With Two-Handed Weapon Specialization 3/3 the swap carries its damage and, since
+/// push 113554, its -20% threat (effect 1367246): on under both two-handers.
 #[test]
-fn a_swap_carries_one_handed_weapon_specialization() {
-    let (value, _) = run("shockadin-paladin-mcp-swap-one-hand-specialization");
-    let swap = effects(&value, "item_swap");
-    let mods: Vec<&Value> = swap[0]["callbacks"]
-        .as_array()
-        .unwrap()
+fn a_swap_carries_the_weapon_specializations() {
+    let name = "shockadin-paladin-mcp-swap-one-hand-specialization";
+    let spell_mods = |value: &Value| -> Vec<Value> {
+        effects(value, "item_swap")[0]["callbacks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|callback| callback["kind"] == "spell_mod")
+            .cloned()
+            .collect()
+    };
+    let (forever, _) = run(name);
+    assert!(spell_mods(&forever).is_empty());
+
+    let mut request = request(name);
+    // The fixture's talents in push 113554's tree, with Two-Handed Weapon Specialization 3/3.
+    request["raid"]["parties"][0]["players"][0]["talentsString"] =
+        Value::from("20123210002001-553220020100005-500000000003");
+    let value = prepare_json_with(request.to_string().as_bytes(), "rust", Rules::Forever).unwrap();
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    check_prepared(&prepared).unwrap_or_else(|error| panic!("{name}: {error:?}"));
+    let mods = spell_mods(&value);
+    let kinds: Vec<(&str, f64)> = mods
         .iter()
-        .filter(|callback| callback["kind"] == "spell_mod")
-        .collect();
-    assert_eq!(mods.len(), 1, "{mods:?}");
-    let (callback, modifier) = (mods[0], &mods[0]["mod"]);
-    assert_eq!(modifier["kind"], "damage_done_pct");
-    assert_eq!(modifier["value"].as_f64(), Some(0.1));
-    assert_eq!(
-        (&callback["main"], &callback["swapped"]),
-        (&Value::Bool(false), &Value::Bool(false))
-    );
-    let spells = value["player"]["spells"].as_array().unwrap();
-    let taken: Vec<i64> = modifier["spells"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter_map(|index| {
-            spells[index.as_u64().unwrap() as usize]["action_id"]["spell_id"].as_i64()
+        .map(|callback| {
+            (
+                callback["mod"]["kind"].as_str().unwrap(),
+                callback["mod"]["value"].as_f64().unwrap(),
+            )
         })
         .collect();
-    assert!(!taken.is_empty());
-    for skipped in [20473, 26573, 7294] {
-        assert!(!taken.contains(&skipped), "{skipped} takes the mod");
+    assert_eq!(
+        kinds,
+        [("damage_done_pct", 0.06), ("threat_multiplier_pct", -0.2)],
+        "{mods:?}"
+    );
+    for callback in &mods {
+        assert_eq!(
+            (&callback["main"], &callback["swapped"]),
+            (&Value::Bool(true), &Value::Bool(true))
+        );
     }
 }

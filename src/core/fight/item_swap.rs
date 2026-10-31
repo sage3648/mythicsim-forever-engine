@@ -173,6 +173,7 @@ fn mod_kind(kind: &str) -> Result<ModKind, BuildError> {
     match kind {
         "damage_done_pct" => Ok(ModKind::DamageDonePercent),
         "bonus_crit_percent" => Ok(ModKind::BonusCritPercent),
+        "threat_multiplier_pct" => Ok(ModKind::ThreatMultiplierPercent),
         other => Err(format!("an item swap spell modifier of kind {other}")),
     }
 }
