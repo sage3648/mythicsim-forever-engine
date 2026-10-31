@@ -5,7 +5,7 @@
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::{fs, path::Path};
 
 #[path = "support/paladin_113554.rs"]
@@ -757,4 +757,23 @@ fn a_swap_carries_the_weapon_specializations() {
             (&Value::Bool(true), &Value::Bool(true))
         );
     }
+}
+
+/// A Manual Crowd Pummeler opener that swaps back to Ironfoe (11684): Fury of Forgewright is off
+/// while the Pummeler is in the hand and on once Ironfoe is.
+#[test]
+fn a_swap_back_to_ironfoe_runs() {
+    let (value, _) = run("retribution-paladin-swap-ironfoe");
+    let swap = effects(&value, "item_swap");
+    let fury: Vec<&Value> = swap[0]["callbacks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|callback| callback["aura"] == "Fury of Forgewright")
+        .collect();
+    assert_eq!(fury.len(), 1, "{fury:?}");
+    assert_eq!(
+        (&fury[0]["main"], &fury[0]["swapped"]),
+        (&json!("off"), &json!("on"))
+    );
 }
