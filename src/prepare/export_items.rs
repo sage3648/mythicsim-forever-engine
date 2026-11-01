@@ -2690,5 +2690,36 @@ pub(crate) fn energy_proc_effects(
             }));
         }
     }
+    effects.extend(beaststalker_mana_proc(env));
     effects
+}
+
+/// item_sets_classic.go Beaststalker Armor (5), under Forever's rules on a class other than a
+/// Hunter: the set (Dungeon Set 1) is not class locked in Forever (classMask 0), and its 5% chance
+/// on landed melee and ranged autoattacks to restore 200 mana (450577) works for any wearer with a
+/// mana bar. The Hunter domain exports it as `hunter_set_mana_proc`; Go attaches its handler
+/// only there, which left the trigger without an effect on anyone else.
+fn beaststalker_mana_proc(env: &Environment) -> Option<Value> {
+    if env.sim.rules != super::sim::Rules::Forever
+        || env.sim.character(env.player).class == "ClassHunter"
+    {
+        return None;
+    }
+    let aura = aura_named(env, "Beaststalker Armor 5P")?;
+    let listener = ProcTrigger {
+        callback: CallbackMask::ON_SPELL_HIT_DEALT,
+        outcome: HitOutcome::LANDED,
+        proc_mask: ProcMask::WHITE_HIT,
+        ..ProcTrigger::default()
+    };
+    let chances: Vec<Value> = proc_trigger_spells(env, &listener)
+        .into_iter()
+        .map(|spell| json!({"spell": spell, "chance": 0.05}))
+        .collect();
+    let label = &env.sim.aura(aura).label;
+    Some(json!({
+        "kind": "mana_proc", "trigger_aura": label, "rng_label": label,
+        "chances": chances, "mana": 200.0,
+        "metrics_action_id": json!({"spell_id": 450577}), "delay_ns": SPELL_BATCH_WINDOW,
+    }))
 }

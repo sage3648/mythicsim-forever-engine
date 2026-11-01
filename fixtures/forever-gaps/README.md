@@ -69,3 +69,7 @@ checks the gate passes and runs it.
 | `balance-druid-thorns` | Thorns first in a Balance Druid's rotation, off the target's threat |
 | `shockadin-paladin-mcp-swap-one-hand-specialization` | One-Handed Weapon Specialization on a Shockadin whose Manual Crowd Pummeler opener swaps back to a two-hander (31 October 2026) |
 | `retribution-paladin-swap-ironfoe` | a Manual Crowd Pummeler opener that swaps back to Ironfoe, whose Fury of Forgewright follows the weapon (1 November 2026) |
+| `enhancement-shaman-beaststalker-armor` | Beaststalker Armor (5) on an Enhancement Shaman, whose mana proc only a Hunter's domain exported (2 November 2026) |
+| `enhancement-shaman-swap-swarmguard` | a Manual Crowd Pummeler opener beside Badge of the Swarmguard, whose rate the swap rebuilds for the weapon in the hand (1 November 2026) |
+| `retribution-paladin-swap-dark-iron-sunderer` | a Manual Crowd Pummeler opener that swaps onto Dark Iron Sunderer, whose Cleave Armor rolls only once it is in the hand (1 November 2026; its talents are in push 113554's tree already) |
+| `combat-rogue-self-casts-at-player` | a strict sequence casting Vanish, Adrenaline Rush and Blade Flurry at the player (1 November 2026) |

@@ -15,6 +15,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     several_targets: Some(crate::engine::coverage::no_limits),
     tanks_several_targets: true,
     other_target_casts: Some(crate::engine::coverage::no_limits),
+    self_spells: &[],
 };
 
 /// Warrior effect kinds implemented in Rust and validated against the pinned Go reference.

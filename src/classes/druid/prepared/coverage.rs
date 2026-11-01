@@ -16,6 +16,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     several_targets: Some(several_targets),
     tanks_several_targets: true,
     other_target_casts: Some(other_target_casts),
+    self_spells: &[],
 };
 
 /// Druid effect kinds implemented in Rust and validated against the pinned Go reference.

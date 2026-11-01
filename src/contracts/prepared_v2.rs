@@ -5164,6 +5164,18 @@ pub enum Effect {
         metrics_action_id: ActionId,
         delay_ns: i64,
     },
+    /// The same for mana, under Forever's rules: a set bonus proc trigger the class's own
+    /// domain does not export, whose handler a spell batch window after a landed hit restores
+    /// mana to a character with a mana bar, as Beaststalker Armor's five piece bonus on a class
+    /// other than a Hunter.
+    ManaProc {
+        trigger_aura: String,
+        rng_label: String,
+        chances: Vec<SpellChance>,
+        mana: f64,
+        metrics_action_id: ActionId,
+        delay_ns: i64,
+    },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.
     FixedUptimeAura {
@@ -5562,6 +5574,7 @@ impl Effect {
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
             Effect::HealthOnCast { .. } => "health_on_cast",
             Effect::EnergizeProc { .. } => "energize_proc",
+            Effect::ManaProc { .. } => "mana_proc",
         }
     }
 }
