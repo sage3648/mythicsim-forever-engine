@@ -17,6 +17,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     // A cast aimed at another target lands its spell, its curse and its debuffs there as in Go,
     // Demonic Brand's included: each target carries its own brand.
     other_target_casts: Some(crate::engine::coverage::no_limits),
+    self_spells: &[],
 };
 
 /// Warlock effect kinds implemented in Rust and validated against the pinned Go reference.

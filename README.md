@@ -544,6 +544,14 @@ the Go goldens and exporter uses. The departures:
   bonus at 3 pieces, not the reference's 2 (`data/go-tables.json` carries the 3). They are data,
   so both rule sets follow them; no Go golden wears enough pieces to reach either count
   (`src/prepare/forever_item_sets.rs`).
+- Beaststalker Armor (Dungeon Set 1) on a class other than a Hunter: Forever does not lock the
+  set to its class (classMask 0), and its five piece bonus reads "Your normal ranged and melee
+  attacks have a chance of restoring 200 mana" (trigger row 450577, 5% on landed autoattacks).
+  The reference attaches the trigger to any wearer but its handler only in the Hunter package, so
+  on anyone else the listener did nothing and Rust refused it. Under Forever's rules it restores
+  the 200 mana to any wearer with a mana bar, a spell batch window after the hit, as the Hunter's
+  does (the prepared effect is `mana_proc`, `src/prepare/export_items.rs`); a Hunter keeps
+  `hunter_set_mana_proc`, and the reference rules still refuse it.
 
 ## Repository layout
 

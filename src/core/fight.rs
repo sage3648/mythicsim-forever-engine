@@ -3710,9 +3710,11 @@ impl<A: Agent> Fight<A> {
                     .then(|| {
                         effects
                             .iter()
-                            .filter(|effect| matches!(effect, Effect::EnergizeProc { .. }))
+                            .filter(|effect| {
+                                matches!(effect, Effect::EnergizeProc { .. } | Effect::ManaProc { .. })
+                            })
                             .position(|effect| {
-                                matches!(effect, Effect::EnergizeProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                                matches!(effect, Effect::EnergizeProc { trigger_aura, .. } | Effect::ManaProc { trigger_aura, .. } if *trigger_aura == exported.label)
                             })
                     })
                     .flatten()
@@ -4248,31 +4250,54 @@ impl<A: Agent> Fight<A> {
             fight.enable_energy_bar(energy);
         }
         for effect in effects {
-            if let Effect::EnergizeProc {
-                rng_label,
-                chances,
-                energy,
-                metrics_action_id,
-                delay_ns,
-                ..
-            } = effect
-            {
-                let mut by_spell = vec![None; fight.spells.len()];
-                for entry in chances {
-                    if let Some(slot) = by_spell.get_mut(entry.spell) {
-                        *slot = Some(entry.chance);
-                    }
+            let (rng_label, chances, resource, amount, metrics_action_id, delay_ns) = match effect {
+                Effect::EnergizeProc {
+                    rng_label,
+                    chances,
+                    energy,
+                    metrics_action_id,
+                    delay_ns,
+                    ..
+                } => (
+                    rng_label,
+                    chances,
+                    ResourceKind::Energy,
+                    energy,
+                    metrics_action_id,
+                    delay_ns,
+                ),
+                Effect::ManaProc {
+                    rng_label,
+                    chances,
+                    mana,
+                    metrics_action_id,
+                    delay_ns,
+                    ..
+                } => (
+                    rng_label,
+                    chances,
+                    ResourceKind::Mana,
+                    mana,
+                    metrics_action_id,
+                    delay_ns,
+                ),
+                _ => continue,
+            };
+            let mut by_spell = vec![None; fight.spells.len()];
+            for entry in chances {
+                if let Some(slot) = by_spell.get_mut(entry.spell) {
+                    *slot = Some(entry.chance);
                 }
-                let metrics =
-                    fight.new_resource_metrics(metrics_action_id.clone(), ResourceKind::Energy);
-                fight.energize_procs.push(energy::EnergizeProc {
-                    label: rng_label.clone(),
-                    chances: by_spell,
-                    energy: *energy,
-                    metrics,
-                    delay: *delay_ns,
-                });
             }
+            let metrics = fight.new_resource_metrics(metrics_action_id.clone(), resource);
+            fight.energize_procs.push(energy::EnergizeProc {
+                label: rng_label.clone(),
+                chances: by_spell,
+                resource,
+                energy: *amount,
+                metrics,
+                delay: *delay_ns,
+            });
         }
         for effect in effects {
             match effect {

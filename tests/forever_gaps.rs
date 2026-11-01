@@ -11,6 +11,9 @@ use std::{fs, path::Path};
 #[path = "support/paladin_113554.rs"]
 mod paladin_113554;
 
+/// The paladin requests recorded with push 113554's talent tree.
+const RECORDED_IN_113554: &[&str] = &["retribution-paladin-swap-dark-iron-sunderer"];
+
 fn request(name: &str) -> Value {
     let path = Path::new(concat!(
         env!("CARGO_MANIFEST_DIR"),
@@ -18,8 +21,11 @@ fn request(name: &str) -> Value {
     ))
     .join(format!("{name}.request.json"));
     let mut request = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    // A paladin's talents read in push 113554's tree, which Forever's rules prepare.
-    paladin_113554::forever_request(&mut request);
+    // A paladin's talents read in push 113554's tree, which Forever's rules prepare. A request
+    // recorded since that push is in its tree already.
+    if !RECORDED_IN_113554.contains(&name) {
+        paladin_113554::forever_request(&mut request);
+    }
     request
 }
 
@@ -776,4 +782,141 @@ fn a_swap_back_to_ironfoe_runs() {
         (&fury[0]["main"], &fury[0]["swapped"]),
         (&json!("off"), &json!("on"))
     );
+}
+
+/// The uptime of the player's aura with this spell id, summed over its tags.
+fn aura_uptime(player: &Value, spell_id: i64) -> f64 {
+    player["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|aura| aura["id"]["spellId"].as_i64() == Some(spell_id))
+        .map(|aura| aura["uptimeSecondsAvg"].as_f64().unwrap_or(0.0))
+        .sum()
+}
+
+/// Runs a prepared input through the gate.
+fn run_prepared(value: &Value) -> Value {
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    check_prepared(&prepared).unwrap_or_else(|error| panic!("{error:?}"));
+    simulate_prepared(&prepared).unwrap().result
+}
+
+/// Beaststalker Armor (5) on an Enhancement Shaman (production sim 672e9c16, 2 November 2026):
+/// Forever does not lock Dungeon Set 1 to its class, and the five piece bonus's 5% chance on
+/// landed melee and ranged autoattacks restores 200 mana (450577) to any wearer with a mana bar.
+/// The Hunter domain exports it for a Hunter; the gate refused it on anyone else.
+#[test]
+fn beaststalker_armor_restores_a_shamans_mana() {
+    let (value, player) = run("enhancement-shaman-beaststalker-armor");
+    let procs = effects(&value, "mana_proc");
+    assert_eq!(procs.len(), 1, "{procs:?}");
+    assert_eq!(procs[0]["trigger_aura"], "Beaststalker Armor 5P");
+    assert_eq!(
+        (&procs[0]["mana"], &procs[0]["delay_ns"]),
+        (&json!(200.0), &json!(10_000_000))
+    );
+    assert!(effects(&value, "hunter_set_mana_proc").is_empty());
+    let gain = resource_gain(&player, 450577, "ResourceTypeMana");
+    assert!(gain > 0.0, "{gain}");
+    // The Go reference has no such effect, so its rules still refuse it.
+    let reference: PreparedV2 = serde_json::from_value(prepared(
+        "enhancement-shaman-beaststalker-armor",
+        Rules::GoReference,
+    ))
+    .unwrap();
+    assert!(check_prepared(&reference).is_err());
+}
+
+/// A Manual Crowd Pummeler opener that swaps onto the shaman's own weapon beside Badge of the
+/// Swarmguard (production sims 472a5d95, 599bddd8 and 2a8fbade, 1 November 2026): the badge's
+/// proc manager rolls a rate for the main hand's speed, which the swap rebuilds. With the
+/// Pummeler's chances zeroed, the badge stacks in a five minute fight only through its second
+/// use, after the swap, at the swapped weapon's chances.
+#[test]
+fn a_swap_rebuilds_the_swarmguards_chances() {
+    let (value, _) = run("enhancement-shaman-swap-swarmguard");
+    let badge = effects(&value, "stacking_cd_on_use")
+        .into_iter()
+        .position(|effect| effect["item_id"] == 21670)
+        .unwrap();
+    let mut value = edited(
+        "enhancement-shaman-swap-swarmguard",
+        &[(r#""duration":60"#, r#""duration":300"#)],
+    );
+    value = prepare_json_with(value.to_string().as_bytes(), "rust", Rules::Forever).unwrap();
+    let index = value["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .enumerate()
+        .filter(|(_, effect)| effect["kind"] == "stacking_cd_on_use")
+        .nth(badge)
+        .unwrap()
+        .0;
+    let swapped = effects(&value, "item_swap")[0]["swapped"].clone();
+    assert!(swapped
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|change| change["path"]
+            .as_str()
+            .unwrap()
+            .starts_with(&format!("/effects/{index}/chances"))));
+    let player = |result: &Value| result["raidMetrics"]["parties"][0]["players"][0].clone();
+    let followed = player(&run_prepared(&value));
+    for chance in value["effects"][index]["chances"].as_array_mut().unwrap() {
+        chance["chance"] = json!(0.0);
+    }
+    let after_swap = player(&run_prepared(&value));
+    let stacks = |player: &Value| aura_uptime(player, 26481);
+    assert!(
+        stacks(&followed) > stacks(&after_swap),
+        "{} {}",
+        stacks(&followed),
+        stacks(&after_swap)
+    );
+    assert!(stacks(&after_swap) > 0.0);
+}
+
+/// A Retribution Paladin's Manual Crowd Pummeler opener that swaps onto Dark Iron Sunderer
+/// (production sims 00ee2f2b and c468fd40, 1 November 2026): the Sunderer's Cleave Armor has no
+/// chances while the Pummeler is in the hand, and the swap's proc manager gives it its own.
+#[test]
+fn a_swap_onto_dark_iron_sunderer_cleaves_armor() {
+    let (value, _) = run("retribution-paladin-swap-dark-iron-sunderer");
+    let procs = effects(&value, "armor_debuff_proc");
+    let sunderer = procs
+        .iter()
+        .find(|effect| effect["trigger_aura"] == "Dark Iron Sunderer")
+        .unwrap();
+    assert_eq!(sunderer["chances"], json!([]));
+    let result = run_prepared(&value);
+    let target = &result["encounterMetrics"]["targets"][0];
+    let cleaved: f64 = target["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|aura| aura["id"]["spellId"] == 15280)
+        .map(|aura| aura["uptimeSecondsAvg"].as_f64().unwrap_or(0.0))
+        .sum();
+    assert!(cleaved > 0.0, "{target}");
+}
+
+/// A Combat Rogue's strict sequence that casts Vanish, Adrenaline Rush and Blade Flurry at the
+/// player (production sims 519a3701 and 15fb0511, 1 November 2026): they act on the rogue alone,
+/// so the casts run as at the target. The recorded sequence opens with Stealth, which never casts
+/// in combat, so the test's own sequence leaves it out.
+#[test]
+fn a_rogues_own_cooldowns_cast_at_the_player() {
+    run("combat-rogue-self-casts-at-player");
+    let mut value = request("combat-rogue-self-casts-at-player");
+    let at_player = |spell: i64| json!({"castSpell": {"spellId": {"spellId": spell}, "target": {"type": "Player"}}});
+    value["raid"]["parties"][0]["players"][0]["rotation"]["priorityList"][0] = json!({
+        "action": {"strictSequence": {"actions": [at_player(1856), at_player(13750), at_player(13877)]}}
+    });
+    let player = run_request(&value);
+    for spell in [1856, 13750, 13877] {
+        assert!(action(&player, spell, 0).0 >= 50.0, "spell {spell}");
+    }
 }

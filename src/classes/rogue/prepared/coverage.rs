@@ -15,6 +15,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     several_targets: Some(several_targets),
     tanks_several_targets: false,
     other_target_casts: Some(other_target_casts),
+    self_spells: &["adrenaline_rush", "blade_flurry", "cold_blood", "vanish"],
 };
 
 /// Rogue effect kinds implemented in Rust and validated against the pinned Go reference.

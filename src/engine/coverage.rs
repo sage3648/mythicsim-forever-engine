@@ -43,6 +43,9 @@ pub(crate) struct ClassGate {
     /// casts there, whose effects and debuffs must land on that target as in Go. None for a
     /// class whose spells have not been checked against it.
     pub(crate) other_target_casts: Option<Limits>,
+    /// The class spells (`class_spell`) that act on the caster alone, whatever unit the rotation
+    /// names: Go casts them at the player as at the target, and the runtime does the same.
+    pub(crate) self_spells: &'static [&'static str],
 }
 
 /// A class check of the input and the spells the rotation can reach: a reason for each
@@ -229,6 +232,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "judgement_of_wisdom",
     "health_on_cast",
     "mana_on_cast",
+    "mana_proc",
     "parry_haste",
     "player_movement",
     "potion_mana",
@@ -488,7 +492,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             _ => Vec::new(),
         },
         Effect::PushbackTrigger { aura, .. } => vec![("player", aura)],
-        Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::EnergizeProc { trigger_aura, .. } | Effect::ManaProc { trigger_aura, .. } => {
+            vec![("player", trigger_aura)]
+        }
         Effect::Crusader { trigger_aura, .. }
         | Effect::DragonbreathChili { trigger_aura, .. }
         | Effect::SpellDataDamageProc { trigger_aura, .. }
@@ -829,6 +835,8 @@ const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
     ("thunderfury", &["chances"]),
     ("spell_data_damage_proc", &["chances", "trigger_spells"]),
     ("extra_attack_proc", &["chances"]),
+    ("stacking_cd_on_use", &["chances"]),
+    ("armor_debuff_proc", &["chances"]),
     (
         "rage_bar",
         &[
@@ -2690,10 +2698,21 @@ fn several_target_limits(
     reasons
 }
 
+/// Whether a cast of the spell at the player is one the runtime follows: a helpful spell, which
+/// `castFriendlySpell` casts there, or a class spell that acts on the caster alone.
+fn casts_at_player(gate: &ClassGate, spell: &Spell) -> bool {
+    spell.has_flag("SpellFlagHelpful")
+        || spell
+            .class_spell
+            .as_deref()
+            .is_some_and(|name| gate.self_spells.contains(&name))
+}
+
 /// Go's `castSpell` names the unit it casts on. Rust casts a spell on a target past the first
 /// when its effects, its debuffs and its dot are all of the target they are given, which the
 /// class checks; a channel's dot aura stays on the first target, so a channel with a dot on
-/// its target is never cast elsewhere. A cast on the player is not supported either: `castFriendlySpell` casts there.
+/// its target is never cast elsewhere. A cast on the player is supported only as
+/// `casts_at_player` allows.
 fn other_target_casts(
     prepared: &PreparedV2,
     gate: &ClassGate,
@@ -2729,7 +2748,7 @@ fn other_target_casts(
                 match step.target.resolve(targets) {
                     Some(Unit::Target(0)) if relative(&step.target) => spells.push(spell),
                     None | Some(Unit::Target(0)) => {}
-                    Some(Unit::Player) if spell.has_flag("SpellFlagHelpful") => {}
+                    Some(Unit::Player) if casts_at_player(gate, spell) => {}
                     Some(Unit::Player) => {
                         reasons.insert(format!(
                             "rotation item {}: a step of a sequence casting {} on the player is \
@@ -2788,7 +2807,7 @@ fn other_target_casts(
             // class checks with the rest of its spells. A harmful spell whose dot sits on its
             // target never casts there, as the game refuses it, where Go panics on the
             // player's missing dot. Any other spell on the player is unsupported.
-            if !spell.has_flag("SpellFlagHelpful") && !harmful_target_dot(spell) {
+            if !casts_at_player(gate, spell) && !harmful_target_dot(spell) {
                 reasons.insert(format!(
                     "rotation item {}: castSpell of {id} on the player is unsupported",
                     item.position

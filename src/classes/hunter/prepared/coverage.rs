@@ -16,6 +16,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     several_targets: Some(several_targets),
     tanks_several_targets: false,
     other_target_casts: None,
+    self_spells: &[],
 };
 
 /// Hunter effect kinds implemented in Rust and validated against the pinned Go reference.
