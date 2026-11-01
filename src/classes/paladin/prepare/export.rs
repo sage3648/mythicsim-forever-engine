@@ -503,6 +503,7 @@ impl Paladin {
                 "spells": ["holy_light", "flash_of_light", "holy_shock_heal", "holy_shock"],
             }));
         }
+        effects.extend(self.oath_of_light_effect(&label));
         let vengeance = talents.i32("vengeance");
         if vengeance > 0 {
             // talents_retribution.go applyVengeance: the damage mod's School and ProcMask, as

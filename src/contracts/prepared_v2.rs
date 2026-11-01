@@ -2430,6 +2430,12 @@ pub enum Effect {
         player: PaladinHealUnit,
         target: PaladinHealUnit,
     },
+    /// Druid Bloom (hotfix push 113531, Forever's rules, healer sims): a heal over time of
+    /// `hots` that ends by its duration heals the player for its Spirit, as the spell `spell_id`.
+    Bloom {
+        spell_id: i32,
+        hots: Vec<i32>,
+    },
     /// MythicSim's healer sims (Rust only): every heal rank a class registers for the player,
     /// and the player's healing modifiers at reset with its bonus healing taken.
     Heals {
@@ -2572,6 +2578,18 @@ pub enum Effect {
         aura: String,
         crit: f64,
         spells: Vec<String>,
+    },
+    /// Paladin oath_of_light.go (hotfix push 113554, Forever's rules): the cast swears the Oath
+    /// on the healed ally for the aura's 5 minutes, and its Holy Light, Flash of Light and Holy
+    /// Shock heals add the flat bonus to their base amount while it holds. Boundless Light's crit
+    /// on the Holy Shock heal holds only without it.
+    OathOfLight {
+        spell_id: i32,
+        aura: String,
+        holy_light: f64,
+        flash_of_light: f64,
+        holy_shock: f64,
+        boundless_light_crit: f64,
     },
     /// An item proc common/shared/shared_utils.go builds from client rows: a listener that
     /// casts a single target magic hit at once on the unit hit. A weapon proc rolls its proc
@@ -5136,6 +5154,7 @@ impl Effect {
             Effect::PaladinHeals { .. } => "paladin_heals",
             Effect::PaladinAuraCast { .. } => "paladin_aura_cast",
             Effect::Heals { .. } => "heals",
+            Effect::Bloom { .. } => "bloom",
             Effect::LayOnHands { .. } => "lay_on_hands",
             Effect::EyeForAnEye { .. } => "eye_for_an_eye",
             Effect::PursuitOfJustice { .. } => "pursuit_of_justice",
@@ -5166,6 +5185,7 @@ impl Effect {
             Effect::IronCreed { .. } => "iron_creed",
             Effect::HolyShield { .. } => "holy_shield",
             Effect::DivineFavor { .. } => "divine_favor",
+            Effect::OathOfLight { .. } => "oath_of_light",
             Effect::SpellDataDamageProc { .. } => "spell_data_damage_proc",
             Effect::SpellDataHealProc { .. } => "spell_data_heal_proc",
             Effect::SecondWind { .. } => "second_wind",

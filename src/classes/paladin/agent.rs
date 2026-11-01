@@ -16,6 +16,7 @@ use super::{
         heals::{Heals, HolyLightHaste, Illumination},
         holy::{self, DivineFavor, Vigil},
         judgement, judgement_refresh,
+        oath_of_light::OathOfLight,
         seals::{self, Seals},
         strikes,
     },
@@ -54,6 +55,8 @@ pub(crate) enum PaladinSpell {
     /// A Holy Shock rank's damage, by its position in the effect.
     HolyShock(usize),
     DivineFavor,
+    /// Oath of Light's cast (push 113554, Forever's rules).
+    OathOfLight,
     RighteousFury,
     SwiftJudgement,
     /// Swift Judgement under Forever's rules since push 113554: a second Judgement.
@@ -102,6 +105,7 @@ pub(crate) enum PaladinAura {
     /// Unsealed Wrath's trigger (push 113554, Forever's rules).
     UnsealedWrath,
     DivineFavor,
+    OathOfLight,
     RighteousFury,
     InstrumentOfLaw,
     SwiftJudgement,
@@ -148,6 +152,8 @@ pub(crate) struct PaladinAgent {
     pub(crate) shieldsworn: bool,
     holy_shock: Vec<(f64, f64)>,
     divine_favor: Option<Rc<DivineFavor>>,
+    /// Oath of Light (push 113554, Forever's rules): read by the heals.
+    pub(crate) oath: Option<OathOfLight>,
     /// Consecrated Ground's mark on the target and its Holy damage multiplier.
     pub(crate) consecrated_ground: Option<(AuraRef, f64)>,
     pub(crate) righteous_fury: Option<RighteousFury>,
@@ -388,6 +394,12 @@ impl PaladinAgent {
                 }
                 _ => None,
             }),
+            "oath_of_light" => effects.iter().find_map(|effect| match effect {
+                Effect::OathOfLight { spell_id, .. } if *spell_id == id.spell_id => {
+                    Some(PaladinSpell::OathOfLight)
+                }
+                _ => None,
+            }),
             _ => None,
         }
     }
@@ -456,6 +468,9 @@ impl PaladinAgent {
                 }
                 Effect::DivineFavor { aura, .. } => {
                     auras.push((aura.clone(), PaladinAura::DivineFavor))
+                }
+                Effect::OathOfLight { aura, .. } => {
+                    auras.push((aura.clone(), PaladinAura::OathOfLight))
                 }
                 Effect::RighteousFury {
                     aura,
@@ -783,6 +798,22 @@ impl PaladinAgent {
                 } => {
                     let bound = DivineFavor::bind(&mut fight, aura, *crit, spells)?;
                     fight.agent.divine_favor = Some(Rc::new(bound));
+                }
+                Effect::OathOfLight {
+                    aura,
+                    holy_light,
+                    flash_of_light,
+                    holy_shock,
+                    boundless_light_crit,
+                    ..
+                } => {
+                    let bound = OathOfLight::bind(
+                        &mut fight,
+                        aura,
+                        (*holy_light, *flash_of_light, *holy_shock),
+                        *boundless_light_crit,
+                    )?;
+                    fight.agent.oath = Some(bound);
                 }
                 Effect::Vengeance {
                     aura,
@@ -1120,6 +1151,10 @@ impl Agent for PaladinAgent {
                 holy::holy_shock(fight, spell, target, roll);
             }
             PaladinSpell::DivineFavor => Self::divine_favor(fight).apply(fight),
+            PaladinSpell::OathOfLight => {
+                let oath = fight.agent.oath.expect("Oath of Light is bound");
+                oath.apply(fight, target);
+            }
             PaladinSpell::RighteousFury => {
                 let aura = fight
                     .agent
@@ -1266,6 +1301,10 @@ impl Agent for PaladinAgent {
         if kind == PaladinAura::DivineFavor {
             Self::divine_favor(fight).on_gain(fight);
         }
+        if kind == PaladinAura::OathOfLight {
+            let oath = fight.agent.oath.expect("Oath of Light is bound");
+            oath.on_gain(fight);
+        }
         if kind == PaladinAura::Vengeance {
             fight
                 .agent
@@ -1287,6 +1326,10 @@ impl Agent for PaladinAgent {
         }
         if kind == PaladinAura::DivineFavor {
             Self::divine_favor(fight).on_expire(fight);
+        }
+        if kind == PaladinAura::OathOfLight {
+            let oath = fight.agent.oath.expect("Oath of Light is bound");
+            oath.on_expire(fight);
         }
         if kind == PaladinAura::Vengeance {
             fight

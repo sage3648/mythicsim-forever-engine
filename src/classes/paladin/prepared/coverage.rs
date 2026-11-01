@@ -36,6 +36,7 @@ const EFFECTS: &[&str] = &[
     "judgement_refresh",
     "lay_on_hands",
     "lights_vigil",
+    "oath_of_light",
     "paladin_aura_cast",
     "paladin_heals",
     "pursuit_of_justice",
@@ -86,6 +87,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "holy_shock" => Some("holy_shock"),
         "lights_vigil" | "lights_vigil_strike" => Some("lights_vigil"),
         "divine_favor" => Some("divine_favor"),
+        "oath_of_light" => Some("oath_of_light"),
         "righteous_fury" => Some("righteous_fury"),
         "swift_judgement" => Some("swift_judgement"),
         "second_judgement" => Some("second_judgement"),
@@ -117,6 +119,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             aura: trigger_aura, ..
         }
         | Effect::DivineFavor {
+            aura: trigger_aura, ..
+        }
+        | Effect::OathOfLight {
             aura: trigger_aura, ..
         }
         | Effect::SwiftJudgement {

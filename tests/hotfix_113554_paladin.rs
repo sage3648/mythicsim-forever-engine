@@ -341,8 +341,8 @@ fn protection_reads_the_reworked_talents() {
 }
 
 /// Holy Power 5/5 is A_MOD_CRITICAL_HEALING_AMOUNT: a heal crit's bonus 50% larger, 150% to 225%,
-/// and no crit chance; Boundless Light 2/2 is 30% Holy Shock heal crit, since the sim registers no
-/// Oath of Light. The reference's Holy Power is crit chance.
+/// and no crit chance; Boundless Light 2/2 is 30% Holy Shock heal crit on an ally without the
+/// paladin's Oath of Light (`healers.rs` casts the Oath). The reference's Holy Power is crit chance.
 #[test]
 fn holy_power_is_crit_healing_and_boundless_light_holy_shock_crit() {
     // Holy Shock and Boundless Light need Holy's first four rows.

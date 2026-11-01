@@ -57,12 +57,14 @@ const EFFECTS: &[&str] = &[
     "wrath",
     // MythicSim's healer sims (Rust only, checked against the client rows, not Go).
     "heals",
+    "bloom",
 ];
 
 /// The effect kind whose implementation executes a Druid spell.
 fn spell_capability(spell: &Spell) -> Option<&'static str> {
     match spell.class_spell.as_deref()? {
         "heal" | "swiftmend" => Some("heals"),
+        "bloom" => Some("bloom"),
         "moonkin_form" => Some("moonkin_form"),
         "starfire" if spell.damage_effect.is_some() => Some("starfire"),
         "wrath" if spell.damage_effect.is_some() => Some("wrath"),

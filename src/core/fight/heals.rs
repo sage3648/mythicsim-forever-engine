@@ -518,6 +518,39 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// A heal of exactly `amount` on the player that nothing modifies: no spell power, no healing
+    /// multiplier of the caster or the player, no crit roll and no threat. It still goes through
+    /// the spell's overhealing share, the burst window, the health gained, the log and the
+    /// caster's heal listeners, and counts as a hit of the spell (Bloom).
+    pub(crate) fn deal_flat_heal(&mut self, spell: SpellId, amount: f64) {
+        let target = Side::Player.index();
+        let (amount, overhealing) = self.landed_healing(spell, target, amount.max(0.0));
+        let result = super::SpellResult {
+            armor_multiplier: 0.0,
+            target: Side::Player,
+            attacker: self.spells[spell].caster,
+            outcome: OUTCOME_HIT,
+            damage: amount,
+            threat: 0.0,
+        };
+        let metrics = &mut self.spells[spell].metrics[target];
+        metrics.hits += 1;
+        metrics.total_healing += amount;
+        self.note_burst(amount);
+        let health = self.self_health_metrics_of(spell);
+        self.gain_health(amount, health);
+        if self.log.is_some() && !self.spells[spell].flags.no_logs {
+            let line = format!(
+                "[{}] {} Hit for {amount:.3} healing{}. (Threat: 0.000)",
+                self.config.player_label,
+                action_string(&self.spells[spell].id),
+                super::healing::overhealing_note(overhealing),
+            );
+            self.player_log(&line);
+        }
+        self.on_heal_dealt(spell, &result);
+    }
+
     /// A shield on the player: its absorb counted as the spell's shielding, which healing per
     /// second includes as Go's does.
     pub(crate) fn deal_shield(&mut self, spell: SpellId, amount: f64) {
