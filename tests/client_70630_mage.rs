@@ -10,6 +10,8 @@ use serde_json::{json, Value};
 use std::{fs, path::Path};
 
 const FROSTBOLT: i64 = 25304;
+/// The Frostbolt a Forever mage casts for 25304: rank X, as rank XI is an Ahn'Qiraj 20 book.
+const FROSTBOLT_KNOWN: i64 = 10181;
 const CONE_OF_COLD: i64 = 10161;
 const ICE_LANCE: i64 = 1240047;
 const WINTERS_CHILL: i64 = 12579;
@@ -245,7 +247,7 @@ fn only_frostbolt_frost_blast_and_an_empowered_ice_lance_apply_winters_chill() {
     };
     let mut lance = 0;
     for gain in &gains {
-        let bolt = at(*gain, "Hit for", FROSTBOLT) || at(*gain, "Crit for", FROSTBOLT);
+        let bolt = at(*gain, "Hit for", FROSTBOLT_KNOWN) || at(*gain, "Crit for", FROSTBOLT_KNOWN);
         let empowered_lance = at(*gain, "Completed cast", ICE_LANCE);
         assert!(
             bolt || empowered_lance,
