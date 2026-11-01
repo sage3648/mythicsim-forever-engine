@@ -1288,9 +1288,9 @@ fn rage_bar(value: &Value) -> &Value {
         .unwrap()
 }
 
-/// Fork patches 123 and 124: a critical auto attack pays the swing's rage and, on top, the rage
-/// of the swing before a two-hander's factor times the crit rage multiplier, now 2, less one.
-/// A two-hander's critical swing is not worth twice its swing, a one-hander's is.
+/// Fork patches 123 and 124, the reference's rule: a critical auto attack pays the swing's rage
+/// and, on top, the rage of the swing before a two-hander's factor times the crit rage multiplier,
+/// now 2, less one. A two-hander's critical swing is not worth twice its swing, a one-hander's is.
 #[test]
 fn a_critical_auto_attack_pays_the_swing_and_the_one_handers_rage() {
     // The Arms Warrior's two-hander: 15.75 rage a swing (3.46 x 1.3006 x 3.5), whose crit adds
@@ -1336,6 +1336,62 @@ fn a_critical_auto_attack_pays_the_swing_and_the_one_handers_rage() {
         }
     }
     assert!(hits > 0 && crits > 0, "{hits} hits and {crits} crits");
+}
+
+/// Forever's rules (wowsims/forever 7c28cfa73): a critical white hit gives twice its swing's whole
+/// rage, a two-hander's factor included. Forever's combat logs of 9 October 2026 hold 21 two-hand
+/// crits at exactly 2x (16.2 to 32.4 rage over 13 crits, 14.8 to 29.7 over 8). Forever preparation
+/// writes `crit_multiplies_swing` on the rage bar and the reference's does not, so the Arms
+/// Warrior's two-hander crits for 31.5 rage, not 27.86. A one-hander's crit already gave twice its
+/// swing, so the Fury Warrior's fight is the same with the flag or without.
+#[test]
+fn a_critical_auto_attack_doubles_the_whole_swing_under_forever_rules() {
+    let request = fs::read(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures/mage/prepared-v2/production-arms-warrior.request.json"),
+    )
+    .unwrap();
+    let forever = forever_engine::prepare_json(&request, "x").unwrap();
+    assert_eq!(rage_bar(&forever)["crit_multiplies_swing"], json!(true));
+    let go = forever_engine::prepare_json_with(&request, "x", forever_engine::Rules::GoReference)
+        .unwrap();
+    assert!(rage_bar(&go).get("crit_multiplies_swing").is_none());
+
+    let mut arms = warrior_fixture("production-arms-warrior");
+    rage_bar_mut(&mut arms)["crit_multiplies_swing"] = json!(true);
+    let logs = first_fight_log(arms);
+    let lines: Vec<&str> = logs.lines().collect();
+    let mut crits = 0;
+    for (index, line) in lines.iter().enumerate() {
+        if !line.contains("{OtherID: 3, Tag: 1} Crit for") {
+            continue;
+        }
+        let Some(gain) = lines[index + 1..]
+            .iter()
+            .take(2)
+            .find(|line| line.contains("rage from {OtherID: 3, Tag: 1}"))
+        else {
+            continue;
+        };
+        assert!(gain.contains("Gained 31.500 rage"), "{line}\n{gain}");
+        crits += 1;
+    }
+    assert!(crits > 0, "no main hand crits");
+
+    let fury = warrior_fixture("production-warrior");
+    let mut flagged = fury.clone();
+    rage_bar_mut(&mut flagged)["crit_multiplies_swing"] = json!(true);
+    assert_eq!(first_fight_log(fury), first_fight_log(flagged));
+}
+
+/// The rage bar of a prepared warrior, to change.
+fn rage_bar_mut(value: &mut Value) -> &mut Value {
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|effect| effect["kind"] == "rage_bar")
+        .unwrap()
 }
 
 /// Fork patch 116: a dual wielder's off hand crit sizes Deep Wounds off the off hand weapon, as
