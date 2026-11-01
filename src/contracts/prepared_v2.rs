@@ -1450,6 +1450,10 @@ pub struct HealSpell {
     /// player, counted as this heal's shielding (Vestments of Faith's Armor of Faith).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub crit_shield: Option<f64>,
+    /// Forever's rules: a share of each critical heal that becomes an absorb on its player
+    /// (Divine Aegis), counted as another spell's shielding.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crit_absorb: Option<CritAbsorb>,
     /// A healer's gear under Forever's rules: the direct heal's multiplier while any of these
     /// heal over time ranks is up (Idol of Rejuvenation on Regrowth).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1461,6 +1465,20 @@ pub struct HealSpell {
     pub cooldown_per_hot_ns: Option<i64>,
 }
 
+/// A heal's critical hits shielding their player, as Divine Aegis does.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct CritAbsorb {
+    /// The share of the critical heal the absorb holds.
+    pub share: f64,
+    /// The client spell ID of the absorb aura, whose spell the shielding counts on.
+    pub spell_id: i32,
+    /// Whether the ticks of a channelled heal (Penance) shield as well. A tick of a heal over
+    /// time never does.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub ticks: bool,
+}
+
 /// A direct heal's bonus while a heal over time of the healer is up.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -1468,6 +1486,39 @@ pub struct HotBonus {
     /// The heal over time ranks, by client spell ID.
     pub spell_ids: Vec<i32>,
     pub multiplier: f64,
+}
+
+/// Renewed Hope (425280): the priest's Power Word: Shield leaves Weakened Soul on a member of
+/// the party, and a listed heal on a member who has it gains crit chance and cuts the debuff.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RenewedHope {
+    /// The heal ranks that gain the crit and cut the debuff, by client spell ID.
+    pub heal_spell_ids: Vec<i32>,
+    /// The shield ranks that leave Weakened Soul, by client spell ID.
+    pub shield_spell_ids: Vec<i32>,
+    /// The crit chance a heal gains, in percentage points.
+    pub crit_percent: f64,
+    /// What a heal takes off the debuff's remaining time, in nanoseconds.
+    pub cut_ns: i64,
+    /// Weakened Soul's duration, in nanoseconds.
+    pub duration_ns: i64,
+    /// Hits a second on each member of the party, the tank first: who needs the next heal.
+    pub hit_rates: Vec<f64>,
+}
+
+/// Litany of Light (1317006): casting a heal after a different heal restores a share of its
+/// base mana cost.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct LitanyOfLight {
+    /// The share of the spell's base cost that returns.
+    pub share: f64,
+    /// The heal ranks, grouped by the spell they are a rank of: the next heal differs when its
+    /// group does.
+    pub families: Vec<Vec<i32>>,
+    /// The metrics the mana returned counts on.
+    pub metrics_action_id: ActionId,
 }
 
 /// A heal that reaches players as the party's damage hits them, in MythicSim's healer sims under
@@ -2445,6 +2496,14 @@ pub enum Effect {
         /// Forever's rules: the party's damage, when a heal follows it ([`SmartHeal`]).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         party: Option<PartyDamage>,
+    },
+    /// The healer Priest's talents that act on the party rather than on one heal (Rust only,
+    /// Forever's rules): what the heals of this priest cannot state by themselves.
+    PriestHealTalents {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        renewed_hope: Option<RenewedHope>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        litany_of_light: Option<LitanyOfLight>,
     },
     /// Paladin lay_on_hands.go: each rank the rotation names drains the paladin's mana,
     /// restores mana to the paladin when it heals the paladin, and heals for the paladin's
@@ -5154,6 +5213,7 @@ impl Effect {
             Effect::PaladinHeals { .. } => "paladin_heals",
             Effect::PaladinAuraCast { .. } => "paladin_aura_cast",
             Effect::Heals { .. } => "heals",
+            Effect::PriestHealTalents { .. } => "priest_heal_talents",
             Effect::Bloom { .. } => "bloom",
             Effect::LayOnHands { .. } => "lay_on_hands",
             Effect::EyeForAnEye { .. } => "eye_for_an_eye",

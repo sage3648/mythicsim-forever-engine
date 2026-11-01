@@ -444,6 +444,19 @@ the Go goldens and exporter uses. The departures:
   October 2026 beta notes); the globes taken spell hits spend are not modelled, since the healer
   takes none. The prepared effects are `instant_cast_aura`, `mana_globes` and the heals' channel
   shapes (`tests/healer_spells.rs`).
+- A healer Priest's talents that read a heal's target or its history, from the client rows and
+  tooltips: Divine Aegis (431622) turns each crit of a direct heal, Penance's bolts and Prayer of
+  Mending's charges into an absorb of 5%, 10% or 15% of the heal, counted as the absorb aura's
+  (431624) shielding; the share is taken before the overhealing share comes off and the absorb
+  is full, like Power Word: Shield's. A heal over time never shields. Renewed Hope (425280) gives
+  Lesser Heal, Heal, Greater Heal, Flash Heal and Penance 2% crit a point on a member of the
+  party with Weakened Soul (6788, 15 seconds) and cuts that debuff by 1 second a point: a heal
+  goes to a member at random in proportion to the party's hit rates (the assumption above), and
+  Power Word: Shield goes to the first member in the party's order without the debuff. Litany of
+  Light (1317006) returns 5% or 10% of a heal's base mana cost when the heal before it was a
+  different spell, not another rank of the same one. Desperate Prayer (19243) is a self heal at
+  no cost on a 10 minute cooldown that a rotation casts when it names it. The prepared effect is
+  `priest_heal_talents`, and a heal's `crit_absorb` (`tests/healer_spells.rs`).
 - Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
   them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
   with no procs per minute, and the reference leaves them unregistered (its generator's "states
