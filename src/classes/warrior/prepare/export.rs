@@ -370,12 +370,15 @@ impl Warrior {
         }
         if talent("flurry") > 0 {
             let buff = data.flurry_triggered.highest();
-            effects.push(
-                json!({"kind": "warrior_flurry", "trigger_aura": "Flurry - Trigger",
+            let mut flurry = json!({"kind": "warrior_flurry", "trigger_aura": "Flurry - Trigger",
                 "aura": "Flurry",
                 "melee_speed_multiplier": data.flurry.multiplier_at(talent("flurry")),
-                "charges": i32::from(buff.proc_charges)}),
-            );
+                "charges": i32::from(buff.proc_charges)});
+            // Forever's logs: misses, dodges and parries spend a charge too (flurry.rs).
+            if sim.rules == Rules::Forever {
+                flurry["every_swing_spends"] = json!(true);
+            }
+            effects.push(flurry);
         }
         if self.has_talent("anger_management") {
             let row = data.anger_management.highest();

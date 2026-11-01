@@ -1078,12 +1078,14 @@ impl WarriorAgent {
                     aura,
                     melee_speed_multiplier,
                     charges,
+                    every_swing_spends,
                     ..
                 } => {
                     fight.agent.flurry = Some(Flurry {
                         aura: fight.player_aura(aura)?,
                         melee_speed_multiplier: *melee_speed_multiplier,
                         charges: *charges,
+                        every_swing_spends: *every_swing_spends,
                     })
                 }
                 Effect::AngerManagement {
