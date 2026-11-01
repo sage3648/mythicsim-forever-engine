@@ -203,6 +203,17 @@ the Go goldens and exporter uses. The departures:
   when the Hunter steps back in. The reference adds the half swing on every arrival, so on a dual
   wield weave that steps in after each Auto Shot and out after the main hand swing the off hand
   almost never swung: 0.0 swings a fight on our weave request, now 28.3.
+- A critical white hit's rage, from Forever's combat logs of 9 October 2026 (counted in
+  wowsims/forever 7c28cfa73): two Warriors' two-hand crits gave exactly twice the swing's rage, 21
+  of 21 (16.2 to 32.4 over 13 crits, 14.8 to 29.7 over 8). The reference adds the rage of the
+  swing before a two-hander's factor, so a two-hand crit gave 1.77 times its swing: 27.86 rage
+  on the Arms production request's 15.75 swing, now 31.5. A one-hander's crit, either hand,
+  already gave twice its swing and does not move. A bear's crit follows the same rule (Forever's
+  development notes of 1 and 8 October raise the crit rage of warriors and bears alike), and
+  moves nothing either: a bear's paw takes no two-hander factor here (8.65 rage a 2.5 second
+  swing), so its crit already doubled. The prepared `rage_bar` effect carries
+  `crit_multiplies_swing`. Arms gains 0.6% to 1.3% (the production request 703.68 to 708.83 DPS
+  at 10,000 iterations); Fury and bears sim the same to the cent.
 - Multi-Shot's cast, from our Forever beta combat logs on Warcraft Logs (reports
   Par9kghHbAVYptwm, TBqwNKxVW8H3narp and mJGyPgZAtr2T4YpX, quiver at 15% speed): all 121
   Multi-Shots have a cast start, a median 0.45, 0.45 and 0.44 seconds before the shot, and 0.32

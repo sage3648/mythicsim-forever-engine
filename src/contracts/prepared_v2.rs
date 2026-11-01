@@ -4148,6 +4148,11 @@ pub enum Effect {
         /// Patch 182: the threat of a gain is `threat_per_rage` times the unit's threat multiplier at
         /// the gain, split between the targets in combat. Off, `threat_per_rage` on each target.
         threat_multiplied: bool,
+        /// Forever's rules: a critical white hit gives `CritRageMultiplier` times its swing's whole
+        /// rage, a two-hander's factor included, in place of the crit rage values. Without it, as
+        /// in Go, a two-hander's crit adds the rage of the swing before that factor.
+        #[serde(default, skip_serializing_if = "is_false")]
+        crit_multiplies_swing: bool,
     },
     /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
     /// auras that are not up from the reset: the gain multiplies, the expiry divides.
