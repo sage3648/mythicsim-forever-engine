@@ -2172,47 +2172,49 @@ fn weapon_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<String>
 /// weapon_procs.go `frostOilEffects`: common/forever/frost_oil.go (the fork's patch 126), Frost
 /// Oil, a temporary enchantment on a melee weapon whose client row casts a Frostbolt on a landed
 /// hit of that weapon at a flat chance, at once on the unit hit. One listener for each oiled
-/// hand, over the spell `shared.SpellDataProcDamageSpell` builds from the row.
-fn frost_oil_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
-    const BOLT: i32 = 350025;
+/// hand, over the spell `shared.SpellDataProcDamageSpell` builds from the row. Shadow Oil (a
+/// MythicSim Rust-only addition beyond the Go reference pin, client 70707 enchant 25) is its twin,
+/// casting its Shadow Bolt the same way.
+fn proc_oil_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
-    for (label, mask) in [
-        ("Frost Oil (main hand)", ProcMask::MELEE_MH),
-        ("Frost Oil (off hand)", ProcMask::MELEE_OH),
-    ] {
-        let Some(aura) = aura_named(env, label) else {
-            continue;
-        };
-        let damage = must_find(BOLT);
-        let position = spell_position(env, &ActionId::spell(damage.id));
-        let a = env.sim.aura(aura);
-        let Some(position) = position.filter(|_| a.dpm.is_none() && a.icd.is_none()) else {
-            unrepresented.push(format!("{label} is not a flat chance on hit for a spell"));
-            continue;
-        };
-        let shape = match proc_damage_shape(env, damage, position) {
-            Ok(shape) => shape,
-            Err(refusal) => {
-                unrepresented.push(format!("{label}'s proc {refusal}"));
+    for oil in &super::proc_oil::PROC_OILS {
+        for mask in [ProcMask::MELEE_MH, ProcMask::MELEE_OH] {
+            let label = oil.aura_name(mask);
+            let label = label.as_str();
+            let Some(aura) = aura_named(env, label) else {
                 continue;
+            };
+            let damage = must_find(oil.bolt);
+            let position = spell_position(env, &ActionId::spell(damage.id));
+            let a = env.sim.aura(aura);
+            let Some(position) = position.filter(|_| a.dpm.is_none() && a.icd.is_none()) else {
+                unrepresented.push(format!("{label} is not a flat chance on hit for a spell"));
+                continue;
+            };
+            let shape = match proc_damage_shape(env, damage, position) {
+                Ok(shape) => shape,
+                Err(refusal) => {
+                    unrepresented.push(format!("{label}'s proc {refusal}"));
+                    continue;
+                }
+            };
+            let listener = ProcTrigger {
+                proc_mask: mask,
+                is_weapon_proc: true,
+                outcome: HitOutcome::LANDED,
+                ..ProcTrigger::default()
+            };
+            let mut effect = json!({
+                "kind": "spell_data_damage_proc", "trigger_aura": a.label,
+                "trigger_spells": proc_trigger_spells(env, &listener),
+                "landed_only": true, "require_damage": false,
+                "proc_chance": f64::from(damage.proc_chance) / 100.0,
+            });
+            for (key, value) in shape {
+                effect[key] = value;
             }
-        };
-        let listener = ProcTrigger {
-            proc_mask: mask,
-            is_weapon_proc: true,
-            outcome: HitOutcome::LANDED,
-            ..ProcTrigger::default()
-        };
-        let mut effect = json!({
-            "kind": "spell_data_damage_proc", "trigger_aura": a.label,
-            "trigger_spells": proc_trigger_spells(env, &listener),
-            "landed_only": true, "require_damage": false,
-            "proc_chance": f64::from(damage.proc_chance) / 100.0,
-        });
-        for (key, value) in shape {
-            effect[key] = value;
+            effects.push(effect);
         }
-        effects.push(effect);
     }
     effects
 }
@@ -2403,7 +2405,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects.extend(weapon_enchant_damage_proc_effects(env, unrepresented));
     effects.extend(proc_damage_item_effects(env, unrepresented));
     effects.extend(weapon_damage_proc_effects(env, unrepresented));
-    effects.extend(frost_oil_effects(env, unrepresented));
+    effects.extend(proc_oil_effects(env, unrepresented));
     effects.extend(lobotomizer_effects(env, unrepresented));
     effects.extend(ebon_hilt_effects(env, unrepresented));
     effects.extend(set_stat_proc_effects(env, unrepresented));

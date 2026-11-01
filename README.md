@@ -509,6 +509,17 @@ the Go goldens and exporter uses. The departures:
   to `HunterOptions.Ammo` as `SwiftfeatherArrow` (13) and `SwiftstrikeShot` (14)
   (`src/contracts/request/schema.rs`), leaving `data/proto-schema.json` as the pinned reference
   wrote it. They are data, not a departure, so both rule sets add the 24.5.
+- Shadow Oil, from the client 1.60.1.70707 data: item 3824 (use spell 3594, level 24) puts
+  temporary enchantment 25 on a melee weapon, a proc effect at the 15% its `EffectPointsMin`
+  states, casting spell 350026, a Shadow Bolt of Shadow damage that rolls 52 plus 0.9 a level with
+  0.15 variance and takes 0.56 of spell power. It is Frost Oil's twin (item 3829, use spell 3595,
+  enchantment 26, 10% of Frostbolt 350025, the fork's patch 126): a flat chance on each landed hit
+  of the oiled hand, not procs per minute, with no proc manager, so `mhImbueId` and `ohImbueId`
+  take 3594 or 3824 as they take 3595 or 3829, the oil on the main hand's swap weapon follows the
+  item swap as Frost Oil does, and each oiled hand has its own listener (`Shadow Oil (main hand)`,
+  `Shadow Oil (off hand)`) with the bolt's row `ProcChance` as its chance. The Go reference has no
+  Shadow Oil and ignores the id, so both rule sets register it, as with the ammo above
+  (`src/prepare/proc_oil.rs`, `tests/classes/proc_oil.rs`).
 
 ## Repository layout
 
