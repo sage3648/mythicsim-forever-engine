@@ -111,7 +111,7 @@ impl Hunter {
         // serpent_sting.go: a ranged hit roll, then after travel a dot whose ticks add a share
         // of ranged attack power.
         if let Some(spell) = self.serpent_sting {
-            let rank = data.serpent_sting.highest();
+            let rank = data.serpent_sting.highest_for(sim.rules);
             effects.push(json!({
                 "kind": "serpent_sting", "spell_id": spell_id_of(sim, spell),
                 "tick_base": rank.periodic_effect().average(CHARACTER_LEVEL),

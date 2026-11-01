@@ -429,7 +429,7 @@ impl Warrior {
                 .effect(dbcenums::A_MOD_DAMAGE_PERCENT_TAKEN, 127).multiplier_at(1)}));
         effects.push(json!({"kind": "pseudo_stat_auras", "auras": pseudo_stat_auras}));
         // battle_shout.go: the warrior's own shout, which outbids the party's at an equal value.
-        let battle_shout = data.battle_shout.highest();
+        let battle_shout = data.battle_shout.highest_for(env.rules);
         if let Some(own) = sim.get_spell(unit, &spell_action(battle_shout.id)) {
             let mut value = generated::BATTLE_SHOUT.value(0);
             if self.inputs.use_battle_shout && sim.state_flag(self.has_bs_t2) {
@@ -626,7 +626,7 @@ impl Warrior {
         if !tanking && sim.rules != Rules::Forever {
             inert("Revenge - Trigger", &mut effects);
         } else if sim.get_aura(unit, "Revenge - Trigger").is_some() {
-            let row = data.revenge.highest();
+            let row = data.revenge.highest_for(env.rules);
             effects.push(json!({"kind": "revenge", "spell_id": row.id,
                 "trigger_aura": "Revenge - Trigger", "aura": "Revenge",
                 "damage": damage_roll(row), "attack_power_share": 0.25}));

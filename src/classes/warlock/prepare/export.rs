@@ -190,11 +190,11 @@ impl Warlock {
         // immolate.go, corruption.go: a snapshot dot of the client's periodic effect.
         effects.push(with_kind(
             "immolate",
-            warlock_tick(data.immolate.highest(), unrepresented),
+            warlock_tick(data.immolate.highest_for(env.rules), unrepresented),
         ));
         effects.push(with_kind(
             "corruption",
-            warlock_tick(data.corruption.highest(), unrepresented),
+            warlock_tick(data.corruption.highest_for(env.rules), unrepresented),
         ));
         // doom.go: one snapshot tick a minute on, on the bane slot.
         effects.push(with_kind(

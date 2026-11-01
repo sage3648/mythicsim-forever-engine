@@ -7,9 +7,11 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
+use super::book_ranks;
 use super::store::must_find;
 use super::{nil, nil_effect, Effect, Spell};
 use crate::data::spells as rows;
+use crate::prepare::sim::Rules;
 
 /// The kept ranks of each talent ladder, by spell id and rank count.
 type TalentRanks = HashMap<(i32, i32), Vec<&'static Spell>>;
@@ -109,6 +111,20 @@ impl Ladder {
 
     pub(crate) fn highest(&self) -> &'static Spell {
         match self.ranks.last() {
+            Some(rank) => rank,
+            None => nil(),
+        }
+    }
+
+    /// The highest rank a player knows under these rules: under Forever's, a rank taught by an
+    /// Ahn'Qiraj 20 book is not known (see [`super::book_ranks`]).
+    pub(crate) fn highest_for(&self, rules: Rules) -> &'static Spell {
+        match self
+            .ranks
+            .iter()
+            .rev()
+            .find(|spell| rules != Rules::Forever || !book_ranks::is_book_rank(spell.id))
+        {
             Some(rank) => rank,
             None => nil(),
         }
