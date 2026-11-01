@@ -46,11 +46,14 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
     ROWS.get_or_init(|| {
         let data = spell_data();
         let mut rows: HashMap<i32, &'static Row> = HashMap::new();
-        data.shadow_bolt.each(|_, row| {
-            rows.insert(row.id, row);
-        });
+        // Every rank of Shadow Bolt and Immolate: Forever's rules cast the rank below the
+        // Ahn'Qiraj 20 book (spelldata::book_ranks), the Go reference the book rank.
+        for ladder in [&data.shadow_bolt, &data.immolate] {
+            ladder.each(|_, row| {
+                rows.insert(row.id, row);
+            });
+        }
         for ladder in [
-            &data.immolate,
             &data.conflagrate,
             &data.shadowburn,
             &data.searing_pain,

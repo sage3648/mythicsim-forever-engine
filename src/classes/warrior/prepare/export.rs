@@ -578,7 +578,7 @@ impl Warrior {
         // base damage the strike adds to a main hand weapon swing.
         let mut strikes = Vec::new();
         for (ladder, cleave) in [(&data.heroic_strike, false), (&data.cleave, true)] {
-            let row = ladder.highest();
+            let row = ladder.highest_for(env.rules);
             let Some(spell) = Self::spell_of(sim, unit, row) else {
                 continue;
             };
