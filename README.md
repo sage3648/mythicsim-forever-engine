@@ -520,6 +520,12 @@ the Go goldens and exporter uses. The departures:
   `Shadow Oil (off hand)`) with the bolt's row `ProcChance` as its chance. The Go reference has no
   Shadow Oil and ignores the id, so both rule sets register it, as with the ammo above
   (`src/prepare/proc_oil.rs`, `tests/classes/proc_oil.rs`).
+- The Zul'Gurub crafted sets, from the client 1.60.1.70425 ItemSet and ItemSetSpell rows: Blood
+  Tiger Harness needs Leatherworking and The Darksoul Blacksmithing (RequiredSkill 165 and 164
+  at 300), as Bloodvine Garb needs Tailoring, and Bloodsoul Embrace and The Darksoul give their
+  bonus at 3 pieces, not the reference's 2 (`data/go-tables.json` carries the 3). They are data,
+  so both rule sets follow them; no Go golden wears enough pieces to reach either count
+  (`src/prepare/forever_item_sets.rs`).
 
 ## Repository layout
 
