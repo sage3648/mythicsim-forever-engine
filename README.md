@@ -309,7 +309,7 @@ the Go goldens and exporter uses. The departures:
   with Predatory Discipline a landed Ferocious Bite keeps the energy left after its cost; Primal
   Bite's level 60 rank is 1238070 (1238073 is gone, same 77 flat damage); Shifting Power's
   cooldown is 8 seconds; Wild Growth takes a 3 second cast that Naturalist shortens; Naturalist's
-  damage and Genesis are 2% a rank. Bloom models nothing (its heal row is not in the store).
+  damage and Genesis are 2% a rank. Bloom is modelled from its text alone (below).
   Moonkin Aura and Leader of the Pack are both 3% of every kind of crit, and one counts (the
   `RaidCrit` category, as #769 rules). Mage: Arcane Resilience has 3 ranks, Ice Lance's Frozen
   bonus is 300% and every rank has an 8 second cooldown on Fire Blast's category 19, Winter's
@@ -349,14 +349,29 @@ the Go goldens and exporter uses. The departures:
   and cost what the rank below did (Rank 3: 153 damage for 195 mana). Divine Precision 4/8%,
   Improved Seals 3-15%, Reverence 15/30%, Spiritual Focus 14-70%, Redoubt 6-30%, Shield
   Specialization 15/30% and 50/100%, Improved Righteous Fury 3/6/9%, Iron Creed 10-30% and
-  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is not registered (its ally
-  aura needs heal targets the sim does not have), so Boundless Light holds on every Holy Shock
-  heal; Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
+  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is a castable spell (below), and
+  Boundless Light holds on a Holy Shock heal only while the Oath is not on the heal target;
+  Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
   heal is not modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing
   the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
   heals the priest for half as much, as a second jump, and Binding Heal's ranks leave the tree.
   Shadow Word: Death's backlash (10% to 30% of maximum health) is self damage the sim does not
   deal.
+- Oath of Light (1328548) and Bloom (1328621), the two healer talents of hotfix pushes 113554 and
+  113531, from the client text and the rows the pushes carry (wago.tools has neither, and
+  upstream wowsims/forever models only the Oath). Oath of Light is an instant 8% base mana cast
+  that swears a 5 minute Oath on the heal target, which is the player in the healer model; while
+  it holds, each Holy Light heals 400 more, each Flash of Light 115 and each Holy Shock 229 (the
+  rows' 6.67, 1.92 and 3.83 a level at level 60), added to the heal's base amount before healing
+  power, and Boundless Light's Holy Shock crit does not apply. A rotation casts it on the player
+  (`castFriendlySpell` before the pull, `castSpell` in the list) and again before it ends.
+  Bloom heals the target of a Rejuvenation or Regrowth that ends by its duration for 100% of the
+  druid's Spirit. The client rows are two dummy effects (100 and 50) and no heal spell, so the
+  coefficient, crit and modifiers are not stated: the heal is the Spirit exactly, no healing
+  power, no multipliers, no crit, with the overhealing share of a heal at once, and shows as its
+  own action (1328621). A heal over time cast again while it runs keeps ticking on its first
+  player, so that cast blooms as the new one goes up; one Swiftmend consumes, or the fight cuts
+  short, blooms nothing. The dispel case (50% of Spirit) never happens in the sim.
 - Party damage for heals that follow it, an assumption until the logs hold them: Forever's level
   30 beta logs have no Prayer of Mending or Chain Heal yet. A healer's party of five takes hits
   at random, the tank about once a second and each of the other four about once every five

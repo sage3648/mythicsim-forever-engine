@@ -14,6 +14,7 @@ use super::{
     spells::{
         bear::{self, Barkskin, Enrage, FrenziedRegeneration, Lacerate, Maul},
         bear_form::{self, BearForm},
+        bloom::Bloom,
         cat_builders::{Builder, CatBuilders},
         cat_form::{self, CatForm},
         faerie_fire::FaerieFire,
@@ -138,6 +139,8 @@ pub(crate) struct DruidAgent {
     /// The Restoration druid's heals, and the ranks Swiftmend consumes, Rejuvenation first.
     heals: Option<Rc<HealBook>>,
     swiftmend_hots: Vec<usize>,
+    /// Bloom (hotfix push 113531, Forever's rules): the heal a heal over time's end makes.
+    bloom: Option<Rc<Bloom>>,
     /// With an item swap, each set's weapon in caster form and paw, Main then Swap1.
     form_weapons: Option<[FormWeapons; 2]>,
     moonkin_form: Option<AuraRef>,
@@ -194,6 +197,7 @@ impl Default for DruidAgent {
         DruidAgent {
             heals: None,
             swiftmend_hots: Vec::new(),
+            bloom: None,
             moonkin_form: None,
             moonfire_dot: None,
             insect_swarm_debuff: None,
@@ -474,6 +478,16 @@ impl DruidAgent {
                         .flat_map(|ids| ids.iter().rev().filter_map(rank_of))
                         .collect();
                     fight.agent.heals = Some(Rc::new(book));
+                }
+                Effect::Bloom { spell_id, hots } => {
+                    let spirit = prepared
+                        .player
+                        .stats
+                        .get("Spirit")
+                        .copied()
+                        .ok_or("prepared stats lack Spirit")?;
+                    let bound = Bloom::bind(&fight, *spell_id, spirit, hots)?;
+                    fight.agent.bloom = Some(Rc::new(bound));
                 }
                 Effect::DruidForms {
                     starting_form,
@@ -1128,6 +1142,10 @@ impl Agent for DruidAgent {
                 let rank = book
                     .rank_of(spell)
                     .expect("a heal is one of the bound ranks");
+                // A heal over time cast again leaves the one running to end on its player.
+                if let Some(bloom) = fight.agent.bloom.clone() {
+                    bloom.on_recast(fight, &book, rank);
+                }
                 book.cast(fight, rank);
             }
             DruidSpell::Swiftmend => {
@@ -1401,6 +1419,11 @@ impl Agent for DruidAgent {
     }
 
     fn on_dot_expire(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
+        if behavior == DruidSpell::Heal {
+            if let Some(bloom) = fight.agent.bloom.clone() {
+                bloom.on_dot_expire(fight, dot);
+            }
+        }
         if behavior == DruidSpell::InsectSwarm {
             let side = fight.dots[dot].side;
             insect_swarm::on_dot_expire(fight, fight.agent.insect_swarm_debuff, side);

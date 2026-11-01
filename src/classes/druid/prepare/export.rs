@@ -200,6 +200,7 @@ impl Druid {
         // MythicSim's healer sims (Rust only): the Restoration druid's heals.
         if !self.heals.is_empty() {
             effects.push(crate::prepare::heals::heals_effect(env, &self.heals));
+            effects.extend(self.bloom_effect());
         }
 
         // thorns.go: the cast turns the druid's own Thorns on. Forever's rules describe it; Go's

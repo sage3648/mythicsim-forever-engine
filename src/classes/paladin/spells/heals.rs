@@ -132,6 +132,15 @@ impl Heals {
             }
             _ => {}
         }
+        // Oath of Light (Forever's rules): the flat bonus, before spell power, on an ally who
+        // carries the paladin's Oath.
+        if let Some(oath) = fight.agent.oath.filter(|oath| oath.on(fight, target)) {
+            amount += match rank.kind {
+                HealKind::HolyLight => oath.holy_light,
+                HealKind::FlashOfLight => oath.flash_of_light,
+                HealKind::HolyShockHeal => oath.holy_shock,
+            };
+        }
         fight.calc_and_deal_healing(
             spell,
             target,
