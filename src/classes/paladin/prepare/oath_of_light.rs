@@ -9,11 +9,14 @@
 //! amount, before spell power, when the ally they heal carries it. Boundless Light's Holy Shock
 //! crit holds only on an ally without the Oath.
 //!
-//! MythicSim's healer model heals the player itself as a stand-in for the tank, so the aura
-//! lives on the player: a rotation casts the Oath on the heal target (`Self`) and every Holy
-//! Light, Flash of Light and Holy Shock heal then carries the bonus while it is up. A cast on
-//! any other unit swears the Oath on an ally the sim does not model: it costs mana and the
-//! global cooldown, replaces the Oath on the player and bonuses nothing.
+//! MythicSim's healer model heals the player itself as a stand-in for a player who needs it, so
+//! the aura lives on the player: a rotation casts the Oath on the heal target (`Self`), meaning
+//! the tank. While it is up, a Holy Light, Flash of Light or Holy Shock heal reaches the tank
+//! only with the tank's share of the party's hits (`prepare::party_damage::tank_share`, 5 in 9);
+//! that share carries the bonus, and the rest reach players without the Oath, where Boundless
+//! Light's crit holds. A cast on any other unit swears the Oath on an ally the sim does not
+//! model: it costs mana and the global cooldown, replaces the Oath on the player and bonuses
+//! nothing.
 
 use serde_json::{json, Value};
 
@@ -73,6 +76,7 @@ impl Paladin {
             "kind": "oath_of_light", "spell_id": row.id, "aura": format!("Oath of Light{label}"),
             "holy_light": bonus(1), "flash_of_light": bonus(2), "holy_shock": bonus(3),
             "boundless_light_crit": hotfix::at(&hotfix::BOUNDLESS_LIGHT, boundless),
+            "holder_share": crate::prepare::party_damage::tank_share(),
         }))
     }
 }

@@ -130,7 +130,9 @@ impl Shaman {
         let mut effects: Vec<Value> = Vec::new();
         // MythicSim's healer sims (Rust only): the Restoration shaman's heals.
         if !self.heals.is_empty() {
-            effects.push(crate::prepare::heals::heals_effect(env, &self.heals));
+            let mut heals = crate::prepare::heals::heals_effect(env, &self.heals);
+            self.riptide_chain_heal_bonus(env, &mut heals);
+            effects.push(heals);
         }
 
         // lightning_bolt.go: the overload rolls on landing, before the bolt deals its damage.

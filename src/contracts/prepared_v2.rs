@@ -1486,6 +1486,10 @@ pub struct HotBonus {
     /// The heal over time ranks, by client spell ID.
     pub spell_ids: Vec<i32>,
     pub multiplier: f64,
+    /// Whether the bonus is the first player's alone, as Riptide's is on Chain Heal ("directly
+    /// on that target"), where the others jump on at their falloff of the unboosted heal.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub first_target_only: bool,
 }
 
 /// Renewed Hope (425280): the priest's Power Word: Shield leaves Weakened Soul on a member of
@@ -2649,6 +2653,12 @@ pub enum Effect {
         flash_of_light: f64,
         holy_shock: f64,
         boundless_light_crit: f64,
+        /// The share of the party's heals that reach the Oath's holder, among the players the
+        /// healer's heals land on: the tank's share of the party's hits. A heal that does not
+        /// reach the holder gets none of the flat bonus, and a Holy Shock heal on it has
+        /// Boundless Light's crit. One is the Oath on every heal.
+        #[serde(default = "one")]
+        holder_share: f64,
     },
     /// An item proc common/shared/shared_utils.go builds from client rows: a listener that
     /// casts a single target magic hit at once on the unit hit. A weapon proc rolls its proc
@@ -3534,17 +3544,6 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         changes: Vec<SpellModChange>,
-    },
-    /// MythicSim's healer sims under Forever's rules: a self buff of globes, as Water Shield.
-    /// Casting `spell_id` puts `aura` up with all its stacks. Each direct heal of the player's
-    /// that crits spends a globe, at most once per `icd_ns`, for `mana_fraction` of the maximum
-    /// mana; the last globe spent takes the aura down.
-    ManaGlobes {
-        spell_id: i32,
-        aura: String,
-        mana_fraction: f64,
-        icd_ns: i64,
-        metrics_action_id: ActionId,
     },
     InertListener {
         unit: String,
@@ -5323,7 +5322,6 @@ impl Effect {
             Effect::StackingCdOnUse { .. } => "stacking_cd_on_use",
             Effect::ShieldOnHeal { .. } => "shield_on_heal",
             Effect::InstantCastAura { .. } => "instant_cast_aura",
-            Effect::ManaGlobes { .. } => "mana_globes",
             Effect::InertListener { .. } => "inert_listener",
             Effect::ShadowBolt {} => "shadow_bolt",
             Effect::Immolate { .. } => "immolate",

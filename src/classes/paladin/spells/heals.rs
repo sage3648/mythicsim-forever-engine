@@ -132,15 +132,23 @@ impl Heals {
             }
             _ => {}
         }
-        // Oath of Light (Forever's rules): the flat bonus, before spell power, on an ally who
-        // carries the paladin's Oath.
+        // Oath of Light (Forever's rules): while the Oath is up, the heal reaches the Oath's
+        // holder or another player (`OathOfLight::holder_share`). The holder's heal adds the flat
+        // bonus, before spell power; any other player's Holy Shock heal has Boundless Light's
+        // crit, which the Oath's aura took off.
+        let mut unsworn_crit = 0.0;
         if let Some(oath) = fight.agent.oath.filter(|oath| oath.on(fight, target)) {
-            amount += match rank.kind {
-                HealKind::HolyLight => oath.holy_light,
-                HealKind::FlashOfLight => oath.flash_of_light,
-                HealKind::HolyShockHeal => oath.holy_shock,
-            };
+            if fight.random("Oath of Light") < oath.holder_share {
+                amount += match rank.kind {
+                    HealKind::HolyLight => oath.holy_light,
+                    HealKind::FlashOfLight => oath.flash_of_light,
+                    HealKind::HolyShockHeal => oath.holy_shock,
+                };
+            } else if rank.kind == HealKind::HolyShockHeal {
+                unsworn_crit = oath.boundless_light_crit;
+            }
         }
+        fight.spells[spell].bonus_crit_percent += unsworn_crit;
         fight.calc_and_deal_healing(
             spell,
             target,
@@ -148,6 +156,7 @@ impl Heals {
             unit.healing,
             unit.bonus_healing_taken,
         );
+        fight.spells[spell].bonus_crit_percent -= unsworn_crit;
     }
 }
 

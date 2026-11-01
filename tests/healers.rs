@@ -190,16 +190,19 @@ fn restoration_druid_heals_as_its_rows_state() {
         "restoration-druid",
         &result,
         &[
-            // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then +10%, on
-            // each of five players, 117.663, of which a group heal's 24.58% is overhealing.
-            "{SpellID: 1238215} tick Hit for 88.741 healing, 28.921 overhealing.",
+            // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then 1.10 x 1.10
+            // (Gift of Nature, and Genesis 5/5 at 2% a rank, whose first effect names Wild
+            // Growth), on each of five players, 129.429, of which a group heal's 24.58% is
+            // overhealing.
+            "{SpellID: 1238215} tick Hit for 97.615 healing, 31.814 overhealing.",
             // Rejuvenation rank 11 (25299): 194 + 0.2 x 302 = 254.4 a tick, then 1.10 x 1.15 x
             // 1.10 (Genesis 5/5 at 2% a rank since hotfix push 113531), 353.999, of which
             // Rejuvenation's 17.76% is overhealing.
             "{SpellID: 25299} tick Hit for 291.128 healing, 62.870 overhealing.",
             // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1770.0,
-            // then Gift of Nature's 10% on Swiftmend's own direct heal.
-            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:1947.0",
+            // then Gift of Nature's 10% and Genesis's 10% (its second effect names Swiftmend) on
+            // Swiftmend's own direct heal.
+            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:2124.0",
             // Bloom, when the Regrowth cast at 9 s and the Rejuvenation cast at 21.5 s end by
             // their duration (27 s and 15 s with Nature's Splendor): 255 Spirit, of which a
             // heal at once's 5.37% is overhealing. The Swiftmends consumed the rest.
@@ -332,6 +335,9 @@ fn restoration_shaman_heals_as_its_rows_state() {
     // Chain Heal rank 3 (10623) lands on up to three players, each with its own roll of 473 to
     // 539 plus 0.714 of healing power, the second at half and the third at a quarter. A cast's
     // first heal is the largest, so a heal larger than the one before starts the next cast.
+    // The first player heals 25% more with a Riptide up (the Riptide holder, see
+    // `Shaman::riptide_chain_heal_bonus`): the fixture's Riptide is up for nearly every cast, and
+    // the casts it is not up for read the roll without it.
     let field = |line: &str, name: &str| -> f64 {
         let at = line.find(name).unwrap() + name.len();
         line[at..].split(',').next().unwrap().parse().unwrap()
@@ -352,6 +358,13 @@ fn restoration_shaman_heals_as_its_rows_state() {
         assert!(cast.len() <= 3, "{} Chain Heal jumps", cast.len());
         for (jump, &(healing_power, base)) in cast.iter().enumerate() {
             let roll = base / 0.5f64.powi(jump as i32) - 0.714 * healing_power;
+            let boosted = jump == 0 && !(472.5..=539.5).contains(&roll);
+            let roll = if boosted {
+                // The first player's whole heal, roll and healing power, is 25% larger.
+                base / 1.25 - 0.714 * healing_power
+            } else {
+                roll
+            };
             assert!((472.5..=539.5).contains(&roll), "jump {jump}: roll {roll}");
         }
     }
@@ -725,7 +738,10 @@ fn base_healing(result: &Value, spell: i64) -> Vec<f64> {
 /// 2/2, on 305 healing power, sworn on the heal target before the pull and again when under five
 /// seconds are left. The Oath adds its flat bonus to the heal's base amount, before healing power
 /// (the Greater Blessing of Light's 400 and 115 are the same numbers): Holy Light 400, Flash of
-/// Light 115 and Holy Shock 229, the rows' 6.67, 1.92 and 3.83 a level at level 60.
+/// Light 115 and Holy Shock 229, the rows' 6.67, 1.92 and 3.83 a level at level 60. While the
+/// Oath is up a heal reaches its holder, the tank, with the tank's share of the party's hits
+/// (`party_damage::tank_share`, 5 in 9), and only those heals carry the bonus: the rest are a
+/// plain roll.
 #[test]
 fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
     let result = run("holy-paladin");
@@ -775,21 +791,40 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
         let swore = base_healing(&result, spell);
         let bare = base_healing(&bare, spell);
         assert!(!swore.is_empty() && !bare.is_empty(), "{spell}");
-        for (name, rolls, plus) in [("with", swore, bonus), ("without", bare, 0.0)] {
-            for base in rolls {
-                let roll = base - coefficient * 305.0 - plus;
-                assert!(
-                    (min - 0.1..=max + 0.1).contains(&roll),
-                    "{spell} {name} the Oath: {base} is a roll of {roll} outside {min} to {max}"
-                );
+        let in_range = |base: f64, plus: f64| {
+            (min - 0.1..=max + 0.1).contains(&(base - coefficient * 305.0 - plus))
+        };
+        // Without the Oath's cast every heal is a plain roll.
+        for &base in &bare {
+            assert!(in_range(base, 0.0), "{spell} without the Oath: {base}");
+        }
+        // With it, a heal is the tank's (the bonus on its roll) or another player's (a plain
+        // roll), the tank's about 5 in 9 of them.
+        let (mut tank, mut others) = (0, 0);
+        for &base in &swore {
+            if in_range(base, bonus) {
+                tank += 1;
+            } else {
+                assert!(in_range(base, 0.0), "{spell} with the Oath: {base}");
+                others += 1;
             }
         }
+        assert!(
+            tank > 0 && others > 0,
+            "{spell}: {tank} tank heals, {others} others"
+        );
+        let share = f64::from(tank) / f64::from(tank + others);
+        assert!(
+            (0.3..=0.8).contains(&share),
+            "{spell}: the tank's share {share}"
+        );
     }
 }
 
-/// Boundless Light's Holy Shock heal crit holds only on an ally without the Oath: the Holy Shock
-/// heal crits about 30 points less often while the paladin's Oath is on its player. The Oath's
-/// bonuses outweigh that lost crit and its mana, so healing per second rises.
+/// Boundless Light's Holy Shock heal crit holds only on an ally without the Oath: while the
+/// paladin's Oath is up, the Holy Shock heals that reach the tank (5 in 9 of them) lose its 30
+/// points of crit and the rest keep it, so the heal crits about 17 points less often. The Oath's
+/// bonuses on the tank's heals outweigh that lost crit and its mana, so healing per second rises.
 #[test]
 fn oath_of_light_takes_boundless_lights_crit_off_the_holy_shock_heal() {
     let sworn = run("holy-paladin");
@@ -804,7 +839,7 @@ fn oath_of_light_takes_boundless_lights_crit_off_the_holy_shock_heal() {
     };
     let (with, without) = (crit_share(&sworn), crit_share(&bare));
     assert!(
-        (0.25..=0.35).contains(&(without - with)),
+        (0.12..=0.22).contains(&(without - with)),
         "Holy Shock crits {with} with the Oath, {without} without"
     );
     let hps = |result: &Value| player(result)["hps"]["avg"].as_f64().unwrap();

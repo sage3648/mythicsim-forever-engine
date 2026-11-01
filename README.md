@@ -360,11 +360,15 @@ the Go goldens and exporter uses. The departures:
 - Oath of Light (1328548) and Bloom (1328621), the two healer talents of hotfix pushes 113554 and
   113531, from the client text and the rows the pushes carry (wago.tools has neither, and
   upstream wowsims/forever models only the Oath). Oath of Light is an instant 8% base mana cast
-  that swears a 5 minute Oath on the heal target, which is the player in the healer model; while
-  it holds, each Holy Light heals 400 more, each Flash of Light 115 and each Holy Shock 229 (the
-  rows' 6.67, 1.92 and 3.83 a level at level 60), added to the heal's base amount before healing
-  power, and Boundless Light's Holy Shock crit does not apply. A rotation casts it on the player
-  (`castFriendlySpell` before the pull, `castSpell` in the list) and again before it ends.
+  that swears a 5 minute Oath on the heal target, which is the player in the healer model and
+  stands for the tank; while it holds, each Holy Light heal that reaches the tank heals 400 more,
+  each Flash of Light 115 and each Holy Shock 229 (the rows' 6.67, 1.92 and 3.83 a level at
+  level 60), added to the heal's base amount before healing power. The sim heals "a player who
+  needs it", so a heal reaches the tank with the tank's share of the party's hits under
+  `prepare::party_damage` (5 in 9, `party_damage::tank_share`, carried as the effect's
+  `holder_share`); the rest reach players without the Oath, get no bonus and, for Holy Shock,
+  keep Boundless Light's crit, which the aura takes off the tank's. A rotation casts it on the
+  player (`castFriendlySpell` before the pull, `castSpell` in the list) and again before it ends.
   Bloom heals the target of a Rejuvenation or Regrowth that ends by its duration for 100% of the
   druid's Spirit. The client rows are two dummy effects (100 and 50) and no heal spell, so the
   coefficient, crit and modifiers are not stated: the heal is the Spirit exactly, no healing
@@ -442,8 +446,8 @@ the Go goldens and exporter uses. The departures:
   and that cast spends it. Water Shield's three globes are each spent, at most once every 3.5
   seconds, by a direct heal of the shaman's that crits, for 2% of the maximum mana (the 16
   October 2026 beta notes); the globes taken spell hits spend are not modelled, since the healer
-  takes none. The prepared effects are `instant_cast_aura`, `mana_globes` and the heals' channel
-  shapes (`tests/healer_spells.rs`).
+  takes none. The prepared effects are `instant_cast_aura`, the shaman's `water_shield` and the
+  heals' channel shapes (`tests/healer_spells.rs`).
 - A healer Priest's talents that read a heal's target or its history, from the client rows and
   tooltips: Divine Aegis (431622) turns each crit of a direct heal, Penance's bolts and Prayer of
   Mending's charges into an absorb of 5%, 10% or 15% of the heal, counted as the absorb aura's
@@ -457,6 +461,19 @@ the Go goldens and exporter uses. The departures:
   different spell, not another rank of the same one. Desperate Prayer (19243) is a self heal at
   no cost on a 10 minute cooldown that a rotation casts when it names it. The prepared effect is
   `priest_heal_talents`, and a heal's `crit_absorb` (`tests/healer_spells.rs`).
+- Healer talents past the heals, from the client rows and Forever's tooltips: Riptide's third
+  effect makes a Chain Heal cast directly on its target heal 25% more. The sim has no
+  per-player auras (a heal lands on a player who needs it), so a Chain Heal's first player is
+  read as the Riptide holder while a Riptide of the shaman's is up, a healer swinging Chain Heal
+  at the player it Riptided and the party model's Chain Heal starting on the tank; the jumps
+  keep their falloff of the unboosted heal, and Riptide is not spent (its row states no
+  consumption). Genesis (1223081) is 2% a rank on the periodic healing of Rejuvenation,
+  Regrowth and Wild Growth, its first effect, and on Swiftmend, its second, which the
+  reference's Genesis (Rejuvenation and Regrowth alone) did not reach. The prepared effect is the
+  heal's `hot_bonus` with `first_target_only` (`tests/healer_talents.rs`). Not modelled: Light's
+  Vigil, whose party heal on the next Holy Shock waits on a rotation that casts it; and the
+  shaman's own Mana Tide Totem, which it has no cast for (the raid's Mana Tide Totem option is an
+  external).
 - Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
   them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
   with no procs per minute, and the reference leaves them unregistered (its generator's "states

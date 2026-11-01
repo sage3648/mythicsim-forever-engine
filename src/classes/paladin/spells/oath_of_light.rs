@@ -15,6 +15,12 @@ pub(crate) struct OathOfLight {
     pub(crate) holy_light: f64,
     pub(crate) flash_of_light: f64,
     pub(crate) holy_shock: f64,
+    /// The share of heals, while the Oath is up, that reach its holder (the tank, by the party's
+    /// hit rates); the rest reach players without it.
+    pub(crate) holder_share: f64,
+    /// Boundless Light's crit on a Holy Shock heal on a player without the Oath, which the
+    /// aura's mod takes off every Holy Shock heal.
+    pub(crate) boundless_light_crit: f64,
     /// A crit mod that takes Boundless Light's bonus off the Holy Shock heal while the Oath
     /// holds, when the paladin has the talent.
     boundless_light: Option<ModId>,
@@ -26,7 +32,11 @@ impl OathOfLight {
         aura: &str,
         bonuses: (f64, f64, f64),
         boundless_light_crit: f64,
+        holder_share: f64,
     ) -> Result<Self, String> {
+        if !(0.0..=1.0).contains(&holder_share) {
+            return Err(format!("Oath of Light holder share {holder_share}"));
+        }
         let aura = fight.player_aura(aura)?;
         let boundless_light = (boundless_light_crit > 0.0).then(|| {
             let heals = fight.spells_with_class(&["holy_shock_heal"]);
@@ -37,6 +47,8 @@ impl OathOfLight {
             holy_light: bonuses.0,
             flash_of_light: bonuses.1,
             holy_shock: bonuses.2,
+            holder_share,
+            boundless_light_crit,
             boundless_light,
         })
     }

@@ -187,9 +187,13 @@ fn water_shield_globes_restore_mana_on_crit_heals() {
         &[(408510, inactive(408510)), (10623, None)],
     );
     let prepared = prepared(&request);
-    let globes = effects(&prepared, "mana_globes");
+    // The class effect alone: a healer export carries no second globes effect that could bind
+    // beside it and double the mana.
+    assert!(effects(&prepared, "mana_globes").is_empty());
+    let globes = effects(&prepared, "water_shield");
     assert_eq!(globes.len(), 1);
-    assert_eq!(globes[0]["mana_fraction"], 0.02);
+    assert_eq!(globes[0]["mana_percent"], 2.0);
+    assert_eq!(globes[0]["globes"], 3);
     assert_eq!(globes[0]["icd_ns"], 3_500_000_000_i64);
     let result = simulate(&prepared);
     let mana = result["raidMetrics"]["parties"][0]["players"][0]["resources"]

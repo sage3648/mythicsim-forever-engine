@@ -1743,8 +1743,6 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) shields_on_heal: Vec<healer_gear::ShieldOnHeal>,
     /// A healer's instant cast auras: [`Effect::InstantCastAura`].
     pub(crate) instant_casts: Vec<healer_gear::InstantCast>,
-    /// A healer's self buffs of globes: [`Effect::ManaGlobes`].
-    pub(crate) mana_globes: Vec<healer_gear::ManaGlobes>,
     /// Go `rageBar`, for a player that has one.
     pub(crate) rage: Option<rage::RageBar>,
     /// Single aura exclusive categories the runtime enforces.
@@ -2770,7 +2768,6 @@ impl<A: Agent> Fight<A> {
                         }
                         Effect::StackingOnUse { spell_id, aura, .. }
                         | Effect::InstantCastAura { spell_id, aura, .. }
-                        | Effect::ManaGlobes { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.item_id == 0 && id.tag == 0 =>
                         {
                             activations.push((spells.len(), aura));
@@ -4058,7 +4055,6 @@ impl<A: Agent> Fight<A> {
             stacking_cds: Vec::new(),
             shields_on_heal: Vec::new(),
             instant_casts: Vec::new(),
-            mana_globes: Vec::new(),
             player: Player::initial(&config),
             cast_speed: config.cast_speed,
             targets: vec![
@@ -5054,29 +5050,6 @@ impl<A: Agent> Fight<A> {
                     .push(healer_gear::InstantCast { mods, spends });
                 fight.aura_mut(aura).behavior =
                     AuraBehavior::InstantCast(fight.instant_casts.len() - 1);
-            }
-            // A healer's self buff of globes, with its internal cooldown on a runtime timer.
-            if let Effect::ManaGlobes {
-                aura,
-                mana_fraction,
-                icd_ns,
-                metrics_action_id,
-                ..
-            } = effect
-            {
-                let aura = fight.player_aura(aura)?;
-                fight.timers.push(STARTING_CD_TIME);
-                let timer = fight.timers.len() - 1;
-                let metrics =
-                    fight.new_resource_metrics(metrics_action_id.clone(), ResourceKind::Mana);
-                fight.mana_globes.push(healer_gear::ManaGlobes {
-                    fraction: *mana_fraction,
-                    icd: *icd_ns,
-                    timer,
-                    metrics,
-                });
-                fight.aura_mut(aura).behavior =
-                    AuraBehavior::ManaGlobes(fight.mana_globes.len() - 1);
             }
             // A healer's on-use aura of spell mods: one dynamic mod per kind and amount, over the
             // spells it changes.

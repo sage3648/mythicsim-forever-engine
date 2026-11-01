@@ -805,6 +805,7 @@ impl PaladinAgent {
                     flash_of_light,
                     holy_shock,
                     boundless_light_crit,
+                    holder_share,
                     ..
                 } => {
                     let bound = OathOfLight::bind(
@@ -812,6 +813,7 @@ impl PaladinAgent {
                         aura,
                         (*holy_light, *flash_of_light, *holy_shock),
                         *boundless_light_crit,
+                        *holder_share,
                     )?;
                     fight.agent.oath = Some(bound);
                 }
