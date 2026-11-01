@@ -1904,6 +1904,9 @@ pub(crate) struct Fight<A: Agent> {
     /// The player's healing dealt multiplier relative to its exported value, which Power
     /// Infusion moves while a copy of the aura holds the category.
     pub(crate) healing_dealt_factor: f64,
+    /// A crit chance, as a fraction, the next heal rolls on top of its spell's: set by a class
+    /// for the one heal it names (Renewed Hope) and put back to zero after it.
+    pub(crate) heal_crit_bonus: f64,
     /// Dragonbreath Chili, when the character ate it.
     pub(crate) chili: Option<DragonbreathChili>,
     /// Enchant Weapon - Revelation, when a weapon carries it.
@@ -4149,6 +4152,7 @@ impl<A: Agent> Fight<A> {
             innervates_up: 0,
             power_infusion: None,
             healing_dealt_factor: 1.0,
+            heal_crit_bonus: 0.0,
             chili: None,
             revelation: None,
             mob_type_spell_damage: None,

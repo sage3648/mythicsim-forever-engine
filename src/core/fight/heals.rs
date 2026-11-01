@@ -48,6 +48,9 @@ pub(crate) struct BoundHeal {
     then_hot: Option<usize>,
     /// The absorb a crit of the direct heal puts on its player.
     crit_shield: Option<f64>,
+    /// The share of a crit a heal turns into an absorb (Divine Aegis), the spell the shielding
+    /// counts on, and whether the ticks of a channel shield too.
+    crit_absorb: Option<(f64, SpellId, bool)>,
     /// The direct heal's multiplier while any of these heal over time ranks is up, and whether
     /// it is the first player's alone.
     hot_bonus: Option<(Vec<usize>, f64, bool)>,
@@ -99,6 +102,24 @@ impl HealBook {
                 if heal.targets == 0 {
                     return Err(format!("heal {} lands on no player", heal.spell_id));
                 }
+                let crit_absorb = heal
+                    .crit_absorb
+                    .map(|absorb| {
+                        fight
+                            .spells
+                            .iter()
+                            .position(|state| {
+                                state.id.spell_id == absorb.spell_id && state.id.tag == 0
+                            })
+                            .map(|shield| (absorb.share, shield, absorb.ticks))
+                            .ok_or_else(|| {
+                                format!(
+                                    "heal {} shields on a crit with spell {}, no spell",
+                                    heal.spell_id, absorb.spell_id
+                                )
+                            })
+                    })
+                    .transpose()?;
                 Ok(BoundHeal {
                     spell,
                     direct: heal.direct.map(|roll| (roll.average, roll.variance)),
@@ -112,6 +133,7 @@ impl HealBook {
                     past_first_multiplier: heal.past_first_multiplier,
                     then_hot: None,
                     crit_shield: heal.crit_shield,
+                    crit_absorb,
                     hot_bonus: None,
                     cooldown_per_hot: heal.cooldown_per_hot_ns,
                 })
@@ -173,6 +195,18 @@ impl HealBook {
 
     /// [`Self::cast`] with every part of the heal scaled, for a class bonus on one cast.
     pub(crate) fn cast_scaled<A: Agent>(&self, fight: &mut Fight<A>, rank: usize, scale: f64) {
+        self.cast_with_crit(fight, rank, scale, 0.0);
+    }
+
+    /// [`Self::cast_scaled`] with `first_crit` more crit chance, as a fraction, on the heal that
+    /// lands on the first player: a talent that reads who the heal was cast on.
+    pub(crate) fn cast_with_crit<A: Agent>(
+        &self,
+        fight: &mut Fight<A>,
+        rank: usize,
+        scale: f64,
+        first_crit: f64,
+    ) {
         let heal = &self.heals[rank];
         let caster = fight.spells[heal.spell].caster;
         let healing = self.healing(fight, caster);
@@ -203,6 +237,7 @@ impl HealBook {
                 _ => heal.targets,
             };
             for jump in 0..targets {
+                fight.heal_crit_bonus = if jump == 0 { first_crit } else { 0.0 };
                 let base = fight.effect_roll(average, variance);
                 let past_first = if jump > 0 {
                     heal.past_first_multiplier
@@ -217,8 +252,12 @@ impl HealBook {
                     self.bonus_healing_taken,
                     share * past_first,
                 );
+                fight.heal_crit_bonus = 0.0;
                 if let (Some(absorb), true) = (heal.crit_shield, result.outcome == OUTCOME_CRIT) {
                     fight.deal_shield(heal.spell, absorb);
+                }
+                if result.outcome == OUTCOME_CRIT {
+                    Self::shield_crit(fight, heal, result.damage, false);
                 }
                 share *= heal.jump_multiplier;
             }
@@ -231,6 +270,21 @@ impl HealBook {
             let amount = self.shield_amount(fight, heal.spell, absorb, healing) * scale;
             fight.deal_shield(heal.spell, amount);
         }
+    }
+
+    /// A crit of `heal` that healed `landed` puts its absorb on the player, when the heal has
+    /// one (`tick` for the tick of a channel). The share is taken from the heal the spell
+    /// computed, before the share real healers overheal comes off, and the absorb is full: it
+    /// is shielding, which has no overhealing.
+    fn shield_crit<A: Agent>(fight: &mut Fight<A>, heal: &BoundHeal, landed: f64, tick: bool) {
+        let Some((share, shield, ticks)) = heal.crit_absorb else {
+            return;
+        };
+        if tick && !ticks {
+            return;
+        }
+        let amount = share * fight.heal_before_overheal(heal.spell, landed);
+        fight.deal_shield(shield, amount);
     }
 
     /// A rank's heal over time going up, `scale` on its tick: one running already goes on another
@@ -314,7 +368,7 @@ impl HealBook {
         let caster = fight.spells[heal.spell].caster;
         let healing = self.healing(fight, caster);
         let base = fight.effect_roll(average, variance);
-        fight.calc_and_deal_healing_scaled(
+        let result = fight.calc_and_deal_healing_scaled(
             heal.spell,
             Side::Player,
             base,
@@ -322,6 +376,9 @@ impl HealBook {
             self.bonus_healing_taken,
             1.0,
         );
+        if result.outcome == OUTCOME_CRIT {
+            Self::shield_crit(fight, heal, result.damage, false);
+        }
     }
 
     /// Go `Dot.SnapshotHeal`: the tick plus its coefficient on healing power, times the
@@ -393,8 +450,15 @@ impl HealBook {
         let healing = self.healing(fight, caster);
         let snapshot = fight.dots[dot].snapshot_base;
         let can_crit = self.tick_can_crit(dot);
+        let channel = self
+            .heals
+            .iter()
+            .find(|heal| heal.dot == Some(dot) && heal.direct.is_some());
         for _ in 0..self.tick_players(dot) {
-            fight.deal_heal_tick(spell, snapshot, healing, can_crit);
+            let (crit, landed) = fight.deal_heal_tick(spell, snapshot, healing, can_crit);
+            if let (true, Some(heal)) = (crit, channel) {
+                Self::shield_crit(fight, heal, landed, true);
+            }
         }
     }
 
@@ -478,7 +542,7 @@ impl<A: Agent> Fight<A> {
         snapshot: f64,
         healing: Healing,
         can_crit: bool,
-    ) {
+    ) -> (bool, f64) {
         let state = &self.spells[spell];
         let mut amount = snapshot;
         if !state.flags.ignore_target_modifiers {
@@ -523,6 +587,13 @@ impl<A: Agent> Fight<A> {
             );
             self.player_log(&line);
         }
+        (crit, amount)
+    }
+
+    /// What a heal of `spell` that landed `landed` healing was before the share real healers
+    /// overheal was taken off: the heal the spell computed.
+    pub(crate) fn heal_before_overheal(&self, spell: SpellId, landed: f64) -> f64 {
+        landed / (1.0 - self.spells[spell].overheal)
     }
 
     /// A heal of exactly `amount` on the player that nothing modifies: no spell power, no healing

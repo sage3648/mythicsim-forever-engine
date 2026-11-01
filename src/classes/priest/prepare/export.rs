@@ -325,6 +325,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
     // MythicSim's healer sims (Rust only): the healer's heals.
     if priest.healer {
         effects.push(crate::prepare::heals::heals_effect(env, &priest.heals));
+        effects.extend(priest.heal_talents(&env.sim));
     }
 
     // mind_blast.go: a direct hit on the rank's own row.
