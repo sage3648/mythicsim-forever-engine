@@ -1109,7 +1109,12 @@ impl<A: Agent> Fight<A> {
             }
             // Deactivation edits the list, so scan again from the start, as Go does.
             match expired {
-                Some(index) => self.deactivate_aura(AuraRef { side, index }),
+                Some(index) => {
+                    let aura = AuraRef { side, index };
+                    self.expiring_by_duration = Some(aura);
+                    self.deactivate_aura(aura);
+                    self.expiring_by_duration = None;
+                }
                 None => {
                     self.trackers[side.index()].min_expires = min;
                     return min;
@@ -1186,6 +1191,13 @@ impl<A: Agent> Fight<A> {
             self.timers[timer] = self.now + duration;
             self.changed(super::reads::TIMERS);
         }
+    }
+
+    /// Whether `aura` is fading now because its duration ran out, as against a deactivation
+    /// from outside: a dot recast, a consume, the iteration's end. Only true inside the aura's
+    /// own expiry callbacks.
+    pub(crate) fn fading_by_duration(&self, aura: AuraRef) -> bool {
+        self.expiring_by_duration == Some(aura)
     }
 
     /// Go `auraTracker.expireAll`: deactivate the active auras, first listed first.

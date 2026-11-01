@@ -13,6 +13,7 @@ mod heals;
 pub(crate) mod hotfix_113554;
 pub(crate) mod items;
 pub(crate) mod masks;
+mod oath_of_light;
 mod seals;
 pub(crate) mod sets;
 mod spell_data;
@@ -89,6 +90,10 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
     ClassSpellName {
         mask: masks::DIVINE_FAVOR,
         name: "divine_favor",
+    },
+    ClassSpellName {
+        mask: masks::OATH_OF_LIGHT,
+        name: "oath_of_light",
     },
     ClassSpellName {
         mask: masks::HOLY_SHOCK,
