@@ -7,6 +7,7 @@ mod hunter;
 mod item_effects;
 mod item_swap;
 mod mage;
+mod oil_of_immolation;
 mod paladin;
 #[path = "../support/paladin_113554.rs"]
 mod paladin_113554;

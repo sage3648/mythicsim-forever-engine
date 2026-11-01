@@ -2851,6 +2851,19 @@ pub enum Effect {
         health: f64,
         metrics_action_id: ActionId,
     },
+    /// Oil of Immolation (MythicSim Rust only, client 70707 item 8956): the character uses the oil
+    /// at the pull and again as its `aura` ends, and each of the aura's `ticks` periods casts the
+    /// tick `spell` (a Fire hit of `damage` on every target) if the player stands within
+    /// `radius` yards.
+    OilOfImmolation {
+        item_id: i32,
+        aura: String,
+        spell: usize,
+        period_ns: i64,
+        ticks: i32,
+        radius: f64,
+        damage: f64,
+    },
     /// core/battle_squawk.go (Forever's rules): the party's squawks, up from the reset in the
     /// exported melee state, take their melee speed back as their stacks fall to none at the
     /// aura's expiry, `per_stack` each.
@@ -5288,6 +5301,7 @@ impl Effect {
             Effect::SpeedAura { .. } => "speed_aura",
             Effect::MobTypeBonus { .. } => "mob_type_bonus",
             Effect::HealthRegenAura { .. } => "health_regen_aura",
+            Effect::OilOfImmolation { .. } => "oil_of_immolation",
             Effect::DamageOnUse { .. } => "damage_on_use",
             Effect::ArmorDebuffProc { .. } => "armor_debuff_proc",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",

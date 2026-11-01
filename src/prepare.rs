@@ -49,6 +49,7 @@ pub(crate) mod itemhelpers;
 pub(crate) mod items;
 pub(crate) mod items_registry;
 pub(crate) mod major_cooldown;
+pub(crate) mod oil_of_immolation;
 pub(crate) mod overheal;
 pub(crate) mod parse_effects;
 pub(crate) mod party_damage;

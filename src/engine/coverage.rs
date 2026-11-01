@@ -264,6 +264,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "speed_aura",
     "mob_type_bonus",
     "health_regen_aura",
+    "oil_of_immolation",
     "armor_debuff_proc",
     "damage_on_use",
     "stoneform",
@@ -538,6 +539,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         }
         Effect::BattleSquawk { aura, .. }
         | Effect::HealthRegenAura { aura, .. }
+        | Effect::OilOfImmolation { aura, .. }
         | Effect::SpeedAura { aura, .. }
         | Effect::MobTypeBonus { aura, .. } => {
             vec![("player", aura)]
