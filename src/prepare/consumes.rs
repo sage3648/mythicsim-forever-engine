@@ -344,6 +344,10 @@ pub(crate) fn apply_consume_effects(
     if consumables.bool("dragonbreath_chili") {
         register_dragonbreath_chili(env);
     }
+    // MythicSim Rust-only, beyond the Go reference pin: Oil of Immolation (client 70707).
+    if consumables.bool("oil_of_immolation") {
+        super::oil_of_immolation::register_oil_of_immolation(env);
+    }
 
     // Static imbues. Forever's Windfury Totem is a party aura, not Era's main-hand enchant
     // (#550), so it no longer displaces a main-hand stone or oil.

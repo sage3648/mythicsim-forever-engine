@@ -2442,6 +2442,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
 /// spell data and energy procs, in Go's order. The stat auras follow in `export`.
 pub(crate) fn item_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = melee_proc_effects(env, unrepresented);
+    effects.extend(super::oil_of_immolation::oil_of_immolation_effect(env));
     effects.extend(gear_proc_effects(env, unrepresented));
     effects.extend(spell_data_stat_proc_effects(env, unrepresented));
     effects.extend(energy_proc_effects(env, unrepresented));

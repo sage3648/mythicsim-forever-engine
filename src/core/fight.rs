@@ -41,6 +41,7 @@ mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
 pub(crate) mod movement;
+mod oil_of_immolation;
 pub(crate) mod pet;
 mod power_infusion;
 mod racial;
@@ -1572,6 +1573,10 @@ pub(crate) enum Action {
         regen: usize,
         generation: u32,
     },
+    /// The character uses the Oil of Immolation.
+    OilUse,
+    /// A period of the Oil of Immolation's shield, numbered from 1.
+    OilTick(i32),
     /// A tick of an aura's periodic stack adder, with the ticks left including this one.
     StackTick {
         aura: AuraRef,
@@ -1933,6 +1938,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) health_rage_procs: Vec<gear_procs::HealthRageProc>,
     pub(crate) energy_procs: Vec<gear_procs::EnergyProc>,
     pub(crate) health_regens: Vec<health_regen::HealthRegen>,
+    /// The Oil of Immolation, when the character uses it.
+    pub(crate) oil: Option<oil_of_immolation::OilOfImmolation>,
     /// Gear procs that stack an armor debuff on the target, by their aura's position.
     pub(crate) armor_debuff_procs: Vec<gear_procs::ArmorDebuffProc>,
     /// Spell data stat procs, by their position among the effects of their kind.
@@ -2964,6 +2971,11 @@ impl<A: Agent> Fight<A> {
                             )
                         }
                         Effect::ForceReactiveDisk { spell, damage, .. } if *spell == spells.len() => {
+                            Some(SpellBehavior::AreaFixedDamage(*damage))
+                        }
+                        // The shield's tick is the same hit: a literal on the magic table with
+                        // a crit against every target, each dealt as it is calculated.
+                        Effect::OilOfImmolation { spell, damage, .. } if *spell == spells.len() => {
                             Some(SpellBehavior::AreaFixedDamage(*damage))
                         }
                         Effect::Thunderfury {
@@ -4167,6 +4179,7 @@ impl<A: Agent> Fight<A> {
             health_rage_procs: Vec::new(),
             energy_procs: Vec::new(),
             health_regens: Vec::new(),
+            oil: None,
             armor_debuff_procs: Vec::new(),
             eureka: None,
             pets: pet::inert_pets(effects)?,
@@ -5114,6 +5127,7 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_gear_procs(effects)?;
         fight.bind_health_regens(effects)?;
+        fight.bind_oil_of_immolation(effects)?;
         fight.bind_on_use_damage(effects);
         fight.autos.melee = prepared.melee.auto_swing_melee;
         fight.autos.dual_wielding = prepared.melee.dual_wielding;
@@ -5815,6 +5829,7 @@ impl<A: Agent> Fight<A> {
         self.reset_auras(side);
         // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
         if side == Side::Player {
+            self.oil_of_immolation_reset();
             if let Some(windfury) = &self.windfury {
                 let period = windfury.period;
                 self.schedule(period, PRIORITY_AUTO, Action::WindfuryRefresh);
@@ -6187,6 +6202,8 @@ impl<A: Agent> Fight<A> {
             Action::HealthRegenTick { regen, generation } => {
                 self.health_regen_tick(regen, generation)
             }
+            Action::OilUse => self.oil_use(),
+            Action::OilTick(tick) => self.oil_tick(tick),
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
                 let (totem, period) = (windfury.totem, windfury.period);

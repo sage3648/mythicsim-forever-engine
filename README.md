@@ -520,6 +520,24 @@ the Go goldens and exporter uses. The departures:
   `Shadow Oil (off hand)`) with the bolt's row `ProcChance` as its chance. The Go reference has no
   Shadow Oil and ignores the id, so both rule sets register it, as with the ammo above
   (`src/prepare/proc_oil.rs`, `tests/classes/proc_oil.rs`).
+- Oil of Immolation, from the client 1.60.1.70707 data: item 8956 (level 31) uses spell 11350
+  "Fire Shield", a 15 second aura with a periodic trigger spell effect every 3 seconds that casts
+  spell 11351 on the user, a Fire school damage effect of 50 base points (a flat 50, no spell
+  power) on the enemies within 5 yards of the caster. The use has no cooldown and no global
+  cooldown, and its category (79, 3 seconds) is not the potion category (4), so it shares nothing
+  with the potions. Neither row is in the pinned game data, so `src/prepare/oil_of_immolation.rs`
+  restates them as literals. A request opts in with `consumables.oilOfImmolation: true`, a
+  Rust-only boolean of the consumables message (`FOREVER_BOOL_FIELDS` in
+  `src/contracts/request/schema.rs`, field 1000; the Go reference refuses it as an unknown
+  field). The character uses the oil at 0 s, so the shield is up at the pull, and again each time
+  the shield ends, all fight. Every 3 seconds, the fifth on the moment the shield ends, spell
+  11351 deals its 50 as a magic hit with a crit to every target, rolled for each target in turn,
+  and shows in the actions as spell 11351; the shield's uptime shows as aura 11350 ("Oil of
+  Immolation"). The fight models one distance between the player and the targets
+  (`distanceFromTarget`), so the tick reaches all of the targets or none: a character beyond 5
+  yards, such as a ranged character at range, takes none. Nothing changes without the field
+  (the prepared effect is `oil_of_immolation`, `src/core/fight/oil_of_immolation.rs`,
+  `tests/classes/oil_of_immolation.rs`).
 - The Zul'Gurub crafted sets, from the client 1.60.1.70425 ItemSet and ItemSetSpell rows: Blood
   Tiger Harness needs Leatherworking and The Darksoul Blacksmithing (RequiredSkill 165 and 164
   at 300), as Bloodvine Garb needs Tailoring, and Bloodsoul Embrace and The Darksoul give their
