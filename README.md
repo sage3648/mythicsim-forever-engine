@@ -349,11 +349,11 @@ the Go goldens and exporter uses. The departures:
   and cost what the rank below did (Rank 3: 153 damage for 195 mana). Divine Precision 4/8%,
   Improved Seals 3-15%, Reverence 15/30%, Spiritual Focus 14-70%, Redoubt 6-30%, Shield
   Specialization 15/30% and 50/100%, Improved Righteous Fury 3/6/9%, Iron Creed 10-30% and
-  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is not registered (its ally
-  aura needs heal targets the sim does not have), so Boundless Light holds on every Holy Shock
-  heal; Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
-  heal is not modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing
-  the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
+  2-6%, Boundless Light 15/30% Holy Shock heal crit. A Holy Paladin healer sim models Oath of
+  Light and gives Boundless Light the heals the oath's holder does not take (below); every other
+  build holds Boundless Light on every Holy Shock heal, as no ally carries an oath; Light's
+  Vigil, now friendly only, refuses a rotation that reaches it, since its party heal is not
+  modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
   heals the priest for half as much, as a second jump, and Binding Heal's ranks leave the tree.
   Shadow Word: Death's backlash (10% to 30% of maximum health) is self damage the sim does not
   deal.
@@ -427,8 +427,27 @@ the Go goldens and exporter uses. The departures:
   and that cast spends it. Water Shield's three globes are each spent, at most once every 3.5
   seconds, by a direct heal of the shaman's that crits, for 2% of the maximum mana (the 16
   October 2026 beta notes); the globes taken spell hits spend are not modelled, since the healer
-  takes none. The prepared effects are `instant_cast_aura`, `mana_globes` and the heals' channel
-  shapes (`tests/healer_spells.rs`).
+  takes none. The prepared effects are `instant_cast_aura`, the shaman's `water_shield` and the
+  heals' channel shapes (`tests/healer_spells.rs`).
+- Healer talents past the heals, from the client rows and Forever's tooltips: Riptide's third
+  effect makes a Chain Heal cast directly on its target heal 25% more. The sim has no
+  per-player auras (a heal lands on a player who needs it), so a Chain Heal's first player is
+  read as the Riptide holder while a Riptide of the shaman's is up, a healer swinging Chain Heal
+  at the player it Riptided and the party model's Chain Heal starting on the tank; the jumps
+  keep their falloff of the unboosted heal, and Riptide is not spent (its row states no
+  consumption). Genesis (1223081) is 2% a rank on the periodic healing of Rejuvenation,
+  Regrowth and Wild Growth, its first effect, and on Swiftmend, its second, which the
+  reference's Genesis (Rejuvenation and Regrowth alone) did not reach. Oath of Light (1328548,
+  push 113554) is sworn on the tank before the pull and lasts the fight: a Holy Light, Flash of
+  Light or Holy Shock heal reaches the oath's holder with the tank's share of the party's hits
+  (5 in 9 with `prepare::party_damage`'s rates) and gains 400, 115 or 229 healing before the
+  healing multipliers, as Blessing of Light's did; a Holy Shock heal on anyone else has
+  Boundless Light's crit. The push's rows for the oath are not in the store, so the amounts are
+  its tooltip's. The prepared effects are the heal's `hot_bonus` with `first_target_only` and
+  the `paladin_heals` effect's `oath_of_light` (`tests/healer_talents.rs`). Not modelled: Bloom
+  (1328621), whose heal row (1328622) is not in the store; Light's Vigil, whose party heal on
+  the next Holy Shock waits on a rotation that casts it; and the shaman's own Mana Tide Totem,
+  which it has no cast for (the raid's Mana Tide Totem option is an external).
 - Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
   them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
   with no procs per minute, and the reference leaves them unregistered (its generator's "states

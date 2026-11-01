@@ -205,8 +205,6 @@ pub(crate) enum AuraBehavior<K> {
     ShieldOnHeal(usize),
     /// A healer's instant cast aura, by its position in `Fight::instant_casts`.
     InstantCast(usize),
-    /// A self buff of globes the player's crit heals spend: [`super::healer_gear::ManaGlobes`].
-    ManaGlobes(usize),
     /// The aura of a dot or channel.
     Dot(DotId),
     /// Go movement.go's Movement aura, which marks its unit moving.
@@ -886,7 +884,6 @@ impl<A: Agent> Fight<A> {
             }
             AuraBehavior::StackingCdWindow(index) => self.stacking_cd_gained(index),
             AuraBehavior::InstantCast(index) => self.instant_cast_gained(index),
-            AuraBehavior::ManaGlobes(_) => self.mana_globes_gained(aura),
             AuraBehavior::ArmorIgnoreFactor(delta) => {
                 if !self.resetting_auras {
                     self.config.melee.armor_ignore_factor += delta;
@@ -1363,7 +1360,6 @@ impl<A: Agent> Fight<A> {
                     Some(result),
                 ),
                 AuraBehavior::ShieldOnHeal(index) => self.shield_on_heal(index, spell, result),
-                AuraBehavior::ManaGlobes(index) => self.mana_globes_on_heal(aura, index, result),
                 AuraBehavior::ManaOnCast(index) => {
                     self.mana_on_crit_callback(aura, index, spell, result)
                 }

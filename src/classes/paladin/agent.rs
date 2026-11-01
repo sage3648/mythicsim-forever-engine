@@ -890,6 +890,7 @@ impl PaladinAgent {
                     blessing_flash_of_light,
                     player,
                     target,
+                    oath_of_light,
                 } => {
                     let bound = Rc::new(Heals::bind(
                         ranks,
@@ -897,6 +898,7 @@ impl PaladinAgent {
                         (*blessing_holy_light, *blessing_flash_of_light),
                         player,
                         target,
+                        *oath_of_light,
                     )?);
                     // The swap set's weapon moves the healing power the heals read.
                     let worn = fight.item_swap_worn_effects().and_then(|worn| {
@@ -908,12 +910,14 @@ impl PaladinAgent {
                                 blessing_flash_of_light,
                                 player,
                                 target,
+                                oath_of_light,
                             } => Some(Heals::bind(
                                 &ranks,
                                 flash_of_light_bonus,
                                 (blessing_holy_light, blessing_flash_of_light),
                                 &player,
                                 &target,
+                                oath_of_light,
                             )),
                             _ => None,
                         })

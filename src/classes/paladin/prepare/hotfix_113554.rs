@@ -153,6 +153,13 @@ pub(crate) const DIVINE_PRECISION: [f64; 2] = [4.0, 8.0];
 /// Boundless Light (1328550): 2 ranks, curve 15/30% Holy Shock crit on an ally without the
 /// paladin's Oath of Light.
 pub(crate) const BOUNDLESS_LIGHT: [f64; 2] = [15.0, 30.0];
+/// Oath of Light (1328548): the healing it adds to the sworn ally's Holy Light, Flash of Light
+/// and Holy Shock, from its Forever tooltip ("by up to 400, ... 115 ... 229"). The push's rows
+/// for it are not in the store, so these are the tooltip's numbers; Holy Light's and Flash of
+/// Light's equal Greater Blessing of Light's (25890), which the same push removes.
+pub(crate) const OATH_OF_LIGHT_HOLY_LIGHT: f64 = 400.0;
+pub(crate) const OATH_OF_LIGHT_FLASH_OF_LIGHT: f64 = 115.0;
+pub(crate) const OATH_OF_LIGHT_HOLY_SHOCK: f64 = 229.0;
 /// Holy Power (5923, effect 683158): A_MOD_CRITICAL_HEALING_AMOUNT on the Holy school, curve
 /// 10/20/30/40/50% (was crit chance 1-5% and 3-15%).
 pub(crate) const HOLY_POWER: [f64; 5] = [10.0, 20.0, 30.0, 40.0, 50.0];

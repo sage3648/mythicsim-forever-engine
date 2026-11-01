@@ -190,16 +190,19 @@ fn restoration_druid_heals_as_its_rows_state() {
         "restoration-druid",
         &result,
         &[
-            // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then +10%, on
-            // each of five players, 117.663, of which a group heal's 24.58% is overhealing.
-            "{SpellID: 1238215} tick Hit for 88.741 healing, 28.921 overhealing.",
+            // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then 1.10 x 1.10
+            // (Gift of Nature, and Genesis 5/5 at 2% a rank, whose first effect names Wild
+            // Growth), on each of five players, 129.429, of which a group heal's 24.58% is
+            // overhealing.
+            "{SpellID: 1238215} tick Hit for 97.615 healing, 31.814 overhealing.",
             // Rejuvenation rank 11 (25299): 194 + 0.2 x 302 = 254.4 a tick, then 1.10 x 1.15 x
             // 1.10 (Genesis 5/5 at 2% a rank since hotfix push 113531), 353.999, of which
             // Rejuvenation's 17.76% is overhealing.
             "{SpellID: 25299} tick Hit for 291.128 healing, 62.870 overhealing.",
             // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1770.0,
-            // then Gift of Nature's 10% on Swiftmend's own direct heal.
-            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:1947.0",
+            // then Gift of Nature's 10% and Genesis's 10% (its second effect names Swiftmend) on
+            // Swiftmend's own direct heal.
+            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:2124.0",
         ],
     );
     golden("restoration-druid", &result);
@@ -214,6 +217,9 @@ fn restoration_shaman_heals_as_its_rows_state() {
     // Chain Heal rank 3 (10623) lands on up to three players, each with its own roll of 473 to
     // 539 plus 0.714 of healing power, the second at half and the third at a quarter. A cast's
     // first heal is the largest, so a heal larger than the one before starts the next cast.
+    // The first player heals 25% more with a Riptide up (the Riptide holder, see
+    // `Shaman::riptide_chain_heal_bonus`): the fixture's Riptide is up for nearly every cast, and
+    // the casts it is not up for read the roll without it.
     let field = |line: &str, name: &str| -> f64 {
         let at = line.find(name).unwrap() + name.len();
         line[at..].split(',').next().unwrap().parse().unwrap()
@@ -234,6 +240,13 @@ fn restoration_shaman_heals_as_its_rows_state() {
         assert!(cast.len() <= 3, "{} Chain Heal jumps", cast.len());
         for (jump, &(healing_power, base)) in cast.iter().enumerate() {
             let roll = base / 0.5f64.powi(jump as i32) - 0.714 * healing_power;
+            let boosted = jump == 0 && !(472.5..=539.5).contains(&roll);
+            let roll = if boosted {
+                // The first player's whole heal, roll and healing power, is 25% larger.
+                base / 1.25 - 0.714 * healing_power
+            } else {
+                roll
+            };
             assert!((472.5..=539.5).contains(&roll), "jump {jump}: roll {roll}");
         }
     }

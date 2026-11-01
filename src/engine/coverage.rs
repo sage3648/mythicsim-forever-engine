@@ -222,7 +222,6 @@ const COMMON_EFFECTS: &[&str] = &[
     "goblin_sapper",
     "inert_listener",
     "instant_cast_aura",
-    "mana_globes",
     "inert_pet",
     "innervate_regen",
     "item_swap",
@@ -383,11 +382,6 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
             if *spell_id == id.spell_id && id.item_id == 0 && id.tag == 0 =>
         {
             Some("instant_cast_aura")
-        }
-        Effect::ManaGlobes { spell_id, .. }
-            if *spell_id == id.spell_id && id.item_id == 0 && id.tag == 0 =>
-        {
-            Some("mana_globes")
         }
         Effect::Berserking { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("berserking")
@@ -565,7 +559,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             ..
         } => vec![("player", window_aura), ("player", stat_aura)],
         Effect::ShieldOnHeal { aura, .. } => vec![("player", aura)],
-        Effect::InstantCastAura { aura, .. } | Effect::ManaGlobes { aura, .. } => {
+        Effect::InstantCastAura { aura, .. } => {
             vec![("player", aura)]
         }
         Effect::WindfuryTotem {

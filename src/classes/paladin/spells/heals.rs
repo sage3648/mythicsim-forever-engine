@@ -4,7 +4,7 @@
 //! return part of the cost.
 
 use crate::{
-    contracts::prepared_v2::{PaladinHealRank, PaladinHealUnit},
+    contracts::prepared_v2::{PaladinHealRank, PaladinHealUnit, PaladinOathOfLight},
     core::fight::{
         healing::Healing, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult, OUTCOME_CRIT,
     },
@@ -73,6 +73,8 @@ pub(crate) struct Heals {
     pub(crate) blessing_flash_of_light: f64,
     pub(crate) player: HealUnit,
     pub(crate) target: HealUnit,
+    /// Oath of Light's holder and what the oath adds, in the Holy Paladin healer sim.
+    pub(crate) oath: Option<PaladinOathOfLight>,
 }
 
 impl Heals {
@@ -82,7 +84,13 @@ impl Heals {
         blessing: (f64, f64),
         player: &PaladinHealUnit,
         target: &PaladinHealUnit,
+        oath: Option<PaladinOathOfLight>,
     ) -> Result<Self, String> {
+        if let Some(oath) = oath {
+            if !(0.0..=1.0).contains(&oath.holder_share) {
+                return Err(format!("Oath of Light holder share {}", oath.holder_share));
+            }
+        }
         Ok(Heals {
             ranks: ranks
                 .iter()
@@ -100,6 +108,7 @@ impl Heals {
             blessing_flash_of_light: blessing.1,
             player: HealUnit::new(player),
             target: HealUnit::new(target),
+            oath,
         })
     }
 
@@ -132,6 +141,20 @@ impl Heals {
             }
             _ => {}
         }
+        // Oath of Light: whether the heal reaches the oath's holder, which adds the oath's flat
+        // healing, or any other player, where a Holy Shock heal gains Boundless Light's crit.
+        let mut unsworn_crit = 0.0;
+        if let Some(oath) = self.oath {
+            let holder = fight.random("Oath of Light") < oath.holder_share;
+            match (rank.kind, holder) {
+                (HealKind::HolyLight, true) => amount += oath.holy_light,
+                (HealKind::FlashOfLight, true) => amount += oath.flash_of_light,
+                (HealKind::HolyShockHeal, true) => amount += oath.holy_shock,
+                (HealKind::HolyShockHeal, false) => unsworn_crit = oath.boundless_light_crit,
+                _ => {}
+            }
+        }
+        fight.spells[spell].bonus_crit_percent += unsworn_crit;
         fight.calc_and_deal_healing(
             spell,
             target,
@@ -139,6 +162,7 @@ impl Heals {
             unit.healing,
             unit.bonus_healing_taken,
         );
+        fight.spells[spell].bonus_crit_percent -= unsworn_crit;
     }
 }
 

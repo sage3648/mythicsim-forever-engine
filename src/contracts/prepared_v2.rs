@@ -544,6 +544,23 @@ pub struct PaladinHealRank {
     pub variance: Option<f64>,
 }
 
+/// Oath of Light (push 113554) in the Holy Paladin healer sim: one ally of the party carries it
+/// the whole fight, and each Holy Light, Flash of Light and Holy Shock heal reaches that ally with
+/// the chance `holder_share`. The holder's heals gain a flat amount before the healing
+/// modifiers, as Blessing of Light's do; a Holy Shock heal on any other player gains
+/// Boundless Light's crit chance.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PaladinOathOfLight {
+    pub holder_share: f64,
+    pub holy_light: f64,
+    pub flash_of_light: f64,
+    pub holy_shock: f64,
+    /// Boundless Light's added crit chance, in percent points, on a Holy Shock heal on a player
+    /// without the oath; zero untaken.
+    pub boundless_light_crit: f64,
+}
+
 /// The paladin's healing modifiers on one unit at reset, its bonus healing taken and whether
 /// it carries Blessing of Light for the whole fight.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -1468,6 +1485,10 @@ pub struct HotBonus {
     /// The heal over time ranks, by client spell ID.
     pub spell_ids: Vec<i32>,
     pub multiplier: f64,
+    /// Whether the bonus is the first player's alone, as Riptide's is on Chain Heal ("directly
+    /// on that target"), where the others jump on at their falloff of the unboosted heal.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub first_target_only: bool,
 }
 
 /// A heal that reaches players as the party's damage hits them, in MythicSim's healer sims under
@@ -2429,6 +2450,10 @@ pub enum Effect {
         blessing_flash_of_light: f64,
         player: PaladinHealUnit,
         target: PaladinHealUnit,
+        /// MythicSim's Holy Paladin healer sim under Forever's rules: Oath of Light's holder
+        /// among the players the heals reach.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        oath_of_light: Option<PaladinOathOfLight>,
     },
     /// MythicSim's healer sims (Rust only): every heal rank a class registers for the player,
     /// and the player's healing modifiers at reset with its bonus healing taken.
@@ -3457,17 +3482,6 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         changes: Vec<SpellModChange>,
-    },
-    /// MythicSim's healer sims under Forever's rules: a self buff of globes, as Water Shield.
-    /// Casting `spell_id` puts `aura` up with all its stacks. Each direct heal of the player's
-    /// that crits spends a globe, at most once per `icd_ns`, for `mana_fraction` of the maximum
-    /// mana; the last globe spent takes the aura down.
-    ManaGlobes {
-        spell_id: i32,
-        aura: String,
-        mana_fraction: f64,
-        icd_ns: i64,
-        metrics_action_id: ActionId,
     },
     InertListener {
         unit: String,
@@ -5243,7 +5257,6 @@ impl Effect {
             Effect::StackingCdOnUse { .. } => "stacking_cd_on_use",
             Effect::ShieldOnHeal { .. } => "shield_on_heal",
             Effect::InstantCastAura { .. } => "instant_cast_aura",
-            Effect::ManaGlobes { .. } => "mana_globes",
             Effect::InertListener { .. } => "inert_listener",
             Effect::ShadowBolt {} => "shadow_bolt",
             Effect::Immolate { .. } => "immolate",

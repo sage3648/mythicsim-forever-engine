@@ -236,6 +236,9 @@ pub(crate) struct Paladin {
     /// Under Forever's rules, the points of the talents push 113554 adds, which the pinned proto
     /// does not have, by upstream #772's field name.
     new_talents: std::collections::BTreeMap<&'static str, i64>,
+    /// Whether the sim is MythicSim's Holy Paladin healer sim, the only one that reads the
+    /// healer-only mechanics push 113554 adds (Oath of Light's holder).
+    healer: bool,
     /// Go `Paladin.Judgement`.
     judgement: Option<SpellId>,
     /// Go `Paladin.Forbearance`.
@@ -362,6 +365,7 @@ pub(crate) fn new_paladin(
     Ok(Box::new(Paladin {
         talents,
         new_talents,
+        healer: spec == "holy_paladin",
         judgement: None,
         forbearance: None,
         righteous_fury_aura: None,
@@ -402,6 +406,13 @@ fn check_talents_string(talents: &str) -> Result<(), String> {
 }
 
 impl Paladin {
+    /// Whether the healer sim models Oath of Light under Forever's rules: the Holy Paladin
+    /// took the talent (push 113554), so one ally of the party carries its oath for the whole
+    /// fight (`export_tank::oath_of_light`).
+    pub(super) fn oath_of_light(&self, sim: &Sim) -> bool {
+        self.healer && sim.rules == Rules::Forever && self.new_talent("oath_of_light") > 0
+    }
+
     /// The points in a talent push 113554 adds (`hotfix_113554`), which only Forever's rules
     /// read: 0 under the reference.
     pub(super) fn new_talent(&self, field: &str) -> i32 {

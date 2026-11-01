@@ -48,8 +48,9 @@ pub(crate) struct BoundHeal {
     then_hot: Option<usize>,
     /// The absorb a crit of the direct heal puts on its player.
     crit_shield: Option<f64>,
-    /// The direct heal's multiplier while any of these heal over time ranks is up.
-    hot_bonus: Option<(Vec<usize>, f64)>,
+    /// The direct heal's multiplier while any of these heal over time ranks is up, and whether
+    /// it is the first player's alone.
+    hot_bonus: Option<(Vec<usize>, f64, bool)>,
     /// What each heal over time up takes off this spell's cooldown when it is cast.
     cooldown_per_hot: Option<i64>,
 }
@@ -138,7 +139,7 @@ impl HealBook {
                     .filter_map(|id| rank(*id))
                     .filter(|&hot| heals[hot].dot.is_some())
                     .collect();
-                heals[index].hot_bonus = Some((ranks, bonus.multiplier));
+                heals[index].hot_bonus = Some((ranks, bonus.multiplier, bonus.first_target_only));
             }
         }
         Ok(HealBook {
@@ -177,14 +178,20 @@ impl HealBook {
         let healing = self.healing(fight, caster);
         if let Some((average, variance)) = heal.direct {
             let mut share = scale;
-            if let Some((hots, multiplier)) = &heal.hot_bonus {
+            // The first player's alone (Riptide on Chain Heal), else every player's.
+            let mut first_bonus = 1.0;
+            if let Some((hots, multiplier, first_only)) = &heal.hot_bonus {
                 if hots.iter().any(|&hot| {
                     let dot = self.heals[hot]
                         .dot
                         .expect("a bonus's heal over time has a dot");
                     fight.aura(fight.dots[dot].aura).active
                 }) {
-                    share *= multiplier;
+                    if *first_only {
+                        first_bonus = *multiplier;
+                    } else {
+                        share *= multiplier;
+                    }
                 }
             }
             let targets = match (heal.smart, &self.party) {
@@ -200,7 +207,7 @@ impl HealBook {
                 let past_first = if jump > 0 {
                     heal.past_first_multiplier
                 } else {
-                    1.0
+                    first_bonus
                 };
                 let result = fight.calc_and_deal_healing_scaled(
                     heal.spell,
