@@ -540,6 +540,15 @@ impl Shaman {
                 "duration_ns": nanos(row.duration()),
             }));
         }
+        // Mana Tide Totem (Forever's rules, Restoration): the aura's MP5, the water totem slot.
+        if let Some(aura) = sim.get_aura(player, super::totems::MANA_TIDE_TOTEM_AURA) {
+            let row = data.mana_tide_totem.highest();
+            effects.push(json!({
+                "kind": "mana_tide_totem", "spell_id": row.id, "aura": sim.aura(aura).label,
+                "duration_ns": nanos(row.duration()),
+                "healing_stream_totems": super::heals::healing_stream_totems(),
+            }));
+        }
         // registerFlametongueTotemSpell and buffs/flametongue_totem.go: the totem's aura turns
         // on the trigger, which casts the hit off landed main hand autos, unless a main hand
         // Flametongue Weapon or the party's totem holds the benefit.

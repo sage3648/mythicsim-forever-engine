@@ -258,9 +258,71 @@ impl Paladin {
     /// Go `registerLightsVigil`: applies Light's Vigil to the target for 30 sec; the next Holy
     /// Shock on them triggers no cooldown.
     fn register_lights_vigil(&mut self, sim: &mut Sim, unit: UnitId) {
-        spell_data()
-            .lights_vigil
-            .each(|_, rank| self.register_lights_vigil_rank(sim, unit, rank));
+        let ally = self.healer && sim.rules == crate::prepare::sim::Rules::Forever;
+        spell_data().lights_vigil.each(|_, rank| {
+            if ally {
+                self.register_lights_vigil_ally_rank(sim, unit, rank);
+            } else {
+                self.register_lights_vigil_rank(sim, unit, rank);
+            }
+        });
+    }
+
+    /// Light's Vigil on an ally (push 113554), in the Holy Paladin healer sim under Forever's
+    /// rules: the cast puts the vigil on the player, who stands for the heal's target; its enemy
+    /// strike and refund are gone. The party heal (the rank's 1310912, 1311591 or 1311596) is a
+    /// spell of its own that the next Holy Shock heal on the player triggers.
+    fn register_lights_vigil_ally_rank(&mut self, sim: &mut Sim, unit: UnitId, rank: &Row) {
+        let (_, aura_id, heal_id, _) = LIGHTS_VIGIL_TRIGGERED
+            .iter()
+            .copied()
+            .find(|(n, _, _, _)| *n == rank.rank_number())
+            .unwrap_or((0, 0, 0, 0));
+        let aura_rank = spell_data().lights_vigil_triggered.by_id(aura_id);
+        let heal_rank = spell_data().lights_vigil_triggered.by_id(heal_id);
+        let label = sim.unit(unit).label.clone();
+
+        sim.register_aura(
+            unit,
+            AuraConfig {
+                label: format!("Light's Vigil{label} Rank {}", rank.rank_number()),
+                action_id: Some(spell_action(aura_rank.id)),
+                duration: aura_rank.duration(),
+                ..AuraConfig::default()
+            },
+        );
+        sim.register_spell(
+            unit,
+            SpellConfig {
+                action_id: spell_action(heal_rank.id),
+                spell_school: heal_rank.spell_school(),
+                defense_type: heal_rank.defense_type_core(),
+                proc_mask: ProcMask::SPELL_HEALING,
+                flags: SpellFlag::PASSIVE_SPELL | SpellFlag::HELPFUL,
+                class_spell_mask: masks::LIGHTS_VIGIL_HEAL,
+                damage_multiplier: 1.0,
+                threat_multiplier: 1.0,
+                bonus_coefficient: heal_rank.heal_effect().coeff(),
+                ..SpellConfig::default()
+            },
+        );
+        let timer = shared_timer(sim, unit, &mut self.timers.lights_vigil);
+        sim.register_spell(
+            unit,
+            SpellConfig {
+                action_id: spell_action(rank.id),
+                spell_school: rank.spell_school(),
+                defense_type: rank.defense_type_core(),
+                proc_mask: ProcMask::EMPTY,
+                flags: SpellFlag::APL | SpellFlag::HELPFUL,
+                class_spell_mask: masks::LIGHTS_VIGIL_ALLY,
+                rank: rank.rank_number(),
+                max_range: f64::from(rank.max_range),
+                cost: mana_cost(rank),
+                cast: gcd_cast(rank.gcd(), rank.cast_time(), Some((timer, cooldown(rank)))),
+                ..SpellConfig::default()
+            },
+        );
     }
 
     fn register_lights_vigil_rank(&mut self, sim: &mut Sim, unit: UnitId, rank: &Row) {

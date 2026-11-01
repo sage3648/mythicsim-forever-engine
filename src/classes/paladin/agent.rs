@@ -70,6 +70,8 @@ pub(crate) enum PaladinSpell {
     /// A Light's Vigil rank, by its position in the effect.
     LightsVigil(usize),
     LightsVigilStrike,
+    /// A Light's Vigil rank on an ally (push 113554, the healer sim), by its position.
+    VigilAlly(usize),
     /// A Judgement of the Crusader rank, by its position in the effect.
     JudgementOfTheCrusader(usize),
     EyeForAnEye,
@@ -169,6 +171,8 @@ pub(crate) struct PaladinAgent {
     undead_or_demon: bool,
     /// Light's Vigil's ranks.
     pub(crate) vigils: Vec<Vigil>,
+    /// Light's Vigil on an ally, rank by rank (push 113554, the healer sim).
+    pub(crate) vigil_allies: Vec<holy::VigilAlly>,
     /// Each Judgement of the Crusader rank's target aura, by its position in the effect.
     crusader_auras: Vec<AuraRef>,
     /// The members of the "Judgement of the Crusader" category, by position.
@@ -337,6 +341,13 @@ impl PaladinAgent {
                     .iter()
                     .position(|rank| rank.spell_id == id.spell_id)
                     .map(PaladinSpell::LightsVigil),
+                _ => None,
+            }),
+            "lights_vigil_ally" => effects.iter().find_map(|effect| match effect {
+                Effect::LightsVigilAlly { ranks } => ranks
+                    .iter()
+                    .position(|rank| rank.spell_id == id.spell_id)
+                    .map(PaladinSpell::VigilAlly),
                 _ => None,
             }),
             "holy_wrath" if damage && has("holy_wrath") => Some(PaladinSpell::HolyWrath),
@@ -684,6 +695,26 @@ impl PaladinAgent {
                             refund: rank.refund,
                             metrics,
                             cost: 0.0,
+                        });
+                    }
+                }
+                Effect::LightsVigilAlly { ranks } => {
+                    for rank in ranks {
+                        let heal = fight
+                            .spells
+                            .iter()
+                            .position(|spell| {
+                                spell.id.spell_id == rank.heal_spell_id && spell.id.tag == 0
+                            })
+                            .ok_or_else(|| {
+                                format!("vigil heal {} is not registered", rank.heal_spell_id)
+                            })?;
+                        fight.agent.vigil_allies.push(holy::VigilAlly {
+                            aura: fight.player_aura(&rank.aura)?,
+                            heal,
+                            average: rank.average,
+                            variance: rank.variance,
+                            players: rank.players,
                         });
                     }
                 }
@@ -1143,6 +1174,7 @@ impl Agent for PaladinAgent {
             PaladinSpell::Exorcism => strikes::exorcism(fight, spell, target),
             PaladinSpell::LightsVigil(rank) => holy::lights_vigil(fight, spell, rank),
             PaladinSpell::LightsVigilStrike => holy::vigil_strike(fight, spell, target),
+            PaladinSpell::VigilAlly(rank) => holy::swear_vigil(fight, rank),
             PaladinSpell::HolyWrath => {
                 let hits = fight.agent.undead_or_demon;
                 strikes::holy_wrath(fight, spell, hits);
@@ -1257,7 +1289,8 @@ impl Agent for PaladinAgent {
             PaladinSpell::HammerOfWrath
             | PaladinSpell::HolyWrath
             | PaladinSpell::Heal(_)
-            | PaladinSpell::LightsVigil(_) => strikes::hold_melee_for_cast(fight, spell),
+            | PaladinSpell::LightsVigil(_)
+            | PaladinSpell::VigilAlly(_) => strikes::hold_melee_for_cast(fight, spell),
             _ => {}
         }
     }

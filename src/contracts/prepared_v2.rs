@@ -610,6 +610,20 @@ pub struct LightsVigilRank {
     pub metrics_action_id: ActionId,
 }
 
+/// A Light's Vigil rank in the Holy Paladin healer sim under Forever's rules (push 113554): the
+/// cast, its vigil aura on the player, and the party heal the next Holy Shock heal on the player
+/// triggers: the heal spell, its client roll at the caster level and the players it lands on.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LightsVigilAllyRank {
+    pub spell_id: i32,
+    pub aura: String,
+    pub heal_spell_id: i32,
+    pub average: f64,
+    pub variance: f64,
+    pub players: u32,
+}
+
 /// A Holy Shock rank's damage roll.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -2630,6 +2644,12 @@ pub enum Effect {
     LightsVigil {
         ranks: Vec<LightsVigilRank>,
     },
+    /// Light's Vigil on an ally (push 113554, the Holy Paladin healer sim under Forever's rules):
+    /// the cast puts a vigil on the player for 30 sec, one at a time, and the next Holy Shock
+    /// heal on the player spends it, triggers no cooldown and heals the player's whole party.
+    LightsVigilAlly {
+        ranks: Vec<LightsVigilAllyRank>,
+    },
     /// Paladin holy_shock.go: every rank's damage roll.
     HolyShock {
         ranks: Vec<HolyShockRank>,
@@ -3974,6 +3994,16 @@ pub enum Effect {
         aura: String,
         duration_ns: i64,
     },
+    /// Mana Tide Totem (MythicSim's Restoration shaman sim, Forever's rules): the water totem's
+    /// aura, whose MP5 is a class stat aura. It takes the water totem slot of the Healing Stream
+    /// Totems `healing_stream_totems` names: its cast ends their heals over time, and a cast of
+    /// one of them ends it.
+    ManaTideTotem {
+        spell_id: i32,
+        aura: String,
+        duration_ns: i64,
+        healing_stream_totems: Vec<i32>,
+    },
     /// Flametongue Totem: the totem's aura turns on a trigger that casts a fire hit off landed
     /// main hand autos, unless a main hand Flametongue Weapon holds the benefit.
     FlametongueTotem {
@@ -5233,6 +5263,7 @@ impl Effect {
             Effect::Shieldsworn { .. } => "shieldsworn",
             Effect::HolyShock { .. } => "holy_shock",
             Effect::LightsVigil { .. } => "lights_vigil",
+            Effect::LightsVigilAlly { .. } => "lights_vigil_ally",
             Effect::StatProc { .. } => "stat_proc",
             Effect::Illumination { .. } => "illumination",
             Effect::RighteousFury { .. } => "righteous_fury",
@@ -5379,6 +5410,7 @@ impl Effect {
             Effect::WaterShield { .. } => "water_shield",
             Effect::GraceOfAirTotem { .. } => "grace_of_air_totem",
             Effect::ManaSpringTotem { .. } => "mana_spring_totem",
+            Effect::ManaTideTotem { .. } => "mana_tide_totem",
             Effect::WindfuryTotemSelf { .. } => "windfury_totem_self",
             Effect::FlametongueTotem { .. } => "flametongue_totem",
             Effect::FlametongueWeapon { .. } => "flametongue_weapon",

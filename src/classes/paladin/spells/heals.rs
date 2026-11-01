@@ -11,6 +11,7 @@ use crate::{
 };
 
 use super::super::agent::PaladinAgent;
+use super::holy;
 
 /// Which heal a rank is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -157,6 +158,10 @@ impl Heals {
             unit.bonus_healing_taken,
         );
         fight.spells[spell].bonus_crit_percent -= unsworn_crit;
+        // Light's Vigil on an ally: a Holy Shock heal on the player spends it and heals the party.
+        if rank.kind == HealKind::HolyShockHeal && target == Side::Player {
+            holy::vigil_party_heal(fight, spell, unit.healing, unit.bonus_healing_taken);
+        }
     }
 }
 

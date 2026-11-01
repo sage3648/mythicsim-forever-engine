@@ -62,6 +62,11 @@ pub const SECOND_JUDGEMENT: i64 = 1 << 46;
 /// the reference's.
 pub const OATH_OF_LIGHT: i64 = 1 << 47;
 
+/// Light's Vigil on an ally (push 113554, Forever's rules): the cast, and the party heal the next
+/// Holy Shock heal triggers. Rust's bits, past the reference's.
+pub const LIGHTS_VIGIL_ALLY: i64 = 1 << 48;
+pub const LIGHTS_VIGIL_HEAL: i64 = 1 << 49;
+
 pub const ALL_SEALS: i64 = SEAL_OF_RIGHTEOUSNESS
     | SEAL_OF_COMMAND
     | SEAL_OF_LIGHT
