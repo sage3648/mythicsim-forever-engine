@@ -1875,6 +1875,9 @@ pub(crate) struct Fight<A: Agent> {
     /// The rotation as the application shows it, with Go's validation messages of each
     /// line, built with the rotation.
     pub(crate) presentation: Option<rotation_checks::Presentation>,
+    /// The logged fight's queued strikes that went out on an extra attack, for the
+    /// application's timeline: when, the strike and the extra attack it replaced.
+    pub(crate) extra_attack_strikes: Vec<serde_json::Value>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -4178,6 +4181,7 @@ impl<A: Agent> Fight<A> {
             pet_agent_max_mana: pet::pet_agent_max_mana(prepared),
             checks: std::cell::RefCell::new(None),
             presentation: None,
+            extra_attack_strikes: Vec::new(),
             heartbeat_offset: 0,
             totals: metrics::Totals {
                 target_dtps: vec![

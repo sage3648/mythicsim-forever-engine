@@ -1599,3 +1599,61 @@ fn rage_gain_threat_takes_the_threat_multiplier_and_splits_between_the_targets()
         "three targets: x{ratio} of the unsplit"
     );
 }
+
+/// A queued Heroic Strike that goes out on a Weaponmaster or Windfury Totem extra attack is
+/// listed, under `--rotation-stats`, with the extra attack it replaced, so the application's
+/// timeline can tell it from a strike that took a regular swing (MythicSim Discord #warrior,
+/// 30 October 2026). Each listed strike is a cast at that time in the first fight's log, and
+/// the result without the adapter's additions does not carry the list.
+#[test]
+fn a_strike_on_an_extra_attack_names_the_extra_attack() {
+    let mut sources = std::collections::BTreeSet::new();
+    for seed in 1..=12 {
+        let mut value = warrior_fixture("arms-warrior-warblade-of-caer-darrow");
+        value["sim"]["iterations"] = json!(1);
+        value["sim"]["debug_first_iteration"] = json!(true);
+        value["sim"]["seed"] = json!(seed);
+        // Queue Heroic Strike whenever it can be paid for, as a custom rotation can, rather
+        // than only above 100 rage and in execute.
+        let rotation = value["player"]["rotation"]["priorityList"]
+            .as_array_mut()
+            .unwrap();
+        let strike = rotation
+            .iter_mut()
+            .find(|line| line["action"]["castSpell"]["spellId"]["spellId"] == 25286)
+            .unwrap();
+        strike["action"]
+            .as_object_mut()
+            .unwrap()
+            .remove("condition");
+        let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+        let mut report = forever_engine::simulate_prepared(&prepared).unwrap();
+        let player = "/raidMetrics/parties/0/players/0";
+        assert!(report
+            .result
+            .pointer(&format!("{player}/extraAttackStrikes"))
+            .is_none());
+        assert!(report.add_rotation_stats());
+        let logs = report.result["logs"].as_str().unwrap().to_string();
+        let strikes = report
+            .result
+            .pointer(&format!("{player}/extraAttackStrikes"))
+            .unwrap();
+        for strike in strikes.as_array().unwrap() {
+            assert_eq!(strike["strike"], "{SpellID: 25286}", "{strike}");
+            let extra = strike["extraAttack"].as_str().unwrap();
+            assert!(
+                extra == "{OtherID: 3, Tag: 1290261}" || extra == "{OtherID: 3, Tag: 25584}",
+                "{strike}"
+            );
+            let time = format!("{:.2}", strike["time"].as_f64().unwrap());
+            assert!(
+                has_line(&logs, &time, "Casting {SpellID: 25286}"),
+                "seed {seed}: no Heroic Strike cast at {time}"
+            );
+            sources.insert(extra.to_string());
+        }
+    }
+    // Both extra attacks hand a queued strike over within these fights.
+    assert_eq!(sources.len(), 2, "{sources:?}");
+}
