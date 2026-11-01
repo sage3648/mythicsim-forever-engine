@@ -43,12 +43,9 @@ impl Paladin {
         // Holy Shock registered in registerTalentSpells
         self.apply_consecrated_ground(sim, unit);
 
-        // Push 113554, under Forever's rules. Boundless Light holds on every Holy Shock heal,
-        // except in the healer sim, where Oath of Light's holder is an ally the heals reach
-        // (`Paladin::oath_of_light`) and the runtime applies it to the rest.
-        if !self.oath_of_light(sim) {
-            self.apply_boundless_light(sim, unit);
-        }
+        // Push 113554, under Forever's rules. Oath of Light is a spell the sim does not register,
+        // so no ally carries it and Boundless Light holds on every Holy Shock heal.
+        self.apply_boundless_light(sim, unit);
 
         // Tier 6
         self.apply_holy_power(sim, unit);

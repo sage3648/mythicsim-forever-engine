@@ -8,7 +8,11 @@
 //! tree (`ui/sim/talents/trees/paladin.json`), checked against Wowhead's Forever talent data
 //! (trees 382 Holy, 383 Protection and 381 Retribution, row, column and ranks per talent).
 
+use std::sync::OnceLock;
+
+use crate::prepare::dbcenums;
 use crate::prepare::sim::{Duration, MILLISECOND, SECOND};
+use crate::prepare::spelldata::{Effect, Power, Spell};
 
 /// A talent of push 113554's Paladin tree: its field, its client name and its ranks. The field
 /// is the pinned proto's name where the talent is there; a talent the push adds has upstream
@@ -153,13 +157,6 @@ pub(crate) const DIVINE_PRECISION: [f64; 2] = [4.0, 8.0];
 /// Boundless Light (1328550): 2 ranks, curve 15/30% Holy Shock crit on an ally without the
 /// paladin's Oath of Light.
 pub(crate) const BOUNDLESS_LIGHT: [f64; 2] = [15.0, 30.0];
-/// Oath of Light (1328548): the healing it adds to the sworn ally's Holy Light, Flash of Light
-/// and Holy Shock, from its Forever tooltip ("by up to 400, ... 115 ... 229"). The push's rows
-/// for it are not in the store, so these are the tooltip's numbers; Holy Light's and Flash of
-/// Light's equal Greater Blessing of Light's (25890), which the same push removes.
-pub(crate) const OATH_OF_LIGHT_HOLY_LIGHT: f64 = 400.0;
-pub(crate) const OATH_OF_LIGHT_FLASH_OF_LIGHT: f64 = 115.0;
-pub(crate) const OATH_OF_LIGHT_HOLY_SHOCK: f64 = 229.0;
 /// Holy Power (5923, effect 683158): A_MOD_CRITICAL_HEALING_AMOUNT on the Holy school, curve
 /// 10/20/30/40/50% (was crit chance 1-5% and 3-15%).
 pub(crate) const HOLY_POWER: [f64; 5] = [10.0, 20.0, 30.0, 40.0, 50.0];
@@ -196,6 +193,58 @@ pub(crate) const TWO_HANDED_THREAT: [f64; 3] = [-7.0, -14.0, -20.0];
 pub(crate) const CHAMPION_OF_THE_LIGHT: [f64; 5] = [12.0, 24.0, 36.0, 48.0, 60.0];
 pub(crate) const CHAMPION_OF_THE_LIGHT_HAMMER_OF_WRATH_MS: [f64; 5] =
     [-200.0, -400.0, -600.0, -800.0, -1000.0];
+
+/// Oath of Light (1328548), a spell the push adds: wago.tools has no row for it, so it is
+/// upstream wowsims/forever #772's, from the DBCache. An instant 8% base mana cast on the global
+/// cooldown (category 133), 40 yards, 5 minutes, holy. Its three effects state the bonus to Holy
+/// Light, Flash of Light and Holy Shock as points per level (6.67, 1.92 and 3.83), which read at
+/// level 60 give the tooltip's 400, 115 and 229.
+pub(crate) const OATH_OF_LIGHT: i32 = 1_328_548;
+
+/// The Oath of Light row.
+pub(crate) fn oath_of_light() -> &'static Spell {
+    static ROW: OnceLock<Spell> = OnceLock::new();
+    ROW.get_or_init(|| {
+        let effect = |id: i32, index: u8, aura: i32, ppl: f64| Effect {
+            id,
+            spell_id: OATH_OF_LIGHT,
+            index,
+            effect_type: dbcenums::E_APPLY_AURA,
+            aura,
+            ppl,
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            ..Effect::default()
+        };
+        Spell {
+            id: OATH_OF_LIGHT,
+            name: "Oath of Light".to_string(),
+            school: 2,
+            duration_ms: 300_000,
+            max_range: 40.0,
+            gcd_ms: 1500,
+            start_recovery_category: 133,
+            defense_type: 1,
+            max_targets: 1,
+            effects: vec![
+                effect(
+                    1367618,
+                    0,
+                    dbcenums::A_PERIODIC_DUMMY,
+                    6.666_669_845_581_055,
+                ),
+                effect(1367619, 1, dbcenums::A_DUMMY, 1.916_669_964_790_344_2),
+                effect(1367620, 2, dbcenums::A_DUMMY, 3.833_329_916_000_366),
+            ],
+            powers: vec![Power {
+                power_type: dbcenums::POWER_MANA,
+                cost_pct: 8.0,
+                ..Power::default()
+            }],
+            ..Spell::default()
+        }
+    })
+}
 
 /// The Echoes Unsealed Wrath (1310735) stores, one per seal. Echo of Fury (1311701) states 15
 /// sec and 3 stacks; upstream #772 reads it for all four.
@@ -256,6 +305,21 @@ mod tests {
             TWO_HANDED_THREAT.len()
         );
         assert_eq!(ranks("champion_of_the_light"), CHAMPION_OF_THE_LIGHT.len());
+    }
+
+    #[test]
+    fn oath_of_light_reads_the_tooltips_bonuses_at_level_60() {
+        let row = oath_of_light();
+        let bonus = |n| {
+            row.effect_n(n)
+                .average(crate::prepare::character::constants::CHARACTER_LEVEL)
+        };
+        // "up to 400 ... up to 115 ... up to 229" (Holy Light, Flash of Light, Holy Shock).
+        assert_eq!([bonus(1), bonus(2), bonus(3)], [400.0, 115.0, 229.0]);
+        assert_eq!(row.mana_cost().base_cost_percent, 8.0);
+        assert_eq!(row.duration(), 300 * SECOND);
+        assert_eq!(row.gcd(), 1500 * MILLISECOND);
+        assert_eq!(row.cast_time(), 0);
     }
 
     #[test]

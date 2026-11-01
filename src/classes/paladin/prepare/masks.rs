@@ -58,6 +58,10 @@ pub const SHADOW_RESISTANCE_AURA: i64 = 1 << 45;
 /// bit; it is Rust's, past the reference's.
 pub const SECOND_JUDGEMENT: i64 = 1 << 46;
 
+/// Oath of Light (1328548, push 113554, Forever's rules). Go has no such bit; it is Rust's, past
+/// the reference's.
+pub const OATH_OF_LIGHT: i64 = 1 << 47;
+
 pub const ALL_SEALS: i64 = SEAL_OF_RIGHTEOUSNESS
     | SEAL_OF_COMMAND
     | SEAL_OF_LIGHT

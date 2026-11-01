@@ -1792,6 +1792,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
     /// Go `doneIteration` is deactivating the auras: an iteration is ending.
     pub(crate) done_iteration: bool,
+    /// The aura the tracker is deactivating because its duration ran out, for a class that tells
+    /// an aura fading by time from one cut short (a refresh, a consume, the iteration's end).
+    pub(crate) expiring_by_duration: Option<AuraRef>,
     /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
     /// both kinds, so Go's single registration order is kept.
     pub(crate) spell_damage_taken_modifiers: Vec<SpellDamageTakenModifier>,
@@ -4071,6 +4074,7 @@ impl<A: Agent> Fight<A> {
             free_travel_batches: Vec::new(),
             damage_taken_modifiers: Vec::new(),
             done_iteration: false,
+            expiring_by_duration: None,
             spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
             config,

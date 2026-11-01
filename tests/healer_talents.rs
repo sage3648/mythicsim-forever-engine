@@ -1,6 +1,6 @@
 //! The healer talents past each class's heals, which Forever's rules model from the client rows
 //! and tooltips (README, Rust-only mechanics): Riptide's bonus to Chain Heal, Genesis on Wild
-//! Growth and Swiftmend, Oath of Light and Boundless Light. Each test puts a reference build's
+//! Growth and Swiftmend, and the Holy Paladin's Oath of Light share. Each test puts a reference build's
 //! talents on one of the healer fixtures, checks what the export carries and what the spell did
 //! in the fights, and that the Go reference's rules do not read it.
 
@@ -14,16 +14,10 @@ const RESTORATION_SHAMAN: &str = "-055-5531500015513151";
 const RESTORATION_DRUID: &str = "05302001--5053025153113051";
 /// The same without Genesis.
 const RESTORATION_DRUID_NO_GENESIS: &str = "00302001--5053025153113051";
-/// The Holy Paladin reference build's, in hotfix push 113554's order: Oath of Light, Boundless
-/// Light 2.
-const HOLY_PALADIN: &str = "50320215002121251-503220005002";
-/// The same without Oath of Light.
-const HOLY_PALADIN_NO_OATH: &str = "50320215002021251-503220005002";
 
 const CHAIN_HEAL: i64 = 10623;
 const RIPTIDE: i64 = 1239243;
 const HOLY_LIGHT: i64 = 25292;
-const HOLY_SHOCK_HEAL: i64 = 25903;
 const WILD_GROWTH: i64 = 1238215;
 const SWIFTMEND: i64 = 18562;
 
@@ -49,15 +43,6 @@ fn request(name: &str, talents: &str, spells: &[i64]) -> Value {
         player["rotation"] = json!({"type": "TypeAPL", "priorityList": list});
     }
     request["simOptions"]["iterations"] = json!(40);
-    request
-}
-
-/// The Holy Paladin fixture on a 113554 talent string and its own rotation (Holy Shock, Holy
-/// Light, Flash of Light).
-fn paladin(talents: &str) -> Value {
-    let mut request = fixture("fixtures/mage/prepared-v2/holy-paladin-healing.request.json");
-    request["raid"]["parties"][0]["players"][0]["talentsString"] = json!(talents);
-    request["simOptions"]["iterations"] = json!(60);
     request
 }
 
@@ -225,48 +210,34 @@ fn genesis_reaches_wild_growth_and_swiftmend() {
     assert_eq!(swiftmend(&reference), swiftmend(&reference_without));
 }
 
-/// Oath of Light (1328548, push 113554), in the Holy Paladin healer sim: one ally carries it for
-/// the fight, and a Holy Light, Flash of Light or Holy Shock heal reaches that ally with the
-/// tank's share of the party's hits. The holder's heal gains the oath's flat healing (400 for
-/// Holy Light, 115, 229 for Holy Shock); a Holy Shock heal on anyone else has Boundless Light's 30%
-/// crit, which the oath-less build has on every Holy Shock heal.
+/// Oath of Light (1328548, push 113554), once cast on the heal target (the tank): while the aura
+/// is up a Holy Light, Flash of Light or Holy Shock heal reaches the tank with the tank's share of
+/// the party's hits, 5 in 9 of them, and only those carry the flat bonus; the other heals are
+/// plain, and a Holy Shock heal on them has Boundless Light's crit back. The share is derived from
+/// the party damage's hit rates. The Oath's cast, mana and bonuses are `tests/healers.rs`'s.
 #[test]
-fn oath_of_light_raises_the_holders_heals_and_leaves_boundless_light_the_rest() {
-    let sworn = prepared(&paladin(HOLY_PALADIN), Rules::Forever);
-    let oath = effect(&sworn, "paladin_heals")["oath_of_light"].clone();
-    assert!((oath["holder_share"].as_f64().unwrap() - 5.0 / 9.0).abs() < 1e-12);
+fn oath_of_light_bonuses_the_tanks_share_of_heals() {
+    let request = fixture("fixtures/healers/holy-paladin.request.json");
+    let prepared = prepared(&request, Rules::Forever);
+    let oath = effect(&prepared, "oath_of_light");
+    // The tank is hit 1.0 a second and the other four 0.2 each.
+    assert!((oath["holder_share"].as_f64().unwrap() - 1.0 / 1.8).abs() < 1e-12);
     assert_eq!(oath["holy_light"], 400.0);
     assert_eq!(oath["flash_of_light"], 115.0);
     assert_eq!(oath["holy_shock"], 229.0);
     assert_eq!(oath["boundless_light_crit"], 30.0);
-    // The runtime applies Boundless Light to the heals the oath's holder does not take.
-    assert_eq!(spell(&sworn, HOLY_SHOCK_HEAL)["bonus_crit_percent"], 0.0);
 
-    let unsworn = prepared(&paladin(HOLY_PALADIN_NO_OATH), Rules::Forever);
-    assert!(effect(&unsworn, "paladin_heals")
-        .get("oath_of_light")
-        .is_none());
-    assert_eq!(spell(&unsworn, HOLY_SHOCK_HEAL)["bonus_crit_percent"], 30.0);
-
-    // Holy Light heals more a cast: 5 in 9 of them gain 400 before the multipliers, on a base of
-    // about 2,000 to 2,500 a cast.
-    let gain = healing_a_cast(&sworn, HOLY_LIGHT) / healing_a_cast(&unsworn, HOLY_LIGHT);
-    assert!((1.05..1.15).contains(&gain), "Holy Light gain {gain}");
-
-    // Healer-only: a Retribution paladin who took the oath, and the reference's rules, read none
-    // (the oath's holder is among the heals a healer's party reaches).
-    let mut ret = fixture("fixtures/mage/prepared-v2/production-retribution-paladin.request.json");
-    ret["raid"]["parties"][0]["players"][0]["talentsString"] =
-        json!("050050002001-503-05233301001301351");
-    let ret = prepared(&ret, Rules::Forever);
-    assert!(ret["effects"]
-        .as_array()
+    // A share of every Holy Light carries the 400: more a cast than without the Oath's cast,
+    // and less than the full 400 on every heal would give.
+    let swore = healing_a_cast(&prepared, HOLY_LIGHT);
+    let mut bare_request = request.clone();
+    let rotation = &mut bare_request["raid"]["parties"][0]["players"][0]["rotation"];
+    rotation["prepullActions"] = json!([]);
+    rotation["priorityList"]
+        .as_array_mut()
         .unwrap()
-        .iter()
-        .filter(|effect| effect["kind"] == "paladin_heals")
-        .all(|effect| effect.get("oath_of_light").is_none()));
-    let reference = prepared(&paladin("25320213225131051-50323"), Rules::GoReference);
-    assert!(effect(&reference, "paladin_heals")
-        .get("oath_of_light")
-        .is_none());
+        .retain(|line| line["action"]["castSpell"]["spellId"]["spellId"] != 1328548);
+    let bare = healing_a_cast(&self::prepared(&bare_request, Rules::Forever), HOLY_LIGHT);
+    let gain = swore / bare;
+    assert!((1.08..1.18).contains(&gain), "Holy Light gain {gain}");
 }

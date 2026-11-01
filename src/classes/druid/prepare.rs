@@ -151,6 +151,10 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
         name: "swiftmend",
     },
     ClassSpellName {
+        mask: masks::BLOOM,
+        name: "bloom",
+    },
+    ClassSpellName {
         mask: masks::ENTANGLING_ROOTS,
         name: "entangling_roots",
     },
@@ -661,6 +665,7 @@ impl PrepAgent for Druid {
             Spec::FeralBear => self.register_feral_tank_spells(sim),
             Spec::Restoration => {
                 self.register_heals(sim);
+                self.register_bloom(sim);
                 self.register_natures_swiftness(sim);
             }
         }

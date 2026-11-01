@@ -4,7 +4,7 @@
 //! return part of the cost.
 
 use crate::{
-    contracts::prepared_v2::{PaladinHealRank, PaladinHealUnit, PaladinOathOfLight},
+    contracts::prepared_v2::{PaladinHealRank, PaladinHealUnit},
     core::fight::{
         healing::Healing, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult, OUTCOME_CRIT,
     },
@@ -73,8 +73,6 @@ pub(crate) struct Heals {
     pub(crate) blessing_flash_of_light: f64,
     pub(crate) player: HealUnit,
     pub(crate) target: HealUnit,
-    /// Oath of Light's holder and what the oath adds, in the Holy Paladin healer sim.
-    pub(crate) oath: Option<PaladinOathOfLight>,
 }
 
 impl Heals {
@@ -84,13 +82,7 @@ impl Heals {
         blessing: (f64, f64),
         player: &PaladinHealUnit,
         target: &PaladinHealUnit,
-        oath: Option<PaladinOathOfLight>,
     ) -> Result<Self, String> {
-        if let Some(oath) = oath {
-            if !(0.0..=1.0).contains(&oath.holder_share) {
-                return Err(format!("Oath of Light holder share {}", oath.holder_share));
-            }
-        }
         Ok(Heals {
             ranks: ranks
                 .iter()
@@ -108,7 +100,6 @@ impl Heals {
             blessing_flash_of_light: blessing.1,
             player: HealUnit::new(player),
             target: HealUnit::new(target),
-            oath,
         })
     }
 
@@ -141,17 +132,20 @@ impl Heals {
             }
             _ => {}
         }
-        // Oath of Light: whether the heal reaches the oath's holder, which adds the oath's flat
-        // healing, or any other player, where a Holy Shock heal gains Boundless Light's crit.
+        // Oath of Light (Forever's rules): while the Oath is up, the heal reaches the Oath's
+        // holder or another player (`OathOfLight::holder_share`). The holder's heal adds the flat
+        // bonus, before spell power; any other player's Holy Shock heal has Boundless Light's
+        // crit, which the Oath's aura took off.
         let mut unsworn_crit = 0.0;
-        if let Some(oath) = self.oath {
-            let holder = fight.random("Oath of Light") < oath.holder_share;
-            match (rank.kind, holder) {
-                (HealKind::HolyLight, true) => amount += oath.holy_light,
-                (HealKind::FlashOfLight, true) => amount += oath.flash_of_light,
-                (HealKind::HolyShockHeal, true) => amount += oath.holy_shock,
-                (HealKind::HolyShockHeal, false) => unsworn_crit = oath.boundless_light_crit,
-                _ => {}
+        if let Some(oath) = fight.agent.oath.filter(|oath| oath.on(fight, target)) {
+            if fight.random("Oath of Light") < oath.holder_share {
+                amount += match rank.kind {
+                    HealKind::HolyLight => oath.holy_light,
+                    HealKind::FlashOfLight => oath.flash_of_light,
+                    HealKind::HolyShockHeal => oath.holy_shock,
+                };
+            } else if rank.kind == HealKind::HolyShockHeal {
+                unsworn_crit = oath.boundless_light_crit;
             }
         }
         fight.spells[spell].bonus_crit_percent += unsworn_crit;

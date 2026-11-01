@@ -85,10 +85,11 @@ pub(crate) struct Talents {
     pub living_spirit: i32,
     /// Hotfix push 113531's new talents, which the pinned proto has no field for: Forever's
     /// rules read them into the layout's extras, and the reference never sets them. Bloom
-    /// (1328621) is read the same way and models nothing: its heal row (1328622) is not in the
-    /// store.
+    /// (1328621) is read the same way: a Restoration druid's heals over time heal their player
+    /// for the druid's Spirit when they end (`spells::bloom`).
     pub lacerate: bool,
     pub predatory_discipline: bool,
+    pub bloom: bool,
 }
 
 impl Talents {
@@ -135,6 +136,7 @@ impl Talents {
             living_spirit: m.i32("living_spirit"),
             lacerate: extra("lacerate"),
             predatory_discipline: extra("predatory_discipline"),
+            bloom: extra("bloom"),
         }
     }
 }

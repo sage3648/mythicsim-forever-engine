@@ -98,6 +98,10 @@ impl Paladin {
         if self.talents.bool("lights_vigil") {
             self.register_lights_vigil(sim, unit);
         }
+        // Push 113554's Oath of Light: 0 points under the reference's rules.
+        if self.new_talent("oath_of_light") > 0 {
+            self.register_oath_of_light(sim, unit);
+        }
 
         // Protection
         if self.talents.bool("swift_judgement") {

@@ -309,7 +309,7 @@ the Go goldens and exporter uses. The departures:
   with Predatory Discipline a landed Ferocious Bite keeps the energy left after its cost; Primal
   Bite's level 60 rank is 1238070 (1238073 is gone, same 77 flat damage); Shifting Power's
   cooldown is 8 seconds; Wild Growth takes a 3 second cast that Naturalist shortens; Naturalist's
-  damage and Genesis are 2% a rank. Bloom models nothing (its heal row is not in the store).
+  damage and Genesis are 2% a rank. Bloom is modelled from its text alone (below).
   Moonkin Aura and Leader of the Pack are both 3% of every kind of crit, and one counts (the
   `RaidCrit` category, as #769 rules). Mage: Arcane Resilience has 3 ranks, Ice Lance's Frozen
   bonus is 300% and every rank has an 8 second cooldown on Fire Blast's category 19, Winter's
@@ -349,14 +349,33 @@ the Go goldens and exporter uses. The departures:
   and cost what the rank below did (Rank 3: 153 damage for 195 mana). Divine Precision 4/8%,
   Improved Seals 3-15%, Reverence 15/30%, Spiritual Focus 14-70%, Redoubt 6-30%, Shield
   Specialization 15/30% and 50/100%, Improved Righteous Fury 3/6/9%, Iron Creed 10-30% and
-  2-6%, Boundless Light 15/30% Holy Shock heal crit. A Holy Paladin healer sim models Oath of
-  Light and gives Boundless Light the heals the oath's holder does not take (below); every other
-  build holds Boundless Light on every Holy Shock heal, as no ally carries an oath; Light's
-  Vigil, now friendly only, refuses a rotation that reaches it, since its party heal is not
-  modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
+  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is a castable spell (below), and
+  Boundless Light holds on a Holy Shock heal only while the Oath is not on the heal target;
+  Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
+  heal is not modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing
+  the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
   heals the priest for half as much, as a second jump, and Binding Heal's ranks leave the tree.
   Shadow Word: Death's backlash (10% to 30% of maximum health) is self damage the sim does not
   deal.
+- Oath of Light (1328548) and Bloom (1328621), the two healer talents of hotfix pushes 113554 and
+  113531, from the client text and the rows the pushes carry (wago.tools has neither, and
+  upstream wowsims/forever models only the Oath). Oath of Light is an instant 8% base mana cast
+  that swears a 5 minute Oath on the heal target, which is the player in the healer model and
+  stands for the tank; while it holds, each Holy Light heal that reaches the tank heals 400 more,
+  each Flash of Light 115 and each Holy Shock 229 (the rows' 6.67, 1.92 and 3.83 a level at
+  level 60), added to the heal's base amount before healing power. The sim heals "a player who
+  needs it", so a heal reaches the tank with the tank's share of the party's hits under
+  `prepare::party_damage` (5 in 9, `party_damage::tank_share`, carried as the effect's
+  `holder_share`); the rest reach players without the Oath, get no bonus and, for Holy Shock,
+  keep Boundless Light's crit, which the aura takes off the tank's. A rotation casts it on the
+  player (`castFriendlySpell` before the pull, `castSpell` in the list) and again before it ends.
+  Bloom heals the target of a Rejuvenation or Regrowth that ends by its duration for 100% of the
+  druid's Spirit. The client rows are two dummy effects (100 and 50) and no heal spell, so the
+  coefficient, crit and modifiers are not stated: the heal is the Spirit exactly, no healing
+  power, no multipliers, no crit, with the overhealing share of a heal at once, and shows as its
+  own action (1328621). A heal over time cast again while it runs keeps ticking on its first
+  player, so that cast blooms as the new one goes up; one Swiftmend consumes, or the fight cuts
+  short, blooms nothing. The dispel case (50% of Spirit) never happens in the sim.
 - Party damage for heals that follow it, an assumption until the logs hold them: Forever's level
   30 beta logs have no Prayer of Mending or Chain Heal yet. A healer's party of five takes hits
   at random, the tank about once a second and each of the other four about once every five
@@ -437,17 +456,11 @@ the Go goldens and exporter uses. The departures:
   keep their falloff of the unboosted heal, and Riptide is not spent (its row states no
   consumption). Genesis (1223081) is 2% a rank on the periodic healing of Rejuvenation,
   Regrowth and Wild Growth, its first effect, and on Swiftmend, its second, which the
-  reference's Genesis (Rejuvenation and Regrowth alone) did not reach. Oath of Light (1328548,
-  push 113554) is sworn on the tank before the pull and lasts the fight: a Holy Light, Flash of
-  Light or Holy Shock heal reaches the oath's holder with the tank's share of the party's hits
-  (5 in 9 with `prepare::party_damage`'s rates) and gains 400, 115 or 229 healing before the
-  healing multipliers, as Blessing of Light's did; a Holy Shock heal on anyone else has
-  Boundless Light's crit. The push's rows for the oath are not in the store, so the amounts are
-  its tooltip's. The prepared effects are the heal's `hot_bonus` with `first_target_only` and
-  the `paladin_heals` effect's `oath_of_light` (`tests/healer_talents.rs`). Not modelled: Bloom
-  (1328621), whose heal row (1328622) is not in the store; Light's Vigil, whose party heal on
-  the next Holy Shock waits on a rotation that casts it; and the shaman's own Mana Tide Totem,
-  which it has no cast for (the raid's Mana Tide Totem option is an external).
+  reference's Genesis (Rejuvenation and Regrowth alone) did not reach. The prepared effect is the
+  heal's `hot_bonus` with `first_target_only` (`tests/healer_talents.rs`). Not modelled: Light's
+  Vigil, whose party heal on the next Holy Shock waits on a rotation that casts it; and the
+  shaman's own Mana Tide Totem, which it has no cast for (the raid's Mana Tide Totem option is an
+  external).
 - Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
   them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
   with no procs per minute, and the reference leaves them unregistered (its generator's "states

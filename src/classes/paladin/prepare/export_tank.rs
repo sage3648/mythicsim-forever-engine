@@ -213,29 +213,6 @@ impl Paladin {
             .average(CHARACTER_LEVEL)
     }
 
-    /// Oath of Light in the healer sim (push 113554), the ally who carries it and what it adds.
-    ///
-    /// The oath lasts 5 minutes and is sworn before the pull, on the player the party hurts
-    /// most, the tank. The sim has no per-player heals (a heal lands on a player who needs it),
-    /// so a Holy Light, Flash of Light or Holy Shock reaches the oath's holder with the share of
-    /// the party's hits the tank takes under `prepare::party_damage`, 5 in 9 with its rates.
-    /// Boundless Light's crit holds on a Holy Shock heal on anyone else. The amounts are the
-    /// tooltip's, since the push's rows for the oath are not in the store
-    /// (`hotfix_113554::OATH_OF_LIGHT_HOLY_LIGHT`).
-    fn oath_of_light_effect(&self) -> Value {
-        use crate::prepare::party_damage::HIT_RATES;
-        json!({
-            "holder_share": HIT_RATES[0] / HIT_RATES.iter().sum::<f64>(),
-            "holy_light": hotfix::OATH_OF_LIGHT_HOLY_LIGHT,
-            "flash_of_light": hotfix::OATH_OF_LIGHT_FLASH_OF_LIGHT,
-            "holy_shock": hotfix::OATH_OF_LIGHT_HOLY_SHOCK,
-            "boundless_light_crit": hotfix::at(
-                &hotfix::BOUNDLESS_LIGHT,
-                self.new_talent("boundless_light"),
-            ),
-        })
-    }
-
     /// Go `paladinHealEffect`: every heal rank's roll, the Libram of Light's Flash of Light
     /// bonus, Blessing of Light's bonuses on a unit that carries it, and the healing modifiers
     /// of the paladin on itself and on the target, which a plain cast heals.
@@ -287,17 +264,13 @@ impl Paladin {
         };
         let player = unit(env.player);
         let target = unit(env.encounter.targets[0]);
-        let mut heals = json!({
+        json!({
             "kind": "paladin_heals", "ranks": ranks,
             "flash_of_light_bonus": self.flash_of_light_bonus_healing,
             "blessing_holy_light": blessing.effect_n(1).average(CHARACTER_LEVEL),
             "blessing_flash_of_light": blessing.effect_n(2).average(CHARACTER_LEVEL),
             "player": player, "target": target,
-        });
-        if self.oath_of_light(sim) {
-            heals["oath_of_light"] = self.oath_of_light_effect();
-        }
-        heals
+        })
     }
 }
 
