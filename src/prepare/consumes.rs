@@ -568,10 +568,10 @@ fn register_per_weapon_main_hand_imbue(env: &mut Environment, consumables: &Mess
             );
             auras.push(aura.aura);
         }
-        if super::frost_oil::is_static_imbue_proc(id) {
+        if let Some(oil) = super::proc_oil::static_imbue_proc(id) {
             known = true;
             let before = env.sim.unit(unit).auras.len();
-            super::frost_oil::register_frost_oil(env, ProcMask::MELEE_MH);
+            super::proc_oil::register_proc_oil(env, oil, ProcMask::MELEE_MH);
             auras.extend(env.sim.unit(unit).auras[before..].iter().copied());
         }
         if !known {
@@ -604,9 +604,10 @@ fn register_per_weapon_main_hand_imbue(env: &mut Environment, consumables: &Mess
 fn register_static_imbue(env: &mut Environment, imbue_id: i32, hand: Hand) {
     let unit = env.player;
     // `StaticImbueProcs`: an imbue whose effect is a combat proc.
-    if super::frost_oil::is_static_imbue_proc(imbue_id) {
-        super::frost_oil::register_frost_oil(
+    if let Some(oil) = super::proc_oil::static_imbue_proc(imbue_id) {
+        super::proc_oil::register_proc_oil(
             env,
+            oil,
             match hand {
                 Hand::Main => ProcMask::MELEE_MH,
                 Hand::Off => ProcMask::MELEE_OH,

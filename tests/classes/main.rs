@@ -11,6 +11,7 @@ mod paladin;
 #[path = "../support/paladin_113554.rs"]
 mod paladin_113554;
 mod priest;
+mod proc_oil;
 mod rogue;
 mod rotation_targets;
 mod rotation_values;
