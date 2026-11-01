@@ -132,6 +132,14 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
         name: "lights_vigil_strike",
     },
     ClassSpellName {
+        mask: masks::LIGHTS_VIGIL_ALLY,
+        name: "lights_vigil_ally",
+    },
+    ClassSpellName {
+        mask: masks::LIGHTS_VIGIL_HEAL,
+        name: "lights_vigil_heal",
+    },
+    ClassSpellName {
         mask: masks::SEAL_OF_RIGHTEOUSNESS,
         name: "seal_of_righteousness",
     },
@@ -241,6 +249,9 @@ pub(crate) struct Paladin {
     /// Under Forever's rules, the points of the talents push 113554 adds, which the pinned proto
     /// does not have, by upstream #772's field name.
     new_talents: std::collections::BTreeMap<&'static str, i64>,
+    /// Whether the sim is MythicSim's Holy Paladin healer sim, the only one that models Light's
+    /// Vigil on an ally (push 113554).
+    healer: bool,
     /// Go `Paladin.Judgement`.
     judgement: Option<SpellId>,
     /// Go `Paladin.Forbearance`.
@@ -367,6 +378,7 @@ pub(crate) fn new_paladin(
     Ok(Box::new(Paladin {
         talents,
         new_talents,
+        healer: spec == "holy_paladin",
         judgement: None,
         forbearance: None,
         righteous_fury_aura: None,

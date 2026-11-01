@@ -25,6 +25,10 @@ use super::util::spell_action;
 use super::Paladin;
 
 /// Go `core.SpellBatchWindow`.
+/// The players Light's Vigil's party heal reaches: the target and its party of five, the party
+/// the healer sims model (`prepare::party_damage`).
+const VIGIL_PARTY: u32 = 5;
+
 const SPELL_BATCH_WINDOW: i64 = 10 * MILLISECOND;
 
 /// Go `sanctifiedJudgementLogScale`: the game returns 10/9 of the stated share of the seal's cost.
@@ -470,9 +474,28 @@ impl Paladin {
         };
         if sim.rules == crate::prepare::sim::Rules::Forever {
             // Push 113554 makes the vigil friendly only: the next Holy Shock heal on the ally
-            // heals its party, and the enemy strike and refund are gone. The party heal is not
-            // modelled yet.
-            if talents.bool("lights_vigil") && vigil_reached {
+            // heals its party, and the enemy strike and refund are gone. The Holy Paladin
+            // healer sim models it; any other build's rotation that reaches it is refused.
+            if talents.bool("lights_vigil") && self.healer {
+                let mut ranks = Vec::new();
+                data.lights_vigil.each(|_, rank| {
+                    let (_, _, heal, _) = LIGHTS_VIGIL_TRIGGERED
+                        .iter()
+                        .copied()
+                        .find(|(n, _, _, _)| *n == rank.rank_number())
+                        .unwrap_or((0, 0, 0, 0));
+                    let heal_rank = data.lights_vigil_triggered.by_id(heal);
+                    let roll = heal_rank.heal_effect();
+                    ranks.push(json!({
+                        "spell_id": rank.id,
+                        "aura": format!("Light's Vigil{label} Rank {}", rank.rank_number()),
+                        "heal_spell_id": heal_rank.id,
+                        "average": roll.average(CHARACTER_LEVEL), "variance": roll.variance,
+                        "players": VIGIL_PARTY,
+                    }));
+                });
+                effects.push(json!({"kind": "lights_vigil_ally", "ranks": ranks}));
+            } else if talents.bool("lights_vigil") && vigil_reached {
                 notes.push("Light's Vigil on an ally (push 113554) is unsupported".to_string());
             }
         } else if talents.bool("lights_vigil") {

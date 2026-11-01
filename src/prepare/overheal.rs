@@ -67,6 +67,7 @@ const ESTIMATED: &[(&str, f64)] = &[
     ("Penance", DIRECT),
     ("Desperate Prayer", DIRECT),
     ("Wild Growth", GROUP),
+    ("Light's Vigil", GROUP),
     // Bloom heals the player a heal over time just ended on, at once and for its Spirit: the
     // logs hold no Bloom yet (a push 113531 talent), so it takes the share of a heal at once.
     ("Bloom", DIRECT),

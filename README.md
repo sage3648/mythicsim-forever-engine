@@ -470,10 +470,25 @@ the Go goldens and exporter uses. The departures:
   consumption). Genesis (1223081) is 2% a rank on the periodic healing of Rejuvenation,
   Regrowth and Wild Growth, its first effect, and on Swiftmend, its second, which the
   reference's Genesis (Rejuvenation and Regrowth alone) did not reach. The prepared effect is the
-  heal's `hot_bonus` with `first_target_only` (`tests/healer_talents.rs`). Not modelled: Light's
-  Vigil, whose party heal on the next Holy Shock waits on a rotation that casts it; and the
-  shaman's own Mana Tide Totem, which it has no cast for (the raid's Mana Tide Totem option is an
-  external).
+  heal's `hot_bonus` with `first_target_only` (`tests/healer_talents.rs`).
+- Mana Tide Totem and Light's Vigil, the last two healer talents, from the client rows.
+  The Restoration shaman's own Mana Tide Totem (rank 4, 1325256; Forever's rules, the talent
+  taken) costs the row's 60 mana, stands 13 seconds on a 5 minute cooldown and gives its Mana
+  Tide row's (1325257) 290 mana every 3 seconds to its group; the sim models the shaman's own
+  mana, as MP5 the way Mana Spring Totem's ticks are (483.3 MP5 for 13 seconds, 1,257 mana
+  against four whole ticks' 1,160), the same MP5 as the raid's external Mana Tide Totem option,
+  which it stacks with. It stands in the water totem slot: its cast ends a Healing Stream Totem
+  and its heals over time, and a Healing Stream Totem cast ends it, so a rotation recasts neither
+  while the other stands. A cast takes no target. Light's Vigil on an ally (rank 3, 1311595 at
+  level 60; push 113554, the Holy Paladin healer sim) costs the row's 1,340 mana on a 1.5 second
+  cast with a 6 second cooldown and puts a 30 second vigil on the player, one at a time; the next
+  Holy Shock heal on the player spends it, triggers no cooldown and heals the player and the four
+  others of the party for 704 plus 0.143 of healing power, each with its own roll and crit (Holy
+  Power's crit healing reaches it and a group heal's overhealing share comes off; Healing Light
+  does not, as its mask omits the vigil, and Illumination does not, since the heal has no cost
+  to refund). The enemy strike and the refund are gone. Any other build's rotation that casts it is
+  refused as before. The prepared effects are `mana_tide_totem` and `lights_vigil_ally`
+  (`tests/healer_talents.rs`).
 - Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
   them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
   with no procs per minute, and the reference leaves them unregistered (its generator's "states

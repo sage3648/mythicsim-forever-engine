@@ -38,6 +38,12 @@ const HEALING_STREAM: &[(i32, i32)] = &[
     (10463, 10461),
 ];
 const PARTY: u32 = 5;
+
+/// Healing Stream Totem's totem spells, by rank: the ones Mana Tide Totem replaces in the water
+/// totem slot.
+pub(super) fn healing_stream_totems() -> Vec<i32> {
+    HEALING_STREAM.iter().map(|&(totem, _)| totem).collect()
+}
 /// Riptide's third effect: a dummy aura whose points are the percent a Chain Heal on the target
 /// gains (the talent's tooltip, "increases the effectiveness of your Chain Heal casts directly
 /// on that target by $s3%"). All three ranks state 25.

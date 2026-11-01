@@ -36,6 +36,7 @@ const EFFECTS: &[&str] = &[
     "judgement_refresh",
     "lay_on_hands",
     "lights_vigil",
+    "lights_vigil_ally",
     "oath_of_light",
     "paladin_aura_cast",
     "paladin_heals",
@@ -86,6 +87,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "holy_wrath" => Some("holy_wrath"),
         "holy_shock" => Some("holy_shock"),
         "lights_vigil" | "lights_vigil_strike" => Some("lights_vigil"),
+        "lights_vigil_ally" | "lights_vigil_heal" => Some("lights_vigil_ally"),
         "divine_favor" => Some("divine_favor"),
         "oath_of_light" => Some("oath_of_light"),
         "righteous_fury" => Some("righteous_fury"),
@@ -189,6 +191,10 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::LightsVigil { ranks } => ranks
             .iter()
             .map(|rank| ("target", rank.aura.as_str()))
+            .collect(),
+        Effect::LightsVigilAlly { ranks } => ranks
+            .iter()
+            .map(|rank| ("player", rank.aura.as_str()))
             .collect(),
         Effect::PaladinAuraCast { ranks } => ranks
             .iter()

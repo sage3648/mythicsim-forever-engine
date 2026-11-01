@@ -380,6 +380,8 @@ pub(crate) fn stat_auras_effect_reading(
 
 /// The label `buffs.ManaTideTotemsAura` gives the external caster's copy.
 const EXTERNAL_MANA_TIDE_LABEL: &str = "Mana Tide Totem (External)";
+/// The label of the Restoration shaman's own Mana Tide Totem, whose MP5 is the same row's.
+const SELF_MANA_TIDE_LABEL: &str = "Mana Tide Totem (Self)";
 
 /// `rawMP5Bonuses`: `AddStatsDynamic` adds each bonus to the raw stats and takes it away again,
 /// so a bonus that is not a whole number leaves the sum a few ulps off its start once the aura
@@ -403,7 +405,9 @@ fn raw_mp5_bonuses(
             continue;
         }
         let value = MANA_TIDE_TOTEMS.value(0);
-        if label == EXTERNAL_MANA_TIDE_LABEL && raw[0] + value == first {
+        if (label == EXTERNAL_MANA_TIDE_LABEL || label == SELF_MANA_TIDE_LABEL)
+            && raw[0] + value == first
+        {
             bonuses.insert(label.clone(), value);
             continue;
         }

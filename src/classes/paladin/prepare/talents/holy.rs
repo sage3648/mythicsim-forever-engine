@@ -327,7 +327,8 @@ impl Paladin {
             sim.add_static_mod(
                 unit,
                 SpellModConfig {
-                    class_mask: masks::HEALING_SPELLS,
+                    // Holy Power's mask names Light's Vigil, whose party heal is the third.
+                    class_mask: masks::HEALING_SPELLS | masks::LIGHTS_VIGIL_HEAL,
                     kind: SpellModType::CritMultiplierPct,
                     float_value: hotfix::at(&hotfix::HOLY_POWER, points) / 100.0,
                     ..SpellModConfig::default()
