@@ -56,7 +56,8 @@ use std::collections::{BTreeMap, HashMap};
 
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{
-    Outcome, SpellResult, OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED, OUTCOME_PARRY,
+    Outcome, SpellResult, OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED, OUTCOME_MISS,
+    OUTCOME_PARRY,
 };
 pub(crate) use dot::Dot;
 pub(crate) use enemy::EnemySlow;

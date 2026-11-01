@@ -109,6 +109,14 @@ the Go goldens and exporter uses. The departures:
   6,750 armor-seconds of its 2,250 armor unapplied as Sunder Armor's ramp: the Marksmanship
   production request sims 609.87 against 609.86. With both, Expose Armor stays up from the pull.
   Forever preparation writes `external_expose_armor`.
+- Flurry's charges, from three level 30 Warrior logs on build 1.60.1.70450 (magey/forever-warrior
+  discussion 30, counted in wowsims/forever PR 745): with Flurry up, every white swing spends a
+  charge whatever its outcome (misses 180 of 180, dodges 75 of 75, parries 72 of 72), and a
+  Heroic Strike spends one only when it misses (23 of 23; landed ones 3 of 265, each sharing its
+  moment with a white swing, dodged or parried ones 0 of 38). Cleave follows Heroic Strike, an
+  assumption, as the logs hold one Cleave. The reference spends a charge on each landed white
+  hit, Heroic Strike and Cleave included, and never on a miss. The prepared `warrior_flurry`
+  effect carries `every_swing_spends`.
 - Casting regeneration auras, from the client's mana regeneration interrupt aura (type 134),
   which acts as it is applied: Resourcefulness, Rapid Recuperation and Improved Stormstrike let
   more spirit regeneration continue while casting from the moment they are up. The reference

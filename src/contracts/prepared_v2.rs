@@ -4349,6 +4349,11 @@ pub enum Effect {
         aura: String,
         melee_speed_multiplier: f64,
         charges: i32,
+        /// Forever's rules: every white swing spends a charge whatever its outcome, and a Heroic
+        /// Strike or Cleave spends one only when it misses. Without it, as in Go, a landed white
+        /// hit spends one, Heroic Strike and Cleave included.
+        #[serde(default, skip_serializing_if = "is_false")]
+        every_swing_spends: bool,
     },
     /// Anger Management: rage every period from the reset.
     AngerManagement {

@@ -1599,3 +1599,67 @@ fn rage_gain_threat_takes_the_threat_multiplier_and_splits_between_the_targets()
         "three targets: x{ratio} of the unsplit"
     );
 }
+
+/// Flurry (12319): with the buff up, every white swing spends a charge whatever its outcome,
+/// and a Heroic Strike or Cleave spends one only when it misses (Forever logs on build
+/// 1.60.1.70450, see src/classes/warrior/talents/flurry.rs). A swing's listeners can run after
+/// a nested extra attack's, so the charges are counted per moment of the log.
+#[test]
+fn flurry_spends_a_charge_on_every_white_swing_and_a_missed_queued_strike() {
+    let mut value = warrior_fixture("production-warrior");
+    effect_mut(&mut value, "warrior_flurry")["every_swing_spends"] = json!(true);
+    let logs = first_fight_log(value);
+    let result = |line: &str| line.contains("] [Target ") && line.contains("(SpellSchool: ");
+    // Either hand's swing, or an extra attack (Windfury's tag), which swings the same way.
+    let white = |line: &str| result(line) && line.contains("{OtherID: 3, Tag: ");
+    let queued_miss = |line: &str| {
+        result(line)
+            && (line.contains("{SpellID: 25286} Miss (")
+                || line.contains("{SpellID: 20569} Miss ("))
+    };
+    let unlanded = |line: &str| {
+        line.contains("} Miss (") || line.contains("} Dodge (") || line.contains("} Parry (")
+    };
+    let mut moments: Vec<(&str, Vec<&str>)> = Vec::new();
+    for line in logs.lines() {
+        let time = &line[..line.find(']').unwrap() + 1];
+        match moments.last_mut() {
+            Some((at, lines)) if *at == time => lines.push(line),
+            _ => moments.push((time, vec![line])),
+        }
+    }
+    let (mut spends, mut unlanded_spends, mut faded) = (0, 0, false);
+    for (time, lines) in &moments {
+        let mut spent = 0;
+        for line in lines {
+            if line.ends_with("Aura faded: {SpellID: 12966}") {
+                faded = true;
+            }
+            let Some(stacks) = line.split("{SpellID: 12966} stacks: ").nth(1) else {
+                continue;
+            };
+            let (from, to) = stacks.split_once(" --> ").unwrap();
+            let (from, to): (i32, i32) = (from.parse().unwrap(), to.parse().unwrap());
+            if to == from - 1 && !faded {
+                spent += 1;
+            }
+            faded = false;
+        }
+        let swings: Vec<&&str> = lines.iter().filter(|line| white(line)).collect();
+        let misses = lines.iter().filter(|line| queued_miss(line)).count();
+        assert!(
+            spent <= swings.len() + misses,
+            "{time}: {spent} charges spent by {} swings and {misses} missed strikes",
+            swings.len()
+        );
+        if spent > 0 && misses == 0 && swings.iter().all(|line| unlanded(line)) {
+            unlanded_spends += 1;
+        }
+        spends += spent;
+    }
+    assert!(spends > 10, "{spends} charges spent");
+    assert!(
+        unlanded_spends > 0,
+        "no missed, dodged or parried swing spent a charge"
+    );
+}
