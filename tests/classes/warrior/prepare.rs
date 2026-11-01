@@ -221,7 +221,8 @@ fn threat_follows_the_in_game_captures() {
     };
     near(&spell("revenge")["threat_multiplier"], 2.25);
     near(&spell("revenge")["flat_threat_bonus"], 0.0);
-    near(&spell("heroic_strike")["flat_threat_bonus"], 2.54 * 60.0);
+    // Heroic Strike VIII (spell level 56): rank IX is an Ahn'Qiraj 20 book (book_ranks).
+    near(&spell("heroic_strike")["flat_threat_bonus"], 2.54 * 56.0);
     near(&spell("cleave")["flat_threat_bonus"], 1.53 * 60.0);
     near(&spell("sunder_armor")["flat_threat_bonus"], 206.0);
 
