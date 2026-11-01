@@ -818,7 +818,10 @@ fn swap_activated_auras(effect: &Effect) -> Vec<&str> {
 /// value of the weapon in the hand. A field named with a slash is one inside each element of the
 /// field's array.
 const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
-    ("seal_of_righteousness", &["swing_speed", "hand_multiplier"]),
+    (
+        "seal_of_righteousness",
+        &["swing_speed", "hand_multiplier", "ranks/hit_coefficient"],
+    ),
     ("seal_of_command", &["proc_chance"]),
     // The healing power the heals snapshot, which the swap set's weapon moves.
     ("paladin_heals", &["player", "target"]),

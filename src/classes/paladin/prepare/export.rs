@@ -282,18 +282,35 @@ impl Paladin {
             } else {
                 0.85
             };
+            // The seal's aura holds only the per-hit value (a dummy aura); each hit is computed as
+            // it lands from the weapon in the hand, its spell power share too ($<1h> or $<2h> in
+            // the tooltip), which the registered spell holds for the weapon worn at the pull.
+            // Only a swap between a one-hander and a two-hander moves it, so only then does each
+            // rank carry the share of this weapon.
+            let two_hand = |item: &crate::prepare::items::Item| item.hand_type == "HandTypeTwoHand";
+            let share_follows_swap = sim.item_swap(unit).is_some_and(|swap| {
+                let main_hand = crate::prepare::items::slot::MAIN_HAND;
+                two_hand(&swap.set(false)[main_hand]) != two_hand(&swap.set(true)[main_hand])
+            });
             let mut ranks = Vec::new();
             data.seal_of_righteousness.each(|_, rank| {
                 let judge_rank = data
                     .judgement_of_righteousness
                     .by_id(rank.effect_n(2).base_value() as i32);
-                ranks.push(json!({
+                let mut row = json!({
                     "seal_spell_id": rank.id,
                     "aura": Self::seal_aura_label("Seal of Righteousness", &label, rank),
                     "judgement_spell_id": judge_rank.id,
                     "proc_spell_id": Self::righteousness_proc_id(rank.rank_number()),
                     "per_hit_value": judge_rank.effect_n(2).average(CHARACTER_LEVEL),
-                }));
+                });
+                if share_follows_swap {
+                    row["hit_coefficient"] = json!(super::seals::righteousness_hit_coefficient(
+                        judge_rank.effect_n(2).coeff(),
+                        two_hand(mh)
+                    ));
+                }
+                ranks.push(row);
             });
             effects.push(json!({
                 "kind": "seal_of_righteousness", "ranks": ranks, "hand_multiplier": hand_multiplier,
