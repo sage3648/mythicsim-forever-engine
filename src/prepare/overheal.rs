@@ -65,6 +65,7 @@ const ESTIMATED: &[(&str, f64)] = &[
     ("Chain Heal", GROUP),
     ("Tranquility", GROUP),
     ("Penance", DIRECT),
+    ("Desperate Prayer", DIRECT),
     ("Wild Growth", GROUP),
 ];
 

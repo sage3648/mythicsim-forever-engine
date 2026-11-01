@@ -42,6 +42,7 @@ const EFFECTS: &[&str] = &[
     "vampiric_embrace",
     // MythicSim's healer sims (Rust only, checked against the client rows, not Go).
     "heals",
+    "priest_heal_talents",
 ];
 
 /// Go registers Inner Focus (talents_discipline.go) and Dark Sacrifice (dark_sacrifice.go)
