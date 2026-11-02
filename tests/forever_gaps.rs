@@ -643,8 +643,10 @@ fn hammer_of_the_righteous_cleaves() {
     assert_eq!(effect["weapon_dps"], 3.0);
     assert_eq!(effect["max_targets"], 4);
     let (casts, damage, _) = action(&player, 407632, 0);
-    // 980 since push 113554's tree (978 before): the fixture's talents read in it.
-    assert_eq!(casts, 980.0);
+    // 980 since push 113554's tree (978 before): the fixture's talents read in it. 961 since the
+    // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
+    // Ahn'Qiraj 20 books, which Forever's rules leave out.
+    assert_eq!(casts, 961.0);
     assert!(damage > 0.0);
 }
 
@@ -702,11 +704,15 @@ fn a_druids_own_thorns_strikes_back() {
         .expect("the tank's own Thorns strikes back");
     // core.NewDamageShield's fixed amount, which draws nothing.
     assert!(shield["roll"].is_null());
-    assert_eq!(action(&player, 9910, 0).0, 993.0);
+    // 991 with the raid's Battle Shout VII, Strength of Earth V and Grace of Air III at the
+    // ranks below their Ahn'Qiraj 20 books (993 before).
+    assert_eq!(action(&player, 9910, 0).0, 991.0);
     assert!(action(&player, 9910, 2).1 > 0.0);
     // Off the target's threat nothing hits the druid, so the shield never strikes.
     let (_, player) = run("balance-druid-thorns");
-    assert_eq!(action(&player, 9910, 0).0, 1634.0);
+    // 1631 with the rotation's Starfire VII (25298, an Ahn'Qiraj 20 book) read as Starfire VI
+    // (1634 before).
+    assert_eq!(action(&player, 9910, 0).0, 1631.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 

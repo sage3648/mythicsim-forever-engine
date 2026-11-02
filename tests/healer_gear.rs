@@ -387,7 +387,9 @@ fn vestments_of_faith_shield_greater_heal_crits_and_proc_epiphany() {
         .as_array()
         .unwrap()
         .iter()
-        .filter(|action| action["id"]["spellId"] == 25314)
+        // Greater Heal IV (10965): Greater Heal V (25314) is an Ahn'Qiraj 20 book rank, so a
+        // Forever priest casts the rank below.
+        .filter(|action| action["id"]["spellId"] == 10965)
         .flat_map(|action| action["targets"].as_array().unwrap().iter())
         .map(|target| target["shielding"].as_f64().unwrap_or(0.0))
         .sum();
@@ -463,7 +465,9 @@ fn a_heal_puts_its_linked_heal_over_time_up() {
         .find(|effect| effect["kind"] == "heals")
         .unwrap();
     for heal in heals_effect["heals"].as_array_mut().unwrap() {
-        if heal["spell_id"] == 25314 {
+        // Greater Heal IV (10965), the rank a Forever priest casts: Greater Heal V (25314) is an
+        // Ahn'Qiraj 20 book rank.
+        if heal["spell_id"] == 10965 {
             heal["then_hot"] = json!(6077);
         }
     }

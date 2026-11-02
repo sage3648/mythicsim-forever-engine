@@ -17,7 +17,9 @@ const RESTORATION_DRUID_NO_GENESIS: &str = "00302001--5053025153113051";
 
 const CHAIN_HEAL: i64 = 10623;
 const RIPTIDE: i64 = 1239243;
-const HOLY_LIGHT: i64 = 25292;
+// Holy Light VIII, the rank a Forever paladin casts: Holy Light IX (25292) is an Ahn'Qiraj 20
+// book rank, which Forever's rules leave out.
+const HOLY_LIGHT: i64 = 10329;
 const WILD_GROWTH: i64 = 1238215;
 const SWIFTMEND: i64 = 18562;
 
