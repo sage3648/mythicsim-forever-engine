@@ -159,9 +159,10 @@ fn holy_priest_heals_as_its_rows_state() {
             "{SpellID: 401859} [DEBUG] HealingPower: 268.2, BaseHealing:287.1, AfterCasterMods:315.8",
             // Power Word: Shield rank 10 (10901): 928 + 0.1 x 268.2 = 954.82, then +20%.
             "{SpellID: 10901} Shield for 1145.790.",
-            // Renew rank 10 (25315): 166 + 0.2 x 268.2 = 219.64 a tick, then 1.10 x 1.15 x 1.05,
-            // 291.750, of which Renew's 16.06% is overhealing.
-            "{SpellID: 25315} tick Hit for 244.895 healing, 46.855 overhealing.",
+            // Renew rank 9 (10929; rank 10, 25315, is an Ahn'Qiraj 20 book rank that Forever's
+            // rules leave out): 134 + 0.2 x 268.2 = 187.64 a tick, then 1.10 x 1.15 x 1.05,
+            // 249.246, of which Renew's 16.06% is overhealing.
+            "{SpellID: 10929} tick Hit for 209.217 healing, 40.029 overhealing.",
         ],
     );
     // Under Forever's rules a charge heals only when the player holding it is hit
@@ -195,14 +196,15 @@ fn restoration_druid_heals_as_its_rows_state() {
             // Growth), on each of five players, 129.429, of which a group heal's 24.58% is
             // overhealing.
             "{SpellID: 1238215} tick Hit for 97.615 healing, 31.814 overhealing.",
-            // Rejuvenation rank 11 (25299): 194 + 0.2 x 302 = 254.4 a tick, then 1.10 x 1.15 x
-            // 1.10 (Genesis 5/5 at 2% a rank since hotfix push 113531), 353.999, of which
+            // Rejuvenation rank 10 (9841; rank 11, 25299, is an Ahn'Qiraj 20 book rank that
+            // Forever's rules leave out): 161 + 0.2 x 302 = 221.4 a tick, then 1.10 x 1.15 x 1.10
+            // (Genesis 5/5 at 2% a rank since hotfix push 113531), 308.078, of which
             // Rejuvenation's 17.76% is overhealing.
-            "{SpellID: 25299} tick Hit for 291.128 healing, 62.870 overhealing.",
-            // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1770.0,
+            "{SpellID: 9841} tick Hit for 253.363 healing, 54.715 overhealing.",
+            // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1540.4,
             // then Gift of Nature's 10% and Genesis's 10% (its second effect names Swiftmend) on
             // Swiftmend's own direct heal.
-            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1770.0, AfterCasterMods:2124.0",
+            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1540.4, AfterCasterMods:1848.5",
             // Bloom, when the Regrowth cast at 9 s and the Rejuvenation cast at 21.5 s end by
             // their duration (27 s and 15 s with Nature's Splendor): 255 Spirit, of which a
             // heal at once's 5.37% is overhealing. The Swiftmends consumed the rest.
@@ -241,7 +243,7 @@ fn bloom_heals_the_druids_spirit_when_a_heal_over_time_ends() {
     let overhealing = action_total(&with, 1328621, "overhealing");
     assert!((healing + overhealing - blooms * spirit).abs() < 1e-6);
     assert!((overhealing / (healing + overhealing) - 0.0537).abs() < 1e-9);
-    for spell in [25297, 6778, 25299, 9858, 1238215, 18562] {
+    for spell in [9889, 6778, 9841, 9858, 1238215, 18562] {
         assert_eq!(
             action_total(&with, spell, "healing"),
             action_total(&without, spell, "healing"),
@@ -261,7 +263,7 @@ fn bloom_heals_the_druids_spirit_when_a_heal_over_time_ends() {
     };
     let in_log = log.matches("{SpellID: 1328621} Hit").count();
     assert!(
-        in_log > 0 && in_log < casts(25299) + casts(9858),
+        in_log > 0 && in_log < casts(9841) + casts(9858),
         "{in_log} Blooms"
     );
 }
@@ -273,7 +275,7 @@ fn bloom_heals_the_druids_spirit_when_a_heal_over_time_ends() {
 fn bloom_follows_every_heal_over_time_to_its_end() {
     let cast = |condition: Option<Value>| {
         let mut action = json!({"action": {"castSpell": {
-            "spellId": {"spellId": 25299}, "target": {"type": "Self"}}}});
+            "spellId": {"spellId": 9841}, "target": {"type": "Self"}}}});
         if let Some(condition) = condition {
             action["action"]["condition"] = condition;
         }
@@ -286,7 +288,7 @@ fn bloom_follows_every_heal_over_time_to_its_end() {
     };
     let counts = |result: &Value| {
         let log = result["logs"].as_str().unwrap();
-        let casts = log.matches("Completed cast {SpellID: 25299}").count();
+        let casts = log.matches("Completed cast {SpellID: 9841}").count();
         (casts, log.matches("{SpellID: 1328621} Hit").count())
     };
     // Recast every global cooldown: every cast but the first leaves one running.
@@ -298,7 +300,7 @@ fn bloom_follows_every_heal_over_time_to_its_end() {
     );
     // Recast only when it has ended: each ends by its duration, Rejuvenation's 12 seconds and
     // Nature's Splendor's 3, and all bloom but the one the fight cuts short.
-    let after_ending = json!({"not": {"val": {"auraIsActive": {"auraId": {"spellId": 25299}}}}});
+    let after_ending = json!({"not": {"val": {"auraIsActive": {"auraId": {"spellId": 9841}}}}});
     let result = rotation(vec![cast(Some(after_ending))]);
     let (casts, blooms) = counts(&result);
     assert!(casts > 5, "{casts} casts");
@@ -311,7 +313,7 @@ fn bloom_follows_every_heal_over_time_to_its_end() {
     let time = |line: &str| -> f64 { line[1..line.find(']').unwrap()].parse().unwrap() };
     let completed: Vec<f64> = log
         .lines()
-        .filter(|line| line.contains("Completed cast {SpellID: 25299}"))
+        .filter(|line| line.contains("Completed cast {SpellID: 9841}"))
         .map(time)
         .collect();
     for line in log
@@ -423,12 +425,14 @@ fn forever_healer_sims_count_healing_less_overhealing() {
     // Light 2, Illumination 5, Divine Favor and Holy Shock; Precision 3, Guardian's Favor 2,
     // Toughness 5 and Anticipation 3.
     holy["raid"]["parties"][0]["players"][0]["talentsString"] = "50300000025101-50323".into();
-    let reference = prepare_json_with(
-        &serde_json::to_vec(&holy).unwrap(),
-        "rust",
-        Rules::GoReference,
-    )
-    .unwrap();
+    // The reference keeps the Ahn'Qiraj 20 book rank the rotation names (Holy Light IX, 25292)
+    // where Forever's rules cast the rank below (Holy Light VIII, 10329), so the reference casts
+    // that rank here too: both draw the same rolls.
+    let reference_request = serde_json::to_string(&holy)
+        .unwrap()
+        .replace("25292", "10329");
+    let reference =
+        prepare_json_with(reference_request.as_bytes(), "rust", Rules::GoReference).unwrap();
     holy["raid"]["parties"][0]["players"][0]["talentsString"] =
         "05300015002001-003200005003".into();
     let holy = serde_json::to_vec(&holy).unwrap();
@@ -442,9 +446,10 @@ fn forever_healer_sims_count_healing_less_overhealing() {
             .find(|entry| entry["spell_id"] == spell)
             .map(|entry| entry["fraction"].as_f64().unwrap())
     };
-    // Flash of Light rank 6, Holy Light rank 9 and the Go reference's Holy Shock heal.
+    // Flash of Light rank 6, Holy Light rank 8 (rank 9 is an Ahn'Qiraj 20 book rank) and the Go
+    // reference's Holy Shock heal.
     assert_eq!(share(19943), Some(0.0699));
-    assert_eq!(share(25292), Some(0.1024));
+    assert_eq!(share(10329), Some(0.1024));
     assert_eq!(share(25903), Some(0.0658));
     // Holy Shock's damage is no heal.
     assert_eq!(share(1311606), None);
@@ -470,7 +475,7 @@ fn forever_healer_sims_count_healing_less_overhealing() {
             .map(|target| target[key].as_f64().unwrap_or(0.0))
             .sum()
     };
-    for (spell, fraction) in [(19943, 0.0699), (25292, 0.1024), (25903, 0.0658)] {
+    for (spell, fraction) in [(19943, 0.0699), (10329, 0.1024), (25903, 0.0658)] {
         let whole = totals(&reference, spell, "healing");
         let healing = totals(&forever, spell, "healing");
         let overhealing = totals(&forever, spell, "overhealing");
@@ -512,15 +517,16 @@ fn forever_heal_ticks_crit_as_their_rows_state() {
             .map(|heal| heal["tick_can_crit"] == true)
             .unwrap()
     };
-    // Rejuvenation rank 11, Regrowth rank 9 and Wild Growth rank 3; Healing Touch has no tick.
-    for spell in [25299, 9858, 1238215] {
+    // Rejuvenation rank 10 (rank 11 is an Ahn'Qiraj 20 book rank), Regrowth rank 9 and Wild
+    // Growth rank 3; Healing Touch (rank 10) has no tick.
+    for spell in [9841, 9858, 1238215] {
         assert!(flagged(&forever, spell), "{spell} ticks crit under Forever");
         assert!(
             !flagged(&reference, spell),
             "{spell} ticks never crit in Go"
         );
     }
-    assert!(!flagged(&forever, 25297));
+    assert!(!flagged(&forever, 9889));
 
     let sim = |prepared: &Value| {
         let prepared = serde_json::from_value(prepared.clone()).unwrap();
@@ -539,22 +545,22 @@ fn forever_heal_ticks_crit_as_their_rows_state() {
     };
     // The druid's spell crit, 15.86% and 25.86% while Elune's Light is up: Rejuvenation takes
     // no crit bonus of its own.
-    let crits = totals(&forever, 25299, "critTicks");
-    let share = crits / (crits + totals(&forever, 25299, "ticks"));
+    let crits = totals(&forever, 9841, "critTicks");
+    let share = crits / (crits + totals(&forever, 9841, "ticks"));
     assert!(
         (0.15..0.2586).contains(&share),
         "Rejuvenation crits {share}"
     );
-    for spell in [25299, 9858, 1238215] {
+    for spell in [9841, 9858, 1238215] {
         assert_eq!(totals(&reference, spell, "critTicks"), 0.0, "{spell}");
         assert!(totals(&forever, spell, "critTicks") > 0.0, "{spell}");
     }
-    // A crit tick heals 1.5 times the 353.999 a tick of Rejuvenation rank 11 heals (above),
-    // 530.996, of which Rejuvenation's 17.76% is overhealing.
+    // A crit tick heals 1.5 times the 308.078 a tick of Rejuvenation rank 10 heals (above),
+    // 462.117, of which Rejuvenation's 17.76% is overhealing.
     logs(
         "restoration-druid",
         &forever,
-        &["{SpellID: 25299} tick Crit for 436.691 healing, 94.305 overhealing."],
+        &["{SpellID: 9841} tick Crit for 380.045 healing, 82.072 overhealing."],
     );
 }
 
@@ -770,7 +776,8 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
     );
     assert!(!bare["logs"].as_str().unwrap().contains("1328548"));
 
-    // Every roll of Holy Light rank 9 and Flash of Light rank 6 lands in its row's range plus
+    // Every roll of Holy Light rank 8 (rank 9 is an Ahn'Qiraj 20 book rank) and Flash of Light
+    // rank 6 lands in its row's range plus
     // the Oath's bonus and the coefficient on healing power.
     let prepared = prepare(&forever_request("holy-paladin"), "rust").unwrap();
     let prepared = serde_json::to_value(&prepared).unwrap();
@@ -780,7 +787,7 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
         .iter()
         .find(|effect| effect["kind"] == "paladin_heals")
         .unwrap();
-    for (spell, coefficient, bonus) in [(25292, 0.714, 400.0), (19943, 0.429, 115.0)] {
+    for (spell, coefficient, bonus) in [(10329, 0.714, 400.0), (19943, 0.429, 115.0)] {
         let rank = heals["ranks"]
             .as_array()
             .unwrap()

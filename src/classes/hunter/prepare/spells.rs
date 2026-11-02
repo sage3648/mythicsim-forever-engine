@@ -341,7 +341,7 @@ impl Hunter {
 
     /// Go `registerSerpentStingSpell`.
     fn register_serpent_sting_spell(&mut self, sim: &mut Sim) {
-        let rank = spell_data().serpent_sting.highest();
+        let rank = spell_data().serpent_sting.highest_for(sim.rules);
         let tick = rank.periodic_effect();
         let tick_length = tick.period();
         let number_of_ticks = (rank.duration() / tick_length) as i32;

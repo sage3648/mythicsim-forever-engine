@@ -190,7 +190,7 @@ impl Shaman {
         // totems.go registerStrengthOfEarthTotemSpell: the earth totem's aura; its Strength
         // reaches the fight through the class's stat auras.
         if let Some(aura) = sim.get_aura(player, "Strength Of Earth Totem (Self)") {
-            let row = data.strength_of_earth_totem.highest();
+            let row = data.strength_of_earth_totem.highest_for(env.rules);
             effects.push(json!({
                 "kind": "strength_of_earth_totem", "spell_id": row.id,
                 "aura": sim.aura(aura).label, "duration_ns": nanos(row.duration()),
@@ -449,7 +449,7 @@ impl Shaman {
         // registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat
         // aura.
         if let Some(aura) = sim.get_aura(player, "Grace Of Air Totem (Self)") {
-            let row = data.grace_of_air_totem.highest();
+            let row = data.grace_of_air_totem.highest_for(env.rules);
             effects.push(json!({
                 "kind": "grace_of_air_totem", "spell_id": row.id, "aura": sim.aura(aura).label,
                 "duration_ns": nanos(row.duration()),

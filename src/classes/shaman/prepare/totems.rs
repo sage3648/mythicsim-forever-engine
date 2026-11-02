@@ -214,7 +214,7 @@ impl Shaman {
     /// Go `registerStrengthOfEarthTotemSpell`.
     pub(super) fn register_strength_of_earth_totem_spell(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
-        let rank = data.strength_of_earth_totem.highest();
+        let rank = data.strength_of_earth_totem.highest_for(sim.rules);
         let buff = data.strength_of_earth_totem_triggered.highest();
         let duration = rank.duration();
         // Forever drops Enhancing Totems, so the buff's own value is the whole value.
@@ -242,7 +242,7 @@ impl Shaman {
     /// Go `registerGraceOfAirTotemSpell`.
     pub(super) fn register_grace_of_air_totem_spell(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
-        let rank = data.grace_of_air_totem.highest();
+        let rank = data.grace_of_air_totem.highest_for(sim.rules);
         let buff = data.grace_of_air_totem_triggered.highest();
         let duration = rank.duration();
         let value = buff.effect_n(1).average(CHARACTER_LEVEL);

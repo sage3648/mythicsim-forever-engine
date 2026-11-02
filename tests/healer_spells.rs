@@ -153,8 +153,10 @@ fn tranquility_heals_the_party_over_its_channel() {
 #[test]
 fn natures_swiftness_makes_the_next_heal_instant() {
     for (name, talents, swiftness, heal) in [
-        ("restoration-druid", RESTORATION_DRUID, 17116, 25297),
-        ("restoration-shaman", RESTORATION_SHAMAN, 16188, 25357),
+        // Healing Touch X (9889) and Healing Wave IX (10396): the ranks below the Ahn'Qiraj 20
+        // books (25297, 25357) that a Forever druid and shaman cast.
+        ("restoration-druid", RESTORATION_DRUID, 17116, 9889),
+        ("restoration-shaman", RESTORATION_SHAMAN, 16188, 10396),
     ] {
         let request = request(
             name,
@@ -218,8 +220,10 @@ fn water_shield_globes_restore_mana_on_crit_heals() {
 const HOLY: &str = "00520101133-33505003030121531";
 const POWER_WORD_SHIELD: i64 = 10901;
 const FLASH_HEAL: i64 = 10917;
-const GREATER_HEAL: i64 = 25314;
-const RENEW: i64 = 25315;
+// Greater Heal IV and Renew IX, the ranks a Forever priest casts: Greater Heal V (25314) and
+// Renew X (25315) are Ahn'Qiraj 20 book ranks, which Forever's rules leave out.
+const GREATER_HEAL: i64 = 10965;
+const RENEW: i64 = 10929;
 const PENANCE: i64 = 1316995;
 const DIVINE_AEGIS_ABSORB: i64 = 431624;
 const LITANY_OF_LIGHT: i64 = 1317006;

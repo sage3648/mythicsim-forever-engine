@@ -351,7 +351,12 @@ fn forever_amounts(spell: i32) -> Vec<(i32, f64)> {
 fn forever_buff_rank(spell: i32) -> Option<i32> {
     match spell {
         20905 => Some(20906),
-        _ => None,
+        // Battle Shout VII, Strength of Earth V and Grace of Air III come from Ahn'Qiraj 20
+        // books, so the raid's shout and totems are the rank below.
+        _ => {
+            let known = super::spelldata::book_ranks::known_rank(Rules::Forever, spell);
+            (known != spell).then_some(known)
+        }
     }
 }
 
