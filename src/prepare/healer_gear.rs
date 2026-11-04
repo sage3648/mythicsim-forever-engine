@@ -973,6 +973,11 @@ pub(crate) fn use_item_effect(
     unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
     if !applies(env) {
+        // Natural Alignment Crystal on a damage dealer, under Forever's rules (Go's exporter
+        // has no effect for it).
+        if env.rules == Rules::Forever && item == 19344 {
+            return Some(natural_alignment_crystal_damage(env, item));
+        }
         // A stacking on-use trinket under Forever's rules, for any spec: Badge of the
         // Swarmguard is a rogue's or a warrior's. Go's exporter has no effect for it.
         if env.rules == Rules::Forever {
@@ -1041,6 +1046,43 @@ fn natural_alignment_crystal(env: &Environment, item: i32) -> Value {
             continue;
         }
         if spell.proc_mask.matches(ProcMask::SPELL_HEALING) {
+            changes.push(json!({"spell": position, "kind": "damage_done_percent", "value": share}));
+            if spell.dots.iter().any(Option::is_some) {
+                changes.push(
+                    json!({"spell": position, "kind": "dot_damage_done_percent", "value": share}),
+                );
+            }
+        }
+        if spell
+            .cost
+            .as_ref()
+            .is_some_and(|cost| cost.resource == Resource::Mana)
+        {
+            changes
+                .push(json!({"spell": position, "kind": "power_cost_percent_add", "value": share}));
+        }
+    }
+    json!({
+        "kind": "spell_mod_aura_on_use", "item_id": item, "aura": row.name, "changes": changes,
+    })
+}
+
+/// Natural Alignment Crystal on a damage dealer: Nature Aligned (23734) for 20 sec. Its rows
+/// (client 70790) are a 20% A_MOD_DAMAGE_PERCENT_DONE, a 20% healing done and a 20%
+/// A_MOD_POWER_COST_SCHOOL_PCT, both over school mask 126 (every school but Physical): each
+/// spell of a magic school deals 20% more, its periodic part too, and each such spell that
+/// costs mana costs 20% more.
+fn natural_alignment_crystal_damage(env: &Environment, item: i32) -> Value {
+    let row = must_find(23734);
+    let share = row.effect_n(1).percent();
+    let book = &env.sim.unit(env.player).spellbook;
+    let mut changes = Vec::new();
+    for (position, id) in book.iter().enumerate() {
+        let spell = env.sim.spell(*id);
+        if spell.spell_school & !super::spell::school::PHYSICAL == 0 {
+            continue;
+        }
+        if !spell.proc_mask.matches(ProcMask::SPELL_HEALING) {
             changes.push(json!({"spell": position, "kind": "damage_done_percent", "value": share}));
             if spell.dots.iter().any(Option::is_some) {
                 changes.push(
