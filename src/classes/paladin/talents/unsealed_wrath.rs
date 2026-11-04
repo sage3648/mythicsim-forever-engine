@@ -1,7 +1,8 @@
 //! Unsealed Wrath (1310735), push 113554's rework of Twist of Light under Forever's rules,
 //! from upstream wowsims/forever #772's talents_retribution.go: each landed melee auto stores
 //! the active seal in its Echo, one stack a swing up to the Echo's stacks; a swing landed under
-//! a different seal spends every other Echo's stacks, each a roll of the stored seal.
+//! a different seal spends every other Echo's stacks, each a roll of the stored seal. A stored
+//! Seal of Command rolls without the seal's one second cooldown (the Echo has none).
 
 use crate::{
     contracts::prepared_v2::SealEcho,
@@ -71,11 +72,12 @@ pub(crate) fn on_spell_hit_dealt(
     }
 }
 
-/// One stored copy: the seal's own effect with its own chance, as Twist of Light's Echo
-/// replays it.
+/// One stored copy: the seal's own effect with its own chance. A Seal of Command copy rolls
+/// without the seal's one second cooldown, which belongs to the seal aura and not to the Echo
+/// (client 70790: 1311703 has no ProcCategoryRecovery), so every stack can proc.
 fn replay(fight: &mut Fight<PaladinAgent>, seal: usize, result: &SpellResult) {
     match fight.agent.seals.seals[seal].kind {
-        SealKind::Command => seals::try_command(fight, seal, result.target),
+        SealKind::Command => seals::try_command_echo(fight, seal, result.target),
         SealKind::Righteousness | SealKind::Fury => {
             let proc_spell = fight.agent.seals.seals[seal].proc_spell;
             fight.cast(proc_spell, result.target);
