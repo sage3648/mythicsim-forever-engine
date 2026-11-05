@@ -116,16 +116,13 @@ ROWS = [
 
 # (label, spell id, power cost field, Forever's value, frozen value): the mana cost a row states.
 POWERS = [
-    ("Riptide rank 1 mana (about 40% less)", 408521, "Cost", 147, 245),
-    ("Riptide rank 2 mana (about 40% less)", 1239242, "Cost", 180, 300),
-    ("Riptide rank 3 mana (about 40% less)", 1239243, "Cost", 231, 385),
     ("Shank rank 2 Energy cost", 1329549, "Cost", 5, None),
     ("Death Mark rank 4 Energy cost", 1325758, "Cost", 25, None),
     ("Mutilate rank 3 Energy cost", 1241584, "Cost", 60, 60),
     ("Reckless Swings health cost (% of base health)", 1329555, "CostPct", 25, 0),
-    # Wowhead's tooltips of 4 November 2026: ranks 1 and 2 still read their old costs.
-    ("Riptide rank 1 mana", 408521, "Cost", 245, 245),
-    ("Riptide rank 2 mana", 1239242, "Cost", 300, 300),
+    # The live store of 5 November 2026 (push 113632): all three ranks about 40% less.
+    ("Riptide rank 1 mana (about 40% less)", 408521, "Cost", 150, 245),
+    ("Riptide rank 2 mana (about 40% less)", 1239242, "Cost", 180, 300),
     ("Riptide rank 3 mana (about 40% less)", 1239243, "Cost", 230, 385),
 ]
 
