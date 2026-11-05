@@ -34,13 +34,32 @@ pub(crate) const PET_UPDATE_INTERVAL: i64 = 5_250 * crate::core::time::NS_PER_MI
 /// [`PET_UPDATE_INTERVAL`] in seconds, as Go's `PetUpdateInterval.Seconds()`.
 pub(crate) const PET_UPDATE_INTERVAL_SECONDS: f64 = 5.25;
 
-/// The stats a unit's [`Powers`] hold, by the names Go's stats use.
-const POWER_STATS: [&str; 5] = [
+/// The stats a unit's [`Powers`] hold, by the names Go's stats use, that an owner's change
+/// passes to a dynamic pet.
+const POWER_STATS: [&str; 6] = [
     "SpellDamage",
     "AttackPower",
     "RangedAttackPower",
     "SpellCritPercent",
     "PhysicalCritPercent",
+    "PhysicalHitPercent",
+];
+
+/// The first powers of [`POWER_STATS`] every dynamic pet's stats recompute: its sheet always
+/// lists them, so they are always written back.
+const SHEET_POWERS: usize = 5;
+
+/// Every stat a dynamic pet's [`Powers`] follow, in [`power_mut`] order: [`POWER_STATS`],
+/// then the pet's spell hit, which only the owner's physical hit feeds. The pet's hit stats
+/// are written back only when its sheet lists them.
+const PET_POWER_STATS: [&str; 7] = [
+    "SpellDamage",
+    "AttackPower",
+    "RangedAttackPower",
+    "SpellCritPercent",
+    "PhysicalCritPercent",
+    "PhysicalHitPercent",
+    "SpellHitPercent",
 ];
 
 fn power_mut(powers: &mut Powers, index: usize) -> &mut f64 {
@@ -49,7 +68,9 @@ fn power_mut(powers: &mut Powers, index: usize) -> &mut f64 {
         1 => &mut powers.attack_power,
         2 => &mut powers.ranged_attack_power,
         3 => &mut powers.spell_crit_percent,
-        _ => &mut powers.physical_crit_percent,
+        4 => &mut powers.physical_crit_percent,
+        5 => &mut powers.physical_hit_percent,
+        _ => &mut powers.spell_hit_percent,
     }
 }
 
@@ -90,8 +111,9 @@ pub(crate) struct Inheritance {
     /// (src, dst, amount, step) of each enabled dependency, in order.
     dependencies: Vec<(usize, usize, f64, f64)>,
     floored: Vec<bool>,
-    /// The stat behind each of the pet's [`Powers`], if it has one.
-    power_stats: [Option<usize>; 5],
+    /// The stat behind each of the pet's [`Powers`] ([`PET_POWER_STATS`] order), if it has
+    /// one.
+    power_stats: [Option<usize>; PET_POWER_STATS.len()],
 }
 
 impl Inheritance {
@@ -152,6 +174,20 @@ impl Inheritance {
             .iter()
             .map(|(name, value)| (index(name), *value))
             .collect();
+        // The hit stats follow the sheet only when it lists them, so a pet without them keeps
+        // the value it was built with.
+        let power_stats = {
+            let mut slots = [None; PET_POWER_STATS.len()];
+            for (slot, name) in PET_POWER_STATS.iter().enumerate() {
+                slots[slot] =
+                    if slot < SHEET_POWERS || exported.stats_without_deps.contains_key(*name) {
+                        Some(index(name))
+                    } else {
+                        None
+                    };
+            }
+            slots
+        };
         let mut initial_without_deps = vec![0.0; names.len()];
         for (position, value) in without {
             initial_without_deps[position] = value;
@@ -167,7 +203,7 @@ impl Inheritance {
         // The stats the runtime changes during a fight: the tracked powers, what they pass to
         // the pet, and the stats depending on those.
         let mut changing = vec![false; names.len()];
-        changing[..POWER_STATS.len()].fill(true);
+        changing[..SHEET_POWERS].fill(true);
         for &(_, stat, _) in &terms {
             changing[stat] = true;
         }
@@ -202,7 +238,7 @@ impl Inheritance {
             disable_stats,
             dependencies,
             floored,
-            power_stats: [Some(0), Some(1), Some(2), Some(3), Some(4)],
+            power_stats,
         }
     }
 
