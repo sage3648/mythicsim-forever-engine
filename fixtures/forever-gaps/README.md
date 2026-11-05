@@ -85,3 +85,4 @@ checks the gate passes and runs it.
 | `ret-protection-paladin-change-target-casts-go-tree` | the five target Retribution and Protection Paladin tanking reference (validation/2026-10-07-tanking-several-targets-references) with that request's changes of target first, in the reference's tree, which Go's rules prepare |
 | `feral-bear-druid-change-target-faerie-fire` | a Feral Bear tanking five targets that changes target with Faerie Fire in its rotation (3 November 2026) |
 | `protection-warrior-dreadnaught-8p` | a Protection Warrior in Dreadnaught's Battlegear (8), whose Cheat Death goes up on a hit taken below a fifth of health (3 November 2026) |
+| `survival-hunter-felstriker-pet-hit` | a hunter pet following the owner's physical hit from a stat aura (Felstriker's proc) |
