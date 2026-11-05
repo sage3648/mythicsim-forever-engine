@@ -185,6 +185,26 @@ impl Warlock {
                 ..SpellModConfig::default()
             },
         );
+        // Forever's Malevolence also reaches the Succubus' Lash of Pain. Client rows (wowf,
+        // 6 November 2026): 1310949 effect 0 is A_ADD_FLAT_MODIFIER on crit chance (misc 7)
+        // with EffectSpellClassMask 550027 in word 0, and bit 13 (8192) of that mask is the
+        // SpellClassMask of every Lash of Pain rank (family 5, e.g. 11780). The mask is the
+        // spell's alone, so the mod rides on the demon that casts it, as Improved Sayaad does.
+        // The reference leaves Lash of Pain out.
+        if sim.rules != Rules::Forever {
+            return;
+        }
+        if let Some(succubus) = self.pets.succubus {
+            sim.add_static_mod(
+                succubus,
+                SpellModConfig {
+                    kind: SpellModType::BonusCritPercent,
+                    float_value: spell_data().malevolence.value_at(points),
+                    class_mask: masks::SUCCUBUS_LASH_OF_PAIN,
+                    ..SpellModConfig::default()
+                },
+            );
+        }
     }
 
     fn apply_nightfall(&self, sim: &mut Sim, unit: UnitId) {
