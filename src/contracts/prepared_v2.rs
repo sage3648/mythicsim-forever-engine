@@ -985,6 +985,13 @@ pub struct Player {
     /// counted.
     #[serde(default, skip_serializing_if = "is_false")]
     pub prepull_casts_finish_on_pull: bool,
+    /// Forever's rule: an item swap in the prepull puts its weapon in the hand, and the set stays
+    /// on into the fight until the rotation swaps again, as a player who swaps weapons before the
+    /// pull keeps them. False is the Go reference, whose prepull swap leaves the main hand weapon
+    /// swinging until the first swap after the pull and which swaps back to Main a nanosecond
+    /// before the pull.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub prepull_swap_stays_in_hand: bool,
     /// MythicSim's healer sims under Forever's rules: each heal's share that real healers
     /// overheal, measured on foreverlogs.gg (`prepare::overheal`). Only the rest counts as
     /// healing; the share counts as overhealing. Empty is the Go reference, which counts every
