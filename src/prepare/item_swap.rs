@@ -1004,9 +1004,14 @@ pub(crate) fn add_item_swap_equip_stats(env: &mut Environment, aura: AuraId) {
 
 /// Go `itemSwapEffect`, or none without an item swap.
 /// The classes whose weapon-dependent effects follow a swap: the Paladin's seals, the Warrior's
-/// specializations, the Shaman's imbues and totems and the Druid's paws.
-pub(crate) const ITEM_SWAP_CLASSES: [&str; 4] =
-    ["ClassPaladin", "ClassWarrior", "ClassShaman", "ClassDruid"];
+/// specializations, the Shaman's imbues and totems, the Druid's paws and the Rogue's poisons.
+pub(crate) const ITEM_SWAP_CLASSES: [&str; 5] = [
+    "ClassPaladin",
+    "ClassWarrior",
+    "ClassShaman",
+    "ClassDruid",
+    "ClassRogue",
+];
 
 pub(crate) fn item_swap_effect(
     env: &Environment,
@@ -1020,7 +1025,9 @@ pub(crate) fn item_swap_effect(
     };
     let refuse = |reason: &str| Err(Refusal::new("item_swap", reason.to_string()));
     let class = env.sim.character(unit).class.as_str();
-    if swap.slots != [slot::MAIN_HAND] {
+    // A Rogue's swap set is the same weapons with poisons of their own, in either hand or both,
+    // which the Rogue's preparation checks (rogue `poisons`).
+    if swap.slots != [slot::MAIN_HAND] && class != "ClassRogue" {
         if swap.slots != [slot::MAIN_HAND, slot::OFF_HAND] || class != "ClassWarrior" {
             return refuse("an item swap of a slot other than the main hand alone is unsupported");
         }

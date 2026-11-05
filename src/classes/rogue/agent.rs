@@ -296,6 +296,24 @@ impl RogueAgent {
                 matches!(spell.behavior, crate::core::fight::SpellBehavior::Class(k) if k == kind)
             })
         };
+        // A Rogue's swap set carries poisons of its own (MythicSim, Forever's rules): the hands
+        // each poison is on with the swap set worn.
+        let worn_effects = fight.item_swap_worn_effects();
+        let worn_hands = |kind: &str| -> Option<Vec<String>> {
+            worn_effects
+                .as_ref()?
+                .iter()
+                .find_map(|effect| match effect {
+                    Effect::InstantPoison { proc_mask, .. }
+                    | Effect::DeadlyPoison { proc_mask, .. }
+                    | Effect::WoundPoison { proc_mask, .. }
+                        if effect.kind() == kind =>
+                    {
+                        Some(proc_mask.clone())
+                    }
+                    _ => None,
+                })
+        };
         let poison = |fight: &Fight<RogueAgent>,
                       kind: RogueSpell,
                       label: &str,
@@ -303,16 +321,30 @@ impl RogueAgent {
                       chance: f64|
          -> Result<PoisonProc, String> {
             let spell = class_spell(fight, kind).ok_or_else(|| format!("{label} has no spell"))?;
-            Ok(PoisonProc {
-                label: label.to_string(),
-                spell,
-                chance,
-                eligible: prepared
+            let hear = |hands: &[String]| -> Vec<bool> {
+                prepared
                     .player
                     .spells
                     .iter()
                     .map(|exported| weapon_proc_hears(exported, hands))
-                    .collect(),
+                    .collect()
+            };
+            let effect_kind = match kind {
+                RogueSpell::InstantPoison => "instant_poison",
+                RogueSpell::DeadlyPoison => "deadly_poison",
+                _ => "wound_poison",
+            };
+            let eligible = hear(hands);
+            let eligible_sets = worn_effects.as_ref().map(|_| {
+                let worn = worn_hands(effect_kind).map_or_else(|| eligible.clone(), |h| hear(&h));
+                [eligible.clone(), worn]
+            });
+            Ok(PoisonProc {
+                label: label.to_string(),
+                spell,
+                chance,
+                eligible,
+                eligible_sets,
             })
         };
         for effect in &prepared.effects {
@@ -874,6 +906,21 @@ impl Agent for RogueAgent {
     type Aura = RogueAura;
     const CACHE_ROTATION: bool = true;
     const CACHE_OVER_ENERGY: bool = true;
+
+    /// A Rogue's swap set carries poisons of its own (MythicSim, Forever's rules): each
+    /// poison's weapon proc hears the hands it is on in the set now worn.
+    fn on_item_swap(fight: &mut Fight<Self>, worn: bool) {
+        let agent = &mut fight.agent;
+        for poison in [
+            &mut agent.instant_poison,
+            &mut agent.deadly_poison,
+            &mut agent.wound_poison,
+        ] {
+            if let Some(next) = poison.as_ref().and_then(|bound| bound.for_set(worn)) {
+                *poison = Some(Rc::new(next));
+            }
+        }
+    }
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: RogueSpell) {
         if matches!(

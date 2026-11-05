@@ -27,7 +27,10 @@ const FOREVER_ENUM_VALUES: [(&str, &str, i32); 2] = [
 /// `PartyBuffs.dark_inspiration` is a Shadow Priest's Dark Inspiration in the party, its talent
 /// rank 0 to 5 (wowsims/forever's `PartyBuffs.dark_inspiration`, numbered 15 there, which this
 /// schema's Grace of Air Totem already holds).
-const FOREVER_FIELDS: [(&str, &str, &str, u32, FieldKind); 2] = [
+///
+/// `ConsumesSpec.oh_imbue_swap_id` is the imbue on the item swap's off hand weapon, beside the
+/// reference's `mh_imbue_swap_id`: a Rogue's swap set's off hand poison.
+const FOREVER_FIELDS: [(&str, &str, &str, u32, FieldKind); 3] = [
     (
         "proto.ConsumesSpec",
         "oil_of_immolation",
@@ -40,6 +43,13 @@ const FOREVER_FIELDS: [(&str, &str, &str, u32, FieldKind); 2] = [
         "dark_inspiration",
         "darkInspiration",
         1001,
+        FieldKind::Int32,
+    ),
+    (
+        "proto.ConsumesSpec",
+        "oh_imbue_swap_id",
+        "ohImbueSwapId",
+        1002,
         FieldKind::Int32,
     ),
 ];

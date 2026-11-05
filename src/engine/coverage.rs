@@ -871,6 +871,10 @@ const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
     // Whether the shaman's own Windfury Totem is contested: the class gate refuses a reachable
     // one contested under either set.
     ("windfury_totem_self", &["contested"]),
+    // A Rogue's swap set's poisons (MythicSim, Forever's rules): the hands each poison is on.
+    ("instant_poison", &["proc_mask"]),
+    ("deadly_poison", &["proc_mask"]),
+    ("wound_poison", &["proc_mask"]),
     // Patch 181: the hands that carry Rockbiter and the main hand's speed, as the weapons worn say.
     (
         "rockbiter_threat",
@@ -911,7 +915,17 @@ fn item_swap_limits(
     let off_hand = slots.as_slice() == ["ItemSlotMainHand", "ItemSlotOffHand"]
         && prepared.player.class == "ClassWarrior"
         && !prepared.melee.dual_wielding;
-    if slots.as_slice() != ["ItemSlotMainHand"] && !off_hand {
+    // A Rogue's swap set holds the same weapons with poisons of their own (MythicSim, Forever's
+    // rules), in either hand or both: the changes must leave the weapons as the reset's.
+    let rogue = prepared.player.class == "ClassRogue"
+        && matches!(
+            slots.as_slice(),
+            [main] | [main, _] if main == "ItemSlotMainHand"
+        )
+        && slots
+            .iter()
+            .all(|slot| matches!(slot.as_str(), "ItemSlotMainHand" | "ItemSlotOffHand"));
+    if slots.as_slice() != ["ItemSlotMainHand"] && !off_hand && !rogue {
         reasons.push(format!("an item swap of slots {slots:?} is unsupported"));
     }
     // The target's swings read the player's block from tables the reset's shield built.
@@ -919,8 +933,14 @@ fn item_swap_limits(
         reasons
             .push("an off hand swap while the target swings at the player is unsupported".into());
     }
-    if !["ClassPaladin", "ClassWarrior", "ClassShaman", "ClassDruid"]
-        .contains(&prepared.player.class.as_str())
+    if ![
+        "ClassPaladin",
+        "ClassWarrior",
+        "ClassShaman",
+        "ClassDruid",
+        "ClassRogue",
+    ]
+    .contains(&prepared.player.class.as_str())
     {
         reasons.push(format!(
             "an item swap of a {} is unsupported",

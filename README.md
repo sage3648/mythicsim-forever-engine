@@ -858,6 +858,22 @@ the Go goldens and exporter uses. The departures:
   so the two never stack: the stronger holds the Spirit, the party's on a tie
   (`src/prepare/buffs/dark_inspiration.rs`, `tests/classes/dark_inspiration.rs`). Nothing changes
   without the field.
+- A Rogue's swap set of poisons, from a player request (Discord #feature-requests, 5 November
+  2026: Ambiwar's Deadly Poison on both hands until it has five stacks, then a second main hand
+  carrying Instant Poison). Under Forever's rules a Rogue's item swap is a copy of each swapped
+  weapon, the same item, random suffix and enchant, carrying a poison of its own: the request
+  names it with `consumables.mhImbueSwapId` (the reference's field) and
+  `consumables.ohImbueSwapId`, a Rust-only int32 of the consumables message (`FOREVER_FIELDS`,
+  field 1002). Each poison is registered once for both sets and its proc mask follows the set
+  worn: the export gives the reset's, the item swap's changes give the swap set's, and the
+  Rogue's runtime switches each poison's hands at the swap. The swap costs what every class's
+  item swap costs in the engine, Go `ItemSwap.SwapItems`: the global cooldown extends to at
+  least 1.5 seconds (`GCDDefault`) and both swings restart a full swing after it
+  (`StopMeleeUntil`), as Bae checked in game for a Warrior (Discord #warrior, 23 October 2026);
+  neither is checked for a Rogue in game yet. Another weapon, a stone or oil the sets differ in,
+  and the reference's rules, whose Rogue reads the request's poisons alone, are refused
+  (`src/classes/rogue/prepare/poisons.rs`, `tests/classes/rogue/item_swap.rs`). Nothing changes
+  without an item swap.
 - The Zul'Gurub crafted sets, from the client 1.60.1.70425 ItemSet and ItemSetSpell rows: Blood
   Tiger Harness needs Leatherworking and The Darksoul Blacksmithing (RequiredSkill 165 and 164
   at 300), as Bloodvine Garb needs Tailoring, and Bloodsoul Embrace and The Darksoul give their
