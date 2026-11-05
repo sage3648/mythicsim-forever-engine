@@ -542,14 +542,38 @@ fn a_change_of_target_in_the_priority_list_moves_the_dots() {
 }
 
 /// A strict sequence changes target between its Curses of the Elements (1311680), then stays on
-/// the last target it moved to, where Hellfire (11684) is cast.
+/// the last target it moved to, where Hellfire (11684) is cast. The warlock stands at 8 yards,
+/// inside Hellfire's 10.
 #[test]
 fn a_change_of_target_in_a_strict_sequence_moves_the_casts() {
-    let (_, player) = run("demonology-warlock-sequence-change-target");
+    let player = run_request(&edited(
+        "demonology-warlock-sequence-change-target",
+        &[("\"distanceFromTarget\":25", "\"distanceFromTarget\":8")],
+    ));
     let curses = casts_by_target(&player, 1311680);
     assert!(curses.len() >= 5 && curses[4] > 0.0, "{curses:?}");
     let hellfire = casts_by_target(&player, 11684);
     assert!(hellfire.len() >= 5 && hellfire[4] > 0.0, "{hellfire:?}");
+}
+
+/// Hellfire Effect reaches 10 yards (EffectRadiusIndex 13), so under Forever's rules the
+/// channel does not start from the request's 25: the sequence stalls on it and nothing burns.
+#[test]
+fn hellfire_does_not_start_beyond_ten_yards() {
+    let (_, player) = run("demonology-warlock-sequence-change-target");
+    let hellfire: f64 = casts_by_target(&player, 11684).iter().sum();
+    assert_eq!(hellfire, 0.0);
+    for yards in ["10", "9"] {
+        let player = run_request(&edited(
+            "demonology-warlock-sequence-change-target",
+            &[(
+                "\"distanceFromTarget\":25",
+                &format!("\"distanceFromTarget\":{yards}"),
+            )],
+        ));
+        let hellfire: f64 = casts_by_target(&player, 11684).iter().sum();
+        assert!(hellfire > 0.0, "no Hellfire at {yards} yards");
+    }
 }
 
 /// Vampiric Embrace against three targets, cast on the next target with the priest's damage

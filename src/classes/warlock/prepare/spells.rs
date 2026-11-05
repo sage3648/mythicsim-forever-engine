@@ -7,7 +7,7 @@
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, UnitId, UnitType};
+use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Rules, Sim, UnitId, UnitType};
 use crate::prepare::spell::{
     Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
     GCD_DEFAULT,
@@ -17,6 +17,9 @@ use crate::prepare::spelldata::Spell as Row;
 use super::masks;
 use super::spell_data::spell_data;
 use super::Warlock;
+
+/// Hellfire Effect's radius (SpellEffect EffectRadiusIndex 13 of 11682, 10 yards).
+const HELLFIRE_RADIUS: f64 = 10.0;
 
 pub(super) fn spell_action(id: i32) -> ActionId {
     ActionId {
@@ -186,6 +189,12 @@ impl Warlock {
         let mut config =
             damage_config(rank, masks::HELLFIRE, SpellFlag::CHANNELED | SpellFlag::APL);
         config.defense_type = DefenseType::Magic;
+        // Hellfire Effect reaches the targets within 10 yards (SpellEffect EffectRadiusIndex 13),
+        // and the channel states no range of its own, so under Forever's rules the radius is its
+        // range: from further out it does not start. The Go reference casts it from anywhere.
+        if sim.rules == Rules::Forever {
+            config.max_range = HELLFIRE_RADIUS;
+        }
         sim.register_spell(
             unit,
             SpellConfig {
