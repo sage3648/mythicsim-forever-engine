@@ -339,14 +339,15 @@ pub(crate) const MUTILATE_WEAPON_SHARE_20261102: f64 = 90.0;
 /// SpellEffect 1340441 of 1310711.
 pub(crate) const FLAWLESS_EXECUTION_COST_20261102: f64 = -15.0;
 
-/// Riptide's three ranks and their mana cost as Wowhead's Forever tooltips state them on 4
-/// November 2026: 245, 300 and 230 (385 before for rank 3). The notes of 2 November cut the cost
-/// "by about 40%", which rank 3's 230 is (40.3%); ranks 1 and 2 read their old costs there. The
+/// Riptide's three ranks and their mana cost as the live store states them on 5 November 2026
+/// (client 1.60.1.70790 with hotfixes to push 113632, wowsims/forever 84c7e1d496): 150, 180 and
+/// 230 (245, 300 and 385 before). The notes of 2 November cut the cost "by about 40%"; on 4
+/// November Wowhead's tooltips had only rank 3's cut, and the live rows now carry all three. The
 /// notes also give it a 12 sec cooldown (was 6, on every rank's tooltip) and drop its initial
 /// heal, leaving the heal over time (89, 115 and 161 every 3 sec, as the rows had it), as, (spell,
 /// mana).
 pub(crate) const RIPTIDE_COSTS_20261104: [(i32, i32); 3] =
-    [(408521, 245), (1239242, 300), (1239243, 230)];
+    [(408521, 150), (1239242, 180), (1239243, 230)];
 
 /// Riptide's cooldown under the notes of 2 November.
 pub(crate) const RIPTIDE_COOLDOWN_MS_20261102: i32 = 12000;

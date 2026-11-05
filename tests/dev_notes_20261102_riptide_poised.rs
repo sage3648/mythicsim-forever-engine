@@ -15,7 +15,7 @@ mod warrior_trees_20261104;
 use warrior_trees_20261104::forever_talents as forever_order;
 
 const RIPTIDE_RANKS: [(i64, i64, i64); 3] =
-    [(408521, 245, 245), (1239242, 300, 300), (1239243, 230, 385)];
+    [(408521, 150, 245), (1239242, 180, 300), (1239243, 230, 385)];
 const RIPTIDE: i64 = 1239243;
 /// The Druid's Poised aura (`prepare::feral`), the row of hotfix push 113578 with the discount.
 const POISED: i64 = 1_328_827;
@@ -115,8 +115,8 @@ fn sum(result: &Value, key: &str) -> f64 {
         .sum()
 }
 
-/// Riptide costs what Wowhead's tooltips state on 4 November (245, 300 and 230 mana: rank 3 is
-/// the notes' "about 40%" less, ranks 1 and 2 read their old costs), waits 12 sec (was 6) and has
+/// Riptide costs what the live store states on 5 November (150, 180 and 230 mana, each about the
+/// notes' 40% less than 245, 300 and 385), waits 12 sec (was 6) and has
 /// no initial heal: its heal row carries only the heal over time (89, 115 and 161 every 3 sec,
 /// which Wowhead's buff tooltips state too), and the Go reference keeps the whole frozen spell.
 #[test]
