@@ -392,3 +392,32 @@ fn unsealed_wrath_replays_stored_seals() {
         "{with_righteousness} + {with_command} vs {righteousness} + {command}"
     );
 }
+
+/// A production twisting rotation (5 November 2026) that stores three Seal of Command copies,
+/// then lands a swing under Seal of Righteousness. Each stored copy rolls the seal's chance on
+/// its own: the one second cooldown is the seal aura's ProcCategoryRecovery (20920: 1000 ms),
+/// and the Echo of Command (1311703) has none, so one swing can replay Seal of Command more
+/// than once.
+#[test]
+fn unsealed_wrath_command_copies_skip_the_seal_cooldown() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/paladin/retribution-paladin-unsealed-wrath-command-echoes.request.json");
+    let request = fs::read(path).unwrap();
+    let prepared = prepare_json_with(&request, "rust", Rules::Forever).unwrap();
+    let prepared: forever_engine::contracts::prepared_v2::PreparedV2 =
+        serde_json::from_value(prepared).unwrap();
+    check_prepared(&prepared).unwrap();
+    let result = simulate_prepared(&prepared).unwrap().result;
+    let logs = result["logs"].as_str().unwrap();
+    let mut casts: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for line in logs.lines() {
+        if line.contains("Casting {SpellID: 20424}") {
+            let at = line.split(']').next().unwrap();
+            *casts.entry(at).or_default() += 1;
+        }
+    }
+    assert!(
+        casts.values().any(|&count| count > 1),
+        "no swing replayed Seal of Command twice: {casts:?}"
+    );
+}

@@ -707,6 +707,25 @@ pub(crate) fn try_command(fight: &mut Fight<PaladinAgent>, seal: usize, target: 
     fight.cast(spell, target);
 }
 
+/// One stored copy of Seal of Command that an Unsealed Wrath Echo replays: the proc manager's
+/// roll only. The one second cooldown is the seal aura's ProcCategoryRecovery (20375 to 20920:
+/// 1000 ms); the Echo of Command (1311703) is an aura of its own with no proc cooldown, and the
+/// seal aura is already gone when the Echo is spent, so each stack rolls and the replay leaves
+/// the seal's cooldown alone.
+pub(crate) fn try_command_echo(fight: &mut Fight<PaladinAgent>, seal: usize, target: Side) {
+    let command = fight
+        .agent
+        .seals
+        .command
+        .clone()
+        .expect("Seal of Command is bound");
+    if !fight.proc(command.chance, &command.label) {
+        return;
+    }
+    let spell = fight.agent.seals.seals[seal].proc_spell;
+    fight.cast(spell, target);
+}
+
 /// Go `dealAfterBatch`: the computed hit lands a batch window later, at low priority.
 fn deal_after_batch(fight: &mut Fight<PaladinAgent>, spell: SpellId, result: SpellResult) {
     let at = fight.now + fight.agent.seals.deal_delay;
