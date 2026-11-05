@@ -740,9 +740,9 @@ fn a_druids_own_thorns_strikes_back() {
     assert!(action(&player, 9910, 2).1 > 0.0);
     // Off the target's threat nothing hits the druid, so the shield never strikes.
     let (_, player) = run("balance-druid-thorns");
-    // 1631 with the rotation's Starfire VII (25298, an Ahn'Qiraj 20 book) read as Starfire VI
-    // (1634 before).
-    assert_eq!(action(&player, 9910, 0).0, 1631.0);
+    // 1634 since a missed Wrath banks no Eclipse charges (1631 before, with the rotation's
+    // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that).
+    assert_eq!(action(&player, 9910, 0).0, 1634.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 

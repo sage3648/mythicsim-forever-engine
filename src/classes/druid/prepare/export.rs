@@ -345,14 +345,20 @@ impl Druid {
         if self.tal.eclipse > 0 {
             // talents_balance.go applyEclipse: a Go literal of two charges a Wrath.
             let ladder = Ladder::talent(408248, 3);
-            effects.push(json!({
+            let mut eclipse = json!({
                 "kind": "eclipse", "trigger_aura": "Eclipse Trigger", "aura": "Eclipse",
                 "cast_time_reduction_ns":
                     nanos(crate::prepare::sim::MILLISECOND
                         * (ladder.effect_at(2).value_at(self.tal.eclipse) as i64)),
                 "charges_per_wrath": 2,
                 "duration_ns": nanos(Ladder::ranked(&[408255]).highest().duration()),
-            }));
+            });
+            // 408248 procs on a harmful spell's damage, so under Forever's rules a missed
+            // Wrath banks nothing; the Go reference banks on the completed cast.
+            if sim.rules == crate::prepare::sim::Rules::Forever {
+                eclipse["bank_on_landed_hit"] = json!(true);
+            }
+            effects.push(eclipse);
         }
         effects.extend(self.druid_feral_effects(env, notes));
         effects.extend(self.druid_bear_effects(env, notes));

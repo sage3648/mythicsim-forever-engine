@@ -2058,6 +2058,9 @@ pub enum Effect {
         aura: String,
         cast_time_reduction_ns: i64,
         charges_per_wrath: i32,
+        /// Bank the charges when a Wrath lands rather than when its cast completes.
+        #[serde(default, skip_serializing_if = "is_false")]
+        bank_on_landed_hit: bool,
         duration_ns: i64,
     },
     /// Cat Form: its cast with Furor's energy carry over, and its aura's pseudo stat, weapon,
