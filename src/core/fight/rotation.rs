@@ -791,12 +791,12 @@ impl<A: Agent> Fight<A> {
             .collect();
         // apl.go: with a swap the prepull leaves on another set, the swap back to Main a
         // nanosecond before the pull (Go's `RegisterPrepullAction(-1, ...)`), registered after
-        // the rotation's.
+        // the rotation's. Forever's rule leaves the set on: the game swaps nothing back.
         let last_swap = prepull.iter().rev().find_map(|(_, act)| match act {
             PrepullAct::ItemSwap(to_swapped) => Some(*to_swapped),
             _ => None,
         });
-        if last_swap == Some(true) {
+        if last_swap == Some(true) && !self.prepull_swap_stays_in_hand {
             prepull.push((-1, PrepullAct::SwapBackToMain));
         }
         prepull.sort_by_key(|(do_at, _)| *do_at);

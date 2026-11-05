@@ -1134,6 +1134,10 @@ pub(crate) fn export_state(
         // precast (README, Rust-only mechanics); the reference finishes a hasted precast early
         // and drops its damage, which lands before 0:00.
         prepared["player"]["prepull_casts_finish_on_pull"] = json!(true);
+        // A weapon swapped in before the pull is the one in the hand at the pull, and the swap
+        // stays on until the rotation swaps again (README, Rust-only mechanics); the reference
+        // keeps swinging the Main weapon and swaps back to Main a nanosecond before the pull.
+        prepared["player"]["prepull_swap_stays_in_hand"] = json!(true);
         // A healer sim counts only the share of each heal real healers do not overheal
         // (README, Rust-only mechanics); the reference counts every heal in full.
         let overheal = super::overheal::export(&player_message, &prepared["player"]["spells"]);

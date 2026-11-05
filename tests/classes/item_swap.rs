@@ -474,3 +474,144 @@ fn seal_of_righteousness_hits_with_the_swapped_one_hander() {
         );
     }
 }
+
+/// The Shockadin request with a Swap1 swap at -1 s in place of the Manual Crowd Pummeler
+/// opener: the Main hand is a 2.0 speed weapon (46 to 70) and Brutality Blade, Swap1's, a 2.5
+/// speed one (90 to 168).
+fn prepull_swap_request() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/paladin/item-swap/shockadin-mcp-to-one-hander.request.json");
+    let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let player = &mut request["raid"]["parties"][0]["players"][0];
+    player["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .drain(..2);
+    player["rotation"]["prepullActions"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({
+            "action": {"itemSwap": {"swapSet": "Swap1"}},
+            "doAtValue": {"const": {"val": "-1s"}},
+        }));
+    request
+}
+
+/// A main hand weapon's damage range and speed.
+fn weapon(value: &Value) -> (f64, f64, f64) {
+    let number = |key: &str| value[key].as_f64().unwrap();
+    (
+        number("base_damage_min"),
+        number("base_damage_max"),
+        number("swing_speed"),
+    )
+}
+
+/// A main hand swing's damage from the weapon, less the attack power part, which follows the
+/// weapon's speed: `base - ap / 14 * speed`.
+fn weapon_damage(log: &str, time: &str, speed: f64) -> f64 {
+    let line = log
+        .lines()
+        .find(|line| line.starts_with(time) && line.contains("{OtherID: 3, Tag: 1} [DEBUG]"))
+        .unwrap_or_else(|| panic!("no swing at {time}"));
+    let number = |key: &str| -> f64 {
+        let rest = line.split(key).nth(1).unwrap();
+        rest.split(',').next().unwrap().trim().parse().unwrap()
+    };
+    number("BaseDamage:") - number("MAP: ") / 14.0 * speed
+}
+
+/// The times of the lines that name the stat change of an item swap.
+fn stat_changes(log: &str) -> Vec<&str> {
+    log.lines()
+        .filter(|line| line.contains("Item Swap - Stats Change"))
+        .map(|line| &line[..line.find(']').unwrap() + 1])
+        .collect()
+}
+
+/// A prepull swap to Swap1 puts Swap1's weapon in the hand, and under Forever's rules
+/// (`prepull_swap_stays_in_hand`) it stays there for the pull: the first white swing rolls the
+/// swapped weapon's damage and the next comes its slower speed later. The reference swaps back
+/// to Main a nanosecond before the pull, so the Main weapon swings.
+#[test]
+fn a_prepull_swap_puts_its_weapon_in_the_hand_under_forever_rules() {
+    let forever = paladin_swap_forever(&prepull_swap_request());
+    assert_eq!(forever["player"]["prepull_swap_stays_in_hand"], true);
+    let main = weapon(&forever["melee"]["main_hand"]);
+    let swapped: Vec<&Value> = forever["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|effect| effect["kind"] == "item_swap")
+        .unwrap()["swapped"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|change| {
+            change["path"]
+                .as_str()
+                .unwrap()
+                .starts_with("/melee/main_hand/")
+        })
+        .collect();
+    let field = |key: &str| {
+        swapped
+            .iter()
+            .find(|change| change["path"] == format!("/melee/main_hand/{key}"))
+            .unwrap()["value"]
+            .as_f64()
+            .unwrap()
+    };
+    let blade = (
+        field("base_damage_min"),
+        field("base_damage_max"),
+        field("swing_speed"),
+    );
+    assert_eq!((main, blade), ((46.0, 70.0, 2.0), (90.0, 168.0, 2.5)));
+
+    let mut reference = forever.clone();
+    reference["player"]["prepull_swap_stays_in_hand"] = false.into();
+    let (forever, reference) = (first_fight_log(forever), first_fight_log(reference));
+
+    let first = |log: &str| -> (String, f64) {
+        let line = log
+            .lines()
+            .find(|line| line.contains("Casting {OtherID: 3, Tag: 1}"))
+            .unwrap();
+        let time = &line[..line.find(']').unwrap() + 1];
+        (time.to_string(), time[1..time.len() - 1].parse().unwrap())
+    };
+    let next = |log: &str, after: f64| -> f64 {
+        log.lines()
+            .filter(|line| line.contains("Casting {OtherID: 3, Tag: 1}"))
+            .map(|line| line[1..line.find(']').unwrap()].parse::<f64>().unwrap())
+            .find(|time| *time > after)
+            .unwrap()
+    };
+    let ((forever_at, forever_first), (reference_at, reference_first)) =
+        (first(&forever), first(&reference));
+    assert_eq!(
+        forever_at, reference_at,
+        "the swing timer starts at the pull"
+    );
+    assert!((0.0..0.5).contains(&forever_first), "{forever_first}");
+
+    // The first swing's weapon damage lies in the range of the weapon in the hand.
+    let rolled = weapon_damage(&forever, &forever_at, blade.2);
+    assert!((blade.0..=blade.1).contains(&rolled), "{rolled}");
+    let rolled = weapon_damage(&reference, &reference_at, main.2);
+    assert!((main.0..=main.1).contains(&rolled), "{rolled}");
+
+    // The second swing waits one swing of the weapon in the hand, the same haste on both.
+    let gap = |log: &str, first: f64| next(log, first) - first;
+    let ratio = gap(&forever, forever_first) / gap(&reference, reference_first);
+    assert!((ratio - blade.2 / main.2).abs() < 0.03, "{ratio}");
+
+    // Swap1 stays worn from -1 s on: its stats change comes once before the iteration's end,
+    // where the reference's swap back to Main lands a nanosecond before the pull.
+    assert_eq!(stat_changes(&forever)[0], "[-1.00]");
+    assert!(forever.contains("Item Swap to set Swap1"));
+    assert!(!forever.contains("Item Swap to set Main"));
+    assert_eq!(stat_changes(&reference)[..2], ["[-1.00]", "[-0.00]"]);
+    assert!(stat_changes(&forever)[1] != "[-0.00]");
+}

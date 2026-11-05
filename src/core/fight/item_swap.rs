@@ -558,7 +558,10 @@ impl<A: Agent> Fight<A> {
         // The weapon the swap takes out of the hand: the set worn until now.
         let previous = usize::from(swap.swapped);
         let ops = swap.ops.clone();
-        if !prepull && sets_main_hand && self.autos.melee {
+        // Go leaves the weapon alone before the pull, and swaps back to Main before it. Under
+        // Forever's rule the weapon swapped to is the one in the hand when the pull's swing
+        // timers start.
+        if (!prepull || self.prepull_swap_stays_in_hand) && sets_main_hand && self.autos.melee {
             self.set_main_hand(weapon);
         }
         for op in &ops {
