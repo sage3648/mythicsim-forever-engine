@@ -376,7 +376,9 @@ impl Rogue {
     /// parried (as each hand of Mutilate), and the Global Cooldown and the off hand's damage
     /// penalty are the other abilities'. A level 60 rogue knows rank 2 (1329549, 25 Energy); a
     /// rotation that names rank 1 (1329283) or the provisional id #200 gave (1399001) presses
-    /// it. Flash of Steel adds Energy and takes time off the cooldown.
+    /// it. Flash of Steel adds Energy and takes time off the cooldown. Both rows carry Suppress
+    /// Weapon Procs (attributes 4, 0x800000; Wowhead Forever lists it on 1329549), so no poison,
+    /// weapon enchant or chance on hit weapon effect hears it.
     pub(super) fn register_shank_spell(&mut self, sim: &mut Sim, unit: UnitId) {
         if sim.rules != Rules::Forever || sim.oh_weapon(unit).is_none() {
             return;
@@ -390,7 +392,7 @@ impl Rogue {
                 spell_school: school::PHYSICAL,
                 defense_type: DefenseType::Melee,
                 proc_mask: ProcMask::MELEE_OH_SPECIAL,
-                flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
+                flags: SpellFlag::MELEE_METRICS | SpellFlag::APL | SpellFlag::SUPPRESS_WEAPON_PROCS,
                 class_spell_mask: masks::SHANK,
                 max_range: MAX_MELEE_RANGE,
                 cost: CostOptions {

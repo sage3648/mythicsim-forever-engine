@@ -376,9 +376,13 @@ fn skyborne_racials_speed_up_swings_and_hit_elementals_harder() {
         let skysight = spell(&env, 1259686);
         assert_eq!(read_ley_line.is_some(), race == "RaceHighOrderSkyborne");
         assert_eq!(skysight.is_some(), race == "RaceWindshaperSkyborne");
-        // Client 1.60.1.70058 SpellMisc: Read Ley Line casts in 2 sec, Skysight in 0.5 sec.
+        // Live client SpellMisc 813211: Read Ley Line casts in 0.5 sec (2 sec in 70058, which
+        // the Go reference keeps); Skysight in 0.5 sec.
         if let Some(id) = read_ley_line {
-            assert_eq!(env.sim.spell(id).default_cast.cast_time, 2 * SECOND);
+            assert_eq!(env.sim.spell(id).default_cast.cast_time, 500 * MILLISECOND);
+            let go = go_warrior(race, "");
+            let go_id = spell(&go, 1259705).expect("the Go reference has Read Ley Line");
+            assert_eq!(go.sim.spell(go_id).default_cast.cast_time, 2 * SECOND);
         }
         if let Some(id) = skysight {
             assert_eq!(env.sim.spell(id).default_cast.cast_time, 500 * MILLISECOND);

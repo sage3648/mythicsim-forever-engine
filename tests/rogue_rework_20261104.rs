@@ -791,3 +791,38 @@ fn ghostly_strike_readies_one_ambush_without_stealth() {
     assert!(log.contains(&format!("Aura gained: {{SpellID: {GHOSTLY_READY}}}")));
     assert!(log.contains(&format!("Aura faded: {{SpellID: {GHOSTLY_READY}}}")));
 }
+
+/// Shank's rows carry Suppress Weapon Procs (attributes 4, 0x800000), so the strike is exported
+/// with the flag and no poison or weapon effect hears it: in a fight, no poison lands at the
+/// moment of a Shank unless a swing landed then too.
+#[test]
+fn shank_suppresses_weapon_procs() {
+    let prepared = prepared(&combat(&[]), Rules::Forever);
+    let flags: Vec<&str> = spell(&prepared, "shank")["flags"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|flag| flag.as_str().unwrap())
+        .collect();
+    assert!(flags.contains(&"SpellFlagSuppressWeaponProcs"), "{flags:?}");
+
+    let request = with_shank(combat(&[]), SHANK, 60);
+    let log = first_fight_log(&request, Rules::Forever);
+    let shank = format!("{{SpellID: {SHANK}}}");
+    let shanks: Vec<f64> = lines_with(&log, &[&shank, "Casting"])
+        .iter()
+        .map(|line| time_of(line))
+        .collect();
+    assert!(shanks.len() >= 4, "{} Shanks", shanks.len());
+    let at = |time: f64, needle: &str| {
+        log.lines()
+            .filter(|line| line.starts_with('[') && close(time_of(line), time))
+            .any(|line| line.contains(needle))
+    };
+    for time in shanks {
+        if at(time, "{OtherID: 1}") || at(time, "{OtherID: 2}") {
+            continue;
+        }
+        assert!(!at(time, "Poison"), "a poison at {time} heard Shank");
+    }
+}

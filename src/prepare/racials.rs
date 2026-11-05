@@ -326,6 +326,13 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
                 },
             );
             // Client 1.60.1.70058: Read Ley Line has a 2 sec cast (SpellMisc CastingTimeIndex).
+            // The live client's row (SpellMisc 813211) has CastingTimeIndex 3, 0.5 sec, as
+            // Wowhead Forever's tooltip states; Forever's rules read it, the Go reference keeps 2.
+            let cast_time = if sim.rules == Rules::Forever {
+                500 * MILLISECOND
+            } else {
+                2 * SECOND
+            };
             let timer = sim.new_timer(unit);
             sim.register_spell(
                 unit,
@@ -335,7 +342,7 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
                     cast: CastConfig {
                         default_cast: Cast {
                             gcd: GCD_DEFAULT,
-                            cast_time: 2 * SECOND,
+                            cast_time,
                             ..Cast::default()
                         },
                         cd: Cooldown {
