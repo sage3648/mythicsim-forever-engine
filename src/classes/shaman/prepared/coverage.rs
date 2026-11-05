@@ -15,7 +15,10 @@ pub(crate) const GATE: ClassGate = ClassGate {
     several_targets: Some(several_targets),
     tanks_several_targets: false,
     other_target_casts: Some(crate::engine::coverage::no_limits),
-    self_spells: &[],
+    // A totem that only places its aura takes no target, so a cast on the player drops it
+    // as a cast at the target does (a healer's Mana Spring Totem cast at Self, 4 November
+    // 2026). The damaging totems are not in this class spell.
+    self_spells: &["basic_totem"],
 };
 
 /// Shaman effect kinds implemented in Rust and validated against the pinned Go reference.
