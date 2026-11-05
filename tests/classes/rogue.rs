@@ -7,6 +7,7 @@ use forever_engine::{
 use serde_json::Value;
 use std::{fs, path::Path};
 
+mod item_swap;
 mod mutilate;
 mod prepare;
 

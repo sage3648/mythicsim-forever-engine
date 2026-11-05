@@ -4,7 +4,8 @@
 //! the numbers are Go literals.
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::sim::{AuraConfig, Sim, UnitId, SECOND};
+use crate::prepare::items::slot as item_slot;
+use crate::prepare::sim::{AuraConfig, Rules, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag};
 
 use super::masks;
@@ -19,17 +20,116 @@ const INSTANT_POISON_SPELL_ID: i32 = 11340;
 const DEADLY_POISON_SPELL_ID: i32 = 25347;
 const WOUND_POISON_SPELL_ID: i32 = 13227;
 
-/// Go `getPoisonProcMask`: the hands the imbue is on.
+/// Go `getPoisonProcMask`: the hands the imbue is on, in the set worn. With a Rogue's swap set
+/// worn, the hands follow the swap set's poisons (see [`hand_imbues`]).
 pub(super) fn poison_proc_mask(sim: &Sim, unit: UnitId, imbue_id: i32) -> ProcMask {
-    let consumables = &sim.character(unit).consumables;
+    let swapped = sim.item_swap(unit).is_some_and(|swap| swap.swapped);
+    hand_mask(hand_imbues(sim, unit, swapped), imbue_id)
+}
+
+/// Whether the imbue is on a hand in either set: the poison's spell and trigger are registered
+/// once for both.
+fn in_either_set(sim: &Sim, unit: UnitId, imbue_id: i32) -> bool {
+    poison_hands(sim, unit, imbue_id) != ProcMask::UNKNOWN
+}
+
+/// The hands the imbue is on in either set.
+fn poison_hands(sim: &Sim, unit: UnitId, imbue_id: i32) -> ProcMask {
+    hand_mask(hand_imbues(sim, unit, false), imbue_id)
+        | hand_mask(hand_imbues(sim, unit, true), imbue_id)
+}
+
+fn hand_mask([main_hand, off_hand]: [i32; 2], imbue_id: i32) -> ProcMask {
     let mut mask = ProcMask::UNKNOWN;
-    if consumables.i32("mhImbue_id") == imbue_id {
+    if main_hand == imbue_id {
         mask = mask | ProcMask::MELEE_MH;
     }
-    if consumables.i32("ohImbue_id") == imbue_id {
+    if off_hand == imbue_id {
         mask = mask | ProcMask::MELEE_OH;
     }
     mask
+}
+
+/// The imbue on the main hand and the off hand in a set: the request's `mhImbueId` and
+/// `ohImbueId`, and with the swap set worn the swap set's `mhImbueSwapId` and `ohImbueSwapId`
+/// on each hand the swap changes (0 is no poison).
+///
+/// MythicSim Rust-only, under Forever's rules: a Rogue's swap set holds the same weapons with
+/// poisons of their own, as a Rogue carries a second copy of a weapon with another poison on
+/// it. The reference's Rogue reads the request's imbues alone, and refuses an item swap.
+pub(super) fn hand_imbues(sim: &Sim, unit: UnitId, swapped: bool) -> [i32; 2] {
+    let consumables = &sim.character(unit).consumables;
+    let mut imbues = [consumables.i32("mhImbue_id"), consumables.i32("ohImbue_id")];
+    let swap = sim.character(unit).item_swap.as_ref();
+    if !swapped || sim.rules != Rules::Forever {
+        return imbues;
+    }
+    let Some(swap) = swap else {
+        return imbues;
+    };
+    for (hand, (slot, field)) in [
+        (item_slot::MAIN_HAND, "mh_imbue_swap_id"),
+        (item_slot::OFF_HAND, "oh_imbue_swap_id"),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        if swap.slots.contains(&slot) {
+            imbues[hand] = consumables.i32(field);
+        }
+    }
+    imbues
+}
+
+/// What a Rogue's swap set may change, noted for the item swap to refuse otherwise: under
+/// Forever's rules each hand the swap changes holds the same item with the same enchant in both
+/// sets, so the swings, the weapon's procs and the weapon talents read as the reset's and only
+/// the poisons follow the swap. A stone or oil the sets differ in would stay on all fight, and
+/// another weapon would need the off hand's swing and procs to follow the swap. The reference's
+/// Rogue refuses an item swap.
+pub(super) fn note_item_swap_limits(sim: &mut Sim, unit: UnitId) {
+    let Some(swap) = sim.item_swap(unit) else {
+        return;
+    };
+    let mut unported = Vec::new();
+    if sim.rules != Rules::Forever {
+        unported.push("a Rogue under the reference's rules".to_string());
+    }
+    let [worn_imbues, swap_imbues] = [hand_imbues(sim, unit, false), hand_imbues(sim, unit, true)];
+    for (hand, slot) in [item_slot::MAIN_HAND, item_slot::OFF_HAND]
+        .into_iter()
+        .enumerate()
+    {
+        if !swap.slots.contains(&slot) {
+            continue;
+        }
+        let (worn, swapped) = (&swap.original_equip[slot], &swap.swap_equip[slot]);
+        let same = worn.id == swapped.id
+            && worn.random_suffix.id == swapped.random_suffix.id
+            && worn.enchant.effect_id == swapped.enchant.effect_id;
+        if !same {
+            unported.push(format!(
+                "item {} (enchant {}) in slot {slot} for the Rogue's item {} (enchant {}): a \
+                 Rogue's swap set holds the same weapons with other poisons",
+                swapped.id, swapped.enchant.effect_id, worn.id, worn.enchant.effect_id
+            ));
+        }
+        let (from, to) = (worn_imbues[hand], swap_imbues[hand]);
+        let poison_or_none = |id: i32| id == 0 || is_poison(id);
+        if from != to && !(poison_or_none(from) && poison_or_none(to)) {
+            unported.push(format!(
+                "a stone or oil the Rogue's sets differ in, {from} and {to} in slot {slot}"
+            ));
+        }
+    }
+    for what in unported {
+        sim.item_swap_unported(unit, what);
+    }
+}
+
+/// Whether an imbue is one of the three poisons.
+fn is_poison(imbue_id: i32) -> bool {
+    [INSTANT_IMBUE_ID, WOUND_IMBUE_ID, DEADLY_IMBUE_ID].contains(&imbue_id)
 }
 
 /// The hands each imbue is on, for the exporter.
@@ -55,7 +155,7 @@ pub(super) fn apply_poisons(sim: &mut Sim, unit: UnitId) {
 /// Go `applyPoisonProc`: a weapon proc on the hand the imbue is on, whose chance the handler
 /// rolls at proc time.
 fn apply_poison_proc(sim: &mut Sim, unit: UnitId, name: &str, imbue_id: i32) {
-    let proc_mask = poison_proc_mask(sim, unit, imbue_id);
+    let proc_mask = poison_hands(sim, unit, imbue_id);
     if proc_mask == ProcMask::UNKNOWN {
         return;
     }
@@ -92,7 +192,7 @@ fn poison_config(action_id: crate::contracts::prepared_v2::ActionId, mask: i64) 
 impl Rogue {
     /// Go `registerDeadlyPoisonSpell`.
     pub(super) fn register_deadly_poison_spell(&mut self, sim: &mut Sim, unit: UnitId) {
-        if poison_proc_mask(sim, unit, DEADLY_IMBUE_ID) == ProcMask::UNKNOWN {
+        if !in_either_set(sim, unit, DEADLY_IMBUE_ID) {
             return;
         }
         let spell = sim.register_spell(
@@ -120,7 +220,7 @@ impl Rogue {
 
     /// Go `registerWoundPoisonSpell`.
     pub(super) fn register_wound_poison_spell(&mut self, sim: &mut Sim, unit: UnitId) {
-        if poison_proc_mask(sim, unit, WOUND_IMBUE_ID) == ProcMask::UNKNOWN {
+        if !in_either_set(sim, unit, WOUND_IMBUE_ID) {
             return;
         }
         // The healing debuff has no effect on a DPS sim.
@@ -147,7 +247,7 @@ impl Rogue {
 
     /// Go `registerInstantPoisonSpell`.
     pub(super) fn register_instant_poison_spell(&mut self, sim: &mut Sim, unit: UnitId) {
-        if poison_proc_mask(sim, unit, INSTANT_IMBUE_ID) == ProcMask::UNKNOWN {
+        if !in_either_set(sim, unit, INSTANT_IMBUE_ID) {
             return;
         }
         let spell = sim.register_spell(

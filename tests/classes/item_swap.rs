@@ -126,9 +126,9 @@ fn a_toggled_rockbiter_with_spirit_weapons_is_refused() {
 #[test]
 fn an_item_swap_of_an_unchecked_class_is_refused() {
     let mut value = fixture("mcp-arms-warrior");
-    value["player"]["class"] = json!("ClassRogue");
+    value["player"]["class"] = json!("ClassHunter");
     assert!(refusals(value).contains(
-        &"item_swap_unsupported: an item swap of a ClassRogue is unsupported".to_string()
+        &"item_swap_unsupported: an item swap of a ClassHunter is unsupported".to_string()
     ));
 }
 

@@ -18,9 +18,22 @@ pub(crate) struct PoisonProc {
     /// Whether each spell, by spellbook position, is a hit from the imbued hand that a weapon
     /// proc hears: one without Suppress Weapon Procs whose proc mask names that hand.
     pub(crate) eligible: Vec<bool>,
+    /// With an item swap, `eligible` under the Main set and the swap set: a Rogue's swap set
+    /// carries poisons of its own (MythicSim, Forever's rules), so the swap moves the hands
+    /// each poison is on.
+    pub(crate) eligible_sets: Option<[Vec<bool>; 2]>,
 }
 
 impl PoisonProc {
+    /// The poison as the set now worn (the swap set when `worn`) has it.
+    pub(crate) fn for_set(&self, worn: bool) -> Option<Self> {
+        let sets = self.eligible_sets.as_ref()?;
+        Some(Self {
+            eligible: sets[usize::from(worn)].clone(),
+            ..self.clone()
+        })
+    }
+
     /// Go `AttachProcTriggerCallback` for the poison: a landed hit from the imbued hand, then
     /// the handler's chance roll and the cast.
     pub(crate) fn on_spell_hit_dealt<A: Agent>(

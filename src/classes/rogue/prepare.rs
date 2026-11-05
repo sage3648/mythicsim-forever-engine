@@ -417,6 +417,7 @@ impl PrepAgent for Rogue {
 
     /// Go `Rogue.Initialize`.
     fn initialize(&mut self, sim: &mut Sim, unit: UnitId) {
+        poisons::note_item_swap_limits(sim, unit);
         self.register_ambush_spell(sim, unit);
         self.register_backstab_spell(sim, unit);
         self.register_eviscerate(sim, unit);
