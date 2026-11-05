@@ -324,11 +324,20 @@ impl Paladin {
             // Push 113554 turns it into A_MOD_CRITICAL_HEALING_AMOUNT on the Holy school: the
             // heal crit's bonus grows by 10% a rank, so 5/5 makes a 150% heal crit 225%. Every
             // paladin heal is Holy. Upstream #772 puts it on the heals as a crit multiplier.
+            //
+            // The client row keeps Holy Power's class mask (wowf SpellEffect 683158, 6 November
+            // 2026): family 10, word 0 = 33612840. It names Holy Light, Flash of Light, Light's
+            // Vigil and Lay on Hands (bit 15, 32768, the SpellClassMask of every Lay on Hands
+            // rank, e.g. 633), and Wowhead's tooltip states "your Holy spells". Lay on Hands
+            // rolls a heal crit like the others, so it takes the bonus too. The reference's
+            // Holy Power already named it.
             sim.add_static_mod(
                 unit,
                 SpellModConfig {
-                    // Holy Power's mask names Light's Vigil, whose party heal is the third.
-                    class_mask: masks::HEALING_SPELLS | masks::LIGHTS_VIGIL_HEAL,
+                    // Light's Vigil's party heal is the third of its three heals.
+                    class_mask: masks::HEALING_SPELLS
+                        | masks::LIGHTS_VIGIL_HEAL
+                        | masks::LAY_ON_HANDS,
                     kind: SpellModType::CritMultiplierPct,
                     float_value: hotfix::at(&hotfix::HOLY_POWER, points) / 100.0,
                     ..SpellModConfig::default()
