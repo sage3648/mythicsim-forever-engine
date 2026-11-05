@@ -899,6 +899,11 @@ the Go goldens and exporter uses. The departures:
   registered Affliction aura on the target, active or not (Go `AfflictionCount`), which is the
   full 36% on every tick (`soul_siphon_live` on `drain_life` and `wrack`,
   `tests/forever_soul_siphon_20261104.rs`).
+- Eclipse banks its two charges only when a Wrath lands. Eclipse 408248 (client 1.60.1.70790)
+  has SpellAuraOptions ProcTypeMask_0 65536, a harmful spell's damage, so a Wrath that misses
+  triggers nothing, as Sildor (#druid) tested on the beta; the charges land with the Wrath, after
+  its travel. The reference banks them on every completed Wrath cast (`bank_on_landed_hit` on
+  `eclipse`, `tests/forever_eclipse_on_hit_20261105.rs`).
 
 ## Repository layout
 

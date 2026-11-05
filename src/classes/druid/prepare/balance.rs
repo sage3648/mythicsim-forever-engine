@@ -645,6 +645,9 @@ impl Druid {
     }
 
     /// Eclipse, new in Forever: every Wrath banks charges that each shorten one Starfire cast.
+    /// Under Forever's rules a Wrath banks them only when it lands: 408248's ProcTypeMask_0 is
+    /// 65536, a harmful spell's damage, so a miss does not trigger it (client 1.60.1.70790,
+    /// tested on the beta). The Go reference banks them on every completed cast.
     fn apply_eclipse(&mut self, sim: &mut Sim) {
         if self.tal.eclipse == 0 {
             return;
@@ -682,6 +685,7 @@ impl Druid {
                 label: "Eclipse Trigger".to_string(),
                 events: EventCallbacks {
                     on_cast_complete: true,
+                    on_spell_hit_dealt: sim.rules == Rules::Forever,
                     ..EventCallbacks::default()
                 },
                 ..AuraConfig::default()

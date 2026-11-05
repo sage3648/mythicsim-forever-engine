@@ -620,6 +620,7 @@ impl DruidAgent {
                     aura,
                     cast_time_reduction_ns,
                     charges_per_wrath,
+                    bank_on_landed_hit,
                     ..
                 } => {
                     let bound = eclipse::bind(
@@ -627,6 +628,7 @@ impl DruidAgent {
                         aura,
                         *cast_time_reduction_ns,
                         *charges_per_wrath,
+                        *bank_on_landed_hit,
                     )?;
                     fight.agent.eclipse = Some(Rc::new(bound));
                 }
@@ -1567,6 +1569,9 @@ impl Agent for DruidAgent {
                 Self::natures_grace(fight).on_spell_hit_dealt(fight, spell, result)
             }
             DruidAura::Prowl => Self::prowl(fight).on_spell_hit_dealt(fight),
+            DruidAura::EclipseTrigger => {
+                Self::eclipse(fight).on_spell_hit_dealt(fight, spell, result)
+            }
             DruidAura::BloodFrenzy => {
                 Self::blood_frenzy(fight).on_spell_hit_dealt(fight, spell, result)
             }
