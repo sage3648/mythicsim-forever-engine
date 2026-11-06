@@ -27,7 +27,7 @@ use super::Refusal;
 pub(crate) use effects::{
     aura_should_refresh_effects, battle_shout_effect, exclusive_refresh,
     external_expose_armor_effect, judgement_of_light_effects, judgement_of_wisdom_effects,
-    sunder_armor_effect,
+    raid_armor_category, sunder_armor_effect,
 };
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs, GIFT_OF_ARTHAS};
 pub(crate) use windfury_effect::{windfury_totem_effect, windfury_trigger_spells};

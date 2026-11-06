@@ -75,6 +75,8 @@ pub struct Member {
     pub name: String,
     pub class: String,
     pub request: Value,
+    /// The raid's armor debuffs a member casts, which every member's fight shares.
+    pub(crate) raid_live: crate::prepare::env::RaidLive,
 }
 
 /// Why a raid did not run.
@@ -244,14 +246,49 @@ pub fn split(input: &RaidInput) -> Result<Vec<Member>, RaidError> {
                     .to_string(),
                 class: class.to_string(),
                 request: Value::Object(own),
+                raid_live: Default::default(),
             });
         }
     }
     if members.is_empty() {
         return Err(invalid("a raid without players"));
     }
+    share_debuffs(&mut members);
     assign(&mut members, &input.assignments)?;
     Ok(members)
+}
+
+/// A debuff a member's rotation casts is on the target in every member's fight, and only while
+/// a member keeps it up: the toggle registers the raid's copy everywhere, and the fights share
+/// its state (`SHARED_DEBUFFS`). A debuff no member casts stays as the request says.
+fn share_debuffs(members: &mut [Member]) {
+    let casters = debuff_casters(members);
+    let live = |name: &str| {
+        SHARED_DEBUFFS
+            .iter()
+            .zip(&casters)
+            .any(|(debuff, casters)| debuff.name == name && !casters.is_empty())
+    };
+    let raid_live = crate::prepare::env::RaidLive {
+        sunder_armor: live("sunder_armor"),
+        expose_armor: live("expose_armor"),
+    };
+    for member in members.iter_mut() {
+        let raid = member.request["raid"]
+            .as_object_mut()
+            .expect("a member's raid");
+        let debuffs = raid
+            .entry("debuffs")
+            .or_insert_with(|| json!({}))
+            .as_object_mut()
+            .expect("debuffs");
+        for (debuff, casters) in SHARED_DEBUFFS.iter().zip(&casters) {
+            if !casters.is_empty() {
+                debuffs.insert(debuff.field.into(), Value::Bool(true));
+            }
+        }
+        member.raid_live = raid_live;
+    }
 }
 
 /// The raid's seed, which a raid needs so its members' seeds can follow from it.
@@ -360,16 +397,71 @@ fn assign(members: &mut [Member], assignments: &Assignments) -> Result<(), RaidE
 /// applies when the aura goes up; the others stay as the request's toggles say (docs/raid.md).
 pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
     SharedDebuff {
+        name: "sunder_armor",
+        field: "sunderArmor",
+        external: "Sunder Armor (External)",
+        own_prefix: "Sunder Armor (Player)",
+        spells: &[7386, 7405, 8380, 11596, 11597],
+    },
+    SharedDebuff {
+        name: "expose_armor",
+        field: "exposeArmor",
+        external: "Expose Armor (External)",
+        own_prefix: "Expose Armor (Player)",
+        spells: &[8647, 8649, 8650, 11197, 11198],
+    },
+    // A judgement is the seal's: the member keeps the seal up to judge it.
+    SharedDebuff {
         name: "judgement_of_wisdom",
+        field: "judgementOfWisdom",
         external: "Judgement of Wisdom (External)",
         own_prefix: "Judgement of Wisdom Rank ",
+        spells: &[20166, 20356, 20357],
     },
     SharedDebuff {
         name: "judgement_of_light",
+        field: "judgementOfLight",
         external: "Judgement of Light (External)",
         own_prefix: "Judgement of Light Rank ",
+        spells: &[20165, 20347, 20348, 20349],
     },
 ];
+
+/// The raid index of each member whose rotation casts each of [`SHARED_DEBUFFS`].
+pub(crate) fn debuff_casters(members: &[Member]) -> Vec<Vec<usize>> {
+    SHARED_DEBUFFS
+        .iter()
+        .map(|debuff| {
+            members
+                .iter()
+                .filter(|member| {
+                    member
+                        .request
+                        .pointer("/raid/parties/0/players/0/rotation")
+                        .is_some_and(|rotation| casts_any(rotation, debuff.spells))
+                })
+                .map(|member| member.raid_index)
+                .collect()
+        })
+        .collect()
+}
+
+/// Whether a rotation casts any of the spells, in its prepull or priority list. A condition that
+/// only reads the debuff, as a warrior's "is Expose Armor up", casts nothing.
+fn casts_any(node: &Value, spells: &[i64]) -> bool {
+    match node {
+        Value::Object(fields) => fields.iter().any(|(key, value)| {
+            let cast = key == "castSpell"
+                && value
+                    .pointer("/spellId/spellId")
+                    .and_then(Value::as_i64)
+                    .is_some_and(|id| spells.contains(&id));
+            cast || casts_any(value, spells)
+        }),
+        Value::Array(items) => items.iter().any(|item| casts_any(item, spells)),
+        _ => false,
+    }
+}
 
 /// A prepared member, ready to simulate.
 pub struct PreparedMember {
@@ -391,7 +483,8 @@ pub fn prepare(members: Vec<Member>, rules: Rules) -> Result<Vec<PreparedMember>
             reason,
         };
         let bytes = serde_json::to_vec(&member.request).map_err(|err| invalid(err.to_string()))?;
-        let value = match crate::prepare::prepare_json_with(&bytes, "raid", rules) {
+        let value = match crate::prepare::prepare_json_raid(&bytes, "raid", rules, member.raid_live)
+        {
             Ok(value) => value,
             Err(PrepareError::Refused(refusal)) => {
                 refused.push(refuse("prepare", refusal.code, refusal.reason));
@@ -437,6 +530,8 @@ pub fn prepare(members: Vec<Member>, rules: Rules) -> Result<Vec<PreparedMember>
 pub struct MemberReport {
     pub member: Member,
     pub report: PreparedReport,
+    /// Whether a target swings at the member: it tanks.
+    pub tanking: bool,
 }
 
 /// A raid's result.
@@ -448,6 +543,8 @@ pub struct RaidReport {
     pub parties: Vec<Option<(Distribution, Distribution)>>,
     /// The raid index of each member that casts each of [`SHARED_DEBUFFS`].
     pub casters: Vec<Vec<usize>>,
+    /// The raid index of each member that casts each of the other raid debuffs.
+    pub cast_debuffs: Vec<Vec<usize>>,
     pub elapsed_ns: u64,
 }
 
@@ -469,20 +566,24 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
     for fight in &mut fights {
         fight.prepare_run();
     }
-    // A debuff is live when a member casts it: every fight then shares its state.
-    let mut casters = vec![Vec::new(); SHARED_DEBUFFS.len()];
-    for (index, fight) in fights.iter_mut().enumerate() {
-        for (key, (own, _)) in fight.share_auras(SHARED_DEBUFFS).into_iter().enumerate() {
-            if own {
-                casters[key].push(members[index].member.raid_index);
-            }
-        }
-    }
-    for (key, debuff) in SHARED_DEBUFFS.iter().enumerate() {
-        if !casters[key].is_empty() {
-            for fight in &mut fights {
-                fight.drive_external(debuff);
-            }
+    // A debuff is live when a member's rotation casts it: every fight then shares its state.
+    let casters = debuff_casters(
+        &members
+            .iter()
+            .map(|member| member.member.clone())
+            .collect::<Vec<_>>(),
+    );
+    // Only those: a debuff nobody casts keeps each fight's own driver, such as the Sunder ramp.
+    let live: Vec<SharedDebuff> = SHARED_DEBUFFS
+        .iter()
+        .zip(&casters)
+        .filter(|(_, casters)| !casters.is_empty())
+        .map(|(debuff, _)| *debuff)
+        .collect();
+    for fight in &mut fights {
+        fight.share_auras(&live);
+        for debuff in &live {
+            fight.drive_external(debuff);
         }
     }
     let mut states = Vec::new();
@@ -589,9 +690,11 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         if rotation_stats {
             report.add_rotation_stats();
         }
+        let tanking = member.prepared.enemy.is_some();
         reports.push(MemberReport {
             member: member.member,
             report,
+            tanking,
         });
     }
     Ok(RaidReport {
@@ -600,6 +703,7 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         raid_hps,
         parties,
         casters,
+        cast_debuffs: Vec::new(),
         elapsed_ns,
     })
 }
@@ -662,7 +766,7 @@ impl RaidReport {
                     "dps": read("/dps/avg"),
                     "dpsStdev": read("/dps/stdev"),
                     "hps": read("/hps/avg"),
-                    "tanking": read("/dtps/avg") > 0.0,
+                    "tanking": member.tanking,
                     "avgIterationDuration": member.report.result["avgIterationDuration"],
                     "scenarioId": member.report.scenario_id,
                 })
@@ -688,9 +792,115 @@ impl RaidReport {
                         "casters": casters,
                         "live": !casters.is_empty(),
                     }))
+                    .chain(CAST_DEBUFFS.iter().zip(&self.cast_debuffs).filter(|(_, casters)| !casters.is_empty()).map(
+                        |((name, _, _), casters)| json!({
+                            "debuff": name,
+                            "casters": casters,
+                            "live": false,
+                        }),
+                    ))
                     .collect::<Vec<_>>(),
             },
         }))
+    }
+}
+
+/// The raid debuffs on the target a member's rotation can cast, besides [`SHARED_DEBUFFS`]: the
+/// request's toggle and the name its auras carry, the member's own copy `<name> (Player)`.
+const CAST_DEBUFFS: &[(&str, &str, &str)] = &[
+    ("faerie_fire", "faerieFire", "Faerie Fire"),
+    (
+        "curse_of_elements",
+        "curseOfElements",
+        "Curse of the Elements",
+    ),
+    (
+        "curse_of_recklessness",
+        "curseOfRecklessness",
+        "Curse of Recklessness",
+    ),
+    ("hunters_mark", "huntersMark", "Hunter's Mark"),
+    (
+        "demoralizing_shout",
+        "demoralizingShout",
+        "Demoralizing Shout",
+    ),
+    ("demoralizing_roar", "demoralizingRoar", "Demoralizing Roar"),
+    ("thunder_clap", "thunderClap", "Thunder Clap"),
+    ("insect_swarm", "insectSwarm", "Insect Swarm"),
+    ("scorpid_sting", "scorpidSting", "Scorpid Sting"),
+];
+
+/// Every spell a rotation casts.
+fn cast_spells(node: &Value, out: &mut Vec<i64>) {
+    match node {
+        Value::Object(fields) => {
+            for (key, value) in fields {
+                if key == "castSpell" {
+                    if let Some(id) = value.pointer("/spellId/spellId").and_then(Value::as_i64) {
+                        out.push(id);
+                    }
+                }
+                cast_spells(value, out);
+            }
+        }
+        Value::Array(items) => items.iter().for_each(|item| cast_spells(item, out)),
+        _ => {}
+    }
+}
+
+/// The raid index of each member whose rotation casts each of [`CAST_DEBUFFS`]: a spell of its
+/// rotation is the one its own copy of the debuff on the target stands for.
+fn cast_debuff_casters(prepared: &[PreparedMember]) -> Vec<Vec<usize>> {
+    CAST_DEBUFFS
+        .iter()
+        .map(|(_, _, name)| {
+            let own = format!("{name} (Player)");
+            prepared
+                .iter()
+                .filter(|member| {
+                    let mut spells = Vec::new();
+                    if let Some(rotation) = member
+                        .member
+                        .request
+                        .pointer("/raid/parties/0/players/0/rotation")
+                    {
+                        cast_spells(rotation, &mut spells);
+                    }
+                    member.prepared.target.auras.iter().any(|aura| {
+                        aura.label == own
+                            && aura
+                                .action_id
+                                .as_ref()
+                                .is_some_and(|id| spells.contains(&i64::from(id.spell_id)))
+                    })
+                })
+                .map(|member| member.member.raid_index)
+                .collect()
+        })
+        .collect()
+}
+
+/// A debuff of [`CAST_DEBUFFS`] a member casts is up on every other member's target from the
+/// pull, as the request's toggle assumes, while its casters' fights have only their own casts:
+/// the raid's copy beside the member's own would hold its category, and the member would recast
+/// a debuff that never lands.
+fn assume_cast_debuffs(members: &mut [Member], casters: &[Vec<usize>]) {
+    for ((_, field, _), casters) in CAST_DEBUFFS.iter().zip(casters) {
+        if casters.is_empty() {
+            continue;
+        }
+        for member in members.iter_mut() {
+            let debuffs = member.request["raid"]
+                .as_object_mut()
+                .expect("a member's raid")
+                .entry("debuffs")
+                .or_insert_with(|| json!({}))
+                .as_object_mut()
+                .expect("debuffs");
+            let casts = casters.contains(&member.raid_index);
+            debuffs.insert((*field).into(), Value::Bool(!casts));
+        }
     }
 }
 
@@ -698,9 +908,15 @@ impl RaidReport {
 pub fn simulate(input: &[u8], rules: Rules, rotation_stats: bool) -> Result<Value, RaidError> {
     let raid: RaidInput =
         serde_json::from_slice(input).map_err(|err| invalid(format!("raid input: {err}")))?;
-    let members = split(&raid)?;
+    let mut members = split(&raid)?;
+    // What each member's rotation casts on the target shows once it is prepared.
+    let first = prepare(members.clone(), rules)?;
+    let cast = cast_debuff_casters(&first);
+    drop(first);
+    assume_cast_debuffs(&mut members, &cast);
     let prepared = prepare(members, rules)?;
-    let report = run(prepared, rotation_stats)?;
+    let mut report = run(prepared, rotation_stats)?;
+    report.cast_debuffs = cast;
     let digest = crate::contracts::request::sha256::hex(input);
     report.to_json(&digest).map_err(RaidError::Invalid)
 }

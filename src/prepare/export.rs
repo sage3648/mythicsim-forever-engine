@@ -942,6 +942,8 @@ pub(crate) fn export_state(
         env,
         &mut unrepresented,
     ));
+    let raid_armor = super::buffs::raid_armor_category(env, &effects, &mut unrepresented);
+    effects.extend(raid_armor);
     effects.extend(super::pet::inert_pet_effects(env, &mut unrepresented));
     // Go then appends the melee, gear, spell data and energy proc effects, and the stat auras
     // effect, in that order.

@@ -140,6 +140,17 @@ pub fn prepare_json_with(
     scenario: &str,
     rules: Rules,
 ) -> Result<serde_json::Value, PrepareError> {
+    prepare_json_raid(request, scenario, rules, env::RaidLive::default())
+}
+
+/// [`prepare_json_with`] for a member of a raid whose members cast the armor debuffs in
+/// `raid_live` (`engine::raid`).
+pub(crate) fn prepare_json_raid(
+    request: &[u8],
+    scenario: &str,
+    rules: Rules,
+    raid_live: env::RaidLive,
+) -> Result<serde_json::Value, PrepareError> {
     let bytes = request;
     let mut request = Request::from_json(bytes).map_err(PrepareError::Invalid)?;
     let options = request.message().message("sim_options");
@@ -152,9 +163,13 @@ pub fn prepare_json_with(
             request = known;
         }
     }
-    let mut env =
-        env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
-            .map_err(PrepareError::Refused)?;
+    let mut env = env::Environment::with_options(
+        request.message(),
+        crate::classes::prepare_agent,
+        rules,
+        raid_live,
+    )
+    .map_err(PrepareError::Refused)?;
     export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
 }
 

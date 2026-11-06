@@ -476,6 +476,7 @@ pub(crate) struct EnemyCombos {
     request: crate::contracts::request::Message,
     factory: super::env::AgentFactory,
     rules: super::sim::Rules,
+    raid_live: super::env::RaidLive,
     layout: StatLayout,
     hardcast: bool,
     /// The swing at reset and the encoding of its values beyond the rolls and aura lists.
@@ -498,6 +499,7 @@ impl EnemyCombos {
         Ok(EnemyCombos {
             request: env.request.clone(),
             factory: env.factory,
+            raid_live: env.raid_live,
             rules: env.rules,
             layout: layout.clone(),
             hardcast: env
@@ -525,7 +527,8 @@ impl EnemyCombos {
     ) -> Result<(), Refusal> {
         let mut own: Option<Environment> = None;
         if !exact {
-            let mut fresh = Environment::with_rules(&self.request, self.factory, self.rules)?;
+            let mut fresh =
+                Environment::with_options(&self.request, self.factory, self.rules, self.raid_live)?;
             set_stat_auras(&mut fresh, &self.layout, mask);
             own = Some(fresh);
         }

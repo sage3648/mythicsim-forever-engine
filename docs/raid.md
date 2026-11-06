@@ -36,17 +36,26 @@ from a member who can cast it. `simOptions.randomSeed` is required.
    and every other member fights to it; each still draws its own roll, so its random numbers
    stay its own. The runner always steps the fight whose next event is earliest, ties in raid
    order.
-4. **Shared target debuffs** (`SHARED_DEBUFFS`). A debuff that a member can cast is one state
-   on the target for the whole raid. When a member's fight changes it (gain, refresh, stacks,
-   fade), the runner hands the new state to every other fight at that moment, which takes it on
-   through its own copy (`Fight::apply_shared`): the member's own ranks when it casts the debuff
-   too, otherwise the raid's copy the request's toggle registered. The raid's copy then no
-   longer counts from the pull in any fight. A fight never sends back a state it was given.
-   Today these are Judgement of Wisdom and Judgement of Light, whose effects the fight applies
-   whenever the aura goes up. The other raid debuffs stay as the request's toggles say: their
-   effects are part of the target's prepared armor, resistances and damage taken, so sharing
-   them needs the target to carry them as live state first (next: Sunder Armor and Expose
-   Armor through the major armor category, then Faerie Fire, the curses and Hunter's Mark).
+4. **Debuffs members cast.** What a member's rotation casts decides what the raid has on the
+   target; a debuff nobody casts stays as the request's toggle says (an assumption from outside
+   the raid).
+   - **Live** (`SHARED_DEBUFFS`): Sunder Armor, Expose Armor, Judgement of Wisdom and Judgement
+     of Light, when a member's rotation casts the spell or keeps the seal up. The raid's copy is
+     registered in every fight but no longer up from the pull: Sunder Armor has no ramp, and both
+     armor debuffs bid in a target major armor category (`raid_armor_category`) with the
+     target's armor at each stack. When a member's fight changes the debuff (gain, refresh,
+     stacks, fade), the runner hands the new state to every other fight at that moment, which
+     takes it on through its own copy (`Fight::apply_shared`): the member's own ranks when it
+     casts the debuff too, otherwise the raid's copy. A fight never sends back a state it was
+     given. A stronger armor debuff the request assumes from the pull, such as the raid's Expose
+     Armor beside members' Sunder Armor, keeps the members' stacks out, as in a Quick Sim.
+   - **Assumed** (`CAST_DEBUFFS`): Faerie Fire, the curses, Hunter's Mark and the tank debuffs,
+     when a member's rotation casts its own copy ("<name> (Player)"). Every other member's fight
+     has the raid's copy from the pull; the caster's fight has only its own casts. Their effects
+     are part of the target's prepared armor, resistances and damage taken, so a member's casts
+     cannot reach another fight yet. Preparing each member once before the run shows what its
+     rotation casts. Without this, a Warlock beside the raid's Curse of the Elements recast its
+     own every global cooldown (it never lands), at about 100 DPS instead of 900.
 5. **Report.** Go's `RaidSimResult`: each member's player metrics in its party, and the raid's
    and each party's DPS and HPS over each iteration's totals. The `mythicsim` block lists each
    member's raid index, party, slot, name, class, DPS, HPS and fight length, and each shared
@@ -60,6 +69,10 @@ from a member who can cast it. `simOptions.randomSeed` is required.
 - Every member fights to the same length each iteration.
 - Judgement of Wisdom on a druid's target follows a paladin in the raid: nothing when the
   paladin keeps Seal of Wisdom up without judging, and mana returns only from its judgements.
+- Sunder Armor on a hunter's target follows an Arms Warrior's stacks; a warrior who never
+  sunders leaves the hunter exactly as alone with the raid's toggle.
+- In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor is live and
+  the three warlocks' Curse of the Elements is assumed for the others and lands for them.
 
 ## Cost
 

@@ -130,8 +130,12 @@ impl Share {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SharedDebuff {
     pub(crate) name: &'static str,
+    /// The request's toggle of the raid's copy.
+    pub(crate) field: &'static str,
     pub(crate) external: &'static str,
     pub(crate) own_prefix: &'static str,
+    /// The spells whose cast in a member's rotation applies it.
+    pub(crate) spells: &'static [i64],
 }
 
 /// A shared target aura's state, which every other member's fight takes on.
