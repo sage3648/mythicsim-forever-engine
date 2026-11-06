@@ -82,6 +82,9 @@ macro_rules! table {
 table!(ITEMS, "items.jsonl");
 // The live client's equippable items that ITEMS lacks, from `tools/rust_client_items.py`.
 table!(CLIENT_ITEMS, "forever-client-items.jsonl");
+// The live client's rows for items whose ITEMS row the live game has since changed, read before
+// ITEMS under Forever's rules (`src/prepare/items.rs`).
+table!(LIVE_ITEMS, "forever-live-items.jsonl");
 table!(RANDOM_SUFFIXES, "random-suffixes.jsonl");
 table!(ENCHANTS, "enchants.jsonl");
 table!(RAND_PROP_POINTS, "rand-prop-points.jsonl");
@@ -144,6 +147,40 @@ mod tests {
         }
         let cloak = proto_row(&CLIENT_ITEMS, "proto.SimItem", 1733).expect("Worn Cloak");
         assert_eq!(cloak.str("name"), "Worn Cloak");
+    }
+
+    /// A live row replaces a reference row: the same item, slot and kind, so only its numbers move.
+    #[test]
+    fn live_items_replace_reference_rows_of_the_same_item() {
+        let ids: Vec<i64> = LIVE_ITEMS.keys().collect();
+        assert!(!ids.is_empty());
+        for id in ids {
+            assert!(CLIENT_ITEMS.row(id).is_none(), "item {id} is a client item");
+            let live = proto_row(&LIVE_ITEMS, "proto.SimItem", id).expect("a live item");
+            let reference = proto_row(&ITEMS, "proto.SimItem", id)
+                .unwrap_or_else(|| panic!("live item {id} has no reference row"));
+            assert_ne!(
+                LIVE_ITEMS.row(id),
+                ITEMS.row(id),
+                "live item {id} repeats its reference row"
+            );
+            for field in ["name", "set_name"] {
+                assert_eq!(live.str(field), reference.str(field), "item {id} {field}");
+            }
+            for field in [
+                "type",
+                "armor_type",
+                "weapon_type",
+                "hand_type",
+                "ranged_weapon_type",
+            ] {
+                assert_eq!(
+                    live.enum_name(field),
+                    reference.enum_name(field),
+                    "item {id} {field}"
+                );
+            }
+        }
     }
 
     #[test]

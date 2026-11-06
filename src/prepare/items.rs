@@ -2,7 +2,7 @@
 //! and the equipment a request equips.
 
 use crate::contracts::request::{Message, Value};
-use crate::data::{self, CLIENT_ITEMS, ENCHANTS, ITEMS, RANDOM_SUFFIXES};
+use crate::data::{self, CLIENT_ITEMS, ENCHANTS, ITEMS, LIVE_ITEMS, RANDOM_SUFFIXES};
 
 use super::sim::Rules;
 use super::stats::{Stat, Stats};
@@ -174,14 +174,18 @@ pub(crate) fn database_item(id: i32) -> Option<Item> {
     Some(item_from_row(row))
 }
 
-/// [`database_item`] under the given rules. Forever's rules also know the equippable items of
-/// the live client that the reference database lacks (`data/forever-client-items.jsonl`), the
-/// low level gear a leveling character wears.
+/// [`database_item`] under the given rules. Forever's rules read the live client's row of an
+/// item whose reference row the live game has changed (`data/forever-live-items.jsonl`), and
+/// also know the equippable items of the live client that the reference database lacks
+/// (`data/forever-client-items.jsonl`), the low level gear a leveling character wears.
 pub(crate) fn database_item_under(id: i32, rules: Rules) -> Option<Item> {
+    if rules != Rules::Forever {
+        return database_item(id);
+    }
+    if let Some(row) = data::proto_row(&LIVE_ITEMS, "proto.SimItem", i64::from(id)) {
+        return Some(item_from_row(row));
+    }
     database_item(id).or_else(|| {
-        if rules != Rules::Forever {
-            return None;
-        }
         let row = data::proto_row(&CLIENT_ITEMS, "proto.SimItem", i64::from(id))?;
         Some(item_from_row(row))
     })
