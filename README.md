@@ -935,6 +935,16 @@ the Go goldens and exporter uses. The departures:
   import is untouched and the reference's rules still refuse them. Items with a use, equip or
   proc effect, a class restriction or a line the generator does not read are left out and stay
   refused (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`).
+- Items whose live row differs from the reference database: Forever's rules read
+  `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
+  pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the
+  live game moved from item level 65 to 60 while the reference rows kept the item level 65 budget
+  (Wowhead's Forever tooltips and gear planner, 6 November 2026, sold by Thanthaldis Snowgleam
+  and Jekyll Flandring): Tome of Arcane Domination, Tome of Shadow Force and Tome of the Ice Lord
+  31 of their school (was 34), Tome of Fiery Arcana 37 Fire (was 40), Lei of the Lifegiver 37
+  healing and 12 damage (was 40 and 13), Therazane's Touch 29 (was 31) and The Immovable Object
+  66 block value, its 41 Block and 25 Block Value (was 71). A live row keeps its reference row's
+  name and kind (`src/data.rs`, `tests/forever_av_vendor_items_20261106.rs`).
 
 ## Repository layout
 
