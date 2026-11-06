@@ -317,7 +317,9 @@ impl Paladin {
                 flags: SpellFlag::APL | SpellFlag::HELPFUL,
                 class_spell_mask: masks::LIGHTS_VIGIL_ALLY,
                 rank: rank.rank_number(),
-                max_range: f64::from(rank.max_range),
+                max_range: f64::from(
+                    crate::prepare::hotfix_113554::LIGHTS_VIGIL_RANGE_LIVE_20261106,
+                ),
                 cost: mana_cost(rank),
                 cast: gcd_cast(rank.gcd(), rank.cast_time(), Some((timer, cooldown(rank)))),
                 ..SpellConfig::default()

@@ -432,11 +432,12 @@ the Go goldens and exporter uses. The departures:
   Lightning's primary target damage: base 215, 348, 428 and 510 (rank 4 was 123) and 1.4, 2.2, 2.7
   and 3.3 a level, so 523 at level 60 (was 126). The shocks are Classic Era's: Earth Shock rank 7
   531 (was 301), Flame Shock rank 6 292 and 80 a tick (was 166 and 44) and Frost Shock rank 4 506
-  base, 509 at level 60 (was 283 and 286). Chain Lightning's other changes are the notes' alone,
-  since Wowhead's tooltips still state the old fields (2 sec, 145, 200, 250 and 315 mana, a 6 sec
-  cooldown, which the notes leave): a 2.5 sec cast (was 2) and mana 225% of the comparable
-  Lightning Bolt ranks' (248, 304, 428 and 495), with the coefficient 0.714 (was 0.571), which
-  Wowhead's spell pages state on all four ranks. Lightning Overload's copies deal half their
+  base, 509 at level 60 (was 283 and 286). Chain Lightning's cast time is the notes' 2.5 sec
+  (was 2), which Wowhead's live tooltips of 6 November 2026 state on every rank, and its mana is
+  those tooltips' 245, 360, 425 and 495 (the notes' "approximately 225%" of the comparable
+  Lightning Bolt rank's, which the first pass read as 248, 304, 428 and 495, is replaced by the
+  live rows; the frozen rows say 145, 200, 250 and 315), with the coefficient 0.714 (was 0.571),
+  which Wowhead's spell pages state on all four ranks. Lightning Overload's copies deal half their
   rank's base and level scaling, since the talent's text says "half damage" ("a second, similar
   spell on the same target at no additional cost that causes half damage and no threat"), where
   Wowhead's tooltips of the copy rows still state the old rows on every rank (rank 10 Lightning

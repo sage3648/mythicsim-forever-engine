@@ -277,32 +277,35 @@ impl Hunter {
         let unit = self.unit;
         let rank = spell_data().sniper_shot.highest();
         let timer = sim.new_timer(unit);
-        self.sniper_shot = Some(sim.register_spell(
-            unit,
-            ranged_config(SpellConfig {
-                action_id: spell_action(rank.id),
-                spell_school: rank.spell_school(),
-                defense_type: rank.defense_type_core(),
-                class_spell_mask: masks::SNIPER_SHOT,
-                proc_mask: ProcMask::RANGED_SPECIAL,
-                flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
-                missile_speed: f64::from(rank.speed),
-                cost: flat_cost(rank),
-                cast: CastConfig {
-                    default_cast: Cast {
-                        cast_time: rank.cast_time(),
-                        ..Cast::default()
-                    },
-                    cd: Cooldown {
-                        timer: Some(timer),
-                        duration: longest_cooldown(rank),
-                    },
-                    ..CastConfig::default()
+        let mut config = ranged_config(SpellConfig {
+            action_id: spell_action(rank.id),
+            spell_school: rank.spell_school(),
+            defense_type: rank.defense_type_core(),
+            class_spell_mask: masks::SNIPER_SHOT,
+            proc_mask: ProcMask::RANGED_SPECIAL,
+            flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
+            missile_speed: f64::from(rank.speed),
+            cost: flat_cost(rank),
+            cast: CastConfig {
+                default_cast: Cast {
+                    cast_time: rank.cast_time(),
+                    ..Cast::default()
                 },
-                bonus_coefficient: 1.0,
-                ..SpellConfig::default()
-            }),
-        ));
+                cd: Cooldown {
+                    timer: Some(timer),
+                    duration: longest_cooldown(rank),
+                },
+                ..CastConfig::default()
+            },
+            bonus_coefficient: 1.0,
+            ..SpellConfig::default()
+        });
+        // Wowhead's Forever tooltip of 6 November 2026 reads "8 - 45 yd range", a long-range shot;
+        // Go's `RegisterRangedSpell` caps every shot at the base 35.
+        if sim.rules == Rules::Forever {
+            config.max_range = f64::from(rank.max_range);
+        }
+        self.sniper_shot = Some(sim.register_spell(unit, config));
     }
 
     /// Go `registerSummonHawkSpell`: Summon Hawk shares its cooldown with Arcane Shot. Each
