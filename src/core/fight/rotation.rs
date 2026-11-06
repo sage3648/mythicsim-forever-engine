@@ -353,6 +353,9 @@ pub(crate) struct AplState {
     pub(crate) in_sequence: bool,
     interrupt_channel_if: Option<usize>,
     allow_channel_recast: bool,
+    /// While the channel clip guard reads the rotation as if the running channel had ended: the
+    /// channel's own aura, which reads as down meanwhile (Forever's rule).
+    ended_channel: Option<AuraRef>,
     pub(crate) queue_hooks: Vec<usize>,
     /// Each item's proof that it is not ready, while it holds.
     proofs: Vec<Proof>,
@@ -1473,12 +1476,12 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::GroupUsed(used) => *used,
-            Compiled::AuraIsActive(aura) => self.aura(*aura).active,
+            Compiled::AuraIsActive(aura) => self.aura_reads_up(*aura),
             // Go `APLValueAuraIsActive` with `includeReactionTime`: `Aura.TimeActive` is zero
             // while inactive and the time since the aura started otherwise.
             Compiled::AuraIsActiveAfterReaction(aura) => {
                 let state = self.aura(*aura);
-                state.active && self.now - state.start >= self.config.reaction
+                self.aura_reads_up(*aura) && self.now - state.start >= self.config.reaction
             }
             // Go `APLValueAuraIsInactive` with `includeReactionTime`: `Aura.TimeInactive` is
             // never-expiring for an aura that has not faded, the time since it faded otherwise.
@@ -1489,7 +1492,9 @@ impl<A: Agent> Fight<A> {
                 } else {
                     self.now - state.fade_time
                 };
-                !state.active && inactive_for >= self.config.reaction
+                // The ended channel's aura is down at once, whenever it faded.
+                (!self.aura_reads_up(*aura) && self.apl.ended_channel == Some(*aura))
+                    || (!state.active && inactive_for >= self.config.reaction)
             }
             // Go `APLValueFrontOfTarget`.
             Compiled::FrontOfTarget => self.config.melee.in_front_of_target,
@@ -1512,12 +1517,13 @@ impl<A: Agent> Fight<A> {
                     .expect("the gate requires a refresh reading");
                 let state = self.aura(*aura);
                 let remaining = state.remaining(self.now);
+                let active = self.aura_reads_up(*aura);
                 readings
                     .iter()
                     .enumerate()
                     .any(|(position, reading)| match reading {
                         // Alone in its category: refreshed once inactive or within the overlap.
-                        RefreshReading::Own => !state.active || remaining <= window,
+                        RefreshReading::Own => !active || remaining <= window,
                         // A permanent aura of another effect holds the category for good.
                         RefreshReading::Never => false,
                         RefreshReading::Live => {
@@ -1667,13 +1673,15 @@ impl<A: Agent> Fight<A> {
     fn get_int(&mut self, value: &Compiled) -> i32 {
         match value {
             Compiled::Const(constant) => constant.int,
-            Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            Compiled::AuraNumStacks(aura) => self.aura_stacks(*aura),
             // Go `APLValueAuraNumStacks` with `includeReactionTime`: the stacks of a reaction
             // time ago, which its stack change handler kept. The wrapping difference is Go's
             // for a handler that has not run since the reset.
             Compiled::AuraNumStacksAfterReaction(aura) => {
                 let state = self.aura(*aura);
-                if self.now.wrapping_sub(state.stack_update) >= self.config.reaction {
+                if self.apl.ended_channel == Some(*aura) {
+                    0
+                } else if self.now.wrapping_sub(state.stack_update) >= self.config.reaction {
                     state.stacks
                 } else {
                     state.previous_stacks
@@ -1848,6 +1856,11 @@ impl<A: Agent> Fight<A> {
             Compiled::SpellTimeToReady(spell) => self.spell_time_to_ready(*spell),
             // Go `Dot.TimeUntilNextTick`: the next tick time is zero while inactive.
             Compiled::DotTimeToNextTick(at) => {
+                let dot = self.dot_of(*at);
+                if self.apl.ended_channel == Some(self.dots[dot].aura) {
+                    // The clip guard reads the ended channel as a fresh cast: one tick period.
+                    return self.calc_tick_period(dot);
+                }
                 let next = if self.dot_active(*at) {
                     self.dots[self.dot_of(*at)].tick_next_at
                 } else {
@@ -2065,7 +2078,7 @@ impl<A: Agent> Fight<A> {
     /// Go `APLValueAuraRemainingTime`: zero when inactive.
     fn aura_remaining_time(&self, aura: AuraRef) -> i64 {
         let state = self.aura(aura);
-        match (state.active, state.expires) {
+        match (self.aura_reads_up(aura), state.expires) {
             (false, _) => 0,
             (true, NEVER_EXPIRES) => NEVER_EXPIRES,
             (true, expires) => expires - self.now,
@@ -2081,16 +2094,38 @@ impl<A: Agent> Fight<A> {
 
     /// Whether the dot of a compiled spell is active on its unit.
     pub(crate) fn dot_active(&self, at: DotAt) -> bool {
-        self.aura(self.dots[self.dot_of(at)].aura).active
+        self.aura_reads_up(self.dots[self.dot_of(at)].aura)
+    }
+
+    /// Whether the rotation reads an aura as up. While the channel clip guard reads the rotation
+    /// with the running channel ended, the channel's own aura reads as down: a line gated on it
+    /// not being up must read as the rotation would find it the moment the clip removes it.
+    #[inline]
+    fn aura_reads_up(&self, aura: AuraRef) -> bool {
+        self.aura(aura).active && self.apl.ended_channel != Some(aura)
+    }
+
+    /// An aura's stacks as the rotation reads them, none for the ended channel's aura.
+    #[inline]
+    fn aura_stacks(&self, aura: AuraRef) -> i32 {
+        if self.apl.ended_channel == Some(aura) {
+            0
+        } else {
+            self.aura(aura).stacks
+        }
     }
 
     /// Go `APLActionCastSpell.IsReady`: castable or queueable, and major cooldowns wait for
     /// the GCD unless reactive or inside a sequence.
     fn cast_ready(&mut self, spell: SpellId) -> bool {
-        self.can_cast_or_queue(spell) && {
-            let flags = self.spells[spell].flags;
-            !flags.mcd || flags.reactive || self.gcd_ready() || self.apl.in_sequence
-        }
+        self.can_cast_or_queue(spell) && !self.major_cooldown_waits(spell)
+    }
+
+    /// Go `Spell.majorCooldownWaits`: a major cooldown that is not reactive goes only at a
+    /// GCD-ready look, unless a sequence runs it.
+    fn major_cooldown_waits(&self, spell: SpellId) -> bool {
+        let flags = self.spells[spell].flags;
+        flags.mcd && !flags.reactive && !self.gcd_ready() && !self.apl.in_sequence
     }
 
     /// Go `APLActionStrictSequence.IsReady`. A ready sequence leaves the sequence flag set,
@@ -2602,8 +2637,11 @@ impl<A: Agent> Fight<A> {
             .dot
             .expect("multidot spells have a dot");
         let remaining = |fight: &Self, target: Side| {
-            let aura = fight.aura(fight.dots[fight.dot_on(dot, target)].aura);
-            (aura.active, aura.remaining(fight.now))
+            let aura_ref = fight.dots[fight.dot_on(dot, target)].aura;
+            (
+                fight.aura_reads_up(aura_ref),
+                fight.aura(aura_ref).remaining(fight.now),
+            )
         };
         let mut ready = Vec::new();
         let mut previous: Option<Side> = None;
@@ -2766,8 +2804,9 @@ impl<A: Agent> Fight<A> {
             .expect("multidot spells have a dot");
         for position in 0..max_dots.max(0) as usize {
             let target = Side::target(position);
-            let aura = self.aura(self.dots[self.dot_on(dot, target)].aura);
-            let active = aura.active;
+            let aura_ref = self.dots[self.dot_on(dot, target)].aura;
+            let aura = self.aura(aura_ref);
+            let active = self.aura_reads_up(aura_ref);
             let remaining = if active { aura.expires - self.now } else { 0 };
             if (!active || remaining < overlap) && self.can_cast_or_queue(spell) {
                 return Some(target);
@@ -3282,6 +3321,165 @@ impl<A: Agent> Fight<A> {
         false
     }
 
+    /// Forever's rule (`channel_clip_walks_rotation`): whether the first action the rotation
+    /// would run with the channel ended casts the channel's spell again. The channel is gone
+    /// from the look and so is its own aura, which reads as down; the sequence mark the look
+    /// raises is put back, since nothing asked here runs.
+    fn rotation_recasts_ended_channel(&mut self, dot: DotId) -> bool {
+        let channeled = self.dots[dot].spell;
+        let in_sequence = self.apl.in_sequence;
+        self.player.channeled_dot = None;
+        self.apl.ended_channel = Some(self.dots[dot].aura);
+        let recasts = self.first_action_recasts(channeled);
+        self.apl.ended_channel = None;
+        self.player.channeled_dot = Some(dot);
+        self.apl.in_sequence = in_sequence;
+        recasts
+    }
+
+    /// Whether the first action the rotation would run casts the channel's spell. A strict
+    /// sequence in control runs its current step and nothing else; any other controlling action
+    /// runs on its own and casts nothing.
+    fn first_action_recasts(&mut self, channeled: SpellId) -> bool {
+        if let Some(item) = self.apl.controlling {
+            let Act::StrictSequence {
+                ref spells,
+                ref changes,
+                ref conditions,
+                next,
+                ..
+            } = self.rotation[item].action
+            else {
+                return false;
+            };
+            let (spell, change, condition) =
+                (spells[next], changes[next], conditions[next].clone());
+            return self.step_condition_holds(condition.as_deref())
+                && self.step_ready(spell, change)
+                && change.is_none()
+                && self.casts_channel(spell, channeled);
+        }
+        self.first_action_in(0..self.priority_len, channeled)
+            .unwrap_or(false)
+    }
+
+    /// Whether a cast of `spell` is a cast of the channel's spell: it, or one its class spell
+    /// names.
+    fn casts_channel(&self, spell: SpellId, channeled: SpellId) -> bool {
+        spell == channeled || self.same_class_spell(spell, channeled)
+    }
+
+    /// Walks the items as the rotation would, a group reference's items in the reference's place
+    /// and a sequence's current step in the sequence's, to the first that would run: `Some`
+    /// says there is one, and holds whether it casts the channel's spell. A cast is read with
+    /// `CanCast` rather than `CanCastOrQueue`, so a spell queued for the end of the GCD does not
+    /// end the channel before then, and a cast row goes through the major cooldown gate as
+    /// `IsReady` does; a channel row does not. Autocast Other Cooldowns fires beside the rotation
+    /// and is passed over. Every answer is asked in full, never from a proof kept while the
+    /// channel ran, which read the channel's aura as up.
+    fn first_action_in(
+        &mut self,
+        items: std::ops::Range<usize>,
+        channeled: SpellId,
+    ) -> Option<bool> {
+        for item in items {
+            if let Some(condition) = self.rotation[item].condition.clone() {
+                if !self.condition(&condition) {
+                    continue;
+                }
+            }
+            let step = match self.rotation[item].action {
+                Act::Autocast => continue,
+                Act::Group { instance } => {
+                    let range =
+                        instance.and_then(|instance| self.group_ranges.get(instance).cloned());
+                    if let Some(found) =
+                        range.and_then(|range| self.first_action_in(range, channeled))
+                    {
+                        return Some(found);
+                    }
+                    continue;
+                }
+                Act::Sequence {
+                    ref spells,
+                    ref conditions,
+                    next,
+                    ..
+                } => {
+                    // A sequence that has run all its steps is not running.
+                    let Some(&spell) = spells.get(next) else {
+                        continue;
+                    };
+                    Some((spell, None, conditions[next].clone()))
+                }
+                Act::StrictSequence { .. } => {
+                    if !self.sequence_ready(item) {
+                        continue;
+                    }
+                    let Act::StrictSequence {
+                        ref spells,
+                        ref changes,
+                        ref conditions,
+                        next,
+                        ..
+                    } = self.rotation[item].action
+                    else {
+                        unreachable!("item is a strict sequence");
+                    };
+                    Some((spells[next], changes[next], conditions[next].clone()))
+                }
+                _ => None,
+            };
+            if let Some((spell, change, condition)) = step {
+                if let Some(condition) = condition {
+                    if !self.condition(&condition) {
+                        continue;
+                    }
+                }
+                let can_cast = match change {
+                    Some((_, last)) => last != self.now,
+                    None => self.can_cast(spell) && !self.major_cooldown_waits(spell),
+                };
+                if change.is_none() && self.casts_channel(spell, channeled) {
+                    return Some(can_cast);
+                }
+                if can_cast {
+                    return Some(false);
+                }
+                continue;
+            }
+            let (spell, can_cast) = match self.rotation[item].action {
+                Act::Cast(spell, _) => (
+                    Some(spell),
+                    self.can_cast(spell) && !self.major_cooldown_waits(spell),
+                ),
+                Act::Channel { spell, .. } => (Some(spell), self.can_cast(spell)),
+                Act::Multidot { spell, .. } | Act::StrictMultidot { spell, .. } => {
+                    (Some(spell), self.item_action_ready(item).is_some())
+                }
+                // A schedule runs its inner action once a time has come.
+                Act::Schedule {
+                    ref timings,
+                    next,
+                    inner,
+                } => {
+                    let due = next < timings.len() && self.now >= timings[next];
+                    (None, due && self.item_ready_asked(inner).is_some())
+                }
+                _ => (None, self.item_action_ready(item).is_some()),
+            };
+            if let Some(spell) = spell {
+                if self.casts_channel(spell, channeled) {
+                    return Some(can_cast);
+                }
+            }
+            if can_cast {
+                return Some(false);
+            }
+        }
+        None
+    }
+
     /// Go `APLRotation.shouldInterruptChannel`.
     pub(crate) fn should_interrupt_channel(&mut self) -> bool {
         let Some(dot) = self.player.channeled_dot else {
@@ -3290,8 +3488,13 @@ impl<A: Agent> Fight<A> {
         if !self.channel_can_be_interrupted(dot) {
             return false;
         }
-        let would_recast = self.next_action_would_recast_channel(dot);
-        self.player.channeled_dot = Some(dot);
+        let would_recast = if self.channel_clip_walks_rotation {
+            self.rotation_recasts_ended_channel(dot)
+        } else {
+            let recasts = self.next_action_would_recast_channel(dot);
+            self.player.channeled_dot = Some(dot);
+            recasts
+        };
         if would_recast {
             self.apl.allow_channel_recast
         } else {

@@ -992,6 +992,15 @@ pub struct Player {
     /// before the pull.
     #[serde(default, skip_serializing_if = "is_false")]
     pub prepull_swap_stays_in_hand: bool,
+    /// Forever's rule: the look that decides whether to clip a channel with an interrupt condition
+    /// reads the rotation as it would run with the channel ended. It walks into groups and into
+    /// the current step of a sequence, reads the channel's own dot aura as down, passes over a
+    /// sequence that is not running, and sends a cast row through the major cooldown gate. False
+    /// is the Go reference, which counts a group or sequence in the way as another action ready,
+    /// reads the channel's aura as up, and recasts a channel gated on its own aura every tick it
+    /// clips.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub channel_clip_walks_rotation: bool,
     /// MythicSim's healer sims under Forever's rules: each heal's share that real healers
     /// overheal, measured on foreverlogs.gg (`prepare::overheal`). Only the rest counts as
     /// healing; the share counts as overhealing. Empty is the Go reference, which counts every
