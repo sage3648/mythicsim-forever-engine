@@ -1000,6 +1000,29 @@ the Go goldens and exporter uses. The departures:
   healing and 12 damage (was 40 and 13), Therazane's Touch 29 (was 31) and The Immovable Object
   66 block value, its 41 Block and 25 Block Value (was 71). A live row keeps its reference row's
   name and kind (`src/data.rs`, `tests/forever_av_vendor_items_20261106.rs`).
+  The second batch (Wowhead's Forever tooltips of 7 November 2026) comes from reading the tooltip
+  of every item the reference rows state differently from Wowhead's gear planner or from the
+  client's item data, every item a reference, trinket board or race request wears, and every
+  armor bearing item whose reference row has no Armor (910 rows, 908 of which the live tooltip
+  gives an armor). It adds 1,004 rows: 931 state only an Armor the row lacked or had wrong, 31
+  change the weapon damage (a caster weapon rolls lower damage live, Witching Stave 40 - 61 not
+  55 - 83, Elemental Mage Staff 109 - 164 not 147 - 221, Mograine's Might 105 - 159 at 3.40 not
+  87 - 131 at 2.80, and the thrown knives roll a wider range around the same average), 20
+  change a shield's block value (the Premier shields and Evergreen Shield 44, was 58, Wormscale
+  Blocker 57, was 75, Blessed Qiraji Bulwark 70, was 88), 14 state a spell power the reference
+  scaled otherwise (Atiesh 150, 300 healing on the healing version, was 216 and 424, Spellshifter
+  Rod 40, was 54), and the rest fix a primary stat: Gemshale Pauldrons, Dragonclaw Ring,
+  Stonerender Gauntlets, Runemender's Seal and a few more. Two stat-bearing equip effects change
+  too: Mace of Unending Life gives 140 feral attack power (was 280), Hammer of Bestial Fury
+  carries none (its tooltip lists no effect; the reference row had 154), and Shard of the
+  Defiler's "Improves your chance to get a critical strike by 15.0%" and "Increases your attack
+  speed and casting speed by 15.0%" become 210 melee crit rating and 150 melee and spell haste
+  rating, which the reference row left to an effect the engine does not model. Items whose
+  tooltip lists a resistance, mana per 5 sec or spell piercing figure as a base plus an extra for
+  Forest and Grassland areas (Rune of Duty, the Volunteer's and Relentless Raider's seals)
+  already match: the row states the base and an area stat. Tooltips are missing for the hidden
+  stat items (`statsHidden` in the gear catalog) and those rows are left as they were
+  (`tests/forever_live_item_stats_20261106.rs`).
 
 ## Repository layout
 
