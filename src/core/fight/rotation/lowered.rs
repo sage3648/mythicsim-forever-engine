@@ -241,7 +241,7 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn condition(&mut self, value: &Cond) -> bool {
         match value {
             Cond::Const(value) => *value,
-            Cond::AuraIsActive(aura) => self.aura(*aura).active,
+            Cond::AuraIsActive(aura) => self.aura_reads_up(*aura),
             Cond::DotIsActive(dot) => self.dot_active(*dot),
             // Go `APLValueIsExecutePhase`: the encounter's execute phase is at or below it.
             Cond::IsExecutePhase(threshold) => self.execute_phase <= *threshold,
@@ -297,7 +297,7 @@ impl<A: Agent> Fight<A> {
     fn lowered_int(&mut self, value: &Int) -> i32 {
         match value {
             Int::Const(value) => *value,
-            Int::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            Int::AuraNumStacks(aura) => self.aura_stacks(*aura),
             Int::CurrentComboPoints => self.energy_bar().combo_points,
             Int::NumberTargets => self.targets.len() as i32,
             Int::Other(value) => self.get_int(value),
@@ -389,7 +389,7 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn condition_stable(&mut self, value: &Cond) -> (bool, i64, u8) {
         match value {
             Cond::Const(value) => (*value, NEVER_EXPIRES, 0),
-            Cond::AuraIsActive(aura) => (self.aura(*aura).active, NEVER_EXPIRES, reads::AURAS),
+            Cond::AuraIsActive(aura) => (self.aura_reads_up(*aura), NEVER_EXPIRES, reads::AURAS),
             Cond::DotIsActive(dot) => (self.dot_active(*dot), NEVER_EXPIRES, reads::AURAS),
             Cond::IsExecutePhase(threshold) => (
                 self.execute_phase <= *threshold,
@@ -558,7 +558,7 @@ impl<A: Agent> Fight<A> {
     fn int_stable(&mut self, value: &Int) -> (i32, bool, u8) {
         match value {
             Int::Const(value) => (*value, true, 0),
-            Int::AuraNumStacks(aura) => (self.aura(*aura).stacks, true, reads::AURAS),
+            Int::AuraNumStacks(aura) => (self.aura_stacks(*aura), true, reads::AURAS),
             Int::CurrentComboPoints => (self.energy_bar().combo_points, true, reads::RESOURCES),
             Int::NumberTargets => (self.targets.len() as i32, true, 0),
             Int::Other(value) => (self.get_int(value), false, reads::ALL),

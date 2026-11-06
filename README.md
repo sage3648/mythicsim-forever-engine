@@ -614,6 +614,19 @@ the Go goldens and exporter uses. The departures:
   swaps back by itself. The reference keeps the Main set's weapon swinging through the prepull
   and registers a swap back to Main a nanosecond before the pull, so a prepull swap is undone
   before the first swing. A swap after the pull is unchanged.
+- A channel is clipped by what the rotation would run with it ended (`channel_clip_walks_rotation`,
+  Forever preparation). A channel with an `interruptIf` ends early only when the first action the
+  rotation would then run is another spell, or a recast with `allowRecast` on. The look reads the
+  rotation as it would run once the channel is gone: a group reference counts as the first ready
+  action inside it, a running sequence as its current step, a sequence that is not running as
+  nothing, the channel's own dot aura as down, and a cast row goes through the major cooldown gate
+  as the rotation does. A Warlock's Wrack channelled from a Cooldowns group, or gated on its own
+  dot being down, is therefore held to its sixth tick when nothing else would go first. The
+  reference counts any ready group as another action and reads the aura as up, so it clipped that
+  Wrack at its second tick and recast it every two seconds. The ticks `Channeled Ticks` reads are
+  the ticks the dot has dealt since it was applied, in both rule sets: Missile Barrage's shorter
+  missile interval drops when the cast completes, and a total rebuilt from the live interval read
+  each missile as its number plus the ticks the buff had taken off.
 - The Paladin tree and Holy Binding of live server hotfix push 113554 (30 October 2026, applied
   to client 1.60.1.70707 by DBCache, which wago.tools' tables do not carry), from upstream
   wowsims/forever #772 and #773's regenerated rows and Wowhead's Forever talent data (Forever

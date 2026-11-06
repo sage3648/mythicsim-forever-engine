@@ -2016,6 +2016,10 @@ pub(crate) struct Fight<A: Agent> {
     /// Forever's rule that a prepull item swap puts its weapon in the hand and stays on into the
     /// fight.
     pub(crate) prepull_swap_stays_in_hand: bool,
+    /// Forever's rule that the channel clip guard walks the rotation as it would run with the
+    /// channel ended: into groups and the current step of a sequence, with the channel's own aura
+    /// down and a cast row through the major cooldown gate.
+    pub(crate) channel_clip_walks_rotation: bool,
     /// Forever's rule that a rotation with a Move keeps looking through the global cooldown:
     /// set only while the rule is on and the rotation holds a Move.
     pub(crate) rotation_with_moves_looks_through_gcd: bool,
@@ -4256,6 +4260,7 @@ impl<A: Agent> Fight<A> {
             move_arrives_at_destination: player.move_arrives_at_destination,
             prepull_casts_finish_on_pull: player.prepull_casts_finish_on_pull,
             prepull_swap_stays_in_hand: player.prepull_swap_stays_in_hand,
+            channel_clip_walks_rotation: player.channel_clip_walks_rotation,
             rotation_with_moves_looks_through_gcd: player.rotation_with_moves_looks_through_gcd,
             off_hand_waits_from_attack_start: player.off_hand_waits_from_attack_start,
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,

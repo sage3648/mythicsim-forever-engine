@@ -17,6 +17,8 @@ pub(crate) struct Dot {
     pub(crate) base_tick_length: i64,
     pub(crate) tick_period: i64,
     pub(crate) remaining_ticks: i32,
+    /// Go `Dot.ticksDone`: the periodic ticks since the dot was applied.
+    pub(crate) ticks_done: i32,
     pub(crate) base_duration_multiplier: f64,
     pub(crate) base_duration_flat: i64,
     pub(crate) affected_by_haste: bool,
@@ -64,6 +66,7 @@ impl Dot {
             base_tick_length: exported.base_tick_length_ns,
             tick_period: exported.base_tick_length_ns,
             remaining_ticks: exported.base_tick_count,
+            ticks_done: 0,
             base_duration_multiplier: exported.base_duration_multiplier,
             base_duration_flat: exported.base_duration_flat_ns,
             affected_by_haste: exported.affected_by_cast_speed || exported.affected_by_real_haste,
@@ -85,15 +88,13 @@ impl Dot {
         }
     }
 
-    /// Go `Dot.TickCount`: the ticks dealt so far. The runtime has no extra ticks and no
-    /// hasted dots, so the hasted count is the base duration over the tick period.
+    /// Go `Dot.TickCount`: the ticks dealt since the dot was applied. A tick length mod that
+    /// changes while the dot runs (Missile Barrage's shorter missile interval drops when Arcane
+    /// Missiles finishes casting, after the channel took the shorter ticks) does not move it,
+    /// where a total rebuilt from the live tick length read each missile as its number plus the
+    /// ticks the mod had taken off.
     pub(crate) fn tick_count(&self) -> i32 {
-        let total = if self.haste_reduces_duration {
-            self.base_tick_count
-        } else {
-            (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
-        };
-        total - self.remaining_ticks
+        self.ticks_done
     }
 
     /// Go `Dot.HastedTickCount`: the base duration over the snapshotted tick period.
@@ -122,6 +123,7 @@ impl<A: Agent> Fight<A> {
         let period = self.calc_tick_period(dot);
         let state = &mut self.dots[dot];
         state.tick_period = period;
+        state.ticks_done = 0;
         let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
         state.remaining_ticks = ticks.round_ties_even() as i32;
         if state.affected_by_haste && !state.haste_reduces_duration {
@@ -150,6 +152,7 @@ impl<A: Agent> Fight<A> {
         let period = self.calc_tick_period(dot);
         let state = &mut self.dots[dot];
         state.tick_period = period;
+        state.ticks_done = 0;
         let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
         state.remaining_ticks = ticks.round_ties_even() as i32;
         if state.affected_by_haste && !state.haste_reduces_duration {
@@ -272,6 +275,7 @@ impl<A: Agent> Fight<A> {
         }
         if self.dots[dot].tick_next_at == self.now {
             self.dots[dot].remaining_ticks -= 1;
+            self.dots[dot].ticks_done += 1;
             self.tick_once(dot);
         }
         if let Some(handle) = self.dots[dot].tick_action.take() {
@@ -353,6 +357,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.dots[dot].remaining_ticks -= 1;
+        self.dots[dot].ticks_done += 1;
         self.tick_once(dot);
         if self.dots[dot].channeled {
             if self.dots[dot].remaining_ticks == 0 && self.gcd_ready() {

@@ -1138,6 +1138,10 @@ pub(crate) fn export_state(
         // stays on until the rotation swaps again (README, Rust-only mechanics); the reference
         // keeps swinging the Main weapon and swaps back to Main a nanosecond before the pull.
         prepared["player"]["prepull_swap_stays_in_hand"] = json!(true);
+        // A channel is clipped by what the rotation would run with it ended, through groups and
+        // sequences and with its own aura down (README, Rust-only mechanics); the reference
+        // counts a group in the way as another action ready and reads the aura as up.
+        prepared["player"]["channel_clip_walks_rotation"] = json!(true);
         // A healer sim counts only the share of each heal real healers do not overheal
         // (README, Rust-only mechanics); the reference counts every heal in full.
         let overheal = super::overheal::export(&player_message, &prepared["player"]["spells"]);
