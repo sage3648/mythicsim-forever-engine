@@ -150,6 +150,11 @@ def write_data(raw):
 
 def check():
     manifest = load(MANIFEST)
+    if not isinstance(manifest, dict):
+        raise ValueError("data manifest must be an object")
+    version = manifest.get("schema_version")
+    if type(version) is not int or version != 1:
+        raise ValueError(f"unsupported data manifest schema_version: {version!r}")
     errors = []
     if manifest.get("engine_revision") != PIN:
         errors.append(f"data was imported at {manifest.get('engine_revision')}, the pin is {PIN}")
