@@ -26,6 +26,7 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
 | [matched-go/](matched-go/) | Go implementation of the same narrow Rust kernel for fair timing | Go |
 | [reference-capture/](reference-capture/) | Standalone request and observation helper programs | Built in temporary modules by inventory capture |
+| [rust_client_items.py](rust_client_items.py) | Write `data/forever-client-items.jsonl`, the live client's weapon and armor rows that `data/items.jsonl` lacks (cloaks, shields and weapons a leveling character wears), from wago.tools ItemSparse and Item and Wowhead's Forever tooltips, read only under Forever's rules; `fetch` keeps every tooltip in a cache, `build` and `check` run offline | Python; network for `fetch` only |
 | [forever_set_spells.py](forever_set_spells.py) | Write `src/prepare/forever_set_spells_generated.rs`, the client's set bonus rows (ItemSet, ItemSetSpell from wago.tools at the data's client build) of every set the item data holds, for the healer sims' gear | Python and the two CSV tables |
 | [app-timeline/main.go](app-timeline/main.go) | Parse Go and Rust logs with the application's timeline helpers and compare | Go and an application checkout, in a scratch module |
 

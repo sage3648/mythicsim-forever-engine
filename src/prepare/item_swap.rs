@@ -17,7 +17,7 @@ use crate::contracts::request::Message;
 use super::attack::Weapon;
 use super::env::Environment;
 use super::items::{self, slot, Equipment, NUM_ITEM_SLOTS};
-use super::sim::{AuraConfig, AuraId, Sim, UnitId, NEVER_EXPIRES};
+use super::sim::{AuraConfig, AuraId, Rules, Sim, UnitId, NEVER_EXPIRES};
 use super::spell_mod::ModId;
 use super::stats::Stats;
 use super::Refusal;
@@ -143,11 +143,11 @@ impl ItemSwap {
 }
 
 /// Go `toItem(itemSpec).inArea(areaTypes)`.
-fn swap_item(spec: &Message, area_types: &[String]) -> Result<items::Item, Refusal> {
+fn swap_item(spec: &Message, area_types: &[String], rules: Rules) -> Result<items::Item, Refusal> {
     if spec.i32("id") == 0 {
         return Ok(items::Item::default());
     }
-    let item = items::new_item(spec)?;
+    let item = items::new_item(spec, rules)?;
     Ok(items::in_area(item, area_types))
 }
 
@@ -190,7 +190,7 @@ impl Sim {
                 ));
             }
             has_item_swap[index] = spec.i32("id") != 0;
-            swap_items[index] = swap_item(spec, area_types)?;
+            swap_items[index] = swap_item(spec, area_types, self.rules)?;
         }
         let two_hand_swap = swap_items[slot::MAIN_HAND].hand_type == "HandTypeTwoHand";
         let has_mh = self.mh_weapon(unit).is_some();

@@ -283,7 +283,7 @@ impl Sim {
         unit.distance_from_target = player.f64("distance_from_target");
         let race = player.enum_name("race");
         let class = player.enum_name("class");
-        let equipment = items::equipment(player.message("equipment"), area_types)?;
+        let equipment = items::equipment(player.message("equipment"), area_types, self.rules)?;
         let base_stats = base_stats(&class, &race)
             .ok_or_else(|| Refusal::new("race", format!("no base stats for {race} {class}")))?;
         unit.character = Some(Box::new(Character {

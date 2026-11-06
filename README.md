@@ -927,6 +927,14 @@ the Go goldens and exporter uses. The departures:
   triggers nothing, as Sildor (#druid) tested on the beta; the charges land with the Wrath, after
   its travel. The reference banks them on every completed Wrath cast (`bank_on_landed_hit` on
   `eclipse`, `tests/forever_eclipse_on_hit_20261105.rs`).
+- Low level weapons and armor the reference database lacks: about 400 rows of the live
+  client as of 6 November 2026 (wago.tools ItemSparse and Item, with Wowhead Forever tooltips for
+  armor, damage, speed and block), such as Worn Cloak (1733) or Crude Bastard Sword (1412), which a
+  leveling character wears. The reference refuses them as an unknown item. Forever's rules read
+  them from `data/forever-client-items.jsonl` for an id `data/items.jsonl` lacks; the pinned
+  import is untouched and the reference's rules still refuse them. Items with a use, equip or
+  proc effect, a class restriction or a line the generator does not read are left out and stay
+  refused (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`).
 
 ## Repository layout
 

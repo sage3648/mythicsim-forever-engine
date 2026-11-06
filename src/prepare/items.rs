@@ -2,8 +2,9 @@
 //! and the equipment a request equips.
 
 use crate::contracts::request::{Message, Value};
-use crate::data::{self, ENCHANTS, ITEMS, RANDOM_SUFFIXES};
+use crate::data::{self, CLIENT_ITEMS, ENCHANTS, ITEMS, RANDOM_SUFFIXES};
 
+use super::sim::Rules;
 use super::stats::{Stat, Stats};
 use super::Refusal;
 
@@ -170,7 +171,24 @@ pub(crate) fn stats_from_map(message: &Message, field: &str) -> Stats {
 /// Go `GetItemByID` with `ItemFromProto`: the database item without per-instance data.
 pub(crate) fn database_item(id: i32) -> Option<Item> {
     let row = data::proto_row(&ITEMS, "proto.SimItem", i64::from(id))?;
-    Some(Item {
+    Some(item_from_row(row))
+}
+
+/// [`database_item`] under the given rules. Forever's rules also know the equippable items of
+/// the live client that the reference database lacks (`data/forever-client-items.jsonl`), the
+/// low level gear a leveling character wears.
+pub(crate) fn database_item_under(id: i32, rules: Rules) -> Option<Item> {
+    database_item(id).or_else(|| {
+        if rules != Rules::Forever {
+            return None;
+        }
+        let row = data::proto_row(&CLIENT_ITEMS, "proto.SimItem", i64::from(id))?;
+        Some(item_from_row(row))
+    })
+}
+
+fn item_from_row(row: std::rc::Rc<Message>) -> Item {
+    Item {
         id: row.i32("id"),
         name: row.str("name").to_string(),
         item_type: row.enum_name("type"),
@@ -189,13 +207,13 @@ pub(crate) fn database_item(id: i32) -> Option<Item> {
         item_effects: row.messages("item_effects").into_iter().cloned().collect(),
         row: Some(row),
         ..Item::default()
-    })
+    }
 }
 
 /// Go `NewItem` for one `ItemSpec`.
-pub(crate) fn new_item(spec: &Message) -> Result<Item, Refusal> {
+pub(crate) fn new_item(spec: &Message, rules: Rules) -> Result<Item, Refusal> {
     let id = spec.i32("id");
-    let mut item = database_item(id)
+    let mut item = database_item_under(id, rules)
         .ok_or_else(|| Refusal::new("unknown_item", format!("no item with id {id}")))?;
     if !spec.ints("gems").iter().all(|gem| *gem == 0) {
         return Err(Refusal::new(
@@ -304,6 +322,7 @@ fn equip_item(equipment: &mut Equipment, item: Item) -> Result<(), Refusal> {
 pub(crate) fn equipment(
     spec: Option<&Message>,
     area_types: &[String],
+    rules: Rules,
 ) -> Result<Equipment, Refusal> {
     let mut equipment: Equipment = Default::default();
     if let Some(spec) = spec {
@@ -315,7 +334,7 @@ pub(crate) fn equipment(
                 ));
             }
             if item.i32("id") != 0 {
-                equip_item(&mut equipment, new_item(item)?)?;
+                equip_item(&mut equipment, new_item(item, rules)?)?;
             }
         }
     }
