@@ -1776,6 +1776,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) armor_category: Option<(usize, Vec<f64>)>,
     /// The copies of the major armor category on the targets past the first.
     pub(crate) extra_armor_categories: Vec<(usize, Side)>,
+    /// The target categories of raid debuffs a member casts, whose holder's changes the fight
+    /// applies (`engine::raid`).
+    pub(crate) raid_debuffs: Vec<raid::RaidDebuffCategory>,
     /// Player auras that multiply the player's damage taken, by aura index.
     pub(crate) damage_taken_auras: Vec<(usize, f64, PseudoStat)>,
     /// Set while the reset activates permanent auras, whose pseudo stats the prepared values
@@ -4092,6 +4095,7 @@ impl<A: Agent> Fight<A> {
             exported_memberships,
             armor_category: None,
             extra_armor_categories: Vec::new(),
+            raid_debuffs: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
             damage_taken_auras: Vec::new(),
             resetting_auras: false,
@@ -4723,6 +4727,7 @@ impl<A: Agent> Fight<A> {
                 }
             }
         }
+        fight.bind_raid_debuffs(effects)?;
         for effect in effects {
             if let Effect::AuraShouldRefresh { unit, aura, modes } = effect {
                 let side = if unit == "target" {

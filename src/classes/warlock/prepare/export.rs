@@ -599,6 +599,14 @@ fn curse_of_elements_effect(
             other => unrepresented.push(format!("Curse of the Elements effect aura {other}")),
         }
     }
+    // In a raid whose members cast it, the fight applies the curse's changes as its category's
+    // holder changes, the warlock's own copy and the raid's alike.
+    if crate::prepare::buffs::raid_applies(env, aura) {
+        return json!({
+            "kind": "curse_of_the_elements", "spell_id": row.id, "aura": sim.aura(aura).label,
+            "resistance_delta": {}, "school_damage_taken_multiplier": {},
+        });
+    }
     // The raid's Curse of the Elements shares the curse's exclusive category. A permanent member
     // that already holds it, as the raid's own at the same rank does, blocks the warlock's curse
     // from activating at all, which Go still counts as a proc (as sunderBlocked reads it).
@@ -712,9 +720,13 @@ fn curse_of_recklessness_effect(
 ) -> Value {
     let sim = &env.sim;
     let curse = sim.aura(aura);
+    // In a raid whose members cast it or Faerie Fire, the fight applies the armor as the
+    // category's holder changes.
+    let raid = crate::prepare::buffs::raid_applies(env, aura);
     for other in &sim.unit(target).auras {
         let other_aura = sim.aura(*other);
-        if *other != aura
+        if !raid
+            && *other != aura
             && !curse.tag.is_empty()
             && other_aura.tag == curse.tag
             && other_aura.duration != NEVER_EXPIRES
@@ -737,11 +749,12 @@ fn curse_of_recklessness_effect(
     fresh.sim.activate(fresh_aura);
     let after_stats = fresh.sim.stats(unit);
     let after_pseudo = fresh.sim.unit(unit).pseudo_stats.clone();
+    let armor = after_stats[Stat::Armor] - before_stats[Stat::Armor];
     let mut effect = json!({
         "kind": "curse_of_recklessness",
         "spell_id": spell_data().curse_of_recklessness.highest().id,
         "aura": label,
-        "armor_delta": after_stats[Stat::Armor] - before_stats[Stat::Armor],
+        "armor_delta": if raid { 0.0 } else { armor },
     });
     let delta = after_stats[Stat::AttackPower] - before_stats[Stat::AttackPower];
     if delta != 0.0 {
