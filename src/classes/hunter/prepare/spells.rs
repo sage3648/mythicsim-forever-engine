@@ -114,6 +114,26 @@ pub(super) fn serpent_sting_rap_per_tick(rules: Rules) -> f64 {
 pub(super) const SUMMON_HAWK_RAP_SHARE: f64 = 0.05;
 /// Summon Hawk's swing damage as a share of the rank's dive bomb base (`swingDamage`).
 pub(super) const SUMMON_HAWK_SWING_SHARE: f64 = 0.35;
+/// A hawk's fixed swing under Forever's rules, as a share of the creature auto attack dps over
+/// the swing's 2.5 seconds: 0.0815 of the level 30 row's 24.69 is the 3.35 to 6.71 that four
+/// level 30 logs read (2,862 swings at 407 to 1,023 owner ranged attack power). Taking it as a
+/// share of the creature dps at level 60 is an extrapolation, as the hawk's own scaling row is
+/// not in the client files.
+pub(super) const HAWK_SWING_SHARE_OF_CREATURE_DPS: f64 = 0.0815;
+/// A hawk's swing time in seconds, before the owner's ranged haste.
+pub(super) const HAWK_SWING_SECONDS: f64 = 2.5;
+/// A hawk's swing spans a third either side of its average.
+pub(super) const HAWK_SWING_SPREAD: f64 = 1.0 / 3.0;
+/// Damage a hawk's swing gains for each point of its owner's ranged attack power, the slope the
+/// same four logs read in every one of them.
+pub(super) const HAWK_DAMAGE_PER_RANGED_ATTACK_POWER: f64 = 0.0179;
+/// The share of its owner's crit a hawk has: Ferocity 5/5 read 10 plus half the owner's crit over
+/// 4,340 swings against targets 2 levels below to 3 above, and two logs without Ferocity read
+/// half the tamed pet's.
+pub(super) const HAWK_CRIT_SHARE: f64 = 0.5;
+/// The Unleashed Fury rank every one of those logs had. It reaches the hawks as it does the pet,
+/// so the swing above is stated before it.
+pub(super) const HAWK_LOGGED_UNLEASHED_FURY_RANK: i32 = 5;
 /// Go `volleyTickDamage`.
 pub(super) const VOLLEY_TICK_DAMAGE: [f64; 4] = [0.0, 70.0, 91.0, 112.0];
 /// Go `trapAttackPowerShare` (patch 147).

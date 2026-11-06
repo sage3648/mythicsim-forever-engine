@@ -89,6 +89,48 @@ the Go goldens and exporter uses. The departures:
   17/8 of its master's ranged hit as spell hit (Lightning Breath and the other magic pet hits),
   and a Warlock's demon takes 8/17 of its master's spell hit as melee hit, where the reference
   gives a Hunter pet no spell hit and a demon the whole spell hit.
+- A Hunter's tamed pet, a fitted model from the client's creature table, Forever's pet sheets and
+  level 30 beta logs (levels 11, 17 and 30; extrapolated to level 60). The pet's own attack power
+  is 30% of the creature auto attack dps as attack power, 14 attack power a point of dps (4.2
+  times the dps, 253.9 at level 60), with nothing from Strength; its weapon is the rest of that
+  dps (the dps less that attack power over 14), 42.3 a second at level 60, a fifth either side;
+  and it takes 10% of its owner's higher attack power, melee or ranged. The sheets of a level 11,
+  a level 17 and a level 30 pet read 36, 61 and 103 own attack power, each the client's
+  `ExpectedStat` creature dps (8.60, 14.56 and 24.69) times 4.2 rounded down, with the owner's 10%
+  rounded down beside it (the three rows were checked against the table on 6 November 2026). A
+  level 30 Cat's 152 logged swings before armor, 42 to 55 at 119 attack power and 46 to 59 at 146
+  (1.2 second swing, Unleashed Fury 5/5), all lie inside this weapon's range with the Cat's 10%
+  and happiness: the model gives 42.4 to 55.5 and 46.0 to 59.1, where the whole creature dps as the
+  weapon puts 131 of them outside. The swing counts are those of the analysis of the logs, which
+  are not in this repository; the table rows, the 3 sheet readings and the two swing ranges are
+  reproduced by `the_own_attack_power_is_four_point_two_a_point_of_creature_dps` and
+  `the_weapon_is_the_creature_dps_less_its_attack_power_share`. Only the shares are measured
+  at level 30 and below: that they hold at level 60, where the creature dps row is the one
+  input, is an extrapolation. The owner's higher attack power is the one the owner has at the
+  reset (the ranged one for an Agility Hunter), inherited as a linear term, so it follows Aspect
+  of the Hawk and the other ranged auras but never swaps to the melee one mid fight. The
+  reference gives the pet Classic's numbers: 136 Strength at two attack power each less 20 (252),
+  an 18.17 to 27.66 a second weapon and nothing of its owner's attack power. At level 60 that is
+  41 dps of the pet's own against 60.5 (18.1 of attack power and 42.3 of weapon), plus the owner's
+  tenth: the Beast Mastery Cat on the board request goes from 149 to 220 DPS and its Hunter from
+  895 to 966 (+7.9%). The pet's abilities, focus, hit, crit and expertise are unchanged.
+- A Summon Hawk hawk, a fitted model from Forever's level 30 combat logs (extrapolated to level
+  60). A swing is a roll a third either side of 0.0815 of the creature auto attack dps over its
+  2.5 seconds (10.7 at level 60, before Unleashed Fury) plus 0.0179 (before Unleashed Fury,
+  0.0156) a point of the owner's ranged attack power, taken through the target's armor, on the
+  melee special hit table with a crit roll at Ferocity's flat crit plus half the owner's crit (the
+  higher of melee and ranged, as the pet inherits it). Four logs of 2,862 swings at 407 to 1,023
+  owner ranged attack power read the swing before armor as 3.3 to 6.7 plus 0.0179 a point in every
+  log (the client's level 30 row gives 0.0815 x 24.69 x 2.5 = 3.35 to 6.71), all with Unleashed
+  Fury 5/5, which reaches the hawks as it does the pet; 4,340 swings with Ferocity 5/5 read 10
+  plus half the owner's crit against targets 2 levels below to 3 above, and two logs without
+  Ferocity half the pet's. The fixed part scaling with the creature dps (the hawk's own scaling
+  row is not in the client files) and the slope holding at level 60 are extrapolations. The
+  reference swings 0.35 of the dive bomb's base, 37.8 at level 60, whatever the ranged attack
+  power, without armor and without a crit roll (community #703). On the Summon Hawk request in the
+  fixtures (1,900 ranged attack power, 976 armor) the hawks' swings deal 5.5 thousand damage a
+  fight against 5.0 thousand. The dive bomb, the hawks' hit and expertise (the owner's, as the
+  pet's) and their uptime are unchanged. The prepared `summon_hawk` effect carries `guardian`.
 - Improved Mind Flay, from its Forever tooltip ("Each instance of damage of Mind Flay deals 20%
   more damage than its previous instance of damage"): each tick deals the step more than the tick
   before it, compounding (1, 1.2 and 1.44 times the tick at two points), where the reference adds
