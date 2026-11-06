@@ -107,6 +107,23 @@ pub(crate) fn drive_innervates(
     Ok(())
 }
 
+/// A raid member assigned another member's Innervate or Power Infusion (`RaidLive`) has its
+/// aura, which only the assigned caster's casts bring up. `engine::raid` clears the member's
+/// assumed casts of it, so the generated buffs registered none.
+pub(crate) fn drive_assigned(
+    env: &mut Environment,
+    unit: UnitId,
+    individual: &Message,
+) -> Result<(), Refusal> {
+    if env.raid_live.innervate && individual.int("innervates") <= 0 {
+        drive_innervates(env, unit, individual)?;
+    }
+    if env.raid_live.power_infusion && individual.int("power_infusions") <= 0 {
+        drive_power_infusions(env, unit, individual)?;
+    }
+    Ok(())
+}
+
 /// Go `AttachInnervateRegen`: shared by player casts and external cooldowns. Actual mana still
 /// arrives on the normal regen ticks; reporting splits its bonus out, which a fight does.
 pub(crate) fn attach_innervate_regen(sim: &mut Sim, unit: UnitId, aura: AuraId) -> AuraId {
