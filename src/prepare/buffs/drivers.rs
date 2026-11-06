@@ -85,6 +85,10 @@ pub(crate) fn drive_innervates(
 ) -> Result<(), Refusal> {
     let aura = INNERVATES.aura(&mut env.sim, unit, false, 0, 0.0);
     attach_innervate_regen(&mut env.sim, unit, aura);
+    // A raid member's assigned Innervate has no cooldown of its own (`RaidLive`).
+    if individual.i32("innervates") <= 0 {
+        return Ok(());
+    }
     // The mana threshold the cooldown waits for is read after finalize, and only by a fight.
     env.post_finalize
         .push(Rc::new(move |env: &mut Environment| {
@@ -133,6 +137,10 @@ pub(crate) fn drive_power_infusions(
     individual: &Message,
 ) -> Result<(), Refusal> {
     let aura = POWER_INFUSIONS.aura(&mut env.sim, unit, false, 0, 0.0);
+    // A raid member's assigned Power Infusion has no cooldown of its own (`RaidLive`).
+    if individual.i32("power_infusions") <= 0 {
+        return Ok(());
+    }
     new_generated_external_cd(
         &mut env.sim,
         unit,

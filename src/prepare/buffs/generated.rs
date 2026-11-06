@@ -560,10 +560,11 @@ pub(crate) fn apply_generated_buffs(
     if individual.bool("greater_blessing_of_light") {
         super::drivers::drive_greater_blessing_of_light(env, unit, individual)?;
     }
-    if individual.int("innervates") > 0 {
+    // A raid member assigned one has its aura, which only the assigned caster's casts bring up.
+    if individual.int("innervates") > 0 || env.raid_live.innervate {
         super::drivers::drive_innervates(env, unit, individual)?;
     }
-    if individual.int("power_infusions") > 0 {
+    if individual.int("power_infusions") > 0 || env.raid_live.power_infusion {
         super::drivers::drive_power_infusions(env, unit, individual)?;
     }
     let _ = raid;

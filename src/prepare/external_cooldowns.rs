@@ -46,6 +46,8 @@ pub(crate) fn mana_tide_initial_delay(env: &Environment) -> i64 {
 struct External {
     label: &'static str,
     sources: i32,
+    /// A raid member's assigned caster brings the aura up instead (`RaidLive`).
+    assigned: bool,
     cooldown: i64,
     aura_effects: fn(&Environment, AuraId, &mut Vec<String>) -> Vec<Value>,
 }
@@ -59,18 +61,21 @@ fn externals(env: &Environment) -> [External; 3] {
         External {
             label: "Mana Tide Totem (External)",
             sources: env.party_buffs.i32("mana_tide_totems"),
+            assigned: false,
             cooldown: MANA_TIDE_TOTEMS.cooldown(),
             aura_effects: mana_tide_aura_effects,
         },
         External {
             label: "Innervates (External)",
             sources: count("innervates"),
+            assigned: env.raid_live.innervate,
             cooldown: INNERVATES.cooldown(),
             aura_effects: innervate_aura_effects,
         },
         External {
             label: "Power Infusions (External)",
             sources: count("power_infusions"),
+            assigned: env.raid_live.power_infusion,
             cooldown: POWER_INFUSIONS.cooldown(),
             aura_effects: power_infusion_aura_effects,
         },
@@ -78,7 +83,8 @@ fn externals(env: &Environment) -> [External; 3] {
 }
 
 /// `externalCooldownEffects`: the external cooldown of each buff the request assigns, and the
-/// effects of its aura.
+/// effects of its aura. A raid member's assigned aura without assumed sources has only its
+/// effects, since the assigned caster's casts bring it up.
 pub(crate) fn external_cooldown_effects(
     env: &Environment,
     unrepresented: &mut Vec<String>,
@@ -89,6 +95,11 @@ pub(crate) fn external_cooldown_effects(
         let Some(aura) = env.sim.get_aura(player, external.label) else {
             continue;
         };
+        // An assigned aura without assumed sources: only what the aura adds.
+        if external.assigned && external.sources <= 0 {
+            effects.extend((external.aura_effects)(env, aura, unrepresented));
+            continue;
+        }
         let mut note = |condition: bool, message: String| {
             if condition {
                 unrepresented.push(message);

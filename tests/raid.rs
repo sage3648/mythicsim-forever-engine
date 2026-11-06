@@ -398,3 +398,134 @@ fn sunder_armor_follows_the_warriors_stacks() {
     );
     assert_eq!(players(&beside_idle)[0], players(&assumed)[0]);
 }
+
+/// The shadow priest with Power Infusion, whose rotation autocasts its cooldowns, without the
+/// fixture's assumed external one.
+fn shadow_priest() -> Value {
+    let path = format!(
+        "{}/fixtures/mage/prepared-v2/shadow-priest-own-and-external-power-infusion.request.json",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let request: Value =
+        serde_json::from_slice(&std::fs::read(path).expect("fixture")).expect("fixture json");
+    let mut priest = request["raid"]["parties"][0]["players"][0].clone();
+    priest["buffs"]
+        .as_object_mut()
+        .unwrap()
+        .remove("powerInfusions");
+    priest
+}
+
+/// A druid and a priest, each with an assumed copy of what the other is assigned to cast on it.
+fn druid_and_priest(mut druid: Value, mut priest: Value) -> Value {
+    druid["buffs"]["powerInfusions"] = json!(1);
+    priest["buffs"]["innervates"] = json!(1);
+    let mut input = raid("balance-druid-thorns", vec![vec![druid, priest]], 20);
+    input["request"]["simOptions"]["debugFirstIteration"] = json!(true);
+    input["assignments"] = json!({
+        "innervate": [{ "from": 0, "to": 1 }],
+        "powerInfusion": [{ "from": 1, "to": 0 }],
+    });
+    input
+}
+
+/// The times of a member's first iteration log lines that contain `text`.
+fn log_times(report: &Value, member: &str, text: &str) -> Vec<String> {
+    let unit = format!("] [{member} (#1)] ");
+    report["result"]["logs"]
+        .as_str()
+        .expect("the raid's log")
+        .lines()
+        .filter(|line| line.contains(&unit) && line.contains(text))
+        .map(|line| line[1..line.find(']').unwrap()].to_string())
+        .collect()
+}
+
+fn assignment(report: &Value, spell: &str) -> Value {
+    report["mythicsim"]["assignments"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|assignment| assignment["spell"] == spell)
+        .unwrap_or_else(|| panic!("no {spell} assignment"))
+        .clone()
+}
+
+#[test]
+fn an_assigned_innervate_and_power_infusion_land_when_their_casters_cast_them() {
+    let report = run(&druid_and_priest(
+        player("balance-druid-thorns"),
+        shadow_priest(),
+    ));
+    for (spell, caster, target, id) in [
+        ("innervate", "balance-druid", "shadow-priest", 29166),
+        ("powerInfusion", "shadow-priest", "balance-druid", 10060),
+    ] {
+        let cast = log_times(
+            &report,
+            caster,
+            &format!("Completed cast {{SpellID: {id}}}"),
+        );
+        assert!(!cast.is_empty(), "{caster} never casts {spell}");
+        let gained = format!("Aura gained: {{SpellID: {id},");
+        // The target gains the aura exactly when the caster casts it, and the caster never.
+        assert_eq!(log_times(&report, target, &gained), cast, "{spell}");
+        assert!(log_times(&report, caster, &gained).is_empty(), "{spell}");
+        let summary = assignment(&report, spell);
+        assert_eq!(summary["cast"], json!(true));
+        assert!(summary["casts"].as_u64().unwrap() >= 20, "{summary}");
+        assert_eq!(summary["landed"], summary["casts"], "{summary}");
+        // The caster's casts replace the target's assumed ones.
+        assert_eq!(casts(member(&report, target), id), 0.0, "{spell}");
+    }
+}
+
+#[test]
+fn an_assigned_caster_whose_rotation_never_casts_gives_nothing() {
+    let mut druid = player("balance-druid-thorns");
+    druid["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|item| item["action"]["castSpell"]["spellId"]["spellId"] != json!(29166));
+    let mut priest = shadow_priest();
+    priest["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|item| item["action"].get("autocastOtherCooldowns").is_none());
+    let report = run(&druid_and_priest(druid.clone(), priest.clone()));
+    for (spell, target, id) in [
+        ("innervate", "shadow-priest", 29166),
+        ("powerInfusion", "balance-druid", 10060),
+    ] {
+        let summary = assignment(&report, spell);
+        assert_eq!(summary["cast"], json!(false), "{summary}");
+        assert_eq!(summary["casts"], json!(0));
+        assert_eq!(summary["landed"], json!(0));
+        assert!(log_times(&report, target, &format!("Aura gained: {{SpellID: {id},")).is_empty());
+    }
+    // The targets fight as with neither the assignment nor the assumed casts.
+    let mut bare = raid("balance-druid-thorns", vec![vec![druid, priest]], 20);
+    bare["request"]["simOptions"]["debugFirstIteration"] = json!(true);
+    let bare = run(&bare);
+    for (assigned, alone) in players(&report).iter().zip(players(&bare)) {
+        assert_eq!(assigned["dps"], alone["dps"]);
+    }
+}
+
+#[test]
+fn an_assignment_names_one_other_member_per_caster() {
+    let refused = |assignments: Value| {
+        let mut input = druid_and_priest(player("balance-druid-thorns"), shadow_priest());
+        input["assignments"] = assignments;
+        match simulate_raid(&serde_json::to_vec(&input).unwrap(), Rules::Forever, false) {
+            Err(RaidError::Invalid(reason)) => reason,
+            other => panic!("{:?}", other.map(|_| ())),
+        }
+    };
+    assert!(refused(json!({ "innervate": [{ "from": 0, "to": 0 }] })).contains("itself"));
+    assert!(refused(json!({ "powerInfusion": [{ "from": 0, "to": 1 }] })).contains("cannot"));
+    assert!(
+        refused(json!({ "innervate": [{ "from": 0, "to": 1 }, { "from": 0, "to": 1 }] }))
+            .contains("two members")
+    );
+}
