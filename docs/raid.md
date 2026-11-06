@@ -90,6 +90,35 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
 - In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor is live and
   the three warlocks' Curse of the Elements is assumed for the others and lands for them.
 
+## Healers and the tank's damage (design, not implemented)
+
+A healer in a raid heals under MythicSim's healer model, as alone: every heal lands on a player
+who needs it, less the share real healers overheal (`prepare::overheal`, measured on live
+reports), and Prayer of Mending and Chain Heal follow the assumed party hit rates
+(`prepare::party_damage`). The tank's fight already takes the targets' real swings
+(`core::fight::enemy`) and tracks its health, so a raid could heal that damage instead:
+
+1. **Damage out.** The tank's fight sends each landed swing (its time and the damage after
+   avoidance, armor and blocks) through the cross-fight channel, as `Fight::give` sends a
+   cast. The runner keeps each tank's missing health, capped at its maximum.
+2. **Healing in.** A healer assigned to a tank (an assignment list beside `innervate`, or the
+   raid's `tanks`) mirrors that tank's missing health. A heal on the tank counts up to it and
+   overheals the rest, in place of the overheal share (`Fight::landed_healing`); the runner
+   takes the heal off the tank's missing health and hands the new value to every other healer
+   of that tank at once, ties in raid order, as shared debuffs are.
+3. **Hits drive the heals that follow damage.** Prayer of Mending on the tank moves when the
+   tank is hit, from the tank's swings instead of a drawn wait.
+4. **What stays assumed.** Nothing else in a raid takes damage: the encounter has no raid
+   damage. Heals on the other members, party heals and Chain Heal's jumps keep the assumed
+   rates and overheal shares, and a healer with no tank keeps today's model.
+
+It is not implemented here. It changes every raid healer's HPS through the core healing path
+(`core::fight::healing`, `core::fight::heals`) and each class's Prayer of Mending, and a tank's
+swing damage alone would make a raid's healers overheal far more than the live reports the
+overheal table measures, where raids take more than the tank's damage. It needs a measurement
+of healing done against a tank's damage taken in Forever logs before it can replace the model.
+No Go golden is affected either way: Go has no raid sim surface.
+
 ## Cost
 
 About one Quick Sim per member, on one thread: 25 members at 1000 iterations take about 11 s
