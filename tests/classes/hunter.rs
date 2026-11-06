@@ -2,6 +2,7 @@
 //! compared with the rest of the fixture family in `mage/prepared_v2.rs`; these tests pin the
 //! ranged auto attack, the ranged cast time, physical ticks, the pets and what the gate rejects.
 
+mod pet_models;
 mod prepare;
 
 use forever_engine::{
@@ -1777,11 +1778,11 @@ fn multi_shot_casts(logs: &str) -> Vec<(bool, bool, &str)> {
 /// Forever's rule (README, Rust-only mechanics): Multi-Shot casts over half a second divided by
 /// the ranged haste multiplier, as Aimed Shot's two seconds are. Our Forever beta logs: 0.44 to
 /// 0.45 seconds with the quiver's 15% (0.5 / 1.15), 0.32 under Rapid Fire as well (0.5 / 1.61).
-/// Seed 8's first fight casts it with the quiver alone and with Rapid Fire up.
+/// Seed 4's first fight casts it with the quiver alone and with Rapid Fire up.
 #[test]
 fn multi_shot_casts_half_a_second_over_the_ranged_haste_in_forever() {
     let mut value = production_marksmanship_prepared(forever_engine::Rules::Forever);
-    value["sim"]["seed"] = json!(8);
+    value["sim"]["seed"] = json!(4);
     let logs = first_fight_log(value);
     let casts = multi_shot_casts(&logs);
     let expected = |rapid_fire: bool, quick_shots: bool| match (rapid_fire, quick_shots) {

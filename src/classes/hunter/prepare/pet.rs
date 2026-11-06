@@ -124,6 +124,53 @@ fn pet_attack_speed(name: &str) -> f64 {
 /// equal to their ranged hit, and their spell hit to their pet equal to 17/8ths of their ranged hit."
 pub(crate) const PET_SPELL_HIT_PER_RANGED_HIT: f64 = 17.0 / 8.0;
 
+/// The client's creature auto attack dps for the character level, 60 (`ExpectedStat`, content set
+/// 0, Lvl 60, CreatureAutoAttackDps, from wago.tools' wowf tables on 6 November 2026; the
+/// reference's `CreatureAutoAttackDpsMaxLevel`).
+const CREATURE_AUTO_ATTACK_DPS: f64 = 60.452_915_191_650_39;
+
+/// A tamed pet's own attack power is this share of the creature dps, 14 attack power a point of
+/// dps, with nothing from Strength: the pet sheets of a level 11, a level 17 and a level 30 pet
+/// read 36, 61 and 103, each the row's dps (8.60, 14.56 and 24.69) times 4.2 rounded down.
+const PET_OWN_ATTACK_POWER_SHARE: f64 = 0.3;
+
+/// Attack power for each point of weapon dps.
+const ATTACK_POWER_PER_DPS: f64 = 14.0;
+
+/// The share of its owner's higher attack power (melee or ranged) a tamed pet inherits, read on
+/// the pet sheets beside the pet's own: 10% rounded down at all three levels.
+const PET_OWNER_ATTACK_POWER_SHARE: f64 = 0.1;
+
+/// A tamed pet's swing spans a fifth either side of its average.
+const PET_SWING_SPREAD: f64 = 0.2;
+
+/// The creature auto attack dps the Forever pet and hawk models scale with.
+pub(super) fn creature_auto_attack_dps() -> f64 {
+    CREATURE_AUTO_ATTACK_DPS
+}
+
+/// A tamed pet's own attack power under Forever's rules: 4.2 a point of the creature dps.
+pub(super) fn tamed_pet_attack_power() -> f64 {
+    PET_OWN_ATTACK_POWER_SHARE * ATTACK_POWER_PER_DPS * CREATURE_AUTO_ATTACK_DPS
+}
+
+/// A tamed pet's swing before attack power under Forever's rules, as (low, high) damage a
+/// second. The creature dps is the pet's auto attack damage with its own attack power in it, so
+/// the weapon is the creature dps less that attack power over 14, 42.3 at level 60. A level 30
+/// Cat's 152 logged swings before armor, 42-55 at 119 attack power and 46-59 at 146 with
+/// Unleashed Fury 5/5, are this weapon (the level 30 row's 17.29 a second, 20% either side, over
+/// the swing as sped up to 1.2 seconds) plus attack power over 14, times the Cat's 1.1, happiness
+/// 1.25 and Unleashed Fury 1.15: 42.4 to 55.5 and 46.0 to 59.1. Using the whole creature dps as
+/// the weapon puts 131 of those 152 outside the range. That the same shares hold at level 60 is
+/// an extrapolation: the client's creature dps row is the only level 60 input.
+pub(super) fn tamed_pet_weapon_dps() -> (f64, f64) {
+    let average = CREATURE_AUTO_ATTACK_DPS - tamed_pet_attack_power() / ATTACK_POWER_PER_DPS;
+    (
+        average * (1.0 - PET_SWING_SPREAD),
+        average * (1.0 + PET_SWING_SPREAD),
+    )
+}
+
 /// What Go's `HunterPet` adds to its `core.Pet`.
 #[derive(Clone)]
 pub(crate) struct HunterPetState {
@@ -160,6 +207,17 @@ fn stat_inheritance(owner: UnitId, offset: StateSlot) -> impl Fn(&mut Sim, &Stat
             inherited[Stat::SpellHitPercent] = owner_stats[Stat::PhysicalHitPercent]
                 * PET_SPELL_HIT_PER_RANGED_HIT
                 + owner_stats[Stat::RangedHitPercent] * PET_SPELL_HIT_PER_RANGED_HIT;
+            // A tenth of the owner's higher attack power. The higher is the one the owner has
+            // at the reset, which a linear inheritance cannot swap during a fight: a ranged
+            // attack power above the melee one, as an Agility hunter's is, follows Aspect of
+            // the Hawk and the other ranged auras.
+            let owner_now = sim.stats(owner);
+            let source = if owner_now[Stat::AttackPower] > owner_now[Stat::RangedAttackPower] {
+                Stat::AttackPower
+            } else {
+                Stat::RangedAttackPower
+            };
+            inherited[Stat::AttackPower] = owner_stats[source] * PET_OWNER_ATTACK_POWER_SHARE;
         }
         inherited
     }
@@ -167,7 +225,7 @@ fn stat_inheritance(owner: UnitId, offset: StateSlot) -> impl Fn(&mut Sim, &Stat
 
 /// Go `Hunter.petCritOffsetNow`: the higher of the Auto Shot's ranged-only crit and the main-hand
 /// swing's melee-only crit.
-fn pet_crit_offset_now(sim: &Sim, owner: UnitId) -> f64 {
+pub(super) fn pet_crit_offset_now(sim: &Sim, owner: UnitId) -> f64 {
     let autos = &sim.unit(owner).auto_attacks;
     let mut ranged = sim.stats(owner)[Stat::RangedCritPercent];
     if let Some(spell) = autos.ranged_spell {
@@ -196,6 +254,7 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     // Go `Hunter.petCritOffset`, the offset the pet currently inherits.
     let offset = sim.new_state_slot(0.0);
 
+    let forever = sim.rules == Rules::Forever;
     let mut base_stats = Stats::default();
     base_stats[Stat::Strength] = 136.0;
     base_stats[Stat::Agility] = 100.0;
@@ -204,6 +263,12 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     base_stats[Stat::Spirit] = 80.0;
     // Apparently pets and warriors have an AP penalty.
     base_stats[Stat::AttackPower] = -20.0;
+    if forever {
+        // The creature's own attack power, with nothing from Strength (README, Rust-only
+        // mechanics).
+        base_stats[Stat::Strength] = 0.0;
+        base_stats[Stat::AttackPower] = tamed_pet_attack_power();
+    }
     let pet = sim.new_pet(PetConfig {
         name: family.name.to_string(),
         owner,
@@ -227,7 +292,9 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
         .unwrap_or(0.0);
     {
         let sdm = &mut sim.unit_mut(pet).sdm;
-        sdm.add_stat_dependency(Stat::Strength, Stat::AttackPower, 2.0);
+        if !forever {
+            sdm.add_stat_dependency(Stat::Strength, Stat::AttackPower, 2.0);
+        }
         // No Agility crit: the pet's physical crit is its owner's (patch 136).
         sdm.add_stat_dependency(Stat::Intellect, Stat::SpellCritPercent, crit_per_int);
     }
@@ -244,12 +311,18 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
         .multiplier_at(hunter.t("bestial_discipline"));
     sim.enable_focus_bar(pet, focus_multiplier);
 
+    // Classic's 18.17 to 27.66 a second under the reference's rules.
+    let (weapon_dps_low, weapon_dps_high) = if forever {
+        tamed_pet_weapon_dps()
+    } else {
+        (18.17, 27.66)
+    };
     sim.enable_auto_attacks(
         pet,
         AutoAttackOptions {
             main_hand: Weapon {
-                base_damage_min: 18.17 * attack_speed,
-                base_damage_max: 27.66 * attack_speed,
+                base_damage_min: weapon_dps_low * attack_speed,
+                base_damage_max: weapon_dps_high * attack_speed,
                 swing_speed: attack_speed,
                 max_range: MAX_MELEE_RANGE,
                 ..Weapon::default()
@@ -655,3 +728,48 @@ fn new_furious_howl(sim: &mut Sim, pet: UnitId) -> SpellId {
 
 #[allow(dead_code)]
 const _NEVER: i64 = NEVER_EXPIRES;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The client's level 11, 17 and 30 creature rows, whose dps times 4.2 rounded down are the
+    /// 36, 61 and 103 attack power of the pet sheets.
+    #[test]
+    fn the_own_attack_power_is_four_point_two_a_point_of_creature_dps() {
+        for (dps, sheet) in [
+            (8.59953212738, 36.0),
+            (14.5638589859, 61.0),
+            (24.69375419617, 103.0),
+        ] {
+            let own = PET_OWN_ATTACK_POWER_SHARE * ATTACK_POWER_PER_DPS * dps;
+            assert_eq!(own.floor(), sheet, "creature dps {dps}");
+        }
+        // The level 60 row's 60.45 gives 253.9 attack power.
+        assert!((tamed_pet_attack_power() - 253.902_243_8).abs() < 1e-6);
+    }
+
+    /// A level 30 Cat's logged swings, 42-55 at 119 attack power and 46-59 at 146, swinging at
+    /// 1.2 seconds with Unleashed Fury 5/5, the Cat's 1.1 and happiness 1.25, before armor.
+    #[test]
+    fn the_weapon_is_the_creature_dps_less_its_attack_power_share() {
+        let level_30_dps = 24.69375419617;
+        let weapon = level_30_dps - PET_OWN_ATTACK_POWER_SHARE * level_30_dps;
+        let (speed, multiplier) = (1.2, 1.1 * 1.25 * 1.15);
+        for (attack_power, low, high) in [(119.0, 42.0, 55.0), (146.0, 46.0, 59.0)] {
+            let fixed = attack_power / ATTACK_POWER_PER_DPS * speed;
+            let swing_low = (weapon * (1.0 - PET_SWING_SPREAD) * speed + fixed) * multiplier;
+            let swing_high = (weapon * (1.0 + PET_SWING_SPREAD) * speed + fixed) * multiplier;
+            assert_eq!(swing_low.round(), low, "{swing_low}");
+            assert_eq!(swing_high.round(), high, "{swing_high}");
+        }
+        // Level 60: 42.3 a second of weapon, a fifth either side, which with the pet's own 18.1
+        // attack power a second is the creature row's 60.45.
+        let (low, high) = tamed_pet_weapon_dps();
+        let average = (low + high) / 2.0;
+        assert!((average - 42.317_040_6).abs() < 1e-6, "{average}");
+        assert!((high / average - 1.2).abs() < 1e-12);
+        let total = average + tamed_pet_attack_power() / ATTACK_POWER_PER_DPS;
+        assert!((total - creature_auto_attack_dps()).abs() < 1e-9);
+    }
+}

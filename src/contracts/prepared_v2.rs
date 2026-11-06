@@ -1231,6 +1231,24 @@ pub struct PetMana {
     pub regen_per_second_not_casting: f64,
 }
 
+/// A Summon Hawk hawk's swing under Forever's rules.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HawkGuardian {
+    /// The average swing before the owner's ranged attack power, armor and the damage
+    /// multipliers that reach Summon Hawk.
+    pub swing_average: f64,
+    /// The roll's half width as a share of the average.
+    pub swing_spread: f64,
+    /// Damage a swing gains for each point of the owner's ranged attack power.
+    pub attack_power_coefficient: f64,
+    /// The share of the owner's crit a hawk has, before Ferocity's flat crit.
+    pub crit_share: f64,
+    /// The owner's crit offset the hawk shares: the higher of the Auto Shot's ranged-only crit
+    /// and the main-hand swing's melee-only crit, as the tamed pet inherits it.
+    pub crit_offset: f64,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManaGain {
@@ -4761,6 +4779,12 @@ pub enum Effect {
         always_hits: bool,
         hawk_spells: Vec<usize>,
         hawk_duration_ns: i64,
+        /// Forever's rules: a hawk's swing is a guardian's, rolled on `swing_average` plus a
+        /// share of the owner's ranged attack power, taken through armor and able to crit.
+        /// Without it, as in Go, a swing is `swing_share` of the base, never crits and ignores
+        /// armor.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        guardian: Option<HawkGuardian>,
     },
     /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
     ConjuredEnergy {
