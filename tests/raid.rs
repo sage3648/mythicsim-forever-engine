@@ -69,12 +69,25 @@ fn a_raid_of_one_is_its_quick_sim() {
             alone["raidMetrics"]["dps"]["avg"]
         );
     }
+    // A caster of a shared debuff alone: the raid's toggle off, as the raid leaves its fight.
+    for (party, slot, field) in [(1, 2, "faerieFire"), (3, 1, "curseOfElements")] {
+        let input = reference_party(vec![reference_player(party, slot)], &[(field, false)]);
+        let report = run(&input);
+        let alone = solo(&input["request"]);
+        assert_eq!(
+            players(&report)[0],
+            alone["raidMetrics"]["parties"][0]["players"][0],
+            "{field}"
+        );
+    }
 }
 
 #[test]
 fn the_raid_sums_its_members_and_the_first_fights_as_alone() {
     let druid = player("balance-druid-thorns");
-    let warlock = player("demonology-warlock-pet-values");
+    // Without its Curse of the Elements, which would be the raid's in place of the druid's
+    // toggle: the druid then shares nothing that changes.
+    let warlock = without_cast(player("demonology-warlock-pet-values"), 1311680);
     let hunter = player("hunter-skysight");
     let input = raid(
         "balance-druid-thorns",
@@ -309,10 +322,13 @@ fn a_reference_raid_shares_what_its_members_cast() {
     // The four warriors' rotations sunder; their stacks are the raid's.
     assert_eq!(find("sunder_armor")["casters"], json!([0, 1, 2, 3]));
     assert_eq!(find("sunder_armor")["live"], json!(true));
-    // The three warlocks cast Curse of the Elements: the others assume it, while each warlock's
-    // own fight has its own curse, which lands instead of being recast every global cooldown.
+    // The feral druid's Faerie Fire and the three warlocks' Curse of the Elements are the raid's.
+    // A warlock's curse is up on every warlock's target, so none recasts it every global
+    // cooldown.
+    assert_eq!(find("faerie_fire")["casters"], json!([7]));
+    assert_eq!(find("faerie_fire")["live"], json!(true));
     assert_eq!(find("curse_of_elements")["casters"], json!([16, 17, 18]));
-    assert_eq!(find("curse_of_elements")["live"], json!(false));
+    assert_eq!(find("curse_of_elements")["live"], json!(true));
     let iterations = report["result"]["iterationsDone"].as_f64().unwrap();
     for warlock in [
         "demonology-warlock",
@@ -334,23 +350,33 @@ fn a_reference_raid_shares_what_its_members_cast() {
 /// The hunter of the reference raid beside the given warrior, with the raid's Sunder Armor
 /// toggle as given.
 fn hunter_beside(warrior: Option<Value>, sunder_toggle: bool) -> Value {
-    let raid = reference_raid();
-    let players = &raid["request"]["raid"]["parties"];
-    let hunter = players[1]["players"][4].clone();
-    let mut input = raid.clone();
-    let mut party = vec![hunter];
+    let mut party = vec![reference_player(1, 4)];
     party.extend(warrior);
-    input["request"]["raid"]["parties"] =
-        json!([{ "players": party, "buffs": players[1]["buffs"] }]);
+    run(&reference_party(party, &[("sunderArmor", sunder_toggle)]))
+}
+
+/// A player of the reference raid, by party and slot.
+fn reference_player(party: usize, slot: usize) -> Value {
+    reference_raid()["request"]["raid"]["parties"][party]["players"][slot].clone()
+}
+
+/// The reference raid's request with one untanked party of the given players and the raid's
+/// debuff toggles as given.
+fn reference_party(party: Vec<Value>, toggles: &[(&str, bool)]) -> Value {
+    let mut input = reference_raid();
+    let buffs = input["request"]["raid"]["parties"][1]["buffs"].clone();
+    input["request"]["raid"]["parties"] = json!([{ "players": party, "buffs": buffs }]);
     input["request"]["raid"]["tanks"] = json!([]);
-    input["request"]["raid"]["debuffs"]["sunderArmor"] = json!(sunder_toggle);
+    for (field, on) in toggles {
+        input["request"]["raid"]["debuffs"][*field] = json!(on);
+    }
     for target in input["request"]["encounter"]["targets"]
         .as_array_mut()
         .unwrap()
     {
         target.as_object_mut().unwrap().remove("tankIndex");
     }
-    run(&input)
+    input
 }
 
 #[test]
@@ -397,4 +423,239 @@ fn sunder_armor_follows_the_warriors_stacks() {
         json!(false)
     );
     assert_eq!(players(&beside_idle)[0], players(&assumed)[0]);
+}
+
+fn first_dps(report: &Value) -> f64 {
+    players(report)[0]["dps"]["avg"].as_f64().unwrap()
+}
+
+fn shared(report: &Value, name: &str) -> Value {
+    report["mythicsim"]["sharedDebuffs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|debuff| debuff["debuff"] == name)
+        .cloned()
+        .unwrap_or_else(|| panic!("no {name}"))
+}
+
+/// The longest uptime of any aura of the spell on the first member's target.
+fn target_uptime(report: &Value, spell: i64) -> f64 {
+    report["result"]["encounterMetrics"]["targets"][0]["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|aura| aura["id"]["spellId"] == json!(spell))
+        .map(|aura| aura["uptimeSecondsAvg"].as_f64().unwrap_or(0.0))
+        .fold(0.0, f64::max)
+}
+
+fn duration(report: &Value) -> f64 {
+    report["result"]["avgIterationDuration"].as_f64().unwrap()
+}
+
+/// The player with every cast of the spell in its rotation's priority list left out.
+fn without_cast(mut player: Value, spell: i64) -> Value {
+    let list = player["rotation"]["priorityList"].as_array_mut().unwrap();
+    list.retain(|item| item["action"]["castSpell"]["spellId"]["spellId"] != json!(spell));
+    player
+}
+
+/// The player with every cast of the spell in its rotation's priority list kept, but never
+/// cast: its rotation casts the debuff, so the raid's copy follows it, and it is never up.
+fn never_casts(mut player: Value, spell: i64) -> Value {
+    let list = player["rotation"]["priorityList"].as_array_mut().unwrap();
+    for item in list {
+        if item["action"]["castSpell"]["spellId"]["spellId"] == json!(spell) {
+            item["action"]["condition"] = json!({ "const": { "val": "false" } });
+        }
+    }
+    player
+}
+
+/// A warlock of the reference raid who keeps Curse of Recklessness up in place of the
+/// Elements.
+fn recklessness_warlock() -> Value {
+    let text = reference_player(3, 1).to_string();
+    serde_json::from_str(&text.replace("1311680", "11717")).unwrap()
+}
+
+/// What a debuff a member casts does on a receiving member's target: nothing until the caster
+/// lands it, and only while the caster keeps it up. The receiver is the first of the party,
+/// and the raid's Faerie Fire and Curse of Recklessness are off, so neither holds the minor
+/// armor category.
+fn follows_the_caster(receiver: Value, caster: Value, field: &str, name: &str, spell: i64) {
+    let toggles = |on: bool| {
+        let mut toggles = vec![("faerieFire", false), ("curseOfRecklessness", false)];
+        toggles.retain(|(other, _)| *other != field);
+        toggles.push((field, on));
+        toggles
+    };
+    let alone = |on: bool| run(&reference_party(vec![receiver.clone()], &toggles(on)));
+    let (bare, assumed) = (alone(false), alone(true));
+    let live = run(&reference_party(
+        vec![receiver.clone(), caster.clone()],
+        &toggles(false),
+    ));
+    assert_eq!(shared(&live, name)["casters"], json!([1]), "{name}");
+    assert_eq!(shared(&live, name)["live"], json!(true), "{name}");
+    let uptime = target_uptime(&live, spell);
+    assert!(
+        uptime > 0.5 * duration(&live) && uptime < duration(&live),
+        "{name} is up {uptime} s"
+    );
+    assert_eq!(target_uptime(&bare, spell), 0.0, "{name}");
+    let (bare, live, assumed) = (first_dps(&bare), first_dps(&live), first_dps(&assumed));
+    assert!(
+        bare < live && live < assumed,
+        "{name}: {bare} {live} {assumed}"
+    );
+    // A caster whose rotation never casts it: nothing on the receiver's target, whatever the
+    // raid's toggle says, as alone without it.
+    let idle = run(&reference_party(
+        vec![receiver, never_casts(caster, spell)],
+        &toggles(true),
+    ));
+    assert_eq!(shared(&idle, name)["live"], json!(true), "{name}");
+    assert_eq!(target_uptime(&idle, spell), 0.0, "{name}");
+    assert_eq!(first_dps(&idle), bare, "{name}");
+}
+
+#[test]
+fn faerie_fire_follows_the_druids_casts() {
+    follows_the_caster(
+        reference_player(1, 4),
+        reference_player(1, 2),
+        "faerieFire",
+        "faerie_fire",
+        9907,
+    );
+}
+
+#[test]
+fn curse_of_recklessness_follows_the_warlocks_casts() {
+    follows_the_caster(
+        reference_player(1, 4),
+        recklessness_warlock(),
+        "curseOfRecklessness",
+        "curse_of_recklessness",
+        11717,
+    );
+}
+
+#[test]
+fn curse_of_the_elements_follows_the_warlocks_casts() {
+    follows_the_caster(
+        reference_player(2, 0),
+        reference_player(3, 1),
+        "curseOfElements",
+        "curse_of_elements",
+        1311680,
+    );
+}
+
+/// Casts of the spell a fight by the named member.
+fn casts_a_fight(report: &Value, name: &str, spell: i64) -> f64 {
+    casts(member(report, name), spell) / report["result"]["iterationsDone"].as_f64().unwrap()
+}
+
+#[test]
+fn a_warlock_takes_another_warlocks_curse() {
+    let demonology = reference_player(3, 1);
+    let affliction = reference_player(3, 2);
+    let toggles = [("curseOfElements", false)];
+    let alone = run(&reference_party(vec![demonology.clone()], &toggles));
+    let together = run(&reference_party(vec![demonology, affliction], &toggles));
+    // Whoever lands the curse first keeps it up for both: neither recasts a curse the other
+    // holds, so together they cast it about as often as one alone.
+    let one = casts_a_fight(&alone, "demonology-warlock", 1311680);
+    let both = casts_a_fight(&together, "demonology-warlock", 1311680)
+        + casts_a_fight(&together, "affliction-warlock", 1311680);
+    assert!(
+        one >= 1.0 && both < 1.5 * one,
+        "{one} alone, {both} together"
+    );
+    let uptime = target_uptime(&together, 1311680);
+    assert!(uptime > 0.9 * duration(&together), "{uptime}");
+}
+
+#[test]
+fn a_feral_druids_faerie_fire_and_a_balance_druids_are_one() {
+    let feral = reference_player(1, 2);
+    // Forever has no Faerie Fire (Feral): the Balance druid keeps up the feral's spell.
+    let mut balance = reference_player(2, 3);
+    let faerie_fire = feral["rotation"]["priorityList"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|item| item["action"]["castSpell"]["spellId"]["spellId"] == json!(9907))
+        .cloned()
+        .unwrap();
+    balance["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .insert(0, faerie_fire);
+    let toggles = [("faerieFire", false)];
+    let alone = |player: &Value| run(&reference_party(vec![player.clone()], &toggles));
+    let together = run(&reference_party(
+        vec![feral.clone(), balance.clone()],
+        &toggles,
+    ));
+    assert_eq!(shared(&together, "faerie_fire")["casters"], json!([0, 1]));
+    for name in ["feral-druid", "balance-druid"] {
+        let player = if name == "feral-druid" {
+            &feral
+        } else {
+            &balance
+        };
+        let own = casts_a_fight(&alone(player), name, 9907);
+        let shared = casts_a_fight(&together, name, 9907);
+        assert!(
+            shared < own,
+            "{name}: {shared} beside the other, {own} alone"
+        );
+    }
+}
+
+#[test]
+fn faerie_fire_and_curse_of_recklessness_hold_one_armor_category() {
+    let hunter = reference_player(1, 4);
+    let off = [("faerieFire", false), ("curseOfRecklessness", false)];
+    let on = [("faerieFire", true), ("curseOfRecklessness", true)];
+    let recklessness = first_dps(&run(&reference_party(
+        vec![hunter.clone(), recklessness_warlock()],
+        &off,
+    )));
+    let both = first_dps(&run(&reference_party(
+        vec![
+            hunter.clone(),
+            recklessness_warlock(),
+            reference_player(1, 2),
+        ],
+        &off,
+    )));
+    let assumed = first_dps(&run(&reference_party(vec![hunter], &on)));
+    // Faerie Fire adds only while the curse is down, and never on top of it.
+    assert!(
+        recklessness < both && both < assumed,
+        "{recklessness} {both} {assumed}"
+    );
+}
+
+#[test]
+fn curse_of_recklessness_reaches_a_tanked_target() {
+    let mut input = reference_raid();
+    let text = input["request"]["raid"]["parties"][3]["players"][3].to_string();
+    input["request"]["raid"]["parties"][3]["players"][3] =
+        serde_json::from_str(&text.replace("1311680", "11717")).unwrap();
+    input["request"]["raid"]["debuffs"]["curseOfRecklessness"] = json!(false);
+    let report = run(&input);
+    assert_eq!(
+        shared(&report, "curse_of_recklessness")["casters"],
+        json!([18])
+    );
+    assert_eq!(report["mythicsim"]["members"][0]["tanking"], json!(true));
+    // The tank's target carries the curse while the warlock keeps it up.
+    let uptime = target_uptime(&report, 11717);
+    assert!(uptime > 0.5 * duration(&report), "{uptime}");
 }

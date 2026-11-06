@@ -136,6 +136,9 @@ pub(crate) struct SharedDebuff {
     pub(crate) own_prefix: &'static str,
     /// The spells whose cast in a member's rotation applies it.
     pub(crate) spells: &'static [i64],
+    /// Whether a caster's fight registers the raid's copy beside its own. Without it, a
+    /// caster's fight is its Quick Sim's with the toggle off.
+    pub(crate) caster_copy: bool,
 }
 
 /// A shared target aura's state, which every other member's fight takes on.
@@ -269,6 +272,125 @@ impl<A: Agent> Fight<A> {
         }
         if self.aura(aura).max_stacks != 0 && self.aura(aura).stacks != state.stacks {
             self.set_stacks(aura, state.stacks);
+        }
+    }
+}
+
+/// A target exclusive category that holds a raid debuff a member casts: the change each member
+/// makes while it holds the category, by target aura index (`Effect::RaidDebuffCategory`).
+#[derive(Clone, Debug)]
+pub(crate) struct RaidDebuffCategory {
+    name: String,
+    members: Vec<(usize, RaidDebuffChange)>,
+}
+
+/// Armor added, resistances added and school damage taken multiplied, by Go school index.
+#[derive(Clone, Debug, Default)]
+struct RaidDebuffChange {
+    armor: f64,
+    resistance: Vec<(usize, f64)>,
+    damage_taken: Vec<(usize, f64)>,
+}
+
+/// Go school names, by school index.
+const SCHOOLS: [&str; 8] = [
+    "none", "physical", "arcane", "fire", "frost", "holy", "nature", "shadow",
+];
+
+fn by_school(
+    values: &std::collections::BTreeMap<String, f64>,
+) -> Result<Vec<(usize, f64)>, String> {
+    values
+        .iter()
+        .map(|(name, value)| {
+            SCHOOLS
+                .iter()
+                .position(|school| school == name)
+                .filter(|&index| index >= 2)
+                .map(|index| (index, *value))
+                .ok_or_else(|| format!("a raid debuff names unknown school {name}"))
+        })
+        .collect()
+}
+
+impl<A: Agent> Fight<A> {
+    pub(crate) fn bind_raid_debuffs(
+        &mut self,
+        effects: &[crate::contracts::prepared_v2::Effect],
+    ) -> Result<(), String> {
+        for effect in effects {
+            let crate::contracts::prepared_v2::Effect::RaidDebuffCategory { category, members } =
+                effect
+            else {
+                continue;
+            };
+            let mut changes = Vec::new();
+            for member in members {
+                let index = self.trackers[super::Side::Target.index()]
+                    .find(&member.aura)
+                    .ok_or_else(|| format!("target aura {} is not registered", member.aura))?;
+                changes.push((
+                    index,
+                    RaidDebuffChange {
+                        armor: member.armor,
+                        resistance: by_school(&member.resistance)?,
+                        damage_taken: by_school(&member.school_damage_taken_multiplier)?,
+                    },
+                ));
+            }
+            self.raid_debuffs.push(RaidDebuffCategory {
+                name: category.clone(),
+                members: changes,
+            });
+        }
+        Ok(())
+    }
+
+    /// Go's `OnExpire` of the effect that gave up a raid debuff's category and `OnGain` of the
+    /// one that took it. The reset's holder is in the prepared target values already.
+    pub(crate) fn raid_debuff_holder_change(
+        &mut self,
+        tracking: bool,
+        category: usize,
+        old: Option<usize>,
+        new: Option<usize>,
+    ) {
+        if self.resetting_auras {
+            return;
+        }
+        let state = self.category(tracking, category);
+        let Some(described) = self
+            .raid_debuffs
+            .iter()
+            .position(|described| described.name == state.name)
+        else {
+            return;
+        };
+        let old = old.map(|member| state.members[member].aura);
+        let new = new.map(|member| state.members[member].aura);
+        for (aura, gain) in [(old, false), (new, true)] {
+            let Some(aura) = aura else {
+                continue;
+            };
+            let Some(change) = self.raid_debuffs[described]
+                .members
+                .iter()
+                .find(|(index, _)| *index == aura.index)
+                .map(|(_, change)| change.clone())
+            else {
+                continue;
+            };
+            let sign = if gain { 1.0 } else { -1.0 };
+            if change.armor != 0.0 {
+                self.add_target_armor(aura.side, sign * change.armor);
+            }
+            for &(school, delta) in &change.resistance {
+                self.add_target_resistance(aura.side, school, sign * delta);
+            }
+            for &(school, factor) in &change.damage_taken {
+                let factor = if gain { factor } else { 1.0 / factor };
+                self.multiply_target_school_damage_taken(aura.side, school, factor);
+            }
         }
     }
 }

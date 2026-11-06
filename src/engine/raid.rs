@@ -272,6 +272,9 @@ fn share_debuffs(members: &mut [Member]) {
     let raid_live = crate::prepare::env::RaidLive {
         sunder_armor: live("sunder_armor"),
         expose_armor: live("expose_armor"),
+        faerie_fire: live("faerie_fire"),
+        curse_of_elements: live("curse_of_elements"),
+        curse_of_recklessness: live("curse_of_recklessness"),
     };
     for member in members.iter_mut() {
         let raid = member.request["raid"]
@@ -284,7 +287,10 @@ fn share_debuffs(members: &mut [Member]) {
             .expect("debuffs");
         for (debuff, casters) in SHARED_DEBUFFS.iter().zip(&casters) {
             if !casters.is_empty() {
-                debuffs.insert(debuff.field.into(), Value::Bool(true));
+                // A caster's own copy takes the others' states, so the raid's is left out of
+                // its fight unless the debuff needs it there (`SharedDebuff::caster_copy`).
+                let copy = debuff.caster_copy || !casters.contains(&member.raid_index);
+                debuffs.insert(debuff.field.into(), Value::Bool(copy));
             }
         }
         member.raid_live = raid_live;
@@ -402,6 +408,7 @@ pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
         external: "Sunder Armor (External)",
         own_prefix: "Sunder Armor (Player)",
         spells: &[7386, 7405, 8380, 11596, 11597],
+        caster_copy: true,
     },
     SharedDebuff {
         name: "expose_armor",
@@ -409,6 +416,32 @@ pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
         external: "Expose Armor (External)",
         own_prefix: "Expose Armor (Player)",
         spells: &[8647, 8649, 8650, 11197, 11198],
+        caster_copy: true,
+    },
+    // Forever has no Faerie Fire (Feral): a feral druid casts the Balance spell.
+    SharedDebuff {
+        name: "faerie_fire",
+        field: "faerieFire",
+        external: "Faerie Fire (External)",
+        own_prefix: "Faerie Fire (Player)",
+        spells: &[770, 778, 9749, 9907],
+        caster_copy: false,
+    },
+    SharedDebuff {
+        name: "curse_of_elements",
+        field: "curseOfElements",
+        external: "Curse of the Elements (External)",
+        own_prefix: "Curse of the Elements (Player)",
+        spells: &[440892, 1311676, 1311677, 1311680],
+        caster_copy: false,
+    },
+    SharedDebuff {
+        name: "curse_of_recklessness",
+        field: "curseOfRecklessness",
+        external: "Curse of Recklessness (External)",
+        own_prefix: "Curse of Recklessness (Player)",
+        spells: &[704, 7658, 7659, 11717],
+        caster_copy: false,
     },
     // A judgement is the seal's: the member keeps the seal up to judge it.
     SharedDebuff {
@@ -417,6 +450,7 @@ pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
         external: "Judgement of Wisdom (External)",
         own_prefix: "Judgement of Wisdom Rank ",
         spells: &[20166, 20356, 20357],
+        caster_copy: true,
     },
     SharedDebuff {
         name: "judgement_of_light",
@@ -424,6 +458,7 @@ pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
         external: "Judgement of Light (External)",
         own_prefix: "Judgement of Light Rank ",
         spells: &[20165, 20347, 20348, 20349],
+        caster_copy: true,
     },
 ];
 
@@ -808,17 +843,7 @@ impl RaidReport {
 /// The raid debuffs on the target a member's rotation can cast, besides [`SHARED_DEBUFFS`]: the
 /// request's toggle and the name its auras carry, the member's own copy `<name> (Player)`.
 const CAST_DEBUFFS: &[(&str, &str, &str)] = &[
-    ("faerie_fire", "faerieFire", "Faerie Fire"),
-    (
-        "curse_of_elements",
-        "curseOfElements",
-        "Curse of the Elements",
-    ),
-    (
-        "curse_of_recklessness",
-        "curseOfRecklessness",
-        "Curse of Recklessness",
-    ),
+    // No Forever class casts it (the reference leaves hunters_mark.go out), so its toggle holds.
     ("hunters_mark", "huntersMark", "Hunter's Mark"),
     (
         "demoralizing_shout",

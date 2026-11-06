@@ -1758,6 +1758,21 @@ pub struct ExclusiveMember {
     pub per_stack: Option<f64>,
 }
 
+/// A target aura's change while its exclusive effect holds a category the raid shares
+/// (`RaidDebuffCategory`): armor added, resistances added and school damage taken multiplied,
+/// by Go school name.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RaidDebuffMember {
+    pub aura: String,
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub armor: f64,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub resistance: BTreeMap<String, f64>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub school_damage_taken_multiplier: BTreeMap<String, f64>,
+}
+
 /// An aura, the pseudo stat it multiplies, `damage_taken` or `threat`, and the multiplier.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -4233,6 +4248,13 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         armor_by_stacks: Vec<f64>,
     },
+    /// A target exclusive category that holds a debuff a raid member casts (`engine::raid`): the
+    /// change each member makes while its effect holds the category. The prepared target values
+    /// carry only what holds it at the reset; the fight applies the rest as the holder changes.
+    RaidDebuffCategory {
+        category: String,
+        members: Vec<RaidDebuffMember>,
+    },
     /// core/rage.go: a rage bar, with the rage each landed white hit gives.
     RageBar {
         aura: String,
@@ -5628,6 +5650,7 @@ impl Effect {
             Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",
             Effect::RageBar { .. } => "rage_bar",
             Effect::ExclusiveCategory { .. } => "exclusive_category",
+            Effect::RaidDebuffCategory { .. } => "raid_debuff_category",
             Effect::PseudoStatAuras { .. } => "pseudo_stat_auras",
             Effect::ExtraAttackProc { .. } => "extra_attack_proc",
             Effect::PlayerDamageTaken { .. } => "player_damage_taken",

@@ -23,8 +23,8 @@ pub(crate) fn apply_debuff_effects(
     debuffs: &Message,
     raid: &Message,
 ) -> Result<(), Refusal> {
-    // A raid's armor debuff a member casts: registered, but up only while the member's casts
-    // keep it up, so neither permanent nor ramped.
+    // A raid's debuff a member casts: registered, but up only while the member's casts keep it
+    // up, so neither permanent nor ramped.
     let live = env.raid_live;
     let mut debuffs = debuffs.clone();
     let mut held = Vec::new();
@@ -38,6 +38,21 @@ pub(crate) fn apply_debuff_effects(
             live.expose_armor,
             "expose_armor",
             &super::buffs::generated::EXPOSE_ARMOR,
+        ),
+        (
+            live.faerie_fire,
+            "faerie_fire",
+            &super::buffs::generated::FAERIE_FIRE,
+        ),
+        (
+            live.curse_of_elements,
+            "curse_of_elements",
+            &super::buffs::generated::CURSE_OF_ELEMENTS,
+        ),
+        (
+            live.curse_of_recklessness,
+            "curse_of_recklessness",
+            &super::buffs::generated::CURSE_OF_RECKLESSNESS,
         ),
     ] {
         if on && debuffs.bool(field) {

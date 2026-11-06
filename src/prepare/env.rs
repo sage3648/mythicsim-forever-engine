@@ -32,18 +32,38 @@ pub(crate) struct Encounter {
     pub no_hit_suppression: bool,
 }
 
-/// The raid's armor debuffs a member casts (`engine::raid`): each is registered on the target
-/// but up only while a member keeps it up, and the target's major armor category is exported so
-/// that a member's stacks set its armor.
+/// The raid's target debuffs a member casts (`engine::raid`): each is registered on the target
+/// but up only while a member keeps it up. The target's major armor category is exported so that
+/// a member's stacks set its armor, and the categories of the others so that the fight applies
+/// their changes as they come and go.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct RaidLive {
     pub(crate) sunder_armor: bool,
     pub(crate) expose_armor: bool,
+    pub(crate) faerie_fire: bool,
+    pub(crate) curse_of_elements: bool,
+    pub(crate) curse_of_recklessness: bool,
 }
 
 impl RaidLive {
+    /// Whether a member casts a major armor debuff.
     pub(crate) fn any(self) -> bool {
         self.sunder_armor || self.expose_armor
+    }
+
+    /// The labels of the raid's copies whose changes the fight applies as they come and go.
+    pub(crate) fn applied_labels(self) -> impl Iterator<Item = &'static str> {
+        [
+            (self.faerie_fire, "Faerie Fire (External)"),
+            (self.curse_of_elements, "Curse of the Elements (External)"),
+            (
+                self.curse_of_recklessness,
+                "Curse of Recklessness (External)",
+            ),
+        ]
+        .into_iter()
+        .filter(|(live, _)| *live)
+        .map(|(_, label)| label)
     }
 }
 
