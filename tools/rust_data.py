@@ -24,6 +24,9 @@ from compare import ROOT, PIN, CLIENT_BUILD, build_oracle, command, go_pin_flags
 DATA = ROOT / "data"
 TOOL = ROOT / "tools" / "rust-data"
 MANIFEST = DATA / "manifest.json"
+# Data written by their own generators, not the import, and checked by them
+# (tools/rust_client_items.py check).
+OWN_FILES = {"forever-client-items.jsonl"}
 
 # SimDatabase list, output file and the key each row is found by.
 DATABASE_TABLES = [
@@ -159,7 +162,7 @@ def check():
             errors.append(f"missing data/{name}")
         elif file_digest(path) != digest:
             errors.append(f"data/{name} differs from its manifest digest")
-    listed = set(manifest["files"]) | {"manifest.json"}
+    listed = set(manifest["files"]) | {"manifest.json"} | OWN_FILES
     for path in DATA.iterdir():
         if path.name not in listed:
             errors.append(f"data/{path.name} is not in the manifest")

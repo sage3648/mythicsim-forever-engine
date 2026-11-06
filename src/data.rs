@@ -80,6 +80,8 @@ macro_rules! table {
 }
 
 table!(ITEMS, "items.jsonl");
+// The live client's equippable items that ITEMS lacks, from `tools/rust_client_items.py`.
+table!(CLIENT_ITEMS, "forever-client-items.jsonl");
 table!(RANDOM_SUFFIXES, "random-suffixes.jsonl");
 table!(ENCHANTS, "enchants.jsonl");
 table!(RAND_PROP_POINTS, "rand-prop-points.jsonl");
@@ -128,6 +130,20 @@ mod tests {
         let enchant = proto_row(&ENCHANTS, "proto.SimEnchant", 15).expect("Light Armor Kit");
         assert_eq!(enchant.str("name"), "Light Armor Kit");
         assert!(ITEMS.keys().count() > 10_000);
+    }
+
+    #[test]
+    fn client_items_are_rows_the_reference_database_lacks() {
+        let ids: Vec<i64> = CLIENT_ITEMS.keys().collect();
+        assert!(ids.len() > 300);
+        for id in ids {
+            assert!(ITEMS.row(id).is_none(), "item {id} is in both tables");
+            let item = proto_row(&CLIENT_ITEMS, "proto.SimItem", id).expect("a client item");
+            assert_eq!(item.i32("id"), id as i32);
+            assert!(!item.str("name").is_empty());
+        }
+        let cloak = proto_row(&CLIENT_ITEMS, "proto.SimItem", 1733).expect("Worn Cloak");
+        assert_eq!(cloak.str("name"), "Worn Cloak");
     }
 
     #[test]
