@@ -28,6 +28,30 @@ pub(crate) fn run_prepared(
     }
 }
 
+/// A prepared v2 input that passed the coverage gate as a member of a raid, with its class's
+/// agent.
+pub(crate) fn raid_member(
+    prepared: &crate::contracts::prepared_v2::PreparedV2,
+) -> Result<Box<dyn crate::core::fight::raid::RaidMember>, String> {
+    fn boxed<F: crate::core::fight::raid::RaidMember + 'static>(
+        fight: Result<F, String>,
+    ) -> Result<Box<dyn crate::core::fight::raid::RaidMember>, String> {
+        fight.map(|fight| Box::new(fight) as Box<dyn crate::core::fight::raid::RaidMember>)
+    }
+    match prepared.player.class.as_str() {
+        "ClassMage" => boxed(mage::agent::MageAgent::fight(prepared)),
+        "ClassDruid" => boxed(druid::agent::DruidAgent::fight(prepared)),
+        "ClassWarlock" => boxed(warlock::agent::WarlockAgent::fight(prepared)),
+        "ClassShaman" => boxed(shaman::agent::ShamanAgent::fight(prepared)),
+        "ClassPaladin" => boxed(paladin::agent::PaladinAgent::fight(prepared)),
+        "ClassPriest" => boxed(priest::agent::PriestAgent::fight(prepared)),
+        "ClassRogue" => boxed(rogue::agent::RogueAgent::fight(prepared)),
+        "ClassWarrior" => boxed(warrior::agent::WarriorAgent::fight(prepared)),
+        "ClassHunter" => boxed(hunter::agent::HunterAgent::fight(prepared)),
+        other => Err(format!("class {other} has no fight agent")),
+    }
+}
+
 /// The class agent Rust preparation builds for a player: Go's agent factory.
 pub(crate) fn prepare_agent(
     sim: &mut crate::prepare::sim::Sim,

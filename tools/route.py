@@ -38,7 +38,18 @@ fault     A step failed for at least one request, which the entry's `stage` and 
           name. Run the whole batch in Go. No result.json is left for any request.
 
 Every request without its own seed gets the same seed, --seed or one drawn for the batch,
-so the candidates share their random numbers. Uses only Python's standard library.
+so the candidates share their random numbers.
+
+With --raid, one raid input (a RaidSimRequest with several players and the raid's assignments,
+see src/engine/raid.rs) runs in one engine process, with no Go step:
+
+rust      The raid ran. --output/result.json holds its RaidSimResult and --output/raid.json the
+          member summary (raid index, party, slot, name, class, DPS, HPS).
+fallback  Rust preparation or the gate refused at least one member. Each of `refusals` names
+          its `member` (raid index); nothing ran. The worker fails the job with them.
+fault     As for a single request.
+
+Uses only Python's standard library.
 """
 
 import argparse
@@ -360,12 +371,66 @@ def route_batch(request_paths, output, bundle, timeout, seed=None, go_prepare=Fa
     return decision
 
 
+def route_raid(raid_path, output, bundle, timeout, seed=None):
+    """Decide one raid input and return the decision. Never raises for a failing step."""
+    output.mkdir(parents=True, exist_ok=False)
+    decision = {"schema": SCHEMA, "raid": True, "timings_ms": {}}
+    manifest = bundle_manifest(bundle)
+    if manifest is not None:
+        decision["bundle"] = manifest
+    try:
+        try:
+            raid = json.loads(Path(raid_path).read_text())
+            decision["seed"], decision["seed_source"] = seed_request(raid["request"], seed)
+        except (OSError, ValueError, AttributeError, TypeError, KeyError) as error:
+            raise Fault("request", f"{type(error).__name__}: {error}")
+        request_file = output / "raid-request.json"
+        request_file.write_text(json.dumps(raid) + "\n")
+        report_file = output / "rust-report.json"
+        command = [bundle / "bin" / ENGINE, "raid", "--request", request_file, "--outfile", report_file,
+                   "--rotation-stats"]
+        try:
+            done = run_step("rust", command, timeout, decision["timings_ms"], accept=(0, GATE_REFUSED))
+            if done.returncode == GATE_REFUSED:
+                try:
+                    refusals = json.loads(done.stdout)["refusals"]
+                except (ValueError, KeyError, TypeError) as error:
+                    raise Fault("check", f"unreadable raid refusal: {type(error).__name__}: {error}")
+                if not refusals:
+                    raise Fault("check", "the raid was refused without a reason")
+                decision.update(status="fallback", refusals=refusals,
+                                codes=sorted({refusal["code"] for refusal in refusals}))
+                return decision
+            try:
+                report = json.loads(report_file.read_text())
+                result = report["result"]
+                members = report["mythicsim"]["members"]
+                if not isinstance(result.get("raidMetrics"), dict) or result.get("iterationsDone") is None:
+                    raise ValueError("the result lacks raidMetrics or iterationsDone")
+            except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                raise Fault("rust", f"incomplete result: {type(error).__name__}: {error}")
+            result_file = output / "result.json"
+            write_atomically(result_file, json.dumps(result) + "\n")
+            summary_file = output / "raid.json"
+            write_atomically(summary_file, json.dumps(report["mythicsim"]) + "\n")
+            decision.update(status="rust", result=str(result_file), summary=str(summary_file),
+                            members=len(members), identity=report.get("identity"),
+                            request_sha256=report.get("request_sha256"))
+        except Fault:
+            discard_partial_output(output)
+            raise
+    except Fault as fault:
+        decision.update(status="fault", stage=fault.stage, error=str(fault))
+    return decision
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     requests = parser.add_mutually_exclusive_group(required=True)
     requests.add_argument("--request", type=Path, help="RaidSimRequest JSON")
     requests.add_argument("--batch", type=Path, nargs="+", metavar="REQUEST",
                           help="the RaidSimRequest JSON files of one batch job, decided together")
+    requests.add_argument("--raid", type=Path, help="raid input JSON: several players simulated together")
     parser.add_argument("--output", type=Path, required=True, help="new folder to write")
     parser.add_argument("--bundle", type=Path, default=Path(__file__).resolve().parents[1],
                         help="bundle folder (default: the one holding this tool)")
@@ -379,7 +444,11 @@ def main():
         parser.error(f"--seed must be from 1 to {MAX_SEED}")
     if args.output.exists():
         parser.error(f"{args.output} exists; each request writes a new folder")
-    if args.batch:
+    if args.raid:
+        if args.go_prepare:
+            parser.error("--go-prepare does not apply to a raid")
+        decision = route_raid(args.raid, args.output, args.bundle.resolve(), args.timeout, args.seed)
+    elif args.batch:
         decision = route_batch(args.batch, args.output, args.bundle.resolve(), args.timeout, args.seed,
                                args.go_prepare)
     else:

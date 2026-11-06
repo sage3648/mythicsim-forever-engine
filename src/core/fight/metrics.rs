@@ -133,6 +133,9 @@ pub(crate) struct Totals {
     /// and the target's own output.
     pub(crate) zero: Distribution,
     pub(crate) oom_seconds: f64,
+    /// The damage and healing of the iteration that just ended, which a raid sums.
+    pub(crate) last_damage: f64,
+    pub(crate) last_healing: f64,
     pub(crate) iterations: u32,
 }
 
@@ -710,6 +713,8 @@ impl<A: Agent> Fight<A> {
         };
         let duration = self.duration;
         let keep = self.config.save_all_values;
+        self.totals.last_damage = self.totals.dps.total;
+        self.totals.last_healing = self.totals.player_hps.total;
         self.totals.dps.done_iteration(duration, seed, keep);
         self.totals.threat.done_iteration(duration, seed, keep);
         self.totals.tto.done_iteration(duration, seed, keep);

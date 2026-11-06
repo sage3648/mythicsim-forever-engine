@@ -30,6 +30,7 @@ mod innervate;
 pub(crate) mod item_swap;
 mod on_use_damage;
 pub(crate) mod proc_damage;
+pub(crate) mod raid;
 mod revelation;
 pub(crate) use on_use_damage::known as on_use_damage_known;
 mod heal_proc;
@@ -1266,6 +1267,14 @@ pub(crate) struct SpiritAttribution {
     pub(crate) force_full: bool,
 }
 
+/// What [`Fight::run`] keeps of its iterations for the report.
+#[derive(Default)]
+pub(crate) struct Run {
+    pub(crate) first_duration: i64,
+    pub(crate) total_duration: i64,
+    pub(crate) logs: String,
+}
+
 /// Static configuration copied from the prepared input.
 pub(crate) struct Config {
     pub(crate) iterations: u32,
@@ -1853,6 +1862,10 @@ pub(crate) struct Fight<A: Agent> {
     /// The player's weapon attacks.
     pub(crate) autos: melee::AutoAttacks,
     sunder: Option<SunderRamp>,
+    /// The fight length a raid's first member rolled, which every other member fights to.
+    pub(crate) duration_override: Option<i64>,
+    /// The target auras a raid shares with this fight's member, when it is one.
+    pub(crate) share: Option<Box<raid::Share>>,
     external_expose: Option<ExternalExpose>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
@@ -4168,6 +4181,8 @@ impl<A: Agent> Fight<A> {
             log: None,
             autos: melee::AutoAttacks::default(),
             sunder: None,
+            duration_override: None,
+            share: None,
             external_expose: None,
             aura_logs,
             stat_combos,
@@ -5678,37 +5693,51 @@ impl<A: Agent> Fight<A> {
 
     /// Run every iteration and return the aggregate report.
     pub(crate) fn run(&mut self) -> FightReport {
+        self.prepare_run();
+        let started = crate::core::stopwatch::Stopwatch::start();
+        let mut run = Run::default();
+        for iteration in 0..self.config.iterations {
+            self.begin_iteration(iteration);
+            while self.step() {}
+            self.end_iteration(iteration, &mut run);
+        }
+        let elapsed_ns = started.elapsed_ns();
+        self.report(run.first_duration, run.total_duration, run.logs, elapsed_ns)
+    }
+
+    /// What a fight builds once before its first iteration.
+    pub(crate) fn prepare_run(&mut self) {
         if !self.extra_targets_built {
             self.build_extra_targets();
             self.build_exclusive_tracking();
             self.apply_enemy_slow_priorities();
         }
-        let started = crate::core::stopwatch::Stopwatch::start();
-        let iterations = self.config.iterations;
-        let mut total_duration = 0i64;
-        let mut first_duration = 0i64;
-        let mut logs = String::new();
-        for iteration in 0..iterations {
-            let seed = self.config.seed + i64::from(iteration);
-            self.rng.reseed(seed as u64);
-            // Go keeps one buffer: every iteration with debug, otherwise only the first.
-            let logged = self.config.debug || (iteration == 0 && self.config.debug_first_iteration);
-            self.log = logged.then(Vec::new);
-            self.run_once();
-            if let Some(lines) = self.log.take() {
-                logs.extend(lines);
-            }
-            if iteration == 0 {
-                first_duration = self.duration;
-            }
-            total_duration += self.duration;
-        }
-        let elapsed_ns = started.elapsed_ns();
-        self.report(first_duration, total_duration, logs, elapsed_ns)
     }
 
-    /// Go `runOnce`: reset, prepull, the event loop and cleanup.
-    fn run_once(&mut self) {
+    /// One iteration up to its event loop: the seed, the log buffer, the reset and the prepull.
+    pub(crate) fn begin_iteration(&mut self, iteration: u32) {
+        let seed = self.config.seed + i64::from(iteration);
+        self.rng.reseed(seed as u64);
+        // Go keeps one buffer: every iteration with debug, otherwise only the first.
+        let logged = self.config.debug || (iteration == 0 && self.config.debug_first_iteration);
+        self.log = logged.then(Vec::new);
+        self.start_once();
+    }
+
+    /// One iteration after its event loop: the cleanup, then what the report keeps of it.
+    pub(crate) fn end_iteration(&mut self, iteration: u32, run: &mut Run) {
+        self.cleanup();
+        if let Some(lines) = self.log.take() {
+            run.logs.extend(lines);
+        }
+        if iteration == 0 {
+            run.first_duration = self.duration;
+        }
+        run.total_duration += self.duration;
+    }
+
+    /// Go `runOnce` up to the event loop: reset and prepull.
+    fn start_once(&mut self) {
         self.reset();
         // Go PrePull: time starts at the first prepull action; later ones run first at a tie.
         let count = self.prepull.len() as i32;
@@ -5752,8 +5781,6 @@ impl<A: Agent> Fight<A> {
             self.schedule(at, PRIORITY_PREPULL + count - index as i32, action);
         }
         self.schedule(0, self.encounter_start_priority(), Action::EncounterStart);
-        while self.step() {}
-        self.cleanup();
     }
 
     /// The priority of the pull at 0:00: after every prepull action at the same time.
@@ -5769,6 +5796,11 @@ impl<A: Agent> Fight<A> {
             let variation = self.config.duration_variation * 2;
             let roll = self.random("sim duration");
             self.duration += (roll * variation as f64) as i64 - self.config.duration_variation;
+        }
+        // A raid's members share the first member's roll; each still draws its own, so its
+        // random numbers stay those of the same member simulated alone.
+        if let Some(duration) = self.duration_override {
+            self.duration = duration;
         }
         self.queue.clear();
         if let Some(burst) = &mut self.burst {
@@ -6000,7 +6032,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Simulation.Step`. Returns false when the fight is over.
-    fn step(&mut self) -> bool {
+    pub(crate) fn step(&mut self) -> bool {
         // Go runs due weapon swings before the next pending action, ties included.
         let next = self.queue.peek_time().unwrap_or(NEVER_EXPIRES);
         if self.due_weapon_attack(next) && self.autos.min_time <= self.min_task_time {

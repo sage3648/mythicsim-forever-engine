@@ -1,7 +1,7 @@
 use forever_engine::{
     contracts::prepared_v2::PreparedV2, prepare_json_with, prepared_refusals, simulate,
     simulate_prepared, simulate_prepared_gated, validate_prepared, Gated, PrepareError,
-    PreparedError, Refusal, Request, Rules, SOURCE_REVISION,
+    PreparedError, RaidError, Refusal, Request, Rules, SOURCE_REVISION,
 };
 use serde::Deserialize;
 use std::{
@@ -177,8 +177,11 @@ fn run() -> Result<(), Failure> {
         println!("{}", coverage_report(&prepared, &refusals)?);
         return Ok(());
     }
+    if args[0] == "raid" {
+        return raid(&args[1..]);
+    }
     if args[0] != "sim" && args[0] != "bench" && args[0] != "prepare" {
-        return Err("expected sim, prepare, bench, check or version".into());
+        return Err("expected sim, raid, prepare, bench, check or version".into());
     }
     let mut infile = None;
     let mut request_file = None;
@@ -363,6 +366,78 @@ fn run() -> Result<(), Failure> {
         serde_json::to_string_pretty(&simulate(&request, trace)?)
     }
     .map_err(|err| err.to_string())?;
+    if let Some(path) = outfile {
+        write_atomically(&path, &(output + "\n"))?;
+    } else {
+        println!("{output}");
+    }
+    Ok(())
+}
+
+/// `raid --request FILE [--outfile FILE] [--rotation-stats] [--go-rules]`: simulate a raid
+/// input (see `engine::raid`). When Rust does not support a member, the refusals, each naming
+/// its member, are on standard output and the exit status is `EXIT_REFUSED`.
+fn raid(args: &[String]) -> Result<(), Failure> {
+    let mut request = None;
+    let mut outfile = None;
+    let mut rotation_stats = false;
+    let mut go_rules = false;
+    let mut index = 0;
+    while index < args.len() {
+        match args[index].as_str() {
+            "--request" | "--outfile" => {
+                let flag = &args[index];
+                index += 1;
+                let value = args
+                    .get(index)
+                    .ok_or_else(|| format!("{flag} requires a value"))?;
+                let target = if flag == "--request" {
+                    &mut request
+                } else {
+                    &mut outfile
+                };
+                if target.replace(value.clone()).is_some() {
+                    return Err(format!("duplicate {flag}").into());
+                }
+            }
+            "--rotation-stats" if !rotation_stats => rotation_stats = true,
+            "--go-rules" if !go_rules => go_rules = true,
+            unknown => return Err(format!("unsupported argument {unknown}").into()),
+        }
+        index += 1;
+    }
+    let request = request.ok_or("raid requires --request")?;
+    let input = fs::read(request).map_err(|err| err.to_string())?;
+    let rules = if go_rules {
+        Rules::GoReference
+    } else {
+        Rules::Forever
+    };
+    let report = match forever_engine::simulate_raid(&input, rules, rotation_stats) {
+        Ok(report) => report,
+        Err(RaidError::Refused(refusals)) => {
+            let reasons: Vec<String> = refusals
+                .iter()
+                .map(|refusal| format!("member {}: {}", refusal.member, refusal.reason))
+                .collect();
+            let report = serde_json::json!({
+                "scenario_id": "raid",
+                "supported": false,
+                "reasons": reasons,
+                "refusals": refusals,
+            });
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?
+            );
+            return Err(Failure {
+                status: EXIT_REFUSED,
+                message: None,
+            });
+        }
+        Err(err) => return Err(err.to_string().into()),
+    };
+    let output = serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?;
     if let Some(path) = outfile {
         write_atomically(&path, &(output + "\n"))?;
     } else {

@@ -27,6 +27,9 @@ pub use engine::prepared::{
     validate as validate_prepared, EngineIdentity, Gated, PreparedError, PreparedReport, Refusal,
     CLIENT_BUILD, REFUSAL_CODES,
 };
+pub use engine::raid::{
+    simulate as simulate_raid, MemberRefusal, RaidError, RaidInput, RAID_SCHEMA,
+};
 pub use engine::simulate;
 pub use prepare::{
     prepare, prepare_json, prepare_json_with, PrepareError, Refusal as PrepareRefusal, Rules,
