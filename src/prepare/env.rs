@@ -32,17 +32,22 @@ pub(crate) struct Encounter {
     pub no_hit_suppression: bool,
 }
 
-/// The raid's armor debuffs a member casts (`engine::raid`): each is registered on the target
-/// but up only while a member keeps it up, and the target's major armor category is exported so
-/// that a member's stacks set its armor.
+/// What a raid member's fight takes from the other members' casts (`engine::raid`). The raid's
+/// armor debuffs a member casts are registered on the target but up only while a member keeps
+/// them up, and the target's major armor category is exported so that a member's stacks set its
+/// armor. An Innervate or Power Infusion a member is assigned is registered on the player, with
+/// no assumed cooldown to cast it: it is up only when the assigned caster's cast lands.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct RaidLive {
     pub(crate) sunder_armor: bool,
     pub(crate) expose_armor: bool,
+    pub(crate) innervate: bool,
+    pub(crate) power_infusion: bool,
 }
 
 impl RaidLive {
-    pub(crate) fn any(self) -> bool {
+    /// Whether a member casts one of the raid's armor debuffs.
+    pub(crate) fn armor(self) -> bool {
         self.sunder_armor || self.expose_armor
     }
 }

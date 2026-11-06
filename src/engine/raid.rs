@@ -21,7 +21,7 @@ use crate::{
     contracts::prepared_v2::PreparedV2,
     core::fight::{
         metrics::Distribution,
-        raid::{RaidMember, SharedDebuff},
+        raid::{Gift, RaidMember, SentGift, SharedDebuff},
         Run,
     },
     prepare::{PrepareError, Rules},
@@ -75,8 +75,11 @@ pub struct Member {
     pub name: String,
     pub class: String,
     pub request: Value,
-    /// The raid's armor debuffs a member casts, which every member's fight shares.
+    /// The raid's armor debuffs a member casts, which every member's fight shares, and the
+    /// Innervate and Power Infusion the member is assigned.
     pub(crate) raid_live: crate::prepare::env::RaidLive,
+    /// What the member's casts give another member: the gift and that member's raid index.
+    pub(crate) gives: Vec<(Gift, usize)>,
 }
 
 /// Why a raid did not run.
@@ -247,6 +250,7 @@ pub fn split(input: &RaidInput) -> Result<Vec<Member>, RaidError> {
                 class: class.to_string(),
                 request: Value::Object(own),
                 raid_live: Default::default(),
+                gives: Vec::new(),
             });
         }
     }
@@ -269,10 +273,6 @@ fn share_debuffs(members: &mut [Member]) {
             .zip(&casters)
             .any(|(debuff, casters)| debuff.name == name && !casters.is_empty())
     };
-    let raid_live = crate::prepare::env::RaidLive {
-        sunder_armor: live("sunder_armor"),
-        expose_armor: live("expose_armor"),
-    };
     for member in members.iter_mut() {
         let raid = member.request["raid"]
             .as_object_mut()
@@ -287,7 +287,8 @@ fn share_debuffs(members: &mut [Member]) {
                 debuffs.insert(debuff.field.into(), Value::Bool(true));
             }
         }
-        member.raid_live = raid_live;
+        member.raid_live.sunder_armor = live("sunder_armor");
+        member.raid_live.expose_armor = live("expose_armor");
     }
 }
 
@@ -331,64 +332,83 @@ fn own_tanks(tanks: &[Value], raid_index: usize) -> Result<Vec<Value>, RaidError
         .collect()
 }
 
-/// Until members cast their external cooldowns themselves, an assignment is one more of the
-/// target's assumed Innervates or Power Infusions, from a member who can cast it.
+/// An assignment is the caster's own cast landing on the target: the caster's rotation and
+/// cooldown decide when, and the target has the aura only then. The target loses the request's
+/// assumed Innervates or Power Infusions, and each caster casts on one other member: a caster
+/// without an assignment casts on itself, as alone.
 fn assign(members: &mut [Member], assignments: &Assignments) -> Result<(), RaidError> {
-    let lists = [
-        (
-            &assignments.innervate,
-            "ClassDruid",
-            "innervates",
-            "Innervate",
-        ),
-        (
-            &assignments.power_infusion,
-            "ClassPriest",
-            "powerInfusions",
-            "Power Infusion",
-        ),
-    ];
-    for (list, caster_class, field, spell) in lists {
-        for assignment in list {
+    for (list, gift) in [
+        (&assignments.innervate, Gift::Innervate),
+        (&assignments.power_infusion, Gift::PowerInfusion),
+    ] {
+        let (caster_class, field, spell) = gift_names(gift);
+        for (index, assignment) in list.iter().enumerate() {
             let caster = members
                 .iter()
-                .find(|member| member.raid_index == assignment.from)
+                .position(|member| member.raid_index == assignment.from)
                 .ok_or_else(|| {
                     invalid(format!(
                         "{spell} from raid index {}, no member",
                         assignment.from
                     ))
                 })?;
-            if caster.class != caster_class {
+            if members[caster].class != caster_class {
                 return Err(invalid(format!(
                     "{spell} from {} ({}), who cannot cast it",
-                    caster.name, caster.class
+                    members[caster].name, members[caster].class
+                )));
+            }
+            if list[..index]
+                .iter()
+                .any(|other| other.from == assignment.from)
+            {
+                return Err(invalid(format!(
+                    "{spell} from {} on two members",
+                    members[caster].name
+                )));
+            }
+            if assignment.to == assignment.from {
+                return Err(invalid(format!(
+                    "{spell} from {} on itself, which needs no assignment",
+                    members[caster].name
                 )));
             }
             let target = members
-                .iter_mut()
-                .find(|member| member.raid_index == assignment.to)
+                .iter()
+                .position(|member| member.raid_index == assignment.to)
                 .ok_or_else(|| {
                     invalid(format!(
                         "{spell} on raid index {}, no member",
                         assignment.to
                     ))
                 })?;
-            let player = target
+            let player = members[target]
                 .request
                 .pointer_mut("/raid/parties/0/players/0")
                 .and_then(Value::as_object_mut)
                 .expect("a member's request holds its player");
-            let buffs = player
-                .entry("buffs")
-                .or_insert_with(|| json!({}))
-                .as_object_mut()
-                .ok_or_else(|| invalid("player buffs are not an object"))?;
-            let count = buffs.get(field).and_then(Value::as_i64).unwrap_or(0);
-            buffs.insert(field.into(), json!(count + 1));
+            if let Some(buffs) = player.get_mut("buffs") {
+                buffs
+                    .as_object_mut()
+                    .ok_or_else(|| invalid("player buffs are not an object"))?
+                    .remove(field);
+            }
+            match gift {
+                Gift::Innervate => members[target].raid_live.innervate = true,
+                Gift::PowerInfusion => members[target].raid_live.power_infusion = true,
+            }
+            members[caster].gives.push((gift, assignment.to));
         }
     }
     Ok(())
+}
+
+/// A gift's caster class, the player buffs field of its assumed casts, and its name.
+fn gift_names(gift: Gift) -> (&'static str, &'static str, &'static str) {
+    match gift {
+        Gift::Innervate => ("ClassDruid", "innervates", "Innervate"),
+        Gift::PowerInfusion => ("ClassPriest", "powerInfusions", "Power Infusion"),
+    }
 }
 
 /// The raid debuffs whose state every member's fight shares. A debuff a member casts is on the
@@ -545,7 +565,30 @@ pub struct RaidReport {
     pub casters: Vec<Vec<usize>>,
     /// The raid index of each member that casts each of the other raid debuffs.
     pub cast_debuffs: Vec<Vec<usize>>,
+    /// What each assignment's caster cast on its target.
+    pub assignments: Vec<AssignmentReport>,
+    pub iterations: u32,
     pub elapsed_ns: u64,
+}
+
+/// An assignment's casts over every iteration: how many the caster cast, and how many landed on
+/// the target, which takes none while another aura with its tag is up.
+pub struct AssignmentReport {
+    gift: Gift,
+    pub from: usize,
+    pub to: usize,
+    pub casts: u64,
+    pub landed: u64,
+}
+
+impl AssignmentReport {
+    /// The assignment's spell, as the raid input names its list.
+    pub fn spell(&self) -> &'static str {
+        match self.gift {
+            Gift::Innervate => "innervate",
+            Gift::PowerInfusion => "powerInfusion",
+        }
+    }
 }
 
 /// Simulate prepared members together.
@@ -586,6 +629,40 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
             fight.drive_external(debuff);
         }
     }
+    // Each assignment's caster sends its casts to the target's fight, by position.
+    let position = |raid_index: usize| {
+        members
+            .iter()
+            .position(|member| member.member.raid_index == raid_index)
+            .expect("an assignment names members")
+    };
+    let mut assignments = Vec::new();
+    for (index, fight) in fights.iter_mut().enumerate() {
+        let member = &members[index].member;
+        let giving: Vec<(Gift, usize)> = member
+            .gives
+            .iter()
+            .map(|&(gift, to)| (gift, position(to)))
+            .collect();
+        let taking: Vec<Gift> = [
+            (member.raid_live.innervate, Gift::Innervate),
+            (member.raid_live.power_infusion, Gift::PowerInfusion),
+        ]
+        .into_iter()
+        .filter_map(|(taken, gift)| taken.then_some(gift))
+        .collect();
+        fight
+            .bind_gifts(&giving, &taking)
+            .map_err(|err| invalid(format!("member {}: {err}", member.raid_index)))?;
+        assignments.extend(member.gives.iter().map(|&(gift, to)| AssignmentReport {
+            gift,
+            from: member.raid_index,
+            to,
+            casts: 0,
+            landed: 0,
+        }));
+    }
+    let mut gifts: Vec<SentGift> = Vec::new();
     let mut states = Vec::new();
     let party_count = members
         .iter()
@@ -653,6 +730,24 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
                     }
                 }
             }
+            // So does an assigned cast, to its target.
+            gifts.clear();
+            fights[index].drain_gifts(&mut gifts);
+            for sent in &gifts {
+                let now = fights[index].now();
+                let landed = active[sent.to] && fights[sent.to].take_gift(now, sent);
+                if active[sent.to] {
+                    due.push(Reverse((fights[sent.to].next_time(), sent.to)));
+                }
+                let from = members[index].member.raid_index;
+                let to = members[sent.to].member.raid_index;
+                let entry = assignments
+                    .iter_mut()
+                    .find(|entry| entry.gift == sent.gift && entry.from == from && entry.to == to)
+                    .expect("a gift follows an assignment");
+                entry.casts += 1;
+                entry.landed += u64::from(landed);
+            }
         }
         let mut damage = 0.0;
         let mut healing = 0.0;
@@ -661,6 +756,8 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
             let (member_damage, member_healing) = fight.end_iteration(iteration, &mut runs[index]);
             states.clear();
             fight.drain_shared(&mut states);
+            gifts.clear();
+            fight.drain_gifts(&mut gifts);
             damage += member_damage;
             healing += member_healing;
             let party = &mut party_totals[members[index].member.party];
@@ -704,6 +801,8 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         parties,
         casters,
         cast_debuffs: Vec::new(),
+        assignments,
+        iterations,
         elapsed_ns,
     })
 }
@@ -737,6 +836,15 @@ impl RaidReport {
             parties.push(
                 json!({ "dps": distribution(dps)?, "hps": distribution(hps)?, "players": players }),
             );
+        }
+        // Go's raid log is every unit's: each member's first iteration, in raid order.
+        let logs: String = self
+            .members
+            .iter()
+            .filter_map(|member| member.report.result.get("logs").and_then(Value::as_str))
+            .collect();
+        if !logs.is_empty() {
+            result["logs"] = Value::String(logs);
         }
         result["raidMetrics"] = json!({
             "dps": distribution(&self.raid_dps)?,
@@ -799,6 +907,19 @@ impl RaidReport {
                             "live": false,
                         }),
                     ))
+                    .collect::<Vec<_>>(),
+                "assignments": self
+                    .assignments
+                    .iter()
+                    .map(|assignment| json!({
+                        "spell": assignment.spell(),
+                        "from": assignment.from,
+                        "to": assignment.to,
+                        "cast": assignment.casts > 0,
+                        "casts": assignment.casts,
+                        "landed": assignment.landed,
+                        "castsPerIteration": assignment.casts as f64 / f64::from(self.iterations),
+                    }))
                     .collect::<Vec<_>>(),
             },
         }))
