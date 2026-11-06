@@ -116,3 +116,21 @@ fn reference_rows_are_not_shadowed() {
     assert_eq!(worn["melee"]["main_hand"]["base_damage_min"], 1.0);
     assert_eq!(worn["melee"]["main_hand"]["swing_speed"], 1.9);
 }
+
+/// Red Defias Mask, a Rogue-only head (its tooltip's "Classes: Rogue" line is the row's class
+/// allowlist): 51 Armor. Four Combat Rogue sims on 6 November were refused on it.
+#[test]
+fn red_defias_mask_adds_its_armor() {
+    const RED_DEFIAS_MASK: i64 = 7997;
+    let mut value: Value = serde_json::from_slice(&request(0, 0, 0)).unwrap();
+    value["raid"]["parties"][0]["players"][0]["equipment"]["items"][0] = json!({});
+    let base = prepared(&serde_json::to_vec(&value).unwrap(), Rules::Forever);
+    value["raid"]["parties"][0]["players"][0]["equipment"]["items"][0] =
+        json!({ "id": RED_DEFIAS_MASK });
+    let masked = serde_json::to_vec(&value).unwrap();
+    assert_eq!(
+        armor(&prepared(&masked, Rules::Forever)) - armor(&base),
+        51.0
+    );
+    assert!(refusal(&masked, Rules::GoReference).contains("no item with id 7997"));
+}

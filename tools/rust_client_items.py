@@ -261,6 +261,8 @@ def parse_tooltip(response):
             pass
         elif line == "Unique":
             out["unique"] = True
+        elif match := re.fullmatch(r"Classes: (.+)", line):
+            out["classes"] = ["Class" + name.strip().replace(" ", "") for name in match.group(1).split(",")]
         elif re.fullmatch(r"Durability \d+ / \d+|Requires Level \d+", line):
             pass
         elif match := STAT_LINE.match(line):
@@ -336,6 +338,8 @@ def row_for(item_id, sparse, item, response):
     row["scaling_options"] = {"0": option}
     if parsed.get("unique"):
         row["unique"] = True
+    if parsed.get("classes"):
+        row["class_allowlist"] = parsed["classes"]
     return row
 
 
@@ -377,7 +381,7 @@ def build(tables, cache, report=None):
 
 ROW_KEYS = {
     "id", "name", "type", "armor_type", "weapon_type", "hand_type", "ranged_weapon_type",
-    "weapon_speed", "scaling_options", "unique",
+    "weapon_speed", "scaling_options", "unique", "class_allowlist",
 }  # fmt: skip
 
 
