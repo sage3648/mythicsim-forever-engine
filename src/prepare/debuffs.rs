@@ -23,7 +23,33 @@ pub(crate) fn apply_debuff_effects(
     debuffs: &Message,
     raid: &Message,
 ) -> Result<(), Refusal> {
+    // A raid's armor debuff a member casts: registered, but up only while the member's casts
+    // keep it up, so neither permanent nor ramped.
+    let live = env.raid_live;
+    let mut debuffs = debuffs.clone();
+    let mut held = Vec::new();
+    for (on, field, meta) in [
+        (
+            live.sunder_armor,
+            "sunder_armor",
+            &super::buffs::generated::SUNDER_ARMOR,
+        ),
+        (
+            live.expose_armor,
+            "expose_armor",
+            &super::buffs::generated::EXPOSE_ARMOR,
+        ),
+    ] {
+        if on && debuffs.bool(field) {
+            debuffs.set_bool(field, false);
+            held.push(meta);
+        }
+    }
+    let debuffs = &debuffs;
     super::buffs::apply_generated_debuffs(env, target, debuffs, raid)?;
+    for meta in held {
+        meta.aura(&mut env.sim, target, false, 0, 0.0);
+    }
     if debuffs.bool("judgement_of_the_crusader") {
         let aura = super::buffs::paladin::judgement_of_the_crusader_aura(
             &mut env.sim,

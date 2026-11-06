@@ -213,6 +213,10 @@ pub(crate) fn sunder_armor_effect(
     env: &Environment,
     unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
+    // A raid member's Sunder Armor stacks it instead (`RaidLive`).
+    if env.raid_live.sunder_armor {
+        return None;
+    }
     let target = env.encounter.targets[0];
     let label = "Sunder Armor (External)";
     let aura = env.sim.get_aura(target, label)?;
@@ -284,6 +288,95 @@ pub(crate) fn external_expose_armor_effect(env: &Environment) -> Option<Value> {
         "kind": "external_expose_armor", "aura": label,
         "delay_ns": EXTERNAL_EXPOSE_ARMOR_DELAY, "armor_before": armor_before,
     }))
+}
+
+/// The target's major armor category for a raid member whose raid casts Sunder Armor or Expose
+/// Armor (`RaidLive`), unless the class's own export already describes it: each member's aura and
+/// bid, a stacking member's bid per stack, and the target's armor at each of its stacks. Then a
+/// member's state on the target sets its armor as the member's own casts would.
+pub(crate) fn raid_armor_category(
+    env: &Environment,
+    effects: &[Value],
+    unrepresented: &mut Vec<String>,
+) -> Option<Value> {
+    if !env.raid_live.any() {
+        return None;
+    }
+    let target = env.encounter.targets[0];
+    let labels = ["Sunder Armor (External)", "Expose Armor (External)"];
+    let aura = labels
+        .iter()
+        .find_map(|label| env.sim.get_aura(target, label))?;
+    let effect = env.sim.aura(aura).exclusive_effects.first()?;
+    let category = env.sim.effects[effect.0].category;
+    let name = env.sim.categories[category.0].name.clone();
+    let described = effects.iter().any(|effect| {
+        effect["kind"] == "exclusive_category"
+            && effect["unit"] == "target"
+            && effect["category"] == name.as_str()
+    });
+    if described {
+        return None;
+    }
+    let mut exclusive = super::super::common_effects::exclusive_category_effect(
+        &env.sim,
+        target,
+        "target",
+        &name,
+        unrepresented,
+    )?;
+    let mut armor_by_stacks = vec![target_armor_with_stacks(env, labels[0], 0)];
+    let members = exclusive["members"].as_array().cloned().unwrap_or_default();
+    let mut with_bids = Vec::new();
+    for mut member in members {
+        let label = member["aura"].as_str().unwrap_or_default().to_string();
+        let max_stacks = env
+            .sim
+            .get_aura(target, &label)
+            .map_or(0, |aura| env.sim.aura(aura).max_stacks);
+        if max_stacks > 0 {
+            if armor_by_stacks.len() > 1 {
+                // Two stacking members would need a table each; the class's own export holds one.
+                with_bids.push(member);
+                continue;
+            }
+            for stacks in 1..=max_stacks {
+                armor_by_stacks.push(target_armor_with_stacks(env, &label, stacks));
+            }
+            member["per_stack"] = json!(stack_priority(env, &label, &name));
+        }
+        with_bids.push(member);
+    }
+    // A stronger debuff the request assumes from the pull, such as the raid's Expose Armor,
+    // keeps the members' stacks out of the category: the target's armor is the prepared one,
+    // as a Quick Sim's beside it.
+    if armor_by_stacks.iter().any(|armor| armor.is_nan()) {
+        return None;
+    }
+    exclusive["members"] = Value::Array(with_bids);
+    exclusive["armor_by_stacks"] = json!(armor_by_stacks);
+    Some(exclusive)
+}
+
+/// A stacking aura's bid in its category at one stack, from a separate reset simulation.
+fn stack_priority(env: &Environment, label: &str, category: &str) -> f64 {
+    let mut fresh = env.fresh();
+    let target = fresh.encounter.targets[0];
+    let Some(aura) = fresh.sim.get_aura(target, label) else {
+        return 0.0;
+    };
+    fresh.sim.activate(aura);
+    if !fresh.sim.aura(aura).active {
+        return 0.0;
+    }
+    fresh.sim.set_stacks(aura, 1);
+    for effect in &fresh.sim.aura(aura).exclusive_effects {
+        let effect = &fresh.sim.effects[effect.0];
+        if fresh.sim.categories[effect.category.0].name == category {
+            return effect.priority;
+        }
+    }
+    0.0
 }
 
 /// The target's armor with the named aura active at the given stacks, from a separate reset
