@@ -363,20 +363,30 @@ pub fn simulate_gated(prepared: &PreparedV2) -> Result<Gated, PreparedError> {
 /// Simulate an input that is valid and that the gate supports.
 fn run(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     let report = classes::run_prepared(prepared).map_err(PreparedError::Invalid)?;
-    let elapsed_ns = report.elapsed_ns;
-    let presentation = report.presentation.clone();
-    let extra_attack_strikes = report.extra_attack_strikes.clone();
-    Ok(PreparedReport {
-        engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
-        schema_version: SCHEMA_VERSION,
-        source_revision: SOURCE_REVISION.into(),
-        identity: EngineIdentity::current(),
-        scenario_id: prepared.scenario_id.clone(),
-        request_sha256: prepared.request_sha256.clone(),
-        elapsed_ns,
-        result: serde_json::to_value(&report)
-            .map_err(|err| PreparedError::Invalid(err.to_string()))?,
-        presentation,
-        extra_attack_strikes,
-    })
+    PreparedReport::of_fight(prepared, report)
+}
+
+impl PreparedReport {
+    /// The report of a prepared input's fight.
+    pub(crate) fn of_fight(
+        prepared: &PreparedV2,
+        report: crate::core::fight::FightReport,
+    ) -> Result<PreparedReport, PreparedError> {
+        let elapsed_ns = report.elapsed_ns;
+        let presentation = report.presentation.clone();
+        let extra_attack_strikes = report.extra_attack_strikes.clone();
+        Ok(PreparedReport {
+            engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
+            schema_version: SCHEMA_VERSION,
+            source_revision: SOURCE_REVISION.into(),
+            identity: EngineIdentity::current(),
+            scenario_id: prepared.scenario_id.clone(),
+            request_sha256: prepared.request_sha256.clone(),
+            elapsed_ns,
+            result: serde_json::to_value(&report)
+                .map_err(|err| PreparedError::Invalid(err.to_string()))?,
+            presentation,
+            extra_attack_strikes,
+        })
+    }
 }
