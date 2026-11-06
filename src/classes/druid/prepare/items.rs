@@ -164,7 +164,15 @@ impl Druid {
         }
         match item {
             8345 => {
-                // Wolfshead Helm: the bonus belongs to Shifting Power and Enrage.
+                // Wolfshead Helm: the bonus belongs to Shifting Power and Enrage. The live helm
+                // gives 5 Energy from Shifting Power (Wowhead Forever's tooltip of 8345 and its
+                // spell 17768: "an additional 5 Rage from activating Enrage and an additional 5
+                // Energy from activating Shifting Power"); the Go reference keeps 20.
+                let energy_gain = if sim.rules == Rules::Forever {
+                    5.0
+                } else {
+                    20.0
+                };
                 let gain = Rc::clone(&self.st);
                 let expire = Rc::clone(&self.st);
                 let aura = sim.register_aura(
@@ -174,13 +182,13 @@ impl Druid {
                         action_id: Some(ActionId::spell(17768)),
                         on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
                             let energy = gain.wolfshead_shifting_power_energy;
-                            sim.set_state(energy, sim.state(energy) + 20.0);
+                            sim.set_state(energy, sim.state(energy) + energy_gain);
                             let rage = gain.wolfshead_enrage_rage;
                             sim.set_state(rage, sim.state(rage) + 5.0);
                         })),
                         on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
                             let energy = expire.wolfshead_shifting_power_energy;
-                            sim.set_state(energy, sim.state(energy) - 20.0);
+                            sim.set_state(energy, sim.state(energy) - energy_gain);
                             let rage = expire.wolfshead_enrage_rage;
                             sim.set_state(rage, sim.state(rage) - 5.0);
                         })),
