@@ -530,6 +530,8 @@ pub fn prepare(members: Vec<Member>, rules: Rules) -> Result<Vec<PreparedMember>
 pub struct MemberReport {
     pub member: Member,
     pub report: PreparedReport,
+    /// Whether a target swings at the member: it tanks.
+    pub tanking: bool,
 }
 
 /// A raid's result.
@@ -688,9 +690,11 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         if rotation_stats {
             report.add_rotation_stats();
         }
+        let tanking = member.prepared.enemy.is_some();
         reports.push(MemberReport {
             member: member.member,
             report,
+            tanking,
         });
     }
     Ok(RaidReport {
@@ -762,7 +766,7 @@ impl RaidReport {
                     "dps": read("/dps/avg"),
                     "dpsStdev": read("/dps/stdev"),
                     "hps": read("/hps/avg"),
-                    "tanking": read("/dtps/avg") > 0.0,
+                    "tanking": member.tanking,
                     "avgIterationDuration": member.report.result["avgIterationDuration"],
                     "scenarioId": member.report.scenario_id,
                 })
