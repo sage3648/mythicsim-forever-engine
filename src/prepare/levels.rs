@@ -488,6 +488,21 @@ pub(crate) fn is_unlearned(spell_id: i32) -> bool {
     })
 }
 
+/// Whether the character has trained an unranked spell such as a conjure: in its spellbook, or
+/// without one at or below its level. Every spell is known at level 60.
+pub(crate) fn knows_spell(spell_id: i32) -> bool {
+    CURRENT.with(|current| {
+        let character = current.borrow();
+        if character.level == MAX_LEVEL {
+            return true;
+        }
+        if let Some(book) = &character.known_spells {
+            return book.contains(&spell_id);
+        }
+        i32::from(crate::prepare::spelldata::find(spell_id).spell_level) <= character.level
+    })
+}
+
 /// Whether the character knows this rank: in its spellbook, or without one at or below its
 /// level. A spellbook that lists no rank of the spell says nothing about it (a talent or a
 /// triggered row), and the level decides.

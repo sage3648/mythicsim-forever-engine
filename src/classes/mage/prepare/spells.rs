@@ -616,12 +616,18 @@ impl Mage {
     /// rules is also the Demonic Rune's and the healthstones' (category 1153).
     fn register_mana_gems(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
-        let gems: [(i32, &Row); 4] = [
-            (5514, data.conjure_mana_agate_triggered.highest()),
-            (5513, data.conjure_mana_jade_triggered.highest()),
-            (8007, data.conjure_mana_citrine_triggered.highest()),
-            (8008, data.conjure_mana_ruby_triggered.highest()),
-        ];
+        // A levelling mage carries only the gems it can conjure (prepare::levels): Conjure Mana
+        // Agate (759) at 28, Jade (3552) at 38, Citrine (10053) at 48, Ruby (10054) at 58.
+        let gems: Vec<(i32, &Row)> = [
+            (5514, 759, data.conjure_mana_agate_triggered.highest()),
+            (5513, 3552, data.conjure_mana_jade_triggered.highest()),
+            (8007, 10053, data.conjure_mana_citrine_triggered.highest()),
+            (8008, 10054, data.conjure_mana_ruby_triggered.highest()),
+        ]
+        .into_iter()
+        .filter(|(_, conjure, _)| crate::prepare::levels::knows_spell(*conjure))
+        .map(|(item, _, row)| (item, row))
+        .collect();
 
         // Go clears the used flags on reset; preparation reads none of them.
         sim.register_reset_effect(unit, Rc::new(|_: &mut Sim| {}));
