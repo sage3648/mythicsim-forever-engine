@@ -17,6 +17,13 @@ comes from the milestone, order from the priority label and "after #N" from the 
 text, using `<...>` for the parts that vary, so the board stops listing that refusal as a gap
 without an issue. `python3 tools/board.py check` reports when the board is out of date.
 
+## Rotations
+
+The rotation presets live in [`presets/`](presets/README.md), mirrored from MythicSim. A pull
+request that edits a preset is welcome: say what changed and include a sim or a log that shows
+it doing better. Adopted changes are A/B tested on the reference builds, go into MythicSim, and
+return here with the next mirror.
+
 ## Code ownership and dependencies
 
 Solid arrows mean "calls or uses". The dotted arrow shows integration coverage.

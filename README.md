@@ -29,6 +29,13 @@ cargo run --locked --release -- sim --infile fixtures/mage/prepared-v2/frost-ref
 and prints the same JSON result that Go prints. You do not need Go to build or test
 the engine.
 
+## Rotation presets
+
+The default rotation of every spec MythicSim sims, and the other playstyles it offers, are in
+[`presets/`](presets/README.md), one APL JSON file per rotation with an index by spec. They are a
+mirror of the presets MythicSim runs; to propose a better rotation, open a pull request against
+the file there.
+
 ## How it works
 
 1. Rust prepares the character from the application's request: gear, stats, auras,
