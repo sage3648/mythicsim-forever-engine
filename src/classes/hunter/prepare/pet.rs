@@ -4,7 +4,8 @@
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::{AutoAttackOptions, Weapon};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
+use crate::prepare::levels::character_level;
 use crate::prepare::parse_effects::{parse_effects, ParseOptions};
 use crate::prepare::pet::PetConfig;
 use crate::prepare::sim::{
@@ -529,7 +530,7 @@ fn new_dust_cloud(sim: &mut Sim, pet: UnitId) -> SpellId {
             aura,
             rank,
             ParseOptions {
-                level: CHARACTER_LEVEL,
+                level: character_level(),
                 ignore_stacks: true,
                 exclusive: Some(("DustCloud".to_string(), true)),
                 ..ParseOptions::default()
@@ -629,7 +630,7 @@ fn new_furious_howl(sim: &mut Sim, pet: UnitId) -> SpellId {
             aura,
             rank,
             ParseOptions {
-                level: CHARACTER_LEVEL,
+                level: character_level(),
                 ..ParseOptions::default()
             },
         );

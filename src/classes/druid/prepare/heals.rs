@@ -8,12 +8,12 @@
 //! channel, and Nature's Swiftness makes the next Healing Touch or Regrowth instant.
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::heals::{
     apply_heal_talent, heal_talent_mod, register_channel_heal, register_heal, ChannelHeal,
     HealShape,
 };
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, EventCallbacks, Rules, Sim, NEVER_EXPIRES, SECOND,
 };
@@ -128,7 +128,7 @@ impl Druid {
                     row,
                     ChannelHeal {
                         direct: None,
-                        tick: tick.average(CHARACTER_LEVEL),
+                        tick: tick.average(character_level()),
                         tick_coefficient: tick.coeff(),
                         ticks: (row.duration() / period.max(1)) as i32,
                         period,

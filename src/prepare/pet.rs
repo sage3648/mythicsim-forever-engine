@@ -101,7 +101,7 @@ impl Sim {
         let label = format!("{} - {}", self.unit(owner).label, config.name);
         let mut unit = super::sim::Unit::new(UnitType::Pet, label);
         unit.index = pet_index;
-        unit.level = super::character::constants::CHARACTER_LEVEL;
+        unit.level = super::levels::character_level();
         unit.reaction_time = self.unit(owner).reaction_time;
         unit.start_distance_from_target = distance;
         unit.distance_from_target = distance;

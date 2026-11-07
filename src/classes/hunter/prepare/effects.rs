@@ -6,10 +6,11 @@ use serde_json::{json, Value};
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::{Message, Value as RequestValue};
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
 use crate::prepare::dbcenums;
 use crate::prepare::export::action_id;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::parse_effects::{dry_run, ParseOptions};
 use crate::prepare::sim::{Sim, SpellId, UnitId, UnitType, MILLISECOND, NEVER_EXPIRES};
 use crate::prepare::spell::{school, DefenseType, ProcMask};
@@ -59,7 +60,7 @@ fn active_target_count(sim: &Sim) -> usize {
 /// Go `hunterPetRowStrike`: the effect's roll as a hit's range, no draw without a variance.
 fn pet_row_strike(id: i32, row: &Row, outcome: &str) -> Value {
     let effect = row.damage_effect();
-    let average = effect.average(CHARACTER_LEVEL);
+    let average = effect.average(character_level());
     json!({
         "kind": "hunter_pet_strike", "spell_id": id, "outcome": outcome,
         "draws": effect.variance != 0.0,
@@ -90,21 +91,21 @@ impl Hunter {
         if let Some(spell) = self.aimed_shot {
             effects.push(json!({
                 "kind": "aimed_shot", "spell_id": spell_id_of(sim, spell),
-                "flat_bonus": row(data.aimed_shot.highest()).damage_effect().average(CHARACTER_LEVEL),
+                "flat_bonus": row(data.aimed_shot.highest()).damage_effect().average(character_level()),
             }));
         }
         // arcane_shot.go: the rank's flat damage plus a share of ranged attack power.
         if let Some(spell) = self.arcane_shot {
             effects.push(json!({
                 "kind": "arcane_shot", "spell_id": spell_id_of(sim, spell),
-                "base_damage": row(data.arcane_shot.highest()).damage_effect().average(CHARACTER_LEVEL),
+                "base_damage": row(data.arcane_shot.highest()).damage_effect().average(character_level()),
                 "rap_coefficient": arcane_shot_rap_coefficient(sim.rules),
             }));
         }
         if let Some(spell) = self.sniper_shot {
             effects.push(json!({
                 "kind": "sniper_shot", "spell_id": spell_id_of(sim, spell),
-                "flat_bonus": row(data.sniper_shot.highest()).damage_effect().average(CHARACTER_LEVEL),
+                "flat_bonus": row(data.sniper_shot.highest()).damage_effect().average(character_level()),
             }));
         }
         // multi_shot.go: one normalized shot per target, at most three.
@@ -117,7 +118,7 @@ impl Hunter {
             let rank = row(data.serpent_sting.highest_for(sim.rules));
             effects.push(json!({
                 "kind": "serpent_sting", "spell_id": spell_id_of(sim, spell),
-                "tick_base": rank.periodic_effect().average(CHARACTER_LEVEL),
+                "tick_base": rank.periodic_effect().average(character_level()),
                 "attack_power_share": serpent_sting_rap_per_tick(sim.rules),
                 "tick_outcome": tick_outcome(rank),
             }));
@@ -137,7 +138,7 @@ impl Hunter {
                 effect["haste_multiplier"] = json!(
                     1.0 + quick_shots
                         .effect(dbcenums::A_MOD_RANGED_HASTE, 0)
-                        .average(CHARACTER_LEVEL)
+                        .average(character_level())
                         / 100.0
                 );
                 effect["proc_chance"] =
@@ -152,7 +153,7 @@ impl Hunter {
                 "kind": "rapid_fire", "spell_id": spell_id_of(sim, spell),
                 "aura": sim.aura(aura).label,
                 "haste_multiplier": 1.0
-                    + rank.effect(dbcenums::A_MOD_RANGED_HASTE, 0).average(CHARACTER_LEVEL) / 100.0,
+                    + rank.effect(dbcenums::A_MOD_RANGED_HASTE, 0).average(character_level()) / 100.0,
             }));
         }
         // summon_hawk.go: a dive bomb on its rank's base plus a share of ranged attack power,
@@ -174,7 +175,7 @@ impl Hunter {
             // A wrong count is named by `export_notes`.
             effects.push(json!({
                 "kind": "summon_hawk", "spell_id": rank.id,
-                "base_damage": rank.damage_effect().average(CHARACTER_LEVEL),
+                "base_damage": rank.damage_effect().average(character_level()),
                 "attack_power_share": SUMMON_HAWK_RAP_SHARE, "swing_share": SUMMON_HAWK_SWING_SHARE,
                 "always_hits": rank.always_hits(), "hawk_spells": hawks,
                 "hawk_duration_ns": data.summon_hawk_triggered.by_id(1293248).duration(),
@@ -277,7 +278,7 @@ impl Hunter {
                 let damage = swipe.damage_effect();
                 effect["cleave"] = json!({
                     "max_targets": i32::from(damage.chain_targets),
-                    "average": damage.average(CHARACTER_LEVEL), "variance": damage.variance,
+                    "average": damage.average(character_level()), "variance": damage.variance,
                 });
             }
             return Some(effect);
@@ -309,7 +310,7 @@ impl Hunter {
                 }
                 return Some(json!({
                     "kind": "hunter_pet_bleed", "spell_id": id, "hit": hit, "tick_outcome": tick,
-                    "tick_base": row.periodic_effect().average(CHARACTER_LEVEL),
+                    "tick_base": row.periodic_effect().average(character_level()),
                 }));
             }
         }
@@ -468,7 +469,7 @@ impl Hunter {
                 effect["haste_multiplier"] = json!(
                     1.0 + rank
                         .effect(dbcenums::A_MOD_MELEE_HASTE_3, 0)
-                        .average(CHARACTER_LEVEL)
+                        .average(character_level())
                         / 100.0
                 );
                 effect["proc_chance"] =
@@ -485,7 +486,7 @@ impl Hunter {
             effects.push(json!({
                 "kind": "raptor_strike", "spell_id": spell_id_of(sim, spell),
                 "queue_aura": sim.aura(queue).label,
-                "base_damage": data.raptor_strike.highest().damage_effect().average(CHARACTER_LEVEL),
+                "base_damage": data.raptor_strike.highest().damage_effect().average(character_level()),
                 "melee_range": MAX_MELEE_RANGE,
             }));
         }
@@ -495,7 +496,7 @@ impl Hunter {
             let mut effect = json!({
                 "kind": "mongoose_bite", "spell_id": spell_id_of(sim, spell),
                 "aura": sim.aura(defensive_state).label,
-                "base_damage": data.mongoose_bite.highest().damage_effect().average(CHARACTER_LEVEL),
+                "base_damage": data.mongoose_bite.highest().damage_effect().average(character_level()),
             });
             if self.lacerating_strikes.is_some() {
                 effect["lacerating_share"] = json!(0.4);
@@ -516,7 +517,7 @@ impl Hunter {
         if let Some(spell) = self.wing_clip {
             effects.push(json!({
                 "kind": "wing_clip", "spell_id": spell_id_of(sim, spell),
-                "base_damage": data.wing_clip.highest().effect_n(2).average(CHARACTER_LEVEL),
+                "base_damage": data.wing_clip.highest().effect_n(2).average(character_level()),
             }));
         }
         // traps.go: Freezing Trap deals nothing. Go's exporter has no effect for it, so only
@@ -533,7 +534,7 @@ impl Hunter {
             let effect = data.immolation_trap_triggered.rank(rank.rank_number());
             effects.push(json!({
                 "kind": "immolation_trap", "spell_id": spell_id_of(sim, spell),
-                "tick_base": effect.periodic_effect().average(CHARACTER_LEVEL),
+                "tick_base": effect.periodic_effect().average(character_level()),
                 // traps.go trapAttackPowerShare (patch 147), split over the burn's ticks.
                 "attack_power_share": TRAP_ATTACK_POWER_SHARE,
                 // spelldata TickOutcomeHitRolled: a crit where the effect row states Periodic Can
@@ -560,7 +561,7 @@ impl Hunter {
                 "attack_power_share": TRAP_ATTACK_POWER_SHARE,
                 "hits": active_target_count(sim),
                 "aoe_cap_multiplier": aoe_cap_multiplier(active_target_count(sim)),
-                "tick_base": effect.effect(dbcenums::A_PERIODIC_DAMAGE, 0).average(CHARACTER_LEVEL),
+                "tick_base": effect.effect(dbcenums::A_PERIODIC_DAMAGE, 0).average(character_level()),
                 "tick_can_crit": effect.periodic_can_crit(),
                 "tick_magic": sim.spell(spell).defense_type == DefenseType::Magic,
             }));
@@ -599,7 +600,7 @@ impl Hunter {
                 "aura": sim.aura(aura).label,
                 "proc_chance": 0.5 * f64::from(self.t("resourcefulness")),
                 "regen": buff.effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0)
-                    .average(CHARACTER_LEVEL) / 100.0,
+                    .average(character_level()) / 100.0,
                 // 16 October 2026 beta notes: only melee and ranged ability crits.
                 "spells": special_spells,
             }));

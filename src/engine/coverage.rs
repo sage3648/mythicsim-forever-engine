@@ -2103,11 +2103,8 @@ pub(crate) fn prepared_coverage(
             format!("class {} is not supported", player.class),
         )];
     };
-    if player.level != 60 {
-        reasons.push(Refusal::new(
-            "level_unsupported",
-            format!("player level {} is not supported", player.level),
-        ));
+    if let Some(reason) = crate::prepare::levels::level_refusal(&player.class, player.level, true) {
+        reasons.push(Refusal::new("level_unsupported", reason));
     }
     // The exporter writes the count only for a fight against several targets.
     let targets = prepared.encounter.target_count as usize;
@@ -2120,7 +2117,7 @@ pub(crate) fn prepared_coverage(
             ),
         ));
     }
-    if !(60..=63).contains(&prepared.target.level) {
+    if !crate::prepare::levels::target_levels(player.level).contains(&prepared.target.level) {
         reasons.push(Refusal::new(
             "level_unsupported",
             format!("target level {} is not supported", prepared.target.level),

@@ -48,6 +48,7 @@ pub(crate) mod item_test_support;
 pub(crate) mod itemhelpers;
 pub(crate) mod items;
 pub(crate) mod items_registry;
+pub(crate) mod levels;
 pub(crate) mod major_cooldown;
 pub(crate) mod mp5_sources;
 pub(crate) mod oil_of_immolation;
@@ -152,10 +153,117 @@ pub fn prepare_json_with(
             request = known;
         }
     }
-    let mut env =
-        env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
-            .map_err(PrepareError::Refused)?;
-    export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+    let mut character = levels::Character::from_request(request.message());
+    if let Some(reason) = levels::level_refusal(
+        &first_player_class(request.message()),
+        character.level,
+        character.sheet.is_some(),
+    ) {
+        return Err(PrepareError::Refused(Refusal::new(
+            "level_unsupported",
+            reason,
+        )));
+    }
+    if character.level != levels::MAX_LEVEL {
+        if let Some(sheet) = character.sheet.clone() {
+            character.calibration = calibrate_level(bytes, &character, &sheet, scenario, rules)?;
+        }
+    }
+    levels::with_character(character, || {
+        let mut env =
+            env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
+                .map_err(PrepareError::Refused)?;
+        export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+    })
+}
+
+/// A levelling character's calibration ([`levels::calibrate`]): the request prepared once with
+/// no buffs or consumables, its player's stats read against the sheet.
+fn calibrate_level(
+    bytes: &[u8],
+    character: &levels::Character,
+    sheet: &levels::Sheet,
+    scenario: &str,
+    rules: Rules,
+) -> Result<levels::Calibration, PrepareError> {
+    let mut value: serde_json::Value =
+        serde_json::from_slice(bytes).map_err(|err| PrepareError::Invalid(err.to_string()))?;
+    without_buffs(&mut value);
+    let bare = serde_json::to_vec(&value).map_err(|err| PrepareError::Fault(err.to_string()))?;
+    let mut request = Request::from_json(&bare).map_err(PrepareError::Invalid)?;
+    if rules == Rules::Forever {
+        if let Some(known) = known_ranks(&bare)? {
+            request = known;
+        }
+    }
+    let digest = request.sha256();
+    let prepared = levels::with_character(character.clone(), || {
+        let mut env =
+            env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
+                .map_err(PrepareError::Refused)?;
+        export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+    })?;
+    let player = &prepared["player"];
+    let stats_of = |value: &serde_json::Value| {
+        let mut stats = stats::Stats::default();
+        for stat in stats::Stat::ALL {
+            stats[stat] = value[stat.name()].as_f64().unwrap_or(0.0);
+        }
+        stats
+    };
+    let engine = stats_of(&player["stats"]);
+    let class = player["class"].as_str().unwrap_or_default();
+    let race = player["race"].as_str().unwrap_or_default();
+    let used = levels::with_character(character.clone(), || character::base_stats(class, race))
+        .unwrap_or_default();
+    let tables = crate::data::tables::tables();
+    let k_agi = tables
+        .crit_per_agi_max_level
+        .get(class)
+        .copied()
+        .unwrap_or(0.0);
+    let k_int = tables
+        .crit_per_int_max_level
+        .get(class)
+        .copied()
+        .unwrap_or(0.0);
+    Ok(levels::calibrate(sheet, &engine, &used, k_agi, k_int))
+}
+
+/// The class of the request's first player, as the schema names it (`ClassMage`).
+fn first_player_class(request: &crate::contracts::request::Message) -> String {
+    request
+        .message("raid")
+        .and_then(|raid| raid.messages("parties").first().copied())
+        .and_then(|party| party.messages("players").first().copied())
+        .map(|player| player.enum_name("class"))
+        .unwrap_or_default()
+}
+
+/// The request with no raid, party or player buffs, no debuffs and no consumables, the way a
+/// character sheet reads with nothing up.
+fn without_buffs(request: &mut serde_json::Value) {
+    fn clear(object: &mut serde_json::Value, keys: &[&str]) {
+        if let Some(map) = object.as_object_mut() {
+            for key in keys {
+                map.remove(*key);
+            }
+        }
+    }
+    let Some(raid) = request.get_mut("raid") else {
+        return;
+    };
+    clear(raid, &["buffs", "debuffs"]);
+    if let Some(parties) = raid.get_mut("parties").and_then(|p| p.as_array_mut()) {
+        for party in parties {
+            clear(party, &["buffs"]);
+            if let Some(players) = party.get_mut("players").and_then(|p| p.as_array_mut()) {
+                for player in players {
+                    clear(player, &["buffs", "consumables", "consumes"]);
+                }
+            }
+        }
+    }
 }
 
 /// The request with every Ahn'Qiraj 20 book rank it names read as the rank below, which is what

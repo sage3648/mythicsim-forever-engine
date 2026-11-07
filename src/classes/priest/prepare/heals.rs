@@ -19,11 +19,11 @@
 
 use crate::contracts::prepared_v2::{ActionId, CritAbsorb, LitanyOfLight, RenewedHope, SmartHeal};
 use crate::core::time::NS_PER_SECOND;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::heals::{
     apply_heal_talent, register_channel_heal, register_heal, register_heal_from, talent_rank,
     ChannelHeal, HealShape,
 };
+use crate::prepare::levels::character_level;
 use crate::prepare::party_damage;
 use crate::prepare::sim::{Duration, Rules, Sim, UnitId, MILLISECOND};
 use crate::prepare::spell::{ProcMask, SpellConfig, SpellFlag};
@@ -180,7 +180,7 @@ impl Priest {
             for &id in PENANCE {
                 let row = must_find(id);
                 let bolt = row.refs()[1].heal_effect();
-                let amount = bolt.average(CHARACTER_LEVEL);
+                let amount = bolt.average(character_level());
                 let mut rank = register_channel_heal(
                     sim,
                     unit,

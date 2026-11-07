@@ -210,8 +210,7 @@ impl Druid {
                 },
                 threat_multiplier: 1.0,
                 // Two threat a level, the sim's long-standing value; the client states none.
-                flat_threat_bonus: 2.0
-                    * f64::from(crate::prepare::character::constants::CHARACTER_LEVEL),
+                flat_threat_bonus: 2.0 * f64::from(crate::prepare::levels::character_level()),
                 max_range: f64::from(rank.max_range),
                 related_aura_arrays: aura_array_to_map(sim, &auras),
                 ..SpellConfig::default()

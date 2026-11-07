@@ -6,13 +6,14 @@ use std::rc::Rc;
 use crate::classes::druid::forms::{ANY, BEAR, CAT};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums::{
     A_ADD_FLAT_MODIFIER, A_ADD_PCT_MODIFIER, A_MOD_DECREASE_SPEED, A_MOD_DODGE_PERCENT,
     SPELLMOD_COOLDOWN, SPELLMOD_CRIT_DAMAGE_BONUS, SPELLMOD_DAMAGE,
 };
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::major_cooldown::COOLDOWN_PRIORITY_DEFAULT;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, EventCallbacks, Rules, Sim, MILLISECOND, NEVER_EXPIRES, SECOND,
@@ -404,7 +405,8 @@ impl Druid {
             / crate::prepare::character::constants::DEFENSE_RATING_PER_DEFENSE_LEVEL;
         // talents_feral_combat.go 60 is one fused multiply-add: the level product is rounded
         // and the defense product is added exactly.
-        let mut armor = per_defense.mul_add(defense_skill, per_level * f64::from(CHARACTER_LEVEL));
+        let mut armor =
+            per_defense.mul_add(defense_skill, per_level * f64::from(character_level()));
         if self.st.starting_form & BEAR != 0 {
             armor *= super::forms::BASE_BEAR_ARMOR_MULTI;
         }

@@ -317,7 +317,7 @@ impl Meta {
 
 /// Go `amount`: the caster's amount at the character level.
 fn amount(effect: &Effect) -> f64 {
-    effect.average(super::character::constants::CHARACTER_LEVEL)
+    effect.average(super::levels::character_level())
 }
 
 /// Go `auraDuration`.

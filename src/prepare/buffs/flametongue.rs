@@ -45,7 +45,7 @@ pub(crate) const WINDFURY_WEAPON_MAIN_HAND_STRIKE: i32 = 439440;
 fn flametongue_totem_value() -> f64 {
     must_find(FLAMETONGUE_TOTEM_PROC)
         .effect_n(1)
-        .average(super::super::character::constants::CHARACTER_LEVEL)
+        .average(super::super::levels::character_level())
 }
 
 /// Go `FlametongueTotemBaseDamage`: what a hit adds under a main-hand weapon of this swing

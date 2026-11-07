@@ -7,9 +7,8 @@ use std::rc::Rc;
 use crate::classes::druid::forms::{ANY, BEAR, CAT, HUMANOID, MOONKIN};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
-use crate::prepare::character::constants::{
-    CHARACTER_LEVEL, DEFAULT_ATTACK_POWER_PER_DPS, MAX_MELEE_RANGE,
-};
+use crate::prepare::character::constants::{DEFAULT_ATTACK_POWER_PER_DPS, MAX_MELEE_RANGE};
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, AuraId, BuildPhase, PowerBar, Sim, SpellId, StateSlot, TimeSlot, UnitId,
     MILLISECOND, NEVER_EXPIRES,
@@ -206,8 +205,8 @@ impl Druid {
     /// Go `druid.formShiftStats`.
     fn form_shift_stats(&self) -> Stats {
         let mut stats = Stats::default();
-        stats[Stat::AttackPower] =
-            predatory_strikes_ap_per_level(self.tal.predatory_strikes) * f64::from(CHARACTER_LEVEL);
+        stats[Stat::AttackPower] = predatory_strikes_ap_per_level(self.tal.predatory_strikes)
+            * f64::from(character_level());
         stats[Stat::PhysicalCritPercent] = sharpened_claws_crit_percent(self.tal.sharpened_claws);
         stats[Stat::SpellCritPercent] = sharpened_claws_crit_percent(self.tal.sharpened_claws);
         stats
@@ -232,7 +231,7 @@ impl Druid {
         let st = Rc::clone(&self.st);
         let mut stat_bonus = self.form_shift_stats();
         let mut extra = Stats::default();
-        extra[Stat::AttackPower] = 2.0 * f64::from(CHARACTER_LEVEL);
+        extra[Stat::AttackPower] = 2.0 * f64::from(character_level());
         stat_bonus = stat_bonus.add(&extra);
 
         // In Cat Form each point of Agility gives 1 AP, and Feral Attack Power converts 1:1.
@@ -389,7 +388,7 @@ impl Druid {
         let st = Rc::clone(&self.st);
         // Dire Bear Form: 180 attack power at level 60 and 1240 health, both flat.
         let mut extra = Stats::default();
-        extra[Stat::AttackPower] = 3.0 * f64::from(CHARACTER_LEVEL);
+        extra[Stat::AttackPower] = 3.0 * f64::from(character_level());
         extra[Stat::Health] = 1240.0;
         let stat_bonus = self.form_shift_stats().add(&extra);
 

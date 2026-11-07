@@ -7,10 +7,11 @@ use crate::classes::druid::forms::{ANY, BEAR};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::PseudoStatField;
 use crate::prepare::buffs::generated::DEMORALIZING_ROAR;
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums::A_MOD_DAMAGE_PERCENT_TAKEN;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::major_cooldown::COOLDOWN_PRIORITY_DEFAULT;
 use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Rules, Sim, MILLISECOND};
 use crate::prepare::spell::{
@@ -161,7 +162,7 @@ impl Druid {
                 cast: gcd_cast(rank),
                 threat_multiplier: 1.0,
                 // Two threat a level, the sim's long-standing value; the client states none.
-                flat_threat_bonus: 2.0 * f64::from(CHARACTER_LEVEL),
+                flat_threat_bonus: 2.0 * f64::from(character_level()),
                 related_aura_arrays: aura_array_to_map(sim, &auras),
                 ..SpellConfig::default()
             },

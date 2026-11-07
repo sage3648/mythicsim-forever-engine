@@ -1,6 +1,6 @@
 //! Go `sim/warlock/armors.go`.
 
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Sim, UnitId, NEVER_EXPIRES};
 use crate::prepare::stats::Stat;
 
@@ -18,8 +18,8 @@ impl Warlock {
             .demonic_aegis
             .multiplier_at(self.talents.i32("demonic_aegis"));
 
-        let armor_bonus = rank.effect_n(1).average(CHARACTER_LEVEL) * aegis;
-        let shadow_res_bonus = rank.effect_n(2).average(CHARACTER_LEVEL) * aegis;
+        let armor_bonus = rank.effect_n(1).average(character_level()) * aegis;
+        let shadow_res_bonus = rank.effect_n(2).average(character_level()) * aegis;
 
         let aura = sim.register_aura(
             unit,

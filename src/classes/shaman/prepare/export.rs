@@ -13,12 +13,12 @@ use crate::prepare::buffs::flametongue::{
     flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
     WINDFURY_WEAPON_MAIN_HAND_STRIKE,
 };
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::{action_id_string, flat_string};
 use crate::prepare::consumable_effects::proc_trigger_spells;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export_items::{dpm_chances, outcome_names};
+use crate::prepare::levels::character_level;
 use crate::prepare::resolve_proc::{chance, proc_trigger};
 use crate::prepare::sim::{Duration, Rules, Sim, SpellId, MILLISECOND, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask, SpellFlag};
@@ -124,7 +124,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
     if effect.is_nil() {
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// The positions of the spellbook entries with this exact action.
@@ -182,7 +182,7 @@ impl Shaman {
         let tick = flame_shock.periodic_effect();
         effects.push(json!({
             "kind": "flame_shock", "spell_id": flame_shock.id,
-            "tick_base": tick.average(CHARACTER_LEVEL),
+            "tick_base": tick.average(character_level()),
             "tick_can_crit": flame_shock.periodic_can_crit()
                 && flame_shock.defense_type_core() == DefenseType::Magic,
         }));
@@ -200,7 +200,7 @@ impl Shaman {
         let nova = data.fire_nova_triggered.by_id(408428);
         let mut fire_nova = json!({
             "kind": "fire_nova", "spell_id": data.fire_nova.highest().id,
-            "base_damage": nova.damage_effect().average(CHARACTER_LEVEL),
+            "base_damage": nova.damage_effect().average(character_level()),
         });
         // Forever's rules: "enemies within 10 yd of your active Fire totem" (408341's tooltip).
         // The reference hits every target.
@@ -213,7 +213,7 @@ impl Shaman {
         let searing_attack = data.searing_totem_triggered.highest();
         let mut searing_totem = json!({
             "kind": "searing_totem", "spell_id": searing.id, "attack_spell_id": searing_attack.id,
-            "attack_damage": searing_attack.damage_effect().average(CHARACTER_LEVEL),
+            "attack_damage": searing_attack.damage_effect().average(character_level()),
             "magma_totem_aura": "Magma Totem", "flametongue_totem_aura": "Flametongue Totem (Self)",
             "duration_ns": nanos(searing.duration()),
         });
@@ -315,7 +315,7 @@ impl Shaman {
                 data.rockbiter_weapon_triggered
                     .highest()
                     .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     * (1.0
                         + data
                             .elemental_weapons
@@ -423,7 +423,7 @@ impl Shaman {
         let pulse = data.magma_totem_triggered.by_id(10581);
         let mut magma_totem = json!({
             "kind": "magma_totem", "spell_id": magma.id,
-            "pulse_damage": pulse.damage_effect().average(CHARACTER_LEVEL),
+            "pulse_damage": pulse.damage_effect().average(character_level()),
             // Trial by Fire (client 70425) lengthens it.
             "duration_ns": nanos(magma.duration() + super::spells::magma_totem_bonus(self.talent("trial_by_fire"))),
         });
@@ -545,7 +545,7 @@ impl Shaman {
                         && spend.require_damage_dealt =>
                 {
                     let buff = data.windfury_totem_triggered.by_id(10610);
-                    let value = buff.effect_n(1).average(CHARACTER_LEVEL);
+                    let value = buff.effect_n(1).average(character_level());
                     let bonus = Stats::from_pairs(&[(Stat::AttackPower, value)]);
                     let proc_id = sim.aura(proc_aura).action_id.clone().unwrap_or_default();
                     let white = ProcTrigger {
@@ -684,7 +684,7 @@ impl Shaman {
             let speed = weapon.swing_speed.clamp(1.3, 4.0);
             flametongue.push(json!({
                 "trigger_aura": label, "spell": hit, "deals_damage": weapon.swing_speed != 0.0,
-                "base_damage": speed * imbue_hit.effect_n(1).average(CHARACTER_LEVEL) / 100.0,
+                "base_damage": speed * imbue_hit.effect_n(1).average(character_level()) / 100.0,
                 "trigger_spells": proc_trigger_spells(env, &ProcTrigger {
                     proc_mask: mask,
                     is_weapon_proc: true,
@@ -752,7 +752,7 @@ impl Shaman {
                 let row = data.frostbrand_weapon_triggered.highest();
                 effects.push(json!({
                     "kind": "frostbrand_weapon", "trigger_aura": trigger.label, "spell_id": row.id,
-                    "base_damage": row.damage_effect().average(CHARACTER_LEVEL),
+                    "base_damage": row.damage_effect().average(character_level()),
                     "chances": dpm_chances(env, &dpm, |spell| {
                         !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
                     }),

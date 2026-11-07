@@ -7,10 +7,10 @@ use std::rc::Rc;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::flametongue::disable_flametongue_totem;
 use crate::prepare::buffs::generated::WINDFURY_TOTEM;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::item_swap::{ManagerChance, ManagerMask, SwapCallback, WEAPON_SLOTS};
 use crate::prepare::items::slot;
+use crate::prepare::levels::character_level;
 use crate::prepare::shared_items::current_proc_mask_for;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId, MILLISECOND, NEVER_EXPIRES};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
@@ -406,7 +406,7 @@ impl Shaman {
         let imbue = data.rockbiter_weapon_triggered.highest();
         let attack_power = imbue
             .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             * (1.0
                 + data
                     .elemental_weapons

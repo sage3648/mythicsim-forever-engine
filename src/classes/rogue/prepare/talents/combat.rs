@@ -4,12 +4,12 @@ use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::constants::{
-    CHARACTER_LEVEL, DODGE_RATING_PER_DODGE_PERCENT, MAX_MELEE_RANGE,
-    PARRY_RATING_PER_PARRY_PERCENT,
+    DODGE_RATING_PER_DODGE_PERCENT, MAX_MELEE_RANGE, PARRY_RATING_PER_PARRY_PERCENT,
 };
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Cooldown, EventCallbacks, Rules, Sim, UnitId};
 use crate::prepare::spell::{school, Cast, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -187,7 +187,7 @@ impl Rogue {
         let attack_speed = 1.0
             + rank
                 .effect(dbcenums::A_MOD_MELEE_HASTE_3, 0)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0;
 
         sim.get_or_register_spell(
@@ -359,7 +359,7 @@ impl Rogue {
         let regen_multiplier = 1.0
             + rank
                 .effect(dbcenums::A_MOD_POWER_REGEN_PERCENT, 3)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0;
 
         let aura = sim.get_or_register_aura(
@@ -422,7 +422,7 @@ impl Rogue {
         }
         let rank = spell_data().riposte.highest();
         let action = spell_action(rank.id);
-        let weapon_damage = rank.effect(dbcenums::A_NONE, 0).average(CHARACTER_LEVEL) / 100.0;
+        let weapon_damage = rank.effect(dbcenums::A_NONE, 0).average(character_level()) / 100.0;
 
         let timer = sim.new_timer(unit);
         sim.get_or_register_spell(

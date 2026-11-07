@@ -4,10 +4,10 @@
 use serde_json::{json, Value};
 
 use crate::prepare::buffs::generated;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::{exclusive_category_effect, SPELL_BATCH_WINDOW};
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::rotation::rotation_spells;
 use crate::prepare::sim::{AuraId, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask};
@@ -41,7 +41,7 @@ pub(super) fn rotation_names_shield_block(sim: &Sim, unit: UnitId) -> bool {
 /// The exporter's `damageRoll`: a client damage row's roll.
 fn damage_roll(row: &Row) -> Value {
     let effect = row.damage_effect();
-    let average = effect.average(CHARACTER_LEVEL);
+    let average = effect.average(character_level());
     json!({"average": average, "min": average * (1.0 - effect.variance / 2.0),
         "max": average * (1.0 + effect.variance / 2.0), "rolls": effect.variance != 0.0,
         "variance": effect.variance})
@@ -138,7 +138,7 @@ impl Warrior {
         let sim = &env.sim;
         let unit = env.player;
         let data = spell_data();
-        let level = CHARACTER_LEVEL;
+        let level = character_level();
         let talent = |name: &str| self.talent(name);
         let mut effects: Vec<Value> = vec![crate::prepare::rage::rage_bar_effect(sim, unit, 1.0)];
 
@@ -640,7 +640,7 @@ impl Warrior {
         let sim = &env.sim;
         let unit = env.player;
         let data = spell_data();
-        let level = CHARACTER_LEVEL;
+        let level = character_level();
         let target = env.encounter.targets[0];
         let tanking = sim.unit(target).current_target == Some(unit);
         let takes_damage = crate::prepare::export::player_takes_damage(env);

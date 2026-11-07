@@ -8,8 +8,8 @@ use std::rc::Rc;
 
 use crate::data::spells::{ClassFlags, Effect, Spell};
 
-use super::character::constants::CHARACTER_LEVEL;
 use super::dbcenums;
+use super::levels::character_level;
 use super::sim::{AuraId, Duration, Sim, UnitId, UnitType, MILLISECOND};
 use super::spell::{school, ProcMask, Resource};
 use super::spell_mod::{ModId, SpellModConfig, SpellModType};
@@ -88,7 +88,7 @@ impl ParseOptions {
     /// Go `RaidBuffOptions`.
     pub(crate) fn raid_buff(skip: &[i32], full_combo_points: bool) -> ParseOptions {
         ParseOptions {
-            level: CHARACTER_LEVEL,
+            level: character_level(),
             buff_auras: true,
             skip_auras: skip.to_vec(),
             combo_points: full_combo_points,
@@ -251,7 +251,7 @@ pub(crate) fn parse_static(
 pub(crate) fn dry_run(row: &'static Spell, options: ParseOptions) -> Parsed {
     let mut scratch = Sim::new();
     let mut unit = super::sim::Unit::new(UnitType::Player, String::new());
-    unit.level = CHARACTER_LEVEL;
+    unit.level = character_level();
     let id = scratch.add_unit(unit);
     parse(&mut scratch, id, None, None, row, options, true)
 }

@@ -354,7 +354,7 @@ mod tests {
         let row = oath_of_light();
         let bonus = |n| {
             row.effect_n(n)
-                .average(crate::prepare::character::constants::CHARACTER_LEVEL)
+                .average(crate::prepare::levels::character_level())
         };
         // "up to 400 ... up to 115 ... up to 229" (Holy Light, Flash of Light, Holy Shock).
         assert_eq!([bonus(1), bonus(2), bonus(3)], [400.0, 115.0, 229.0]);
