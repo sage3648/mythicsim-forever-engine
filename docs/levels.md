@@ -25,6 +25,8 @@ Base stats (`character::base_stats`) move to the level (`levels::base_stats_at_l
 - Base attack power follows the class's per-level rule: the table's level 60 value is the class's attack power per level times 60, less 20 (Warrior and Paladin 3 per level, Hunter, Rogue and Shaman 2), or a constant for the casters and Druid.
 - Base health, base mana and crit per agility and per intellect are solved from the sheet (`levels::calibrate`). Preparation runs once with no buffs, debuffs or consumables, reads the player's stats, and solves the numbers that make the engine's sheet the exported one: crit per agility `k = (C_s - C_e + k_used A_e) / A_s`, base health `H_used + (H_s - H_e) - 10 (Sta_s - Sta_e)`, base mana the same with 15 per intellect. Attribute differences from buffs up at export carry through those terms. The second pass prepares the real request with the solved numbers.
 
+The sheet describes the character in its own gear, which a Best Gear or Droptimizer set swaps out. The worker sends that gear as `characterSheet.equipment`, and the calibration pass wears it, so a candidate is simmed with the character's own calibration: solved against the swapped gear, the solve would absorb most of a candidate's own crit (Robe of the Archmage's 1% read as 0.47%, `tests/levels_20261108.rs`).
+
 The client carries no per-level crit tables and wago.tools was down on 7 Nov, so the calibration is the source today. It makes the character's total crit, health and mana match its sheet; the marginal crit of a point of agility is then exact only to the extent that the constant part of crit (base and gear) is what the engine has.
 
 ## Spells the character has not trained

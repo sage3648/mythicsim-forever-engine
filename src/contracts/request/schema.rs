@@ -84,8 +84,9 @@ const FOREVER_FIELDS: [ForeverField; 6] = [
 /// `collect_sheet` in the app): attributes in Strength, Agility, Stamina, Intellect, Spirit
 /// order (`base` without gear or buffs), spell numbers per school from Holy to Arcane, attack
 /// power as base, positive and negative parts, armor as base and total, mana regen as base and
-/// casting, weapon skill as main hand base and bonus, off hand, ranged, and the helpful auras up
-/// when it was read.
+/// casting, weapon skill as main hand base and bonus, off hand, ranged, the helpful auras up
+/// when it was read, and the gear it was read in (the export's own, which a Best Gear or
+/// Droptimizer request's equipment replaces).
 const FOREVER_MESSAGES: [(&str, &[ForeverField]); 1] = [(
     "proto.CharacterSheet",
     &[
@@ -122,6 +123,10 @@ const FOREVER_MESSAGES: [(&str, &[ForeverField]); 1] = [(
         ForeverField::list("mana_regen", "manaRegen", 21, FieldKind::Double),
         ForeverField::list("weapon_skill", "weaponSkill", 22, FieldKind::Double),
         ForeverField::list("auras", "auras", 23, FieldKind::Int32),
+        ForeverField {
+            type_name: Some("proto.EquipmentSpec"),
+            ..ForeverField::scalar("", "equipment", "equipment", 24, FieldKind::Message)
+        },
     ],
 )];
 

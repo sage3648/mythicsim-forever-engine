@@ -193,7 +193,8 @@ pub fn prepare_json_with(
 }
 
 /// A levelling character's calibration ([`levels::calibrate`]): the request prepared once with
-/// no buffs or consumables, its player's stats read against the sheet.
+/// no buffs or consumables, in the gear the sheet was read in, its player's stats read against
+/// the sheet.
 fn calibrate_level(
     bytes: &[u8],
     character: &levels::Character,
@@ -204,6 +205,7 @@ fn calibrate_level(
     let mut value: serde_json::Value =
         serde_json::from_slice(bytes).map_err(|err| PrepareError::Invalid(err.to_string()))?;
     without_buffs(&mut value);
+    in_sheet_gear(&mut value);
     let bare = serde_json::to_vec(&value).map_err(|err| PrepareError::Fault(err.to_string()))?;
     let mut request = Request::from_json(&bare).map_err(PrepareError::Invalid)?;
     if rules == Rules::Forever {
@@ -264,6 +266,36 @@ fn calibrate_level(
         levels::calibrate(sheet, &engine, &used, k_agi, k_int),
         first,
     ))
+}
+
+/// The request with each player in the gear its sheet was read in, where the sheet names it: a
+/// Best Gear or Droptimizer set swaps other gear in, and the sheet is solved against its own
+/// (levels::calibrate), so a candidate's own crit is not solved away.
+fn in_sheet_gear(request: &mut serde_json::Value) {
+    let Some(parties) = request
+        .pointer_mut("/raid/parties")
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return;
+    };
+    for party in parties {
+        let Some(players) = party
+            .get_mut("players")
+            .and_then(serde_json::Value::as_array_mut)
+        else {
+            continue;
+        };
+        for player in players {
+            let gear = player
+                .pointer("/characterSheet/equipment")
+                .or_else(|| player.pointer("/character_sheet/equipment"))
+                .cloned();
+            if let (Some(gear), Some(player)) = (gear, player.as_object_mut()) {
+                player.remove("equipment");
+                player.insert("equipment".to_string(), gear);
+            }
+        }
+    }
 }
 
 /// The class of the request's first player, as the schema names it (`ClassMage`).

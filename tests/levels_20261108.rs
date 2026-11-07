@@ -120,3 +120,34 @@ fn a_levelling_character_needs_its_sheet_and_ten_levels() {
         }
     }
 }
+
+/// A Best Gear or Droptimizer set swaps gear into the request while the sheet still describes
+/// the character's own. Solved against the swapped gear, the sheet would absorb the swap's own
+/// crit; solved against the gear it names (`characterSheet.equipment`), taking off Robe of the
+/// Archmage (14152: 1% spell crit and 16 Intellect) costs that crit and the Intellect's.
+#[test]
+fn a_swapped_item_keeps_its_crit() {
+    let own = request("frost-mage-L20");
+    let items = own["raid"]["parties"][0]["players"][0]["equipment"]["items"].clone();
+    let spell_crit = |request: &Value| {
+        prepare(request).unwrap()["player"]["stats"]["SpellCritPercent"]
+            .as_f64()
+            .unwrap()
+    };
+    let mut without_robe = own.clone();
+    player(&mut without_robe)["equipment"]["items"] = Value::Array(
+        items
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|item| item["id"] != 14152)
+            .cloned()
+            .collect(),
+    );
+    player(&mut without_robe)["characterSheet"]["equipment"] = serde_json::json!({"items": items});
+    let lost = spell_crit(&own) - spell_crit(&without_robe);
+    assert!(
+        lost > 1.2 && lost < 1.6,
+        "the robe was worth {lost}% spell crit"
+    );
+}
