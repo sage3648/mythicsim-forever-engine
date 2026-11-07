@@ -245,7 +245,14 @@ pub(crate) fn export_spell_of(
     out.insert("school".into(), json!(spell.spell_school));
     out.insert("defense_type".into(), json!(spell.defense_type.name()));
     out.insert("proc_mask".into(), json!(spell.proc_mask.names()));
-    out.insert("flags".into(), json!(spell.flags.names()));
+    // A spell the character has not learned is no APL or major cooldown spell: the rotation
+    // and the cooldown manager never press it.
+    let mut flags = spell.flags.names();
+    if super::levels::is_unlearned(spell.action_id.spell_id) {
+        flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
+        flags.push("SpellFlagUnlearned".to_string());
+    }
+    out.insert("flags".into(), json!(flags));
     if !class_spell.is_empty() {
         out.insert("class_spell".into(), json!(class_spell));
     }
@@ -906,6 +913,9 @@ pub(crate) fn export_state(
     let mut mcds = Vec::new();
     for mcd in &env.sim.character(player).initial_major_cooldowns {
         let action = env.sim.spell(mcd.spell).action_id.clone();
+        if super::levels::is_unlearned(action.spell_id) {
+            continue;
+        }
         let mut types = Vec::new();
         for (bit, name) in [
             (1u32, "mana"),

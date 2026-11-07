@@ -8,7 +8,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::exclusive_refresh;
-use crate::prepare::buffs::generated::{DEMORALIZING_ROAR, FAERIE_FIRE};
+use crate::prepare::buffs::generated::DEMORALIZING_ROAR;
 use crate::prepare::common_effects::exclusive_category_effect;
 use crate::prepare::dbcenums::{
     A_ADD_PCT_MODIFIER, A_MOD_CASTING_SPEED_NOT_STACK, A_MOD_DECREASE_SPEED, A_NONE,
@@ -535,13 +535,21 @@ impl Druid {
                     + sim_wolfshead_energy(sim, self),
             }));
         }
-        if let (Some(faerie_fire), false) = (self.faerie_fire, self.faerie_fire_auras.is_empty()) {
+        let faerie_fire_rank = self
+            .faerie_fire
+            .map_or(0, |spell| sim.spell(spell).action_id.spell_id);
+        if let (Some(faerie_fire), false, false) = (
+            self.faerie_fire,
+            self.faerie_fire_auras.is_empty(),
+            crate::prepare::levels::is_unlearned(faerie_fire_rank),
+        ) {
             // faerie_fire.go and buffs FaerieFireAura
             let aura = self.faerie_fire_auras[sim.unit(target).unit_index as usize]
                 .expect("Faerie Fire has an aura on the target");
             effects.push(json!({
                 "kind": "faerie_fire", "spell": spell_position(sim, unit, faerie_fire),
-                "aura": sim.aura(aura).label, "armor_reduction": FAERIE_FIRE.value(0),
+                "aura": sim.aura(aura).label,
+                "armor_reduction": super::baseline::known_faerie_fire(faerie_fire_rank).value(0),
                 "refresh": exclusive_refresh(sim, aura),
             }));
         }

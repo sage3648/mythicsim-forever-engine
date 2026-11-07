@@ -343,8 +343,15 @@ impl Warlock {
         }
         // curse_of_elements.go: core's debuff on the target, whose stat and damage taken changes
         // the exporter reads off the client row and checks against Go activating it.
+        // A levelling warlock below the curse's level has not learned it (prepare::levels).
         let target_index = sim.unit(target).unit_index as usize;
-        if let Some(Some(aura)) = self.curse_of_elements_auras.get(target_index) {
+        let elements_known =
+            !crate::prepare::levels::is_unlearned(spell_data().curse_of_the_elements.highest().id);
+        if let Some(Some(aura)) = self
+            .curse_of_elements_auras
+            .get(target_index)
+            .filter(|_| elements_known)
+        {
             effects.push(curse_of_elements_effect(env, target, *aura, unrepresented));
         }
         if let Some(Some(aura)) = self.curse_of_recklessness_auras.get(target_index) {

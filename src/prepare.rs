@@ -166,7 +166,22 @@ pub fn prepare_json_with(
     }
     if character.level != levels::MAX_LEVEL {
         if let Some(sheet) = character.sheet.clone() {
-            character.calibration = calibrate_level(bytes, &character, &sheet, scenario, rules)?;
+            let (calibration, first) = calibrate_level(bytes, &character, &sheet, scenario, rules)?;
+            character.calibration = calibration;
+            // Every unlearned spell is known from the start of the real pass, so each export of
+            // a spell, the item swap's included, flags it alike.
+            character.unlearned = first.unlearned.clone();
+            // The rotation names the ranks the character knows before preparation registers
+            // its actions (levels::rewrite_rotations), as known_ranks does for book ranks.
+            let mut value: serde_json::Value = serde_json::from_slice(bytes)
+                .map_err(|err| PrepareError::Invalid(err.to_string()))?;
+            if rules == Rules::Forever {
+                spelldata::book_ranks::rewrite_request(&mut value);
+            }
+            levels::rewrite_rotations(&mut value, &first);
+            let bytes =
+                serde_json::to_vec(&value).map_err(|err| PrepareError::Fault(err.to_string()))?;
+            request = Request::from_json(&bytes).map_err(PrepareError::Invalid)?;
         }
     }
     levels::with_character(character, || {
@@ -185,7 +200,7 @@ fn calibrate_level(
     sheet: &levels::Sheet,
     scenario: &str,
     rules: Rules,
-) -> Result<levels::Calibration, PrepareError> {
+) -> Result<(levels::Calibration, levels::Character), PrepareError> {
     let mut value: serde_json::Value =
         serde_json::from_slice(bytes).map_err(|err| PrepareError::Invalid(err.to_string()))?;
     without_buffs(&mut value);
@@ -197,13 +212,31 @@ fn calibrate_level(
         }
     }
     let digest = request.sha256();
-    let prepared = levels::with_character(character.clone(), || {
+    let (prepared, first) = levels::with_character(character.clone(), || {
         let mut env =
             env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
                 .map_err(PrepareError::Refused)?;
-        export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+        let prepared =
+            export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)?;
+        Ok::<_, PrepareError>((prepared, levels::current()))
     })?;
     let player = &prepared["player"];
+    let mut first = first;
+    // Every spell the first pass registered, unlearned ones included, with its class spell:
+    // levels::rewrite_rotations points a rotation only at a known one of the same kind.
+    first.registered = player["spells"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|spell| {
+            let id = i32::try_from(spell["action_id"]["spell_id"].as_i64()?).ok()?;
+            let kind = spell["class_spell"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
+            Some((id, kind))
+        })
+        .collect();
     let stats_of = |value: &serde_json::Value| {
         let mut stats = stats::Stats::default();
         for stat in stats::Stat::ALL {
@@ -227,7 +260,10 @@ fn calibrate_level(
         .get(class)
         .copied()
         .unwrap_or(0.0);
-    Ok(levels::calibrate(sheet, &engine, &used, k_agi, k_int))
+    Ok((
+        levels::calibrate(sheet, &engine, &used, k_agi, k_int),
+        first,
+    ))
 }
 
 /// The class of the request's first player, as the schema names it (`ClassMage`).

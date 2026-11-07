@@ -730,24 +730,32 @@ impl<A: Agent> Fight<A> {
             return self.spells.iter().position(|s| s.flags.combat_potion);
         }
         let apl = self.spells.iter().position(|s| &s.id == id && s.flags.apl);
-        apl.or_else(|| self.spells.iter().position(|s| &s.id == id))
-            // Go `RankAliases`: an older rank a rotation names presses the known one.
-            .or_else(|| {
-                self.spells.iter().position(|s| {
-                    s.flags.apl
-                        && s.rank_aliases.iter().any(|alias| {
-                            alias.spell_id == id.spell_id
-                                && alias.item_id == id.item_id
-                                && alias.other_id == id.other_id
-                        })
-                })
+        apl.or_else(|| {
+            self.spells
+                .iter()
+                .position(|s| &s.id == id && !s.flags.unlearned)
+        })
+        // Go `RankAliases`: an older rank a rotation names presses the known one.
+        .or_else(|| {
+            self.spells.iter().position(|s| {
+                s.flags.apl
+                    && s.rank_aliases.iter().any(|alias| {
+                        alias.spell_id == id.spell_id
+                            && alias.item_id == id.item_id
+                            && alias.other_id == id.other_id
+                    })
             })
+        })
     }
 
     /// Go `GetAPLCastSpell`: a registered spell without the APL flag defers to an APL-flagged
     /// spell with the same action ignoring the tag, then to `GetAPLSpell`.
     fn apl_cast_spell(&self, id: &ActionId) -> Option<SpellId> {
-        if let Some(spell) = self.spells.iter().find(|s| &s.id == id) {
+        if let Some(spell) = self
+            .spells
+            .iter()
+            .find(|s| &s.id == id && !s.flags.unlearned)
+        {
             if !spell.flags.apl {
                 let same = |s: &super::Spell<A::Spell>| {
                     s.id.spell_id == id.spell_id

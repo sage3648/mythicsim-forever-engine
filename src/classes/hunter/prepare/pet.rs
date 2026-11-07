@@ -372,6 +372,30 @@ fn new_pet_ability(sim: &mut Sim, pet: UnitId, ability: PetAbility) -> Option<Sp
     }
 }
 
+/// The pet's Bite and Claw damage ranks, lowest first: a levelling hunter's pet, at its level,
+/// bites with the rank that level teaches (prepare::levels). Rank 8 at level 60.
+static BITE_RANKS: std::sync::LazyLock<crate::prepare::spelldata::Ladder> =
+    std::sync::LazyLock::new(|| {
+        crate::prepare::spelldata::Ladder::ranked(&[
+            17253, 17255, 17256, 17257, 17258, 17259, 17260, 17261,
+        ])
+    });
+static CLAW_RANKS: std::sync::LazyLock<crate::prepare::spelldata::Ladder> =
+    std::sync::LazyLock::new(|| {
+        crate::prepare::spelldata::Ladder::ranked(&[
+            16827, 16828, 16829, 16830, 16831, 16832, 3010, 3009,
+        ])
+    });
+
+/// Whether `id` is a rank of the pet's Bite or Claw.
+pub(super) fn is_bite_or_claw(id: i32) -> bool {
+    let mut found = false;
+    for ladder in [&*BITE_RANKS, &*CLAW_RANKS] {
+        ladder.each(|_, rank| found |= rank.id == id);
+    }
+    found
+}
+
 fn new_bite(sim: &mut Sim, pet: UnitId) -> SpellId {
     let timer = sim.new_timer(pet);
     sim.register_spell(
@@ -385,7 +409,11 @@ fn new_bite(sim: &mut Sim, pet: UnitId) -> SpellId {
                 duration: 10 * SECOND,
             })),
             bonus_coefficient: 1.0,
-            ..ability_base(ActionId::spell(17261), school::PHYSICAL, DefenseType::Melee)
+            ..ability_base(
+                ActionId::spell(BITE_RANKS.highest().id),
+                school::PHYSICAL,
+                DefenseType::Melee,
+            )
         },
     )
 }
@@ -399,7 +427,11 @@ fn new_claw(sim: &mut Sim, pet: UnitId) -> SpellId {
             cost: focus(25),
             cast: pet_cast(None),
             bonus_coefficient: 1.0,
-            ..ability_base(ActionId::spell(3009), school::PHYSICAL, DefenseType::Melee)
+            ..ability_base(
+                ActionId::spell(CLAW_RANKS.highest().id),
+                school::PHYSICAL,
+                DefenseType::Melee,
+            )
         },
     )
 }

@@ -27,7 +27,17 @@ pub(crate) const MIN_LEVEL: i32 = 10;
 /// The classes whose preparation has been checked below level 60: every spell they register
 /// is one the character has learned, or falls back to one it has. A class not listed refuses a
 /// levelling character rather than prepare spells it does not know.
-pub(crate) const LEVELLED_CLASSES: &[&str] = &[];
+pub(crate) const LEVELLED_CLASSES: &[&str] = &[
+    "ClassDruid",
+    "ClassHunter",
+    "ClassMage",
+    "ClassPaladin",
+    "ClassPriest",
+    "ClassRogue",
+    "ClassShaman",
+    "ClassWarlock",
+    "ClassWarrior",
+];
 
 /// Why a character of this class and level cannot be prepared, or None when it can.
 pub(crate) fn level_refusal(class: &str, level: i32, has_sheet: bool) -> Option<String> {
@@ -71,6 +81,15 @@ pub(crate) struct Character {
     pub sheet: Option<Sheet>,
     /// What its sheet says about the numbers the engine has for level 60 only ([`calibrate`]).
     pub calibration: Calibration,
+    /// Every rank of each ladder preparation asked for that the character knows none of
+    /// ([`unlearned_rank`]).
+    pub unlearned: BTreeSet<i32>,
+    /// For each ladder preparation resolved to a rank the character knows, its other ranks and
+    /// that rank ([`rewrite_rotations`]).
+    pub known_as: std::collections::BTreeMap<i32, i32>,
+    /// The spells a first preparation registered for the player and did not flag unlearned,
+    /// with their class spell name: what a rotation can be pointed at ([`known_rank_of_name`]).
+    pub registered: std::collections::BTreeMap<i32, String>,
 }
 
 /// The attributes in the sheet's order.
@@ -167,6 +186,9 @@ impl Character {
                 .message("character_sheet")
                 .and_then(Sheet::from_message),
             calibration: Calibration::default(),
+            unlearned: BTreeSet::new(),
+            known_as: std::collections::BTreeMap::new(),
+            registered: std::collections::BTreeMap::new(),
         }
     }
 }
@@ -206,7 +228,7 @@ pub(crate) fn character_level() -> i32 {
 /// is known up to the character's level like every rank without a spellbook: a rank whose spell
 /// level is at or below the character's level. A spell level of 0 is a row without a level.
 pub(crate) fn known_rank<'a>(ranks: &[&'a Spell]) -> Option<&'a Spell> {
-    CURRENT.with(|current| {
+    let known = CURRENT.with(|current| {
         let character = current.borrow();
         if let Some(book) = &character.known_spells {
             if let Some(rank) = ranks.iter().rev().find(|rank| book.contains(&rank.id)) {
@@ -218,7 +240,96 @@ pub(crate) fn known_rank<'a>(ranks: &[&'a Spell]) -> Option<&'a Spell> {
             .rev()
             .find(|rank| i32::from(rank.spell_level) <= character.level)
             .copied()
-    })
+    })?;
+    if ranks.len() > 1 {
+        CURRENT.with(|current| {
+            let mut character = current.borrow_mut();
+            if character.level != MAX_LEVEL {
+                for rank in ranks {
+                    if rank.id != known.id {
+                        character.known_as.insert(rank.id, known.id);
+                    }
+                }
+            }
+        });
+    }
+    Some(known)
+}
+
+/// A levelling character's rotations, naming the rank it knows wherever a rotation names
+/// another rank of the same spell: the presets name the top rank, which a level 30 character
+/// has not trained, in casts, aura and dot checks alike. Go's `RankAliases` does this only for
+/// the ranks a spell lists.
+///
+/// `character` is the first preparation's: `known_as` maps the ranks of each ladder it resolved
+/// to the rank it knows. A class that registers every rank as its own spell (a Druid's Wrath)
+/// resolves no ladder of several ranks, so a rank it does not know maps to the highest known
+/// rank of the same name ([`known_rank_of_name`]).
+pub(crate) fn rewrite_rotations(request: &mut serde_json::Value, character: &Character) {
+    use serde_json::Value;
+    let known = |id: i32| -> Option<i32> {
+        if let Some(known) = character.known_as.get(&id) {
+            return Some(*known);
+        }
+        known_rank_of_name(id, character).filter(|known| *known != id)
+    };
+    fn walk(value: &mut Value, known: &dyn Fn(i32) -> Option<i32>) {
+        match value {
+            Value::Object(map) => {
+                for (key, field) in map.iter_mut() {
+                    if key == "spellId" {
+                        if let Some(id) = field.as_i64().and_then(|id| i32::try_from(id).ok()) {
+                            if let Some(rank) = known(id) {
+                                *field = Value::from(rank);
+                                continue;
+                            }
+                        }
+                    }
+                    walk(field, known);
+                }
+            }
+            Value::Array(items) => items.iter_mut().for_each(|item| walk(item, known)),
+            _ => {}
+        }
+    }
+    let Some(parties) = request
+        .pointer_mut("/raid/parties")
+        .and_then(Value::as_array_mut)
+    else {
+        return;
+    };
+    for party in parties {
+        let Some(players) = party.get_mut("players").and_then(Value::as_array_mut) else {
+            continue;
+        };
+        for player in players {
+            if let Some(rotation) = player.get_mut("rotation") {
+                walk(rotation, &known);
+            }
+        }
+    }
+}
+
+/// For a ranked spell the character does not know, the highest rank of the same name it does
+/// that the first preparation registered as the same class spell (a cast for a cast, never its
+/// tick). None for an unranked spell, one it knows, or one it knows no such rank of.
+fn known_rank_of_name(id: i32, character: &Character) -> Option<i32> {
+    let spell = crate::prepare::spelldata::find(id);
+    if spell.id == 0 || !spell.rank.starts_with("Rank ") || knows_rank(character, spell) {
+        return None;
+    }
+    let kind = character.registered.get(&id);
+    same_name_ranks(spell)
+        .iter()
+        .map(|id| crate::prepare::spelldata::find(*id))
+        .filter(|rank| knows_rank(character, rank))
+        .filter(|rank| match (kind, character.registered.get(&rank.id)) {
+            (_, None) => false,
+            (Some(kind), Some(other)) => kind == other,
+            (None, Some(_)) => true,
+        })
+        .max_by_key(|rank| (rank.spell_level, rank.id))
+        .map(|rank| rank.id)
 }
 
 /// A level 60 character's base stats, `stats` from the engine's table, moved to the level of
@@ -323,15 +434,90 @@ pub(crate) fn calibrate(
             k_int,
             Stat::Intellect,
         ),
-        base_health: (sheet.health > 0.0).then(|| {
-            used[Stat::Health] + (sheet.health - engine[Stat::Health])
-                - 10.0 * (sheet.attribute(Stat::Stamina) - engine[Stat::Stamina])
-        }),
-        base_mana: (sheet.mana > 0.0 && used[Stat::Mana] > 0.0).then(|| {
-            used[Stat::Mana] + (sheet.mana - engine[Stat::Mana])
-                - 15.0 * (sheet.attribute(Stat::Intellect) - engine[Stat::Intellect])
-        }),
+        // A base that is not positive means the sheet and the engine disagree about more than
+        // the level (an export read mid-shapeshift, a buff the engine has no row for): the
+        // level 60 base stays rather than leave the character with no health or mana.
+        base_health: (sheet.health > 0.0)
+            .then(|| {
+                used[Stat::Health] + (sheet.health - engine[Stat::Health])
+                    - 10.0 * (sheet.attribute(Stat::Stamina) - engine[Stat::Stamina])
+            })
+            .filter(|health| *health > 0.0),
+        base_mana: (sheet.mana > 0.0 && used[Stat::Mana] > 0.0)
+            .then(|| {
+                used[Stat::Mana] + (sheet.mana - engine[Stat::Mana])
+                    - 15.0 * (sheet.attribute(Stat::Intellect) - engine[Stat::Intellect])
+            })
+            .filter(|mana| *mana > 0.0),
     }
+}
+
+/// A ladder the character knows no rank of: its first rank, so the class code that registers it
+/// still has a school, a label and effects to read, with every rank noted as unlearned. The
+/// export then leaves the spell out of the rotation and the major cooldowns
+/// (`SpellFlagUnlearned`), and an aura from it is never made permanent, so the character never
+/// casts or wears what it has not trained.
+pub(crate) fn unlearned_rank<'a>(ranks: &[&'a Spell]) -> Option<&'a Spell> {
+    let first = ranks.first().copied()?;
+    CURRENT.with(|current| {
+        current
+            .borrow_mut()
+            .unlearned
+            .extend(ranks.iter().map(|rank| rank.id));
+    });
+    Some(first)
+}
+
+/// Whether the character has not trained `spell_id`: a rank of a ladder it knows none of, or a
+/// ranked spell above its level or missing from its spellbook, which a class that registers
+/// every rank of a spell (Arcane Missiles, Wrath) registers all the same.
+pub(crate) fn is_unlearned(spell_id: i32) -> bool {
+    if spell_id == 0 {
+        return false;
+    }
+    CURRENT.with(|current| {
+        let character = current.borrow();
+        if character.unlearned.contains(&spell_id) {
+            return true;
+        }
+        if character.level == MAX_LEVEL {
+            return false;
+        }
+        let row = crate::prepare::spelldata::find(spell_id);
+        row.id != 0 && row.rank.starts_with("Rank ") && !knows_rank(&character, row)
+    })
+}
+
+/// Whether the character knows this rank: in its spellbook, or without one at or below its
+/// level. A spellbook that lists no rank of the spell says nothing about it (a talent or a
+/// triggered row), and the level decides.
+fn knows_rank(character: &Character, rank: &Spell) -> bool {
+    if let Some(book) = &character.known_spells {
+        if book.contains(&rank.id) {
+            return true;
+        }
+        if same_name_ranks(rank).iter().any(|id| book.contains(id)) {
+            return false;
+        }
+    }
+    i32::from(rank.spell_level) <= character.level
+}
+
+/// Every ranked row with this rank's name.
+fn same_name_ranks(rank: &Spell) -> &'static [i32] {
+    use std::collections::HashMap;
+    use std::sync::OnceLock;
+    static RANKS: OnceLock<HashMap<String, Vec<i32>>> = OnceLock::new();
+    let ranks = RANKS.get_or_init(|| {
+        let mut ranks: HashMap<String, Vec<i32>> = HashMap::new();
+        for row in crate::prepare::spelldata::all() {
+            if row.rank.starts_with("Rank ") {
+                ranks.entry(row.name.clone()).or_default().push(row.id);
+            }
+        }
+        ranks
+    });
+    ranks.get(&rank.name).map_or(&[], Vec::as_slice)
 }
 
 #[cfg(test)]
@@ -362,7 +548,19 @@ mod tests {
         assert_eq!(at(4), 116);
         assert_eq!(at(13), 205);
         assert_eq!(at(14), 837);
-        assert_eq!(at(3), 0, "below the first rank nothing is known");
+        let below = Character {
+            level: 3,
+            ..Character::default()
+        };
+        assert_eq!(
+            with_character(below, || {
+                let rank = frostbolt().highest().id;
+                (rank, is_unlearned(116), is_unlearned(837))
+            }),
+            (116, true, true),
+            "below the first rank the first stands in, unlearned"
+        );
+        assert!(!is_unlearned(116), "the next character starts clean");
         assert_eq!(character_level(), MAX_LEVEL, "the level goes back after");
     }
 

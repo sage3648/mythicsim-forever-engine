@@ -181,10 +181,10 @@ impl Druid {
     /// Go `registerFaerieFireSpell`.
     pub(super) fn register_faerie_fire_spell(&mut self, sim: &mut Sim) {
         let rank = Ladder::ranked(&[770, 778, 9749, 9907]).highest();
-        // Forever has no Improved Faerie Fire node, so there are no talent points to pass.
-        let auras = new_enemy_aura_array(sim, |sim, target| {
-            FAERIE_FIRE.aura(sim, target, true, 0, 0.0)
-        });
+        // Forever has no Improved Faerie Fire node, so there are no talent points to pass. A
+        // levelling druid's debuff is the rank it knows (prepare::levels).
+        let known = known_faerie_fire(rank.id);
+        let auras = new_enemy_aura_array(sim, |sim, target| known.aura(sim, target, true, 0, 0.0));
         self.faerie_fire_auras = auras.clone();
         let spell = self.register_spell(
             sim,
@@ -217,5 +217,13 @@ impl Druid {
             },
         );
         self.faerie_fire = Some(spell);
+    }
+}
+
+/// Core's Faerie Fire debuff at the rank the druid knows: its top rank at level 60.
+pub(super) fn known_faerie_fire(rank: i32) -> crate::prepare::buffs::Meta {
+    crate::prepare::buffs::Meta {
+        spell: if rank == 0 { FAERIE_FIRE.spell } else { rank },
+        ..FAERIE_FIRE
     }
 }

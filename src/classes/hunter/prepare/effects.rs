@@ -238,6 +238,15 @@ impl Hunter {
                 "min_damage": min, "max_damage": max,
             }));
         }
+        // A levelling hunter's pet bites and claws with its level's rank (pet.rs BITE_RANKS),
+        // whose roll is its row's: the literals above are rank 8's rows.
+        if super::pet::is_bite_or_claw(id) {
+            return Some(pet_row_strike(
+                id,
+                crate::prepare::spelldata::find(id),
+                "melee_special",
+            ));
+        }
         let strike_rows = [
             &data.demoralizing_screech_triggered,
             &data.pinch_triggered,

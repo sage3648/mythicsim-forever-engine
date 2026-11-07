@@ -1,6 +1,6 @@
 # Levelling characters
 
-Status: foundation, 7 Nov 2026. Part of MythicSim's Forever Droptimizer with levelling dungeons (app `docs/forever-droptimizer.md`).
+Status: every class sims from level 10 to 59, 8 Nov 2026. Part of MythicSim's Forever Droptimizer with levelling dungeons (app `docs/forever-droptimizer.md`).
 
 ## What a request carries
 
@@ -27,28 +27,47 @@ Base stats (`character::base_stats`) move to the level (`levels::base_stats_at_l
 
 The client carries no per-level crit tables and wago.tools was down on 7 Nov, so the calibration is the source today. It makes the character's total crit, health and mana match its sheet; the marginal crit of a point of agility is then exact only to the extent that the constant part of crit (base and gear) is what the engine has.
 
+## Spells the character has not trained
+
+A ladder the character knows no rank of resolves to its first rank, noted as unlearned (`levels::unlearned_rank`), so class code that registers it still reads a school, a label and effects. A ranked spell above the level or missing from the spellbook is unlearned too, which covers classes that register every rank as its own spell (Arcane Missiles, Wrath). An unlearned spell:
+
+- exports with `SpellFlagUnlearned` and without its APL and MCD flags, so the rotation, the major cooldowns and the coverage gate's reach skip it;
+- never makes its aura permanent (`Sim::make_permanent`), so an armor or aspect it would put up never goes up.
+
+The calibration pass collects every unlearned spell, and the real pass starts with that set, so every export of a spell (the item swap's included) flags it alike.
+
+## Ranks a rotation names
+
+The presets name top ranks in casts, aura and dot checks. Before the real pass prepares, each rotation in the request names the rank the character knows instead (`levels::rewrite_rotations`), as `book_ranks::rewrite_request` does for Ahn'Qiraj 20 books: the rank a ladder resolved to in the calibration pass, or, for a spell registered rank by rank, the highest known rank of the same name the calibration pass registered as the same class spell (a cast for a cast, never its tick). Go's `RankAliases` covers only the ranks a spell lists.
+
+Class code that builds a debuff or pet ability from a fixed top rank now builds it from the known one: Curse of the Elements, Curse of Recklessness, Faerie Fire, and the hunter pet's Bite and Claw (rank 8's Go literals stay at level 60, lower ranks roll their rows).
+
 ## Gate
 
 `levels::level_refusal` refuses, before preparation and again in the coverage gate:
 
 - a level outside 10 to 59 (other than 60);
-- a class not in `LEVELLED_CLASSES`. A class joins the list once every spell it registers is one the character knows or falls back to one it does (a level 20 Mage set to Mage Armor wears Frost Armor), checked with the levelled request dump below;
+- a class not in `LEVELLED_CLASSES` (all nine since 8 Nov, see below);
 - a levelling character without a sheet.
 
 The target may be from the player's level to 3 above (`levels::target_levels`); at 60 it stays 60 to 63.
 
 ## Checking a class
 
-The app's worker writes every reference build at levels 10 to 50, talents trimmed to the level's points (smallest tree first, deepest talent first) and a synthetic sheet:
+The app's worker writes every reference build at levels 10 to 50, talents trimmed to the level's points (smallest tree first, deepest talent first):
 
 ```sh
 cd worker && FOREVER_LEVEL_DUMP_DIR=/tmp/levels go test ./forever -run TestDumpLevelledRequests
 ```
 
-Run each through `forever-engine sim --request <file> --gate`. A class is ready when no request prepares a fault, every spell it casts is one known at the level, and DPS rises with level.
+Give each request a sheet consistent with its gear (the engine's own level 60 stats for it, over a smaller base), then run each through `forever-engine sim --request <file> --gate`. A class is ready when no request faults or is refused, nothing casts a ranked spell above the level, and DPS rises with level.
+
+On 8 Nov all 34 reference builds at levels 10, 20, 30, 40 and 50 (170 requests) prepare, pass the gate and sim, solo, with no cast above the level. `tests/levels_20261108.rs` keeps three of them. The worker side of a levelling sim (solo, a caster filler at the end of the rotation, a dungeon boss two levels up) is the app's `worker/forever/levels.go`.
 
 ## Open
 
 - Spell coefficients below level 20: Classic scaled a low-level spell's coefficient down; whether Forever keeps it is unchecked.
 - Dungeon boss armor: the worker scales the level 63 boss's 3731 armor by level. The client does not carry creature armor.
 - Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas; pets still use level 60 base stats.
+- Other class buffs and debuffs built from core's fixed rows (Shaman totems' triggered buffs resolve by level already; Sunder and Expose Armor, Hunter's Mark and the external raid rows have not been checked below 60). The worker sims a levelling character solo, so the external rows do not reach it.
+- No real levelling export has been simmed yet. The first ones (addon 0.4.0) check the sheet readers (`UnitStat` base without gear, `C_SpellBook` item types) and the calibration.

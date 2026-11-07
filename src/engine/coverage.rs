@@ -2613,6 +2613,8 @@ pub(crate) fn prepared_coverage(
                 moves_without_values(prepared, rotation),
             ));
         }
+        // A spell a levelling character has not trained is never pressed (prepare::levels).
+        reachable.retain(|spell| !spell.has_flag("SpellFlagUnlearned"));
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
         reasons.extend(coded(
             "several_targets_unsupported",

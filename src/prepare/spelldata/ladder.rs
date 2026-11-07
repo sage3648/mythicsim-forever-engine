@@ -118,9 +118,12 @@ impl Ladder {
     }
 
     /// The highest rank the character being prepared knows ([`crate::prepare::levels`]): every
-    /// rank at level 60 without a spellbook, Nil when it knows none.
+    /// rank at level 60 without a spellbook. When it knows none, the first rank stands in,
+    /// noted as unlearned ([`crate::prepare::levels::unlearned_rank`]); Nil for an empty ladder.
     pub(crate) fn highest(&self) -> &'static Spell {
-        crate::prepare::levels::known_rank(&self.ranks).unwrap_or_else(nil)
+        crate::prepare::levels::known_rank(&self.ranks)
+            .or_else(|| crate::prepare::levels::unlearned_rank(&self.ranks))
+            .unwrap_or_else(nil)
     }
 
     /// The highest rank a player knows under these rules: under Forever's, a rank taught by an
@@ -132,7 +135,9 @@ impl Ladder {
             .copied()
             .filter(|spell| rules != Rules::Forever || !book_ranks::is_book_rank(spell.id))
             .collect();
-        crate::prepare::levels::known_rank(&ranks).unwrap_or_else(nil)
+        crate::prepare::levels::known_rank(&ranks)
+            .or_else(|| crate::prepare::levels::unlearned_rank(&ranks))
+            .unwrap_or_else(nil)
     }
 
     /// The rank with this spell id. Panics on an id the ladder does not carry, the way
