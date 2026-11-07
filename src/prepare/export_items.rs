@@ -1322,6 +1322,39 @@ const SPELL_DATA_DAMAGE_PROCS: [(&str, i32, i32); 27] = [
     ("Satchel of Dark Iron Bombs", 1318123, 1318121),
 ];
 
+/// Spell data damage procs that only spells with a damaging component trigger (Forever rules).
+/// Searing Dagger's Sear (1291568) reads "Harmful spell casts sear the target", and its mask is
+/// the harmful spell cast bit alone, which a curse or a debuff without damage also sets. The
+/// hotfixes of 6 November 2026 say "Searing Dagger is now only activated by spells that have a
+/// damaging component"; the client rows did not change, so the server decides.
+const DAMAGING_SPELLS_ONLY: [&str; 1] = ["Searing Dagger"];
+
+/// Whether a client row deals damage: a direct hit, a weapon strike, a leech or a mana burn, a
+/// damage over time aura, or a spell it triggers that does (a channel's missiles). `depth`
+/// bounds the walk through triggered spells.
+fn has_damaging_component(row: &Spell, depth: u8) -> bool {
+    row.effects.iter().any(|effect| {
+        matches!(
+            effect.effect_type,
+            dbcenums::E_SCHOOL_DAMAGE
+                | dbcenums::E_HEALTH_LEECH
+                | dbcenums::E_WEAPON_DAMAGE_NOSCHOOL
+                | dbcenums::E_WEAPON_PERCENT_DAMAGE
+                | dbcenums::E_WEAPON_DAMAGE
+                | dbcenums::E_NORMALIZED_WEAPON_DMG
+                | dbcenums::E_POWER_BURN
+        ) || matches!(
+            effect.aura,
+            dbcenums::A_PERIODIC_DAMAGE
+                | dbcenums::A_PERIODIC_LEECH
+                | dbcenums::A_PERIODIC_DAMAGE_PERCENT
+        ) || (effect.trigger_id != 0
+            && effect.trigger_id != row.id
+            && depth < 2
+            && has_damaging_component(find(effect.trigger_id), depth + 1))
+    })
+}
+
 /// melee_procs.go `spellDataDamageProcEffects`: a listener resolved from the trigger row that
 /// casts the damage spell at once on the unit hit, or, for a hit taken, on the attacker. The hit
 /// is described as `proc_damage_shape` does: dealt where it lands, or struck by a melee or ranged
@@ -1377,11 +1410,26 @@ fn spell_data_damage_proc_effects(
         // A cast carries no result: AttachProcTriggerCallback checks no outcome and no damage for it.
         let casts = names[0] == "on_cast_complete";
         // A struck proc hears the attacker's hits, which the Rust runtime tells by their masks.
-        let trigger_spells = if struck {
+        let mut trigger_spells = if struck {
             Vec::new()
         } else {
             proc_trigger_spells(env, &listener)
         };
+        if env.sim.rules == super::sim::Rules::Forever && DAMAGING_SPELLS_ONLY.contains(&label) {
+            trigger_spells.retain(|&position| {
+                let spell = env.sim.unit(env.player).spellbook[position];
+                // A spell the sim gives a spell power coefficient or runs as a damage over time
+                // deals damage even where its row scripts it with a dummy effect (Holy Shock's
+                // hit, Fire Nova). An item's own action or a spell the store lacks is left as it
+                // was.
+                let state = env.sim.spell(spell);
+                state.bonus_coefficient != 0.0
+                    || state.dots.iter().any(Option::is_some)
+                    || state.aoe_dot.is_some()
+                    || crate::data::spells::find(state.action_id.spell_id)
+                        .is_none_or(|row| has_damaging_component(row, 0))
+            });
+        }
         let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": label, "trigger_spells": trigger_spells,
             "landed_only": listener.outcome == HitOutcome::LANDED && !casts,
