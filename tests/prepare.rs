@@ -130,20 +130,43 @@ fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>, limi
     }
 }
 
-/// Every fixture Rust prepares with the reference's rules must give the prepared state the Go
-/// exporter wrote; the rest must be refused, never prepared wrongly. Set PREPARE_REPORT to
-/// print every case.
+// This reference request has an unported item-swap effect. Keep the exception specific:
+// another refused request is lost coverage, even when it has the same refusal code.
+const EXPECTED_PREPARATION_REFUSALS: &[(&str, &str, &str)] = &[(
+    "mcp-shockadin-paladin",
+    "item_swap",
+    "an item swap with the effect of item 2801 is not prepared yet",
+)];
+
+/// Accepted requests must prepare exactly as Go does, except for the named limitations above.
+/// Set PREPARE_REPORT to print every case.
 #[test]
-fn rust_preparation_matches_go_or_refuses() {
+fn accepted_requests_preserve_preparation_coverage_and_match_go() {
     let report = std::env::var("PREPARE_REPORT").is_ok();
     let mut matched = 0;
     let mut refused = std::collections::BTreeMap::<String, usize>::new();
     let mut mismatched = Vec::new();
     let cases = manifest().cases;
+    assert!(!cases.is_empty(), "no preparation cases");
+    for (id, _, _) in EXPECTED_PREPARATION_REFUSALS {
+        assert!(
+            cases.iter().any(|case| case.id == *id),
+            "stale preparation exception: {id}"
+        );
+    }
     for case in &cases {
+        let expected_refusal = EXPECTED_PREPARATION_REFUSALS
+            .iter()
+            .find(|(id, _, _)| *id == case.id);
         let rules = forever_engine::Rules::GoReference;
         match forever_engine::prepare_json_with(&request_bytes(case), &case.id, rules) {
             Ok(rust) => {
+                if expected_refusal.is_some() {
+                    mismatched.push(format!(
+                        "{}: now prepares; review and remove its refusal exception",
+                        case.id
+                    ));
+                }
                 let go = prepared(case);
                 let mut diffs = Vec::new();
                 differences(&go, &rust, "", &mut diffs, 12);
@@ -157,7 +180,16 @@ fn rust_preparation_matches_go_or_refuses() {
                 }
             }
             Err(forever_engine::PrepareError::Refused(refusal)) => {
-                *refused.entry(refusal.code.to_string()).or_default() += 1;
+                if expected_refusal.is_some_and(|(_, code, reason)| {
+                    refusal.code == *code && refusal.reason == *reason
+                }) {
+                    *refused.entry(refusal.code.to_string()).or_default() += 1;
+                } else {
+                    mismatched.push(format!(
+                        "{}: unexpected refusal {refusal}; expected {:?}",
+                        case.id, expected_refusal
+                    ));
+                }
                 if report {
                     println!("refuse  {}: {refusal}", case.id);
                 }
@@ -169,10 +201,10 @@ fn rust_preparation_matches_go_or_refuses() {
         "prepared in Rust and equal to Go: {matched} of {}",
         cases.len()
     );
-    println!("refused: {refused:?}");
+    println!("expected refusals: {refused:?}");
     assert!(
         mismatched.is_empty(),
-        "{} prepared differently from Go:\n{}",
+        "{} preparation coverage or equality failures:\n{}",
         mismatched.len(),
         mismatched.join("\n")
     );
