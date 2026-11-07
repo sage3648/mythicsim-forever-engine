@@ -55,43 +55,25 @@ fn command_raises_hunter_pet_damage_by_five_percent() {
     assert_eq!(go, go_base);
 }
 
-/// A Warlock's Command reads the client's rows since the 3 November hotfixes (Wowhead's spell
-/// page, 4 November): +5% damage on Firebolt and Lash of Pain alone, a spell modifier added to the
-/// pet's others, where it was 5% on every pet's damage. The Go reference has no Command.
+/// A Warlock's Command (Forever rules) since hotfix push 113702 (client 1.60.1.70862): 5% on all
+/// the demons' damage (SpellEffect 697942, the Tamed Pet Passive), and nothing more on Firebolt
+/// and Lash of Pain (SpellEffect 697943, base 0). `orc_command_20261106.rs` checks the damage.
+/// The Go reference has no Command.
 #[test]
-fn command_raises_the_imps_firebolt_and_the_succubus_lash_of_pain_only() {
-    let additive = |prepared: &Value, id: i64| -> f64 {
-        let spells: Vec<f64> = prepared["pets"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .flat_map(|pet| pet["spells"].as_array().unwrap().clone())
-            .filter(|spell| spell["action_id"]["spell_id"] == id)
-            .map(|spell| spell["damage_multiplier_additive"].as_f64().unwrap())
-            .collect();
-        assert_eq!(spells.len(), 1, "{id}");
-        spells[0]
-    };
-    for (summon, id) in [("Succubus", 11780), ("Imp", 11763)] {
-        let mut orc = request("affliction-warlock-lash-of-pain-rounding");
-        player(&mut orc)["race"] = "RaceOrc".into();
-        player(&mut orc)["warlock"]["options"]["classOptions"]["summon"] = summon.into();
-        let mut without = orc.clone();
-        player(&mut without)["disableRacials"] = true.into();
-        let (with, base) = (
-            prepared(&orc, Rules::Forever),
-            prepared(&without, Rules::Forever),
-        );
-        // No pet's damage as a whole moves ...
-        assert_eq!(pet_damage_multipliers(&with), pet_damage_multipliers(&base));
-        // ... and the pet's one spell the rows name takes 5% more.
-        assert!(
-            (additive(&with, id) - additive(&base, id) - 0.05).abs() < 1e-12,
-            "{summon}"
-        );
-        let go = prepared(&orc, Rules::GoReference);
-        assert_eq!(additive(&go, id), additive(&base, id), "{summon}");
+fn command_raises_every_demons_damage_by_five_percent() {
+    let mut orc = request("affliction-warlock-lash-of-pain-rounding");
+    player(&mut orc)["race"] = "RaceOrc".into();
+    let mut without = orc.clone();
+    player(&mut without)["disableRacials"] = true.into();
+    let with = pet_damage_multipliers(&prepared(&orc, Rules::Forever));
+    let base = pet_damage_multipliers(&prepared(&without, Rules::Forever));
+    assert!(!with.is_empty(), "no demon");
+    for (with, base) in with.iter().zip(&base) {
+        assert!((with / base - 1.05).abs() < 1e-12, "{with} vs {base}");
     }
+    let go = pet_damage_multipliers(&prepared(&orc, Rules::GoReference));
+    let go_base = pet_damage_multipliers(&prepared(&without, Rules::GoReference));
+    assert_eq!(go, go_base);
 }
 
 /// The first iteration's log lines of a Skyborne Fire Mage who receives an external Innervate

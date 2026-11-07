@@ -630,7 +630,8 @@ the Go goldens and exporter uses. The departures:
   page: all effects of the Tamed Pet Passive +5% (the Hunter's pet, kept as the 5% on its
   damage) and "Modifies Damage/Healing Done" +5% on Firebolt and Lash of Pain alone, so an Orc
   Warlock's Imp and Succubus gain 5% on those two spells, added to their other damage
-  modifiers, and its other demons nothing (it was 5% on every pet's damage). Clearcasting is
+  modifiers, and its other demons nothing (it was 5% on every pet's damage; hotfix push 113702
+  undid this, see below). Clearcasting is
   spent as the cast's effects apply rather than as it completes (wowsims/forever #831): an Arcane
   Missiles cast Missile Barrage pays for leaves it standing, and the check at completion found
   Missile Barrage already spent whenever it had been gained before the Clearcasting, which
@@ -1024,6 +1025,17 @@ the Go goldens and exporter uses. The departures:
   already match: the row states the base and an area stat. Tooltips are missing for the hidden
   stat items (`statsHidden` in the gear catalog) and those rows are left as they were
   (`tests/forever_live_item_stats_20261106.rs`).
+- Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
+  Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
+  preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two
+  effects: SpellEffect 697942 adds 5 to all effect points (aura 107, misc 8) of the Tamed Pet
+  Passive (DND) (18727 to 18730, class set 5 mask 0x4000000), whose one effect is damage done
+  percent on all schools at 0, so the demon deals 5% more damage of every kind, melee included;
+  SpellEffect 697943 (aura 108, 5% damage on Firebolt and Lash of Pain, mask 0x3000) is rewritten
+  to 0 by hotfix push 113702, the fix for those two spells taking it on top of the first. An Orc
+  Warlock's four demons now deal 5% more of all their damage and Firebolt and Lash of Pain
+  nothing more; a gear guardian such as the Emerald Dragon Whelp gets nothing
+  (`tests/orc_command_20261106.rs`). The Hunter's pet keeps its 5%.
 
 ## Repository layout
 
