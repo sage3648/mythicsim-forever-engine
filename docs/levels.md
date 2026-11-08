@@ -44,6 +44,8 @@ The presets name top ranks in casts, aura and dot checks. Before the real pass p
 
 Class code that builds a debuff or pet ability from a fixed top rank now builds it from the known one: Curse of the Elements, Curse of Recklessness, Faerie Fire, and the hunter pet's Bite and Claw (rank 8's Go literals stay at level 60, lower ranks roll their rows).
 
+A class's own raid and party buffs (`add_raid_buffs`, `add_party_buffs`: Arcane Brilliance, the Prayers, Battle Shout, Blood Pact, Trueshot Aura and the rest of core's buff rows) resolve in `Meta::aura` to the highest rank of the same name the character knows, or to the single-target spell for a group buff it has not learned (`levels::known_buff_rank`: Arcane Intellect for Arcane Brilliance, Power Word: Fortitude, Divine Spirit, Shadow Protection, Mark of the Wild). One it knows no rank of is noted unlearned and never goes up.
+
 ## Gate
 
 `levels::level_refusal` refuses, before preparation and again in the coverage gate:
@@ -63,6 +65,8 @@ cd worker && FOREVER_LEVEL_DUMP_DIR=/tmp/levels go test ./forever -run TestDumpL
 ```
 
 Give each request a sheet consistent with its gear (the engine's own level 60 stats for it, over a smaller base), then run each through `forever-engine sim --request <file> --gate`. A class is ready when no request faults or is refused, nothing casts a ranked spell above the level, and DPS rises with level.
+
+Ten real addon 0.4.1 exports from prod (levels 21 to 37, eight classes, 8 Nov) prepare, pass the gate and sim at 27 to 113 DPS with no cast above level. They found the class self-buffs above: a level 21 mage had Arcane Brilliance's +31 Intellect, a level 28 warrior the top Battle Shout. A Druid exported out of form (Travel Form) cannot calibrate crit per agility against its Cat Form sim, whose form talents add crit the sheet lacks; the solve comes out negative and the level 60 value stays.
 
 On 8 Nov all 34 reference builds at levels 10, 20, 30, 40 and 50 (170 requests) prepare, pass the gate and sim, solo, with no cast above the level. `tests/levels_20261108.rs` keeps three of them. The worker side of a levelling sim (solo, a caster filler at the end of the rotation, a dungeon boss two levels up) is the app's `worker/forever/levels.go`.
 
