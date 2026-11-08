@@ -202,8 +202,8 @@ NOT_IN_DATA = [
      "Arcane Shot on a training dummy at two ranged attack power values: the damage grows 0.15 a point"),
     ("Serpent Sting 5% of ranged attack power a tick",
      "Serpent Sting ticks at two ranged attack power values: each tick grows 0.05 a point"),
-    ("Rip 1% a combo point (up to four), Rake 5% and Ferocious Bite 3% a combo point of attack "
-     "power, each times the notes' 1.25",
+    ("Ferocious Bite 3% a combo point of attack power times the notes' 1.25 (Rip's 0.0114 a combo "
+     "point up to four, Rake's 6.5% and Swipe's 3% were measured in game on 7 November 2026)",
      "no row or tooltip states the shares (server side): ticks and hits at two attack power "
      "values, the damage grows by the share a point"),
     ("Pounce rank 3 bleed 31 a tick (186 over 18 sec, was 25)",
