@@ -3,7 +3,8 @@
 //!
 //! The rage of an avoided hit (Shield Specialization on a block, Master of Defense on a dodge or
 //! parry) makes 5 threat a point in Battle and Defensive Stance alike, and Defiance does not
-//! scale it; Cleave rank 1 adds 30 threat beyond its damage on one target.
+//! scale it; Cleave rank 1 adds 30 threat beyond its damage on one target; Hamstring is 1.25
+//! times its damage and Shield Bash 1.5 times, with nothing flat.
 
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
@@ -22,6 +23,8 @@ const MASTER_OF_DEFENSE_RAGE: i64 = 23602;
 
 const CLEAVE_RANK_1: i64 = 845;
 const CLEAVE_RANK_5: i64 = 20569;
+const HAMSTRING_RANK_1: i64 = 1715;
+const SHIELD_BASH_RANK_1: i64 = 72;
 
 fn recorded(name: &str) -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
@@ -210,4 +213,29 @@ fn cleave_rank_1_adds_thirty_threat() {
         let flat = number(&spell(&prepared(&at_60, rules), CLEAVE_RANK_5)["flat_threat_bonus"]);
         assert!((flat - 1.53 * 60.0).abs() < 1e-9, "{flat}");
     }
+}
+
+/// Hamstring is 1.25 times its damage (a crit for 8 makes 10, where a flat +1 would make 9) and
+/// Shield Bash 1.5 times (crits for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7),
+/// with nothing flat. The reference adds a flat 135 to Hamstring and gives Shield Bash its
+/// damage.
+#[test]
+fn hamstring_and_shield_bash_threat_follow_the_measurements() {
+    let request = levelling_warrior();
+    let forever = prepared(&request, Rules::Forever);
+    let hamstring = spell(&forever, HAMSTRING_RANK_1);
+    assert_eq!(number(&hamstring["threat_multiplier"]), 1.25);
+    assert_eq!(number(&hamstring["flat_threat_bonus"]), 0.0);
+    let bash = spell(&forever, SHIELD_BASH_RANK_1);
+    assert_eq!(number(&bash["threat_multiplier"]), 1.5);
+    assert_eq!(number(&bash["flat_threat_bonus"]), 0.0);
+
+    let reference = prepared(&request, Rules::GoReference);
+    let hamstring = spell(&reference, HAMSTRING_RANK_1);
+    assert_eq!(number(&hamstring["threat_multiplier"]), 1.25);
+    assert_eq!(number(&hamstring["flat_threat_bonus"]), 135.0);
+    assert_eq!(
+        number(&spell(&reference, SHIELD_BASH_RANK_1)["threat_multiplier"]),
+        1.0
+    );
 }

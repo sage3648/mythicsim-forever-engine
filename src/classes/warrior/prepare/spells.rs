@@ -21,6 +21,15 @@ use super::masks;
 use super::spell_data::spell_data;
 use super::Warrior;
 
+/// The reference adds a flat 135 to the threat of every rank of Hamstring. Under Forever's rules
+/// its threat is 1.25 times its damage and nothing flat: its crits for 8 make 10 threat, where a
+/// flat +1 would make 9 (warrior threat measurements at levels 20 to 24, 7 November 2026).
+const HAMSTRING_REFERENCE_FLAT_THREAT: f64 = 135.0;
+/// Shield Bash's threat under Forever's rules is 1.5 times its damage, times the stance: its
+/// crits for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7 threat, where 1.5 predicts
+/// 12, 12, 13.5, 15 and 16.5 and a flat +2 would predict 10, 10, 11, 12 and 13 (same
+/// measurements). The reference gives it the plain damage.
+const SHIELD_BASH_THREAT_MULTIPLIER: f64 = 1.5;
 /// Go `heroicStrikeThreatPerLevel`: patch 184, upstream's in-game captures.
 const HEROIC_STRIKE_THREAT_PER_LEVEL: f64 = 2.54;
 /// Go `cleaveThreatPerLevel`.
@@ -323,7 +332,11 @@ impl Warrior {
                 cast: cast_config(rank.gcd(), true, Cooldown::default()),
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.25,
-                flat_threat_bonus: 135.0,
+                flat_threat_bonus: if sim.rules == Rules::Forever {
+                    0.0
+                } else {
+                    HAMSTRING_REFERENCE_FLAT_THREAT
+                },
                 has_extra_cast_condition: true,
                 ..SpellConfig::default()
             },
@@ -856,7 +869,11 @@ impl Warrior {
                 cost: rage_cost_with_refund(rank),
                 cast: cast_config(rank.gcd(), true, cd),
                 damage_multiplier: 1.0,
-                threat_multiplier: 1.0,
+                threat_multiplier: if sim.rules == Rules::Forever {
+                    SHIELD_BASH_THREAT_MULTIPLIER
+                } else {
+                    1.0
+                },
                 flat_threat_bonus: 0.0,
                 has_extra_cast_condition: true,
                 ..SpellConfig::default()

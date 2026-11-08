@@ -1059,6 +1059,11 @@ the Go goldens and exporter uses. The departures:
   would give 30.6. Victory Rush's heal, which makes healing threat, is not modelled: Victorious
   comes up on a kill and nothing in a fight dies, so the spell is never cast
   (`tests/forever_warrior_threat_20261107.rs`).
+- Hamstring and Shield Bash threat, from the same measurements. Hamstring is 1.25 times its
+  damage (its crits for 8 make 10, where a flat +1 would make 9) and Shield Bash 1.5 times (crits
+  for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
+  adds 135 to every rank of Hamstring and gives Shield Bash its damage
+  (`tests/forever_warrior_threat_20261107.rs`).
 
 ## Repository layout
 
