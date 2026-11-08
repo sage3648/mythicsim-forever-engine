@@ -845,6 +845,11 @@ pub struct Spell {
     pub crit_multiplier_additive: f64,
     pub bonus_base_damage: f64,
     pub bonus_coefficient: f64,
+    /// Forever's rules: a physical row that deals school damage takes the caster's flat physical
+    /// damage bonus at this share, its bonus coefficient column; with none, a physical spell
+    /// takes the bonus whole, as a weapon strike does.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub physical_school_coefficient: Option<f64>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     pub pushback_resist: f64,

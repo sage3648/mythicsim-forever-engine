@@ -1070,6 +1070,13 @@ the Go goldens and exporter uses. The departures:
   bonus; the reference takes off the fraction. Whether the game floors the shield or the product
   when a multiplier applies is not measured (`src/prepare/enemy/tests.rs`,
   `tests/forever_physical_damage_20261107.rs`).
+- A physical row that deals school damage takes the caster's flat physical damage bonus (from
+  gear) at the row's bonus coefficient column, never as spell power: Revenge and Hamstring state 1
+  and take all of it, Thunder Clap, Victory Rush and Shield Bash state 0 and take none, and Rend's
+  ticks, with no coefficient, take none (the same measurements). A weapon strike keeps taking the
+  bonus whole. Preparation carries the column as `physical_school_coefficient` on the spell, for
+  a spell that names no coefficient of its own; the reference gives every physical spell the
+  whole bonus (`tests/forever_physical_damage_20261107.rs`).
 
 ## Repository layout
 

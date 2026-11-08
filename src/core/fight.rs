@@ -872,6 +872,9 @@ pub(crate) struct Spell<S> {
     pub(crate) crit_multiplier_additive: f64,
     pub(crate) bonus_base_damage: f64,
     pub(crate) bonus_coefficient: f64,
+    /// Forever's rule that a physical row dealing school damage takes the flat physical damage
+    /// bonus at this share, its bonus coefficient column (see `prepare::physical_damage`).
+    pub(crate) physical_school_coefficient: Option<f64>,
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
     /// Go `Spell.PushbackResist`, which the pushback chance loses.
@@ -3154,6 +3157,7 @@ impl<A: Agent> Fight<A> {
                 crit_multiplier_additive: exported.crit_multiplier_additive,
                 bonus_base_damage: exported.bonus_base_damage,
                 bonus_coefficient: exported.bonus_coefficient,
+                physical_school_coefficient: exported.physical_school_coefficient,
                 threat_multiplier: exported.threat_multiplier,
                 flat_threat_bonus: exported.flat_threat_bonus,
                 pushback_resist: exported.pushback_resist,

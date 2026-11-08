@@ -469,7 +469,9 @@ impl<A: Agent> Fight<A> {
         let attacker = self.attacker_multiplier(spell, false);
         let mut base = base_damage;
         let coefficient = self.spells[spell].bonus_coefficient;
-        if coefficient > 0.0 {
+        if let Some(coefficient) = self.spells[spell].physical_school_coefficient {
+            base += self.physical_school_bonus_damage(spell, coefficient);
+        } else if coefficient > 0.0 {
             base = coefficient.mul_add(self.school_bonus_damage(spell, target), base);
         } else if self.spells[spell].school & 1 != 0 {
             base += self.school_bonus_damage(spell, target);
