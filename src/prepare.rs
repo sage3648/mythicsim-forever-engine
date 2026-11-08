@@ -271,7 +271,10 @@ fn calibrate_level(
 
 /// The request with each player in the gear its sheet was read in, where the sheet names it: a
 /// Best Gear or Droptimizer set swaps other gear in, and the sheet is solved against its own
-/// (levels::calibrate), so a candidate's own crit is not solved away.
+/// (levels::calibrate), so a candidate's own crit is not solved away. The sheet was read with
+/// no item swap set on, so the player's swap set goes too: the Manual Crowd Pummeler opener's
+/// set holds a set's two-hander, which next to the sheet's own shield would swap the off hand
+/// as well, a swap the request never makes.
 fn in_sheet_gear(request: &mut serde_json::Value) {
     let Some(parties) = request
         .pointer_mut("/raid/parties")
@@ -294,6 +297,14 @@ fn in_sheet_gear(request: &mut serde_json::Value) {
             if let (Some(gear), Some(player)) = (gear, player.as_object_mut()) {
                 player.remove("equipment");
                 player.insert("equipment".to_string(), gear);
+                for key in [
+                    "enableItemSwap",
+                    "enable_item_swap",
+                    "itemSwap",
+                    "item_swap",
+                ] {
+                    player.remove(key);
+                }
             }
         }
     }
