@@ -174,3 +174,26 @@ fn a_levelling_class_buffs_with_the_rank_it_knows() {
         .expect("the mage's own raid buff");
     assert_eq!(brilliance["action_id"]["spell_id"], 1460);
 }
+
+/// A levelling Retribution Paladin's Best Gear set with a two-hander from the bags opens with the
+/// Manual Crowd Pummeler and swaps back to that two-hander, while the sheet was read in a
+/// one-hander and shield (Outlaw Sabre 16886, Commander's Crest 6320). The calibration prepares
+/// the request in the sheet's gear; with the swap set still on, the two-hander swap would take
+/// the sheet's shield off too and the request was refused ("an item swap of a slot other than
+/// the main hand alone", nine Best Gear and Droptimizer sims on 8 November 2026). The set sims
+/// with the opener: one Pummeler swap back to the two-hander.
+#[test]
+fn a_two_hander_set_opens_with_the_pummeler_beside_a_sheet_shield() {
+    let request = request("retribution-paladin-L29-two-hander");
+    let sheet_gear = &request["raid"]["parties"][0]["players"][0]["characterSheet"]["equipment"];
+    assert!(
+        sheet_gear.to_string().contains("6320"),
+        "the sheet holds the shield"
+    );
+    assert_eq!(
+        request["raid"]["parties"][0]["players"][0]["itemSwap"]["items"][14]["id"], 251533,
+        "the set's two-hander, Forsaken Greataxe, is the swap set's main hand"
+    );
+    let prepared = prepare(&request).unwrap();
+    assert!(dps(&prepared) > 0.0);
+}
