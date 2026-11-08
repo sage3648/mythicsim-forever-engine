@@ -84,19 +84,27 @@ fn a_level_20_mage_presses_the_frostbolt_it_knows() {
 }
 
 /// The sheet's health and mana are the character's, buffs and all: the calibration solves the
-/// level's base health and mana so the engine's sheet is the exported one.
+/// level's base health and mana so the engine's sheet is the exported one, less what the sheet's
+/// extra attributes give (10 health a point of Stamina, 15 mana a point of Intellect). The
+/// sheet was read with buffs up; the engine sims the character solo.
 #[test]
 fn the_sheet_sets_health_and_mana() {
     let request = request("frost-mage-L20");
     let sheet = request["raid"]["parties"][0]["players"][0]["characterSheet"].clone();
     let prepared = prepare(&request).unwrap();
     let stats = &prepared["player"]["stats"];
-    for (stat, field) in [("Health", "health"), ("Mana", "mana")] {
+    for (stat, field, attribute, index, per_point) in [
+        ("Health", "health", "Stamina", 2, 10.0),
+        ("Mana", "mana", "Intellect", 3, 15.0),
+    ] {
         let engine = stats[stat].as_f64().unwrap();
-        let exported = sheet[field].as_f64().unwrap();
+        let extra =
+            sheet["attributes"][index].as_f64().unwrap() - stats[attribute].as_f64().unwrap();
+        let want = sheet[field].as_f64().unwrap() - per_point * extra;
         assert!(
-            (engine - exported).abs() < 1.0,
-            "{stat}: {engine} against {exported}"
+            (engine - want).abs() < 1.0,
+            "{stat}: {engine} against {want} (the sheet's {} less {per_point} for each of its {extra} extra {attribute})",
+            sheet[field]
         );
     }
 }
@@ -150,4 +158,19 @@ fn a_swapped_item_keeps_its_crit() {
         lost > 1.2 && lost < 1.6,
         "the robe was worth {lost}% spell crit"
     );
+}
+
+/// A class's own raid buff is the rank the levelling character knows: Arcane Brilliance is a
+/// level 56 book, so a level 20 mage buffs with Arcane Intellect rank 2 (1460, learned at 14),
+/// not the raid's +31 Intellect.
+#[test]
+fn a_levelling_class_buffs_with_the_rank_it_knows() {
+    let prepared = prepare(&request("frost-mage-L20")).unwrap();
+    let brilliance = prepared["player"]["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|aura| aura["label"] == "Arcane Brilliance (External)")
+        .expect("the mage's own raid buff");
+    assert_eq!(brilliance["action_id"]["spell_id"], 1460);
 }

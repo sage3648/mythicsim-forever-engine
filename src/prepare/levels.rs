@@ -332,6 +332,65 @@ fn known_rank_of_name(id: i32, character: &Character) -> Option<i32> {
         .map(|rank| rank.id)
 }
 
+/// The group buffs a class casts on its raid and what a levelling caster casts instead when it
+/// has not learned the group version: Arcane Brilliance is learned at 56 from a book, and a level
+/// 21 mage buffs with its Arcane Intellect.
+const SINGLE_TARGET_OF: [(&str, &str); 5] = [
+    ("Arcane Brilliance", "Arcane Intellect"),
+    ("Prayer of Fortitude", "Power Word: Fortitude"),
+    ("Prayer of Spirit", "Divine Spirit"),
+    ("Prayer of Shadow Protection", "Shadow Protection"),
+    ("Gift of the Wild", "Mark of the Wild"),
+];
+
+/// The rank of a buff a levelling character casts in place of `spell`, the level 60 row core's
+/// buff tables name: the highest rank of the same name it knows, or of the single-target spell
+/// for a group buff it has not learned. A buff it knows no rank of keeps `spell`, noted as
+/// unlearned, so its aura is never made permanent. A level 60 character keeps `spell`.
+///
+/// A levelling character sims solo (the app's `worker/forever/levels.go`), so every such buff is
+/// one the class adds for itself (`add_raid_buffs`, `add_party_buffs`).
+pub(crate) fn known_buff_rank(spell: i32) -> i32 {
+    let character = current();
+    if character.level == MAX_LEVEL {
+        return spell;
+    }
+    let row = crate::prepare::spelldata::find(spell);
+    if row.id == 0 {
+        return spell;
+    }
+    let highest_known = |name: &str| -> Option<i32> {
+        let mut ranks: Vec<&Spell> = crate::prepare::spelldata::all()
+            .filter(|candidate| candidate.name == name)
+            .filter(|candidate| knows_buff_row(&character, candidate))
+            .collect();
+        ranks.sort_by_key(|candidate| (candidate.spell_level, candidate.id));
+        ranks.last().map(|rank| rank.id)
+    };
+    let single = SINGLE_TARGET_OF
+        .iter()
+        .find(|(group, _)| *group == row.name)
+        .map(|(_, single)| *single);
+    if let Some(known) = highest_known(&row.name).or_else(|| single.and_then(highest_known)) {
+        return known;
+    }
+    CURRENT.with(|current| current.borrow_mut().unlearned.insert(spell));
+    spell
+}
+
+/// Whether the character has a buff's row: a ranked row as [`knows_rank`] reads it, an unranked
+/// one by its spell level alone (a spellbook lists the rank a buff casts, not every row).
+fn knows_buff_row(character: &Character, row: &Spell) -> bool {
+    if row.spell_level == 0 {
+        return false;
+    }
+    if row.rank.starts_with("Rank ") {
+        knows_rank(character, row)
+    } else {
+        i32::from(row.spell_level) <= character.level
+    }
+}
+
 /// A level 60 character's base stats, `stats` from the engine's table, moved to the level of
 /// the character being prepared. At 60 they stay as they are. Below it the attributes are the
 /// sheet's own, base health and mana are what [`calibrate`] solved, and base attack power
