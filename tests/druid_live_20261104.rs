@@ -83,9 +83,10 @@ fn rip_reproduces_its_live_tooltip() {
     // The buff tooltip, "19 + (32 * Combo Points)", is the same tick.
     assert_eq!(number(&rip["tick_base"]), 19.0);
     assert_eq!(number(&rip["tick_per_combo_point"]).round(), 32.0);
-    // The attack power share, 1% a point up to four, takes the notes' 25% (no row states it); the
-    // placeholder multiplier on the whole spell is gone.
-    close(number(&rip["attack_power_share_per_combo_point"]), 0.0125);
+    // The attack power share, up to four combo points, is the 0.0114 a point measured in game on 7
+    // November 2026 (no row states it; tests/forever_feral_measured_20261107.rs); the placeholder
+    // multiplier on the whole spell is gone.
+    close(number(&rip["attack_power_share_per_combo_point"]), 0.0114);
     assert_eq!(number(&rip["attack_power_share_max_points"]), 4.0);
     assert_eq!(number(&spell(&forever, 9896)["damage_multiplier"]), 1.0);
 
@@ -105,7 +106,7 @@ fn rake_reproduces_its_live_tooltip() {
     let rake = effect(&forever, "rake");
     assert_eq!(number(&rake["flat_damage"]), 76.0);
     assert_eq!(3.0 * number(&rake["tick_base"]), 126.0);
-    close(number(&rake["attack_power_share"]), 0.0625);
+    close(number(&rake["attack_power_share"]), 0.065);
     assert_eq!(number(&spell(&forever, 9904)["damage_multiplier"]), 1.0);
 
     let reference = prepared(&production("feral-druid"), Rules::GoReference);

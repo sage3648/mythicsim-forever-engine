@@ -39,6 +39,17 @@ pub(super) fn primal_bite_rank(rules: Rules) -> &'static Spell {
     }
 }
 
+/// Swipe's share of attack power on each hit. The client rows state none for any rank. A Tauren
+/// druid's combat log of levels 22 to 25 (client 1.60.1.70862, 7 November 2026) fits 0.0301 on
+/// 457 rank 2 hits, 3% as rank 5's, and rank 1 takes the same; ranks 3 and 4 carry it,
+/// unmeasured. The Go reference keeps its 5% literal on every rank.
+pub(super) fn swipe_attack_power_share(rules: Rules) -> f64 {
+    match rules {
+        Rules::Forever => 0.03,
+        Rules::GoReference => 0.05,
+    }
+}
+
 /// Go `LacerateMaxStacks`.
 pub(crate) const LACERATE_MAX_STACKS: i32 = 5;
 /// maul.go's realism cooldown.

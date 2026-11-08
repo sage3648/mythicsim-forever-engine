@@ -561,7 +561,9 @@ the Go goldens and exporter uses. The departures:
   with 1.3, 1.5, 1.6, 1.8, 2.2, 2.3 and 2.4), the row's spread unchanged: rank 7's tooltip reads
   510 to 597 at its level 66 cap, 533 at level 60. Shred, Claw and Ravage read 200%, 140% and
   435% in the rows already. No row or tooltip states the attack power shares of Rip, Rake and
-  Ferocious Bite (server side), so they keep the notes' 25% (1.25 times 1%, 5% and 3% a point).
+  Ferocious Bite (server side), so they kept the notes' 25% (1.25 times 1%, 5% and 3% a point);
+  Rip's and Rake's are now the measured shares in the last bullet of the departures, and Ferocious
+  Bite's alone keeps the 25%.
   Rend and Tear stays 3/6/9/12/15%: the live tooltip's "20%" is the row's own base points (20 in
   the frozen data too, beside a per rank curve of 2 to 10), the way Genesis reads "1%" and
   Naturalist "100%". Bear Form's threat stays the notes' 115% (its tooltips state none), and
@@ -986,6 +988,29 @@ the Go goldens and exporter uses. The departures:
   registered Affliction aura on the target, active or not (Go `AfflictionCount`), which is the
   full 36% on every tick (`soul_siphon_live` on `drain_life` and `wrack`,
   `tests/forever_soul_siphon_20261104.rs`).
+- Feral druid attack power shares, measured in game: a Tauren druid's combat log at levels 22 to 25
+  on client 1.60.1.70862 (7 November 2026), against client rows that state none of them. Rake's
+  hit takes 6.5% of attack power (0.0648 fitted) and each tick the same share (0.0652 fitted): at
+  221 attack power with Savage Fury 2/2 the hit read 45 on 26 of 26 hits and the tick 37 on 55 of
+  55, where 0.06875 gives a tick of 38, and a weapon damage buff moved neither, so neither has a
+  weapon term. Rip takes 0.0114 of attack power a tick for each combo point (up to four, the cap
+  kept), read at each tick and not snapshotted: 17 ticks at 3 and 4 combo points and 192 to 239
+  attack power fit floor(4 + 5.5 x points + k x attack power x points) for k from 0.0113 to
+  0.0115. Swipe takes 3% of attack power on each hit (0.0301 fitted on 457 rank 2 hits), the same
+  share on every rank. Rake and Rip were measured on rank 1 and Swipe on ranks 1 and 2; the other
+  ranks carry the share, unmeasured, and the engine reads one share for whichever rank it casts.
+  Swipe's rank 5 took 5% until now (a fit of the beta logs) and takes 3% too: the
+  Bear board's rotation never casts Swipe and does not move, a Bear with Swipe as a filler loses
+  3.3% (364.1 to 352.0 DPS), and the production Cat goes from 706.6 to 701.2 (-0.8%). Forever's rules take Rake 0.065 (was the
+  notes' 1.25 times the reference's 5%, 0.0625), Rip 0.0114 (was 0.0125, the notes' 1.25 times 1%)
+  and Swipe 0.03; the reference keeps 5%, 1% and 5% (`attack_power_share` and
+  `attack_power_share_per_combo_point` on `rake` and `rip`, `attack_power_coefficient` on `swipe`;
+  no new field). Ferocious Bite's 3% a combo point was not measured and keeps the notes' 25%. An
+  avoided Ferocious Bite (miss, dodge or parry) gets back 80% of its 35 base energy, as its row's
+  Discount Power On Miss attribute states, and keeps the extra energy and the combo points: five
+  avoided bites in the log cost 6.1 to 6.7 energy. Both rule sets already did, from the row's
+  attribute, so nothing changes there; the test pins it
+  (`tests/forever_feral_measured_20261107.rs`).
 - Eclipse banks its two charges only when a Wrath lands. Eclipse 408248 (client 1.60.1.70790)
   has SpellAuraOptions ProcTypeMask_0 65536, a harmful spell's damage, so a Wrath that misses
   triggers nothing, as Sildor (#druid) tested on the beta; the charges land with the Wrath, after
