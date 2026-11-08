@@ -454,7 +454,6 @@ impl Druid {
             // rip.go: the tick base and points per combo point; the attack power share is a Go
             // literal.
             let rank = super::feral::cat_rank(sim.rules, &RIP_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             // spell_result.go TargetDamageMultiplier: a bleed tick also takes the target's
             // periodic physical multiplier.
             if sim
@@ -470,8 +469,9 @@ impl Druid {
                 "kind": "rip", "spell": spell_position(sim, unit, rip),
                 "tick_base": tick.average(character_level()),
                 "tick_per_combo_point": f64::from(tick.points_per_resource),
-                // The notes' 25% on the share under Forever's rules (no row states it).
-                "attack_power_share_per_combo_point": 0.01 * share_scale,
+                // Measured in game under Forever's rules (no row states it), every rank on rank 1's.
+                "attack_power_share_per_combo_point":
+                    super::feral::rip_attack_power_share_per_combo_point(sim.rules),
                 "attack_power_share_max_points": 4.0,
                 "tick_can_crit": rank.periodic_can_crit(),
                 "tick_magic": rank.defense_type_core() == DefenseType::Magic,
@@ -482,14 +482,13 @@ impl Druid {
         if let Some(rake) = self.rake {
             // rake.go: a flat hit and a flat bleed tick, neither scaling with attack power.
             let rank = super::feral::cat_rank(sim.rules, &RAKE_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             effects.push(json!({
                 "kind": "rake", "spell": spell_position(sim, unit, rake),
                 "flat_damage": rank.damage_effect().average(character_level()),
                 "tick_base": rank.periodic_effect().average(character_level()),
-                // rake.go: 5% of attack power on the hit and on every tick, a Go literal fitted
-                // to beta logs (community #769).
-                "attack_power_share": 0.05 * share_scale,
+                // rake.go: a share of attack power on the hit and on every tick, a Go literal of
+                // 5% fitted to beta logs (community #769); measured in game under Forever's rules.
+                "attack_power_share": super::feral::rake_attack_power_share(sim.rules),
                 "tick_can_crit": rank.periodic_can_crit(),
                 "tick_magic": rank.defense_type_core() == DefenseType::Magic,
                 "short_name": "Rake",
@@ -499,12 +498,12 @@ impl Druid {
             // ferocious_bite.go: client values (the live row under Forever's rules), and 3% attack
             // power a point, a Go literal that keeps the notes' 25% under Forever's rules.
             let rank = super::feral::cat_rank(sim.rules, &BITE_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             let mut effect = json!({
                 "kind": "ferocious_bite", "spell": spell_position(sim, unit, bite),
                 "damage_per_energy": rank.effect_n(2).percent(),
                 "damage_per_combo_point": f64::from(rank.damage_effect().points_per_resource),
-                "attack_power_per_combo_point": 0.03 * share_scale,
+                "attack_power_per_combo_point":
+                    super::feral::ferocious_bite_attack_power_share(sim.rules),
             });
             // Predatory Discipline (1328613, hotfix push 113531): "Ferocious Bite no longer
             // converts extra Energy into damage, but still deals extra damage based on excess
@@ -734,9 +733,10 @@ impl Druid {
                     "kind": "swipe", "spell": spell_position(sim, unit, swipe),
                     "flat_damage": Ladder::ranked(&SWIPE_RANKS).highest()
                         .damage_effect().average(character_level()),
-                    // swipeAttackPowerCoeff, a Go literal the client rows do not carry, fitted
-                    // to beta logs (community #787).
-                    "attack_power_coefficient": 0.05,
+                    // swipeAttackPowerCoeff, a Go literal of 5% the client rows do not carry,
+                    // fitted to beta logs (community #787); measured in game under Forever's
+                    // rules (`swipe_attack_power_share`).
+                    "attack_power_coefficient": super::bear::swipe_attack_power_share(sim.rules),
                 }));
             }
             if self.barkskin.is_some() {

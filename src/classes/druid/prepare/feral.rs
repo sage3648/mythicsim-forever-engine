@@ -58,13 +58,37 @@ fn weapon_multiplier(rules: Rules, ladder: &Ladder, forever: f64) -> f64 {
 
 /// The notes of 2 November 2026 raise Rip's, Rake's and Ferocious Bite's base damage and attack
 /// power scaling by "about 25%". The live rows state the new base damage (`hotfix_113554`); no
-/// row or tooltip states the attack power shares, which are server side literals (Rip 1% a combo
-/// point up to four, Rake 5%, Ferocious Bite 3% a combo point), so they keep the notes' 25%.
-/// 1 for the Go reference.
-pub(super) fn attack_power_share_scale(rules: Rules) -> f64 {
+/// row or tooltip states the attack power shares, which are server side literals. Rip's and
+/// Rake's were measured in game on 7 November 2026 (below); Ferocious Bite's, 3% a combo point,
+/// still keeps the notes' 25%. 1 for the Go reference.
+pub(super) fn ferocious_bite_attack_power_share(rules: Rules) -> f64 {
     match rules {
-        Rules::Forever => 1.25,
-        Rules::GoReference => 1.0,
+        Rules::Forever => 0.03 * 1.25,
+        Rules::GoReference => 0.03,
+    }
+}
+
+/// Rake's share of attack power, on the hit and on every tick. A Tauren druid's combat log of
+/// levels 22 to 25 (client 1.60.1.70862, 7 November 2026) fits 0.0648 on the hit and 0.0652 on
+/// the tick: at 221 attack power with Savage Fury 2/2 the hit read 45 on 26 of 26 hits and the
+/// tick 37 on 55 of 55, where 0.06875 gives a tick of 38. A weapon damage buff moved neither, so
+/// neither has a weapon term. Measured on rank 1; ranks 2 to 4 carry its share, unmeasured. The
+/// Go reference keeps its 5% literal.
+pub(super) fn rake_attack_power_share(rules: Rules) -> f64 {
+    match rules {
+        Rules::Forever => 0.065,
+        Rules::GoReference => 0.05,
+    }
+}
+
+/// Rip's share of attack power a tick for each combo point (up to four), read at each tick, not
+/// snapshotted. The same log read 17 ticks at 3 and 4 combo points and 192 to 239 attack power,
+/// which fit floor(4 + 5.5 x points + k x attack power x points) for k from 0.0113 to 0.0115.
+/// Measured on rank 1; ranks 2 to 6 carry its share, unmeasured. The Go reference keeps its 1%.
+pub(super) fn rip_attack_power_share_per_combo_point(rules: Rules) -> f64 {
+    match rules {
+        Rules::Forever => 0.0114,
+        Rules::GoReference => 0.01,
     }
 }
 
@@ -738,14 +762,35 @@ mod tests {
     }
 
     /// The Go reference keeps the frozen rows and shares; Forever's rules read the live rows, and
-    /// only the attack power shares keep the notes' 25%.
+    /// the attack power shares measured in game on 7 November 2026 (Ferocious Bite's keeps the
+    /// notes' 25%).
     #[test]
     fn cat_rows_follow_the_rules() {
         let live = cat_rank(Rules::Forever, &RIP_RANKS).periodic_effect();
         assert_eq!(live.average(60), 19.0);
         let frozen = cat_rank(Rules::GoReference, &RIP_RANKS).periodic_effect();
         assert_eq!(frozen.average(60), 15.0);
-        assert_eq!(attack_power_share_scale(Rules::Forever), 1.25);
-        assert_eq!(attack_power_share_scale(Rules::GoReference), 1.0);
+        assert_eq!(ferocious_bite_attack_power_share(Rules::Forever), 0.0375);
+        assert_eq!(ferocious_bite_attack_power_share(Rules::GoReference), 0.03);
+    }
+
+    /// The shares of the Tauren druid's combat log (levels 22 to 25, client 1.60.1.70862, 7
+    /// November 2026): Rake 6.5% of attack power on the hit and on each tick, Rip 0.0114 a tick for
+    /// each combo point, Swipe 3% a hit. The reference keeps 5%, 1% and 5%.
+    #[test]
+    fn measured_shares_follow_the_rules() {
+        use super::super::bear::swipe_attack_power_share;
+        assert_eq!(rake_attack_power_share(Rules::Forever), 0.065);
+        assert_eq!(rake_attack_power_share(Rules::GoReference), 0.05);
+        assert_eq!(
+            rip_attack_power_share_per_combo_point(Rules::Forever),
+            0.0114
+        );
+        assert_eq!(
+            rip_attack_power_share_per_combo_point(Rules::GoReference),
+            0.01
+        );
+        assert_eq!(swipe_attack_power_share(Rules::Forever), 0.03);
+        assert_eq!(swipe_attack_power_share(Rules::GoReference), 0.05);
     }
 }
