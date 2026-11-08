@@ -996,9 +996,15 @@ the Go goldens and exporter uses. The departures:
   armor, damage, speed and block), such as Worn Cloak (1733) or Crude Bastard Sword (1412), which a
   leveling character wears. The reference refuses them as an unknown item. Forever's rules read
   them from `data/forever-client-items.jsonl` for an id `data/items.jsonl` lacks; the pinned
-  import is untouched and the reference's rules still refuse them. Items with a use, equip or
-  proc effect, a class restriction or a line the generator does not read are left out and stay
-  refused (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`).
+  import is untouched and the reference's rules still refuse them. Since 8 November 2026 the file
+  also holds the items the Forever client adds whose ItemSparse rows the client ships encrypted
+  (wago.tools cannot read them), from their Item row and Wowhead Forever tooltip alone, such as
+  Berserker Shackles (274600), and equip lines that are a plain stat (Defense, Attack Power,
+  spell power, hit, crit, mana per 5 sec, dodge, parry, block) read as `data/items.jsonl` holds
+  the same line of a Classic item. Items with a use, chance on hit or other equip effect, a set
+  bonus or a line the generator does not read are left out and stay refused
+  (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
+  `tests/forever_client_items_20261108.rs`).
 - Items whose live row differs from the reference database: Forever's rules read
   `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
   pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the

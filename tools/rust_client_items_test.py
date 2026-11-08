@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 
 import rust_client_items as tool
@@ -38,6 +39,39 @@ BUCKLER = {
         "</td></tr></table>"
     ),
 }
+
+# Berserker Shackles, a Forever item with no readable ItemSparse row (Wowhead, 8 November 2026).
+SHACKLES = {
+    "name": "Berserker Shackles",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Berserker Shackles</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->39</span><!--bo--><br>Binds when '
+        'picked up<!--ue--><!--ue--><table width="100%"><tr><td>Wrist</td><th><!--scstart4:3-->'
+        '<span class="q1">Mail</span><!--scend--></th></tr></table><!--rf--><span><!--amr-->109 '
+        "Armor</span><br><span><!--stat4-->+7 Strength</span><!--ebstats--><!--egstats-->"
+        "<!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--></td></tr></table><table><tr>"
+        '<td>Requires Level <!--rlvl-->34<br><!--rr--><span class="q2">Equip: Increased Defense '
+        "+<!--rtg12-->6.</span><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div "
+        'class="whtt-sellprice">Sell Price: <span class="moneysilver">38</span> <span '
+        'class="moneycopper">48</span></div></td></tr></table><!--i?274600:1:60:34-->'
+    ),
+}
+# Staff of Jordan's equip lines (Wowhead Forever), the reference row: {"20":15,"4":60,"5":60}.
+JORDAN_EFFECTS = (
+    '<span class="q2">Equip: Improves your chance to hit by 1.5%.</span><br><span class="q2">'
+    "Equip: Increases damage and healing done by magical spells and effects by up to <span>"
+    "<!--rtg41-->60</span>.</span><!--itemEffects:1-->"
+)
+
+
+def with_effects(response, effects):
+    """A copy of a tooltip response with its effect lines replaced."""
+    out = json.loads(json.dumps(response))
+    out["tooltip"] = re.sub(
+        r'<span class="q2">.*?<!--itemEffects:\d+-->', lambda _: effects, out["tooltip"]
+    )
+    return out
 
 
 def sparse(inventory, level, delay=0):
@@ -101,6 +135,55 @@ class ParseTests(unittest.TestCase):
     def test_a_missing_tooltip_leaves_the_item_out(self):
         with self.assertRaisesRegex(tool.Unreadable, "no tooltip"):
             tool.row_for(1733, sparse(16, 15), item(4, 1), {"missing": True})
+
+    def test_an_item_without_an_itemsparse_row_reads_from_its_tooltip(self):
+        row = tool.row_for(274600, None, {**item(4, 3), "InventoryType": "9"}, SHACKLES)
+        self.assertEqual(
+            tool.dump_row(row),
+            '{"id":274600,"name":"Berserker Shackles","type":"ItemTypeWrist",'
+            '"armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"0":7,"25":6,"30":109},'
+            '"ilvl":39}}}',
+        )
+
+    def test_the_tooltip_must_name_the_item_rows_slot(self):
+        with self.assertRaisesRegex(tool.Unreadable, "slot"):
+            tool.row_for(274600, None, {**item(4, 3), "InventoryType": "10"}, SHACKLES)
+
+    def test_an_item_without_an_itemsparse_row_passes_the_name_filter(self):
+        test = {**SHACKLES, "name": "Test Shackles"}
+        test["tooltip"] = test["tooltip"].replace("Berserker Shackles", "Test Shackles")
+        with self.assertRaisesRegex(tool.Unreadable, "development name"):
+            tool.row_for(274600, None, {**item(4, 3), "InventoryType": "9"}, test)
+
+    def test_equip_lines_read_as_the_reference_rows_hold_them(self):
+        staff = tool.parse_tooltip(with_effects(SHACKLES, JORDAN_EFFECTS))
+        self.assertEqual(staff["stats"], {0: 7, 4: 60, 5: 60, 20: 15})
+        for line, stats in [
+            ("Equip: +20 Attack Power.", {17: 20}),
+            ("Equip: Improves your chance to get a critical strike by 1%.", {21: 14}),
+            ("Equip: Improves your chance to hit with spells by 1%.", {12: 10}),
+            ("Equip: Improves your chance to get a critical strike with spells by 2%.", {13: 28}),
+            ("Equip: Restores 3 mana per 5 sec.", {34: 3}),
+            ("Equip: Increases damage done by Holy spells and effects by up to 3.", {9: 3}),
+            (
+                "Equip: Increases healing done by up to 15 and damage done by up to 5 for all "
+                "magical spells and effects.",
+                {4: 15, 5: 5},
+            ),
+            ("Equip: Increases your chance to Dodge an attack by 1.0%.", {28: 12}),
+            ("Equip: Increases your chance to Parry an attack by 1.0%.", {29: 15}),
+        ]:
+            self.assertEqual(tool.equip_stats(line), stats, line)
+
+    def test_other_effect_lines_leave_the_item_out(self):
+        for line in [
+            "Equip: Immune to Disarm.",
+            "Use: Restores 100 health.",
+            "Chance on hit: Wounds the target for 20 damage.",
+        ]:
+            odd = with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
+            with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+                tool.row_for(274600, None, {**item(4, 3), "InventoryType": "9"}, odd)
 
     def test_development_rows_are_not_items(self):
         for name in ["Deprecated Old Belt", "OLDRecruit's Belt", "Test Fire Sword", "Hidden Cloak (DNT)"]:
