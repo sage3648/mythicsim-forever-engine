@@ -1272,7 +1272,41 @@ impl<A: Agent> Fight<A> {
         if variance == 0.0 {
             return average;
         }
+        if self.spells[spell].physical_damage_effect {
+            return self.physical_effect_roll(average, variance);
+        }
         self.effect_roll(average, variance)
+    }
+
+    /// The roll of a physical school damage row. Under Forever's rules
+    /// (`physical_rolls_are_whole`) the row's base points roll a half Variance either side and
+    /// the roll lands on a whole number, so Revenge rank 1's 22 with Variance 0.154 rolls 20 to
+    /// 24, the ends rarer than the three between, as in game (warrior damage measurements at
+    /// levels 20 to 24, 7 November 2026). Attack power and the flat bonus are added after,
+    /// unspread. No physical school damage row of the client table has a per level gain, which
+    /// would be added after the rounding (`physical_rows_have_no_per_level_gain`), so the average
+    /// is the base points. Without the rule it is [`Self::effect_roll`], the Go reference's roll.
+    pub(crate) fn physical_effect_roll(&mut self, average: f64, variance: f64) -> f64 {
+        if variance == 0.0 || !self.physical_rolls_are_whole {
+            return self.effect_roll(average, variance);
+        }
+        // The client states these as float32, and the roll's bounds are float32 sums.
+        let base = average as f32;
+        let side = base.abs() * variance as f32 / 2.0;
+        self.go_roll(f64::from(base - side), f64::from(base + side))
+            .round()
+    }
+
+    /// `Simulation.Roll` over a physical school damage range the exporter has as literal bounds,
+    /// as a hunter's pet strikes with Claw and Bite: whole numbers under Forever's rules, the ends
+    /// half as likely (see [`Self::physical_effect_roll`]).
+    pub(crate) fn physical_range_roll(&mut self, min: f64, max: f64) -> f64 {
+        let roll = self.go_roll(min, max);
+        if self.physical_rolls_are_whole {
+            roll.round()
+        } else {
+            roll
+        }
     }
 
     /// Go `Simulation.Roll`: min + (max - min) * roll, which the arm64 build fuses into one

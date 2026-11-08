@@ -880,6 +880,9 @@ pub(crate) struct Spell<S> {
     /// Go `Spell.PushbackResist`, which the pushback chance loses.
     pub(crate) pushback_resist: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
+    /// Forever's rule that the damage effect is a physical school damage row, whose roll lands
+    /// on a whole number.
+    pub(crate) physical_damage_effect: bool,
     pub(crate) dot: Option<DotId>,
     /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
     pub(crate) related_dot_spell: Option<SpellId>,
@@ -2039,6 +2042,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autocast_skips_unready_cooldowns: bool,
     /// Forever's rule that a damage bonus applied after the calculation raises threat too.
     pub(crate) threat_follows_damage_bonus: bool,
+    /// Forever's rule that a physical school damage roll lands on a whole number.
+    pub(crate) physical_rolls_are_whole: bool,
     /// A healer sim's burst healing window under Forever's rules (see [`burst`]).
     pub(crate) burst: Option<burst::BurstWindow>,
     /// How each exclusive effect of an aura a rotation asks about reads.
@@ -3162,6 +3167,7 @@ impl<A: Agent> Fight<A> {
                 flat_threat_bonus: exported.flat_threat_bonus,
                 pushback_resist: exported.pushback_resist,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
+                physical_damage_effect: exported.damage_effect.is_some_and(|e| e.physical),
                 dot,
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
@@ -4277,6 +4283,7 @@ impl<A: Agent> Fight<A> {
             off_hand_waits_from_attack_start: player.off_hand_waits_from_attack_start,
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,
             threat_follows_damage_bonus: player.threat_follows_damage_bonus,
+            physical_rolls_are_whole: player.physical_rolls_are_whole,
             burst: player.burst_window.map(burst::BurstWindow::new),
             aura_refresh: Vec::new(),
             derived_categories: Vec::new(),

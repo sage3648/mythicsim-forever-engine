@@ -189,6 +189,16 @@ impl ProcDamage {
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go `Effect.Roll` of the row's direct hit: a physical school damage row rolls a whole
+    /// number under Forever's rules ([`Self::physical_effect_roll`]).
+    fn roll_direct(&mut self, spell: SpellId, direct: Direct) -> f64 {
+        if self.spells[spell].physical_school_coefficient.is_some() {
+            self.physical_effect_roll(direct.average, direct.variance)
+        } else {
+            self.effect_roll(direct.average, direct.variance)
+        }
+    }
+
     /// Go `CalcDamage` of the direct hit on a target for a base amount.
     fn calc_proc_hit(
         &mut self,
@@ -223,14 +233,14 @@ impl<A: Agent> Fight<A> {
         };
         let share = area.splits.then(|| {
             let reached = sides.len();
-            self.effect_roll(direct.average, direct.variance) / reached as f64
+            self.roll_direct(spell, direct) / reached as f64
         });
         let mut results = Vec::with_capacity(sides.len());
         for side in sides {
             let base = match share {
                 Some(share) => share,
-                None if capped => self.effect_roll(direct.average, direct.variance),
-                None => self.effect_roll(direct.average, direct.variance) * area.aoe_cap_multiplier,
+                None if capped => self.roll_direct(spell, direct),
+                None => self.roll_direct(spell, direct) * area.aoe_cap_multiplier,
             };
             results.push(self.calc_proc_hit(spell, side, base, direct.table));
         }
@@ -278,7 +288,7 @@ impl<A: Agent> Fight<A> {
             let mut keep = 1.0;
             let mut results = Vec::with_capacity(targets);
             for side in self.cleave_targets(target, targets) {
-                let base = self.effect_roll(direct.average, direct.variance) * keep;
+                let base = self.roll_direct(spell, direct) * keep;
                 keep *= amp;
                 results.push(self.calc_proc_hit(spell, side, base, direct.table));
             }
@@ -298,7 +308,7 @@ impl<A: Agent> Fight<A> {
             }
             return;
         }
-        let base = self.effect_roll(direct.average, direct.variance);
+        let base = self.roll_direct(spell, direct);
         let result = self.calc_proc_hit(spell, target, base, direct.table);
         match (flies, dot) {
             (true, Some(dot)) => self.deal_damage_after_travel_then_dot(spell, result, dot),

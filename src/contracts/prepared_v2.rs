@@ -802,6 +802,10 @@ pub struct DamageEffect {
     pub average: f64,
     /// Client variance: the roll is uniform over average x (1 +- variance / 2).
     pub variance: f64,
+    /// Forever's rules: the row is a physical school damage row, whose roll lands on a whole
+    /// number (`physical_rolls_are_whole`).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub physical: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -984,6 +988,12 @@ pub struct Player {
     /// which kept the threat of the damage before the bonus.
     #[serde(default, skip_serializing_if = "is_false")]
     pub threat_follows_damage_bonus: bool,
+    /// Forever's rule: a physical hit that deals school damage rolls its client row's base
+    /// points a half Variance either side and lands on a whole number, so Revenge rank 1 (22,
+    /// Variance 0.154) rolls 20 to 24 with the two ends rarer than the three between. False is
+    /// the Go reference, which rolls the same span without rounding.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub physical_rolls_are_whole: bool,
     /// Forever's rule: a cast begun before the pull that would finish before it finishes on the
     /// pull, as a player times a precast to land as the fight starts. False is the Go reference,
     /// under which a hasted precast finishes early and its damage, landing before 0:00, is not

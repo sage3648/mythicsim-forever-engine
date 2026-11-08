@@ -1077,6 +1077,15 @@ the Go goldens and exporter uses. The departures:
   bonus whole. Preparation carries the column as `physical_school_coefficient` on the spell, for
   a spell that names no coefficient of its own; the reference gives every physical spell the
   whole bonus (`tests/forever_physical_damage_20261107.rs`).
+- A physical hit that deals school damage rolls its base points a half Variance either side and
+  lands on a whole number, with attack power added on top unspread: Revenge rank 1 states 22 with
+  a Variance of 0.154 and lands on 20 to 24, the two ends rarer than the three between, and a
+  pet's Claw and Bite and Eviscerate roll the same way (the same measurements); the pet strikes
+  the exporter has as a literal range, a Cat's Claw 43 to 59, round the same. Every physical
+  school damage row of the client table has no per level gain, which would be added after the
+  rounding, so the row's average is its base points (`physical_rolls_are_whole`,
+  `src/prepare/physical_damage.rs`). The reference rolls the span without rounding
+  (`src/classes/warrior/spells/revenge.rs`).
 
 ## Repository layout
 

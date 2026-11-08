@@ -3,7 +3,9 @@
 //! every check also reads the reference.
 //!
 //! A block takes off a whole number, and a physical row that deals school damage takes the flat
-//! physical damage bonus at its bonus coefficient column.
+//! physical damage bonus at its bonus coefficient column. The roll of such a row lands on a whole
+//! number, which `a_physical_row_rolls_whole_numbers_with_its_ends_rarer` in
+//! `src/classes/warrior/spells/revenge.rs` pins.
 
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
@@ -177,6 +179,10 @@ fn a_school_damage_row_carries_its_bonus_coefficient() {
     for spell in reference["player"]["spells"].as_array().unwrap() {
         assert!(spell.get("physical_school_coefficient").is_none());
     }
+    assert!(reference["player"]
+        .get("physical_rolls_are_whole")
+        .is_none());
+    assert_eq!(forever["player"]["physical_rolls_are_whole"], json!(true));
 }
 
 /// What a fight that casts only this spell in Battle Stance dealt with it, with this much flat
