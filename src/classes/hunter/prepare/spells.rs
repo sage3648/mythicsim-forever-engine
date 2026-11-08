@@ -7,10 +7,11 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE, MIN_RANGED_RANGE};
+use crate::prepare::character::constants::{MAX_MELEE_RANGE, MIN_RANGED_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::SpellId;
 use crate::prepare::sim::{
     AuraConfig, AuraId, Cooldown, Duration, EventCallbacks, Rules, Sim, MILLISECOND, NEVER_EXPIRES,
@@ -862,7 +863,7 @@ impl Hunter {
         let haste_multiplier = 1.0
             + rank
                 .effect(dbcenums::A_MOD_RANGED_HASTE, 0)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0;
 
         // Forever: ranged and melee attack speed, where Classic's was ranged only.

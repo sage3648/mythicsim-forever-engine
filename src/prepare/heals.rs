@@ -23,7 +23,7 @@ use super::spell_mod::{SpellModConfig, SpellModType};
 use super::spelldata::{Effect, Ladder, Spell as Row};
 use crate::contracts::prepared_v2::{ActionId, CritAbsorb, SmartHeal};
 use crate::contracts::request::{Message, Value as RequestValue};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::AuraConfig;
 use crate::prepare::stats::Stat;
 
@@ -117,9 +117,9 @@ pub(crate) fn register_heal_from(
 ) -> HealRank {
     let periodic = row.periodic_effect();
     let absorb = row.absorb_effect();
-    let direct = (!heal.is_nil()).then(|| (heal.average(CHARACTER_LEVEL), heal.variance));
-    let tick = (!periodic.is_nil()).then(|| periodic.average(CHARACTER_LEVEL));
-    let shield = (!absorb.is_nil()).then(|| absorb.average(CHARACTER_LEVEL));
+    let direct = (!heal.is_nil()).then(|| (heal.average(character_level()), heal.variance));
+    let tick = (!periodic.is_nil()).then(|| periodic.average(character_level()));
+    let shield = (!absorb.is_nil()).then(|| absorb.average(character_level()));
     let coefficient = if direct.is_some() {
         heal.coeff()
     } else if shield.is_some() {
@@ -309,7 +309,7 @@ pub(crate) fn register_totem_heal(
         .iter()
         .find(|effect| effect.aura == super::dbcenums::A_PERIODIC_HEAL)
         .unwrap_or_else(|| super::spelldata::nil_effect());
-    let tick = periodic.average(CHARACTER_LEVEL);
+    let tick = periodic.average(character_level());
     let mana = totem.mana_cost();
     let mut flags = totem.class_flags;
     for (word, other) in flags.mask.iter_mut().zip(heal.class_flags.mask) {

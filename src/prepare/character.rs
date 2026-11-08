@@ -8,6 +8,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
 
 use super::items::{self, Equipment};
+use super::levels::character_level;
 use super::sim::{
     AuraConfig, AuraId, BuildPhase, Duration, Rules, Sim, SpellId, TimerId, Unit, UnitId, UnitType,
     MILLISECOND,
@@ -21,7 +22,6 @@ pub(crate) const CONJURED_CATEGORY: i32 = 1153;
 
 /// Go constants from constants.go and base_stats_auto_gen.go.
 pub(crate) mod constants {
-    pub const CHARACTER_LEVEL: i32 = 60;
     pub const EXPERTISE_RATING_PER_EXPERTISE_PERCENT: f64 = 10.0;
     pub const DEFENSE_RATING_PER_DEFENSE_LEVEL: f64 = 1.0;
     pub const DODGE_RATING_PER_DODGE_PERCENT: f64 = 12.0;
@@ -115,14 +115,14 @@ pub(crate) fn unit_level_f64(
     plus2: f64,
     plus3: f64,
 ) -> f64 {
-    use constants::CHARACTER_LEVEL;
-    if level == CHARACTER_LEVEL - 2 {
+    use super::levels::character_level;
+    if level == character_level() - 2 {
         minus2
-    } else if level == CHARACTER_LEVEL {
+    } else if level == character_level() {
         plus0
-    } else if level == CHARACTER_LEVEL + 1 {
+    } else if level == character_level() + 1 {
         plus1
-    } else if level == CHARACTER_LEVEL + 2 {
+    } else if level == character_level() + 2 {
         plus2
     } else {
         plus3
@@ -225,8 +225,8 @@ pub(crate) fn add_character_universal_stat_dependencies(sim: &mut Sim, unit: Uni
     sdm.add_stat_dependency(Stat::Agility, Stat::Armor, 2.0);
 }
 
-/// Go `BaseStats[{race, class}]`.
-fn base_stats(class: &str, race: &str) -> Option<Stats> {
+/// Go `BaseStats[{race, class}]`, at the level of the character being prepared.
+pub(crate) fn base_stats(class: &str, race: &str) -> Option<Stats> {
     let values = crate::data::tables::tables()
         .base_stats
         .get(class)?
@@ -235,6 +235,7 @@ fn base_stats(class: &str, race: &str) -> Option<Stats> {
     for (name, value) in values {
         out[Stat::by_name(name).expect("a Go stat name")] = *value;
     }
+    super::levels::base_stats_at_level(&mut out);
     Some(out)
 }
 
@@ -275,7 +276,7 @@ impl Sim {
         let name = player.str("name").to_string();
         let mut unit = Unit::new(UnitType::Player, format!("{} (#{})", name, index + 1));
         unit.index = index;
-        unit.level = constants::CHARACTER_LEVEL;
+        unit.level = character_level();
         unit.reaction_time = Duration::from(player.i32("reaction_time_ms").max(10)) * MILLISECOND;
         unit.channel_clip_delay =
             (Duration::from(player.i32("channel_clip_delay_ms")) * MILLISECOND).max(0);
@@ -486,11 +487,13 @@ impl Sim {
         }
         if self.unit(unit).unit_type == UnitType::Player {
             let class = self.character(unit).class.clone();
-            let crit_per_int = crate::data::tables::tables()
-                .crit_per_int_max_level
-                .get(&class)
-                .copied()
-                .unwrap_or(0.0);
+            let crit_per_int = super::levels::crit_per_intellect(
+                crate::data::tables::tables()
+                    .crit_per_int_max_level
+                    .get(&class)
+                    .copied()
+                    .unwrap_or(0.0),
+            );
             self.unit_mut(unit).sdm.add_stat_dependency(
                 Stat::Intellect,
                 Stat::SpellCritPercent,
@@ -529,11 +532,13 @@ impl Sim {
 
     /// Go `CritPerAgiMaxLevel[class]`.
     pub(crate) fn crit_per_agi_max_level(&self, unit: UnitId) -> f64 {
-        crate::data::tables::tables()
-            .crit_per_agi_max_level
-            .get(&self.character(unit).class)
-            .copied()
-            .unwrap_or(0.0)
+        super::levels::crit_per_agility(
+            crate::data::tables::tables()
+                .crit_per_agi_max_level
+                .get(&self.character(unit).class)
+                .copied()
+                .unwrap_or(0.0),
+        )
     }
 
     /// Go `AddMajorCooldown`.

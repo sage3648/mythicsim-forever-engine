@@ -3,10 +3,10 @@
 
 use serde_json::{json, Value};
 
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export::action_id;
+use crate::prepare::levels::character_level;
 use crate::prepare::rotation::rotation_spells;
 use crate::prepare::sim::{Rules, Sim, UnitId, NEVER_EXPIRES};
 use crate::prepare::spelldata::Spell as Row;
@@ -210,7 +210,7 @@ impl Paladin {
             }
         }
         rank.effect(dbcenums::A_PROC_TRIGGER_DAMAGE, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
     }
 
     /// Go `paladinHealEffect`: every heal rank's roll, the Libram of Light's Flash of Light
@@ -222,7 +222,7 @@ impl Paladin {
         let mut ranks: Vec<Value> = Vec::new();
         let mut roll = |name: &str, rank: &Row| {
             let heal = rank.heal_effect();
-            let average = heal.average(CHARACTER_LEVEL);
+            let average = heal.average(character_level());
             ranks.push(json!({
                 "spell_id": rank.id, "heal": name,
                 "min": average * (1.0 - heal.variance / 2.0),
@@ -267,8 +267,8 @@ impl Paladin {
         json!({
             "kind": "paladin_heals", "ranks": ranks,
             "flash_of_light_bonus": self.flash_of_light_bonus_healing,
-            "blessing_holy_light": blessing.effect_n(1).average(CHARACTER_LEVEL),
-            "blessing_flash_of_light": blessing.effect_n(2).average(CHARACTER_LEVEL),
+            "blessing_holy_light": blessing.effect_n(1).average(character_level()),
+            "blessing_flash_of_light": blessing.effect_n(2).average(character_level()),
             "player": player, "target": target,
         })
     }

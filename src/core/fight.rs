@@ -619,6 +619,9 @@ pub(crate) struct Flags {
     pub(crate) cannot_be_dodged: bool,
     /// Go `SpellFlagPushback`: damage taken during the hardcast pushes the cast back.
     pub(crate) pushback: bool,
+    /// A spell the levelling character has not trained (`prepare::levels`): registered for
+    /// what refers to it, never pressed by the rotation.
+    pub(crate) unlearned: bool,
 }
 
 impl Flags {
@@ -648,6 +651,7 @@ impl Flags {
                 "SpellFlagCombatPotion" => flags.combat_potion = true,
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
                 "SpellFlagPushback" => flags.pushback = true,
+                "SpellFlagUnlearned" => flags.unlearned = true,
                 _ => {}
             }
         }

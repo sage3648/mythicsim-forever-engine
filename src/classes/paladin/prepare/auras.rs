@@ -5,7 +5,7 @@ use crate::prepare::buffs::paladin::{
     concentration_aura, devotion_aura_buff, fire_resistance_aura, frost_resistance_aura,
     retribution_aura_buff, shadow_resistance_aura, PaladinAuraRank,
 };
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraId, Sim, UnitId};
 use crate::prepare::spell::{ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spelldata::Spell as Row;
@@ -81,7 +81,7 @@ impl Paladin {
         spell_data().retribution_aura.each(|_, rank| {
             // The damage shield's number is the rank's first effect.
             let mut aura_rank = aura_rank(rank);
-            aura_rank.value = rank.effect_n(1).average(CHARACTER_LEVEL);
+            aura_rank.value = rank.effect_n(1).average(character_level());
             let aura = retribution_aura_buff(sim, unit, true, &aura_rank);
             self.register_aura_spell(sim, unit, rank, aura, masks::RETRIBUTION_AURA);
         });

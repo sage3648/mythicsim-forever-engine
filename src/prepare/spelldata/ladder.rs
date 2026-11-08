@@ -117,25 +117,27 @@ impl Ladder {
         self.ranks[(n - 1) as usize]
     }
 
+    /// The highest rank the character being prepared knows ([`crate::prepare::levels`]): every
+    /// rank at level 60 without a spellbook. When it knows none, the first rank stands in,
+    /// noted as unlearned ([`crate::prepare::levels::unlearned_rank`]); Nil for an empty ladder.
     pub(crate) fn highest(&self) -> &'static Spell {
-        match self.ranks.last() {
-            Some(rank) => rank,
-            None => nil(),
-        }
+        crate::prepare::levels::known_rank(&self.ranks)
+            .or_else(|| crate::prepare::levels::unlearned_rank(&self.ranks))
+            .unwrap_or_else(nil)
     }
 
     /// The highest rank a player knows under these rules: under Forever's, a rank taught by an
     /// Ahn'Qiraj 20 book is not known (see [`super::book_ranks`]).
     pub(crate) fn highest_for(&self, rules: Rules) -> &'static Spell {
-        match self
+        let ranks: Vec<&'static Spell> = self
             .ranks
             .iter()
-            .rev()
-            .find(|spell| rules != Rules::Forever || !book_ranks::is_book_rank(spell.id))
-        {
-            Some(rank) => rank,
-            None => nil(),
-        }
+            .copied()
+            .filter(|spell| rules != Rules::Forever || !book_ranks::is_book_rank(spell.id))
+            .collect();
+        crate::prepare::levels::known_rank(&ranks)
+            .or_else(|| crate::prepare::levels::unlearned_rank(&ranks))
+            .unwrap_or_else(nil)
     }
 
     /// The rank with this spell id. Panics on an id the ladder does not carry, the way

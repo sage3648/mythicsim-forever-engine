@@ -7,9 +7,9 @@ use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::generated;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{
     school, Cast, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
@@ -38,7 +38,7 @@ impl Warrior {
         let action = spell_action(rank.id);
         let crit = rank
             .effect(dbcenums::A_MOD_CRIT_PCT, 0)
-            .average(CHARACTER_LEVEL);
+            .average(character_level());
         let aura = sim.register_aura(
             unit,
             AuraConfig {
@@ -445,7 +445,7 @@ impl Warrior {
                 threat_multiplier: 1.0,
                 flat_threat_bonus: rank
                     .find_effect(dbcenums::E_THREAT, 0, 0)
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 related_aura_arrays: related,
                 ..SpellConfig::default()
             },

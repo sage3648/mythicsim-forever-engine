@@ -22,7 +22,6 @@ const FOREVER_ENUM_VALUES: [(&str, &str, i32); 2] = [
 /// mechanics), each added unless the message already has a field of that name or number. They
 /// number from 1000, clear of anything the reference or an upstream merge will add: the
 /// reference refuses them as unknown fields, so a request that sets one is a Rust-only request.
-/// Each is a scalar of the message: (message, proto name, JSON name, number, kind).
 ///
 /// `PartyBuffs.dark_inspiration` is a Shadow Priest's Dark Inspiration in the party, its talent
 /// rank 0 to 5 (wowsims/forever's `PartyBuffs.dark_inspiration`, numbered 15 there, which this
@@ -30,29 +29,166 @@ const FOREVER_ENUM_VALUES: [(&str, &str, i32); 2] = [
 ///
 /// `ConsumesSpec.oh_imbue_swap_id` is the imbue on the item swap's off hand weapon, beside the
 /// reference's `mh_imbue_swap_id`: a Rogue's swap set's off hand poison.
-const FOREVER_FIELDS: [(&str, &str, &str, u32, FieldKind); 3] = [
-    (
+///
+/// `Player.level`, `Player.character_sheet` and `Player.known_spells` carry a levelling
+/// character: its level (0 reads as 60), the character sheet the MythicSim addon exports for it
+/// ([`FOREVER_MESSAGES`]) and the spell ids its spellbook says it has trained.
+const FOREVER_FIELDS: [ForeverField; 6] = [
+    ForeverField::scalar(
         "proto.ConsumesSpec",
         "oil_of_immolation",
         "oilOfImmolation",
         1000,
         FieldKind::Bool,
     ),
-    (
+    ForeverField::scalar(
         "proto.PartyBuffs",
         "dark_inspiration",
         "darkInspiration",
         1001,
         FieldKind::Int32,
     ),
-    (
+    ForeverField::scalar(
         "proto.ConsumesSpec",
         "oh_imbue_swap_id",
         "ohImbueSwapId",
         1002,
         FieldKind::Int32,
     ),
+    ForeverField::scalar("proto.Player", "level", "level", 1003, FieldKind::Int32),
+    ForeverField {
+        type_name: Some("proto.CharacterSheet"),
+        ..ForeverField::scalar(
+            "proto.Player",
+            "character_sheet",
+            "characterSheet",
+            1004,
+            FieldKind::Message,
+        )
+    },
+    ForeverField {
+        repeated: true,
+        ..ForeverField::scalar(
+            "proto.Player",
+            "known_spells",
+            "knownSpells",
+            1005,
+            FieldKind::Int32,
+        )
+    },
 ];
+
+/// Messages Forever has that the reference schema lacks, with their fields.
+///
+/// `CharacterSheet` is what the addon reads off the character sheet (addon/MythicSim/Forever.lua
+/// `collect_sheet` in the app): attributes in Strength, Agility, Stamina, Intellect, Spirit
+/// order (`base` without gear or buffs), spell numbers per school from Holy to Arcane, attack
+/// power as base, positive and negative parts, armor as base and total, mana regen as base and
+/// casting, weapon skill as main hand base and bonus, off hand, ranged, the helpful auras up
+/// when it was read, and the gear it was read in (the export's own, which a Best Gear or
+/// Droptimizer request's equipment replaces).
+const FOREVER_MESSAGES: [(&str, &[ForeverField]); 1] = [(
+    "proto.CharacterSheet",
+    &[
+        ForeverField::scalar("", "level", "level", 1, FieldKind::Int32),
+        ForeverField::list("base", "base", 2, FieldKind::Double),
+        ForeverField::list("attributes", "attributes", 3, FieldKind::Double),
+        ForeverField::list("attribute_buffs", "attributeBuffs", 4, FieldKind::Double),
+        ForeverField::list(
+            "attribute_debuffs",
+            "attributeDebuffs",
+            5,
+            FieldKind::Double,
+        ),
+        ForeverField::scalar("", "health", "health", 6, FieldKind::Double),
+        ForeverField::scalar("", "mana", "mana", 7, FieldKind::Double),
+        ForeverField::scalar("", "melee_crit", "meleeCrit", 8, FieldKind::Double),
+        ForeverField::scalar("", "ranged_crit", "rangedCrit", 9, FieldKind::Double),
+        ForeverField::list("spell_crit", "spellCrit", 10, FieldKind::Double),
+        ForeverField::list("spell_power", "spellPower", 11, FieldKind::Double),
+        ForeverField::scalar("", "healing_power", "healingPower", 12, FieldKind::Double),
+        ForeverField::scalar("", "melee_hit", "meleeHit", 13, FieldKind::Double),
+        ForeverField::scalar("", "spell_hit", "spellHit", 14, FieldKind::Double),
+        ForeverField::scalar("", "dodge", "dodge", 15, FieldKind::Double),
+        ForeverField::scalar("", "parry", "parry", 16, FieldKind::Double),
+        ForeverField::scalar("", "block", "block", 17, FieldKind::Double),
+        ForeverField::list("attack_power", "attackPower", 18, FieldKind::Double),
+        ForeverField::list(
+            "ranged_attack_power",
+            "rangedAttackPower",
+            19,
+            FieldKind::Double,
+        ),
+        ForeverField::list("armor", "armor", 20, FieldKind::Double),
+        ForeverField::list("mana_regen", "manaRegen", 21, FieldKind::Double),
+        ForeverField::list("weapon_skill", "weaponSkill", 22, FieldKind::Double),
+        ForeverField::list("auras", "auras", 23, FieldKind::Int32),
+        ForeverField {
+            type_name: Some("proto.EquipmentSpec"),
+            ..ForeverField::scalar("", "equipment", "equipment", 24, FieldKind::Message)
+        },
+    ],
+)];
+
+/// One field [`FOREVER_FIELDS`] or [`FOREVER_MESSAGES`] adds.
+struct ForeverField {
+    message: &'static str,
+    name: &'static str,
+    json_name: &'static str,
+    number: u32,
+    kind: FieldKind,
+    repeated: bool,
+    type_name: Option<&'static str>,
+}
+
+impl ForeverField {
+    const fn scalar(
+        message: &'static str,
+        name: &'static str,
+        json_name: &'static str,
+        number: u32,
+        kind: FieldKind,
+    ) -> ForeverField {
+        ForeverField {
+            message,
+            name,
+            json_name,
+            number,
+            kind,
+            repeated: false,
+            type_name: None,
+        }
+    }
+
+    const fn list(
+        name: &'static str,
+        json_name: &'static str,
+        number: u32,
+        kind: FieldKind,
+    ) -> ForeverField {
+        ForeverField {
+            repeated: true,
+            ..ForeverField::scalar("", name, json_name, number, kind)
+        }
+    }
+
+    fn schema(&self) -> FieldSchema {
+        FieldSchema {
+            name: self.name.to_string(),
+            json_name: self.json_name.to_string(),
+            number: self.number,
+            kind: self.kind,
+            repeated: self.repeated,
+            packed: self.repeated,
+            optional: false,
+            oneof: None,
+            oneof_index: None,
+            type_name: self.type_name.map(str::to_string),
+            map_key: None,
+            map_value: None,
+        }
+    }
+}
 
 /// A field's protobuf kind, by Go's `protoreflect.Kind` name.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -209,30 +345,24 @@ fn schema() -> &'static Schema {
                 });
             }
         }
-        for (message, name, json_name, number, kind) in FOREVER_FIELDS {
+        for (name, fields) in FOREVER_MESSAGES {
+            raw.messages
+                .entry(name.to_string())
+                .or_insert_with(|| RawMessage {
+                    fields: fields.iter().map(ForeverField::schema).collect(),
+                });
+        }
+        for field in &FOREVER_FIELDS {
             let fields = &mut raw
                 .messages
-                .get_mut(message)
+                .get_mut(field.message)
                 .expect("the schema has the message")
                 .fields;
             if fields
                 .iter()
-                .all(|field| field.name != name && field.number != number)
+                .all(|existing| existing.name != field.name && existing.number != field.number)
             {
-                fields.push(FieldSchema {
-                    name: name.to_string(),
-                    json_name: json_name.to_string(),
-                    number,
-                    kind,
-                    repeated: false,
-                    packed: false,
-                    optional: false,
-                    oneof: None,
-                    oneof_index: None,
-                    type_name: None,
-                    map_key: None,
-                    map_value: None,
-                });
+                fields.push(field.schema());
             }
         }
         let messages = raw

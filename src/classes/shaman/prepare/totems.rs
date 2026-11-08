@@ -11,8 +11,8 @@ use crate::prepare::buffs::generated::{
     GRACE_OF_AIR_TOTEM, MANA_SPRING_TOTEM, MANA_TIDE_TOTEMS, STRENGTH_OF_EARTH_TOTEM,
     WINDFURY_TOTEM,
 };
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::parse_effects::exclusive_stat_category;
 use crate::prepare::periodic_action::PeriodicActionOptions;
 use crate::prepare::resolve_proc::{chance, proc_trigger};
@@ -92,7 +92,7 @@ impl Shaman {
         let party_aura = data.windfury_totem_triggered.by_id(10612);
         let duration = rank.duration();
         // Forever drops Improved Weapon Totems, so the buff's own attack power is the whole value.
-        let value = buff.effect_n(1).average(CHARACTER_LEVEL);
+        let value = buff.effect_n(1).average(character_level());
 
         let wf_proc_aura = sim
             .new_temporary_stats_aura(
@@ -218,7 +218,7 @@ impl Shaman {
         let buff = data.strength_of_earth_totem_triggered.highest();
         let duration = rank.duration();
         // Forever drops Enhancing Totems, so the buff's own value is the whole value.
-        let value = buff.effect_n(1).average(CHARACTER_LEVEL);
+        let value = buff.effect_n(1).average(character_level());
         let config = rank_totem_config(rank, masks::BASIC_TOTEM);
         let aura = sim.register_aura(
             unit,
@@ -245,7 +245,7 @@ impl Shaman {
         let rank = data.grace_of_air_totem.highest_for(sim.rules);
         let buff = data.grace_of_air_totem_triggered.highest();
         let duration = rank.duration();
-        let value = buff.effect_n(1).average(CHARACTER_LEVEL);
+        let value = buff.effect_n(1).average(character_level());
         let config = rank_totem_config(rank, masks::BASIC_TOTEM);
         let aura = sim.register_aura(
             unit,
@@ -269,7 +269,7 @@ impl Shaman {
         // The buff ticks its value every 2 sec, and MP5 is the form the sim takes; Restorative
         // Totems raises it by the ladder the client states.
         let tick = buff.effect(dbcenums::A_PERIODIC_ENERGIZE, 0);
-        let value = tick.average(CHARACTER_LEVEL)
+        let value = tick.average(character_level())
             * (5.0 / duration_seconds(tick.period()))
             * data
                 .restorative_totems

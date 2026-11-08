@@ -1078,7 +1078,18 @@ impl Sim {
 
     /// Go `MakePermanent`: an aura with no expiry that a reset activates. Its reset callback
     /// restores the duration, runs the aura's earlier reset callback, then activates it.
+    ///
+    /// An aura of a spell the character has not learned ([`super::levels::is_unlearned`]) stays
+    /// registered but is never made permanent, so it never goes up.
     pub(crate) fn make_permanent(&mut self, id: AuraId) -> AuraId {
+        let spell = self
+            .aura(id)
+            .action_id
+            .as_ref()
+            .map_or(0, |action| action.spell_id);
+        if super::levels::is_unlearned(spell) {
+            return id;
+        }
         let aura = self.aura_mut(id);
         aura.duration = NEVER_EXPIRES;
         let old = aura.on_reset.take();

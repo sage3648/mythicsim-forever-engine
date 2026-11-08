@@ -3,11 +3,10 @@
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::{
-    CHARACTER_LEVEL, DODGE_RATING_PER_DODGE_PERCENT, MAX_MELEE_RANGE,
-};
+use crate::prepare::character::constants::{DODGE_RATING_PER_DODGE_PERCENT, MAX_MELEE_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, EventCallbacks, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND,
 };
@@ -194,7 +193,7 @@ impl Rogue {
             dodge_aura,
             crate::prepare::stats::Stat::DodgeRating,
             rank.effect(dbcenums::A_MOD_DODGE_PERCENT, 0)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 * DODGE_RATING_PER_DODGE_PERCENT,
         );
 
@@ -536,7 +535,7 @@ impl Rogue {
         let buff = spell_data().thousand_cuts_triggered.highest();
         let cost_per_stack = buff
             .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_COST)
-            .average(CHARACTER_LEVEL) as i32;
+            .average(character_level()) as i32;
         let cost_mod = sim.add_dynamic_mod(
             unit,
             SpellModConfig {

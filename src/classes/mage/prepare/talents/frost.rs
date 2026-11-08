@@ -5,9 +5,9 @@ use std::rc::Rc;
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::AbsorptionAuraConfig;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::resolve_aura::aura_config;
 use crate::prepare::resolve_spell::{flags, spell_config};
 use crate::prepare::sim::AuraId;
@@ -69,7 +69,7 @@ impl Mage {
             hotfix_113554::row(sim.rules, data.ice_barrier_triggered.by_id(1326891).id);
         let pct = |row: &'static crate::data::spells::Spell, misc: i32| {
             row.effect(dbcenums::A_ADD_PCT_MODIFIER, misc)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0
         };
 
@@ -86,7 +86,7 @@ impl Mage {
                 .frost_warding
                 .effect_at(3)
                 .fraction_at(self.talents.i32("frost_warding"));
-        let base = rank.effect_n(1).average(CHARACTER_LEVEL);
+        let base = rank.effect_n(1).average(character_level());
         let shield = sim.new_damage_absorption_aura(
             unit,
             AbsorptionAuraConfig {

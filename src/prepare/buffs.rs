@@ -188,11 +188,30 @@ impl Meta {
         count: f64,
     ) -> AuraId {
         if sim.rules == Rules::Forever {
-            if let Some(spell) = forever_buff_rank(self.spell) {
-                let meta = Meta { spell, ..*self };
-                return meta.aura(sim, unit, is_player, talent_points, count);
+            // Forever's own rank of the buff, then the rank a levelling character knows
+            // (prepare::levels), each applied once.
+            let forever = forever_buff_rank(self.spell).unwrap_or(self.spell);
+            let known = super::levels::known_buff_rank(forever);
+            if known != self.spell {
+                let meta = Meta {
+                    spell: known,
+                    ..*self
+                };
+                return meta.aura_at_rank(sim, unit, is_player, talent_points, count);
             }
         }
+        self.aura_at_rank(sim, unit, is_player, talent_points, count)
+    }
+
+    /// [`Meta::aura`] at this meta's own row, with no rank resolved.
+    fn aura_at_rank(
+        &self,
+        sim: &mut Sim,
+        unit: UnitId,
+        is_player: bool,
+        talent_points: i32,
+        count: f64,
+    ) -> AuraId {
         match self.kind {
             MetaKind::Buff => {
                 let mut options = self.options(talent_points);
@@ -317,7 +336,7 @@ impl Meta {
 
 /// Go `amount`: the caster's amount at the character level.
 fn amount(effect: &Effect) -> f64 {
-    effect.average(super::character::constants::CHARACTER_LEVEL)
+    effect.average(super::levels::character_level())
 }
 
 /// Go `auraDuration`.

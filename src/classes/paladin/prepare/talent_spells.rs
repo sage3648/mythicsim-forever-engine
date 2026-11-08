@@ -150,7 +150,7 @@ impl Paladin {
                         dbcenums::A_ADD_FLAT_MODIFIER,
                         dbcenums::SPELLMOD_CRITICAL_CHANCE,
                     )
-                    .average(crate::prepare::character::constants::CHARACTER_LEVEL),
+                    .average(crate::prepare::levels::character_level()),
                 ..SpellModConfig::default()
             },
         );
