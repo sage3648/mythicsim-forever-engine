@@ -317,13 +317,17 @@ pub(crate) const CHAIN_LIGHTNING_COEFFICIENTS_20261102: [(i32, i32, f64); 8] = [
     (408484, 1072638, 0.357),
 ];
 
-/// Chain Lightning's mana cost ("approximately 225%" of the
-/// comparable Lightning Bolt rank's) under the notes of 2 November, as (spell, mana). The
-/// comparable Lightning Bolt ranks are 6, 7, 9 and 10, the nearest by the level each is learnt.
-pub(crate) const CHAIN_LIGHTNING_COSTS_20261102: [(i32, i32); 4] =
-    [(421, 248), (930, 304), (2860, 428), (10605, 495)];
+/// Chain Lightning's mana cost as Wowhead's Forever tooltips read it from the live client on 6
+/// November 2026, as (spell, mana): 245, 360, 425 and 495 for ranks 1 to 4. The notes of 2
+/// November say "approximately 225%" of the comparable Lightning Bolt rank's, which the first pass
+/// turned into 248, 304, 428 and 495 (Lightning Bolt ranks 6, 7, 9 and 10 at 110, 135, 190 and
+/// 220 mana). The live rows replace that approximation; rank 4 agrees with it. The frozen rows
+/// say 145, 200, 250 and 315.
+pub(crate) const CHAIN_LIGHTNING_COSTS_LIVE_20261106: [(i32, i32); 4] =
+    [(421, 245), (930, 360), (2860, 425), (10605, 495)];
 
-/// Chain Lightning's cast time under the notes of 2 November.
+/// Chain Lightning's cast time under the notes of 2 November, which the live tooltips state too
+/// (2.5 sec on every rank, 6 November 2026).
 pub(crate) const CHAIN_LIGHTNING_CAST_MS_20261102: i32 = 2500;
 /// Every Mutilate hit spell, a main hand and an off hand strike for each of four ranks, whose
 /// weapon damage effect the notes of 2 November raise from 75% to 90%. The flat damage a hit adds
@@ -351,6 +355,13 @@ pub(crate) const RIPTIDE_COSTS_20261104: [(i32, i32); 3] =
 
 /// Riptide's cooldown under the notes of 2 November.
 pub(crate) const RIPTIDE_COOLDOWN_MS_20261102: i32 = 12000;
+
+/// Light's Vigil's range in yards as Wowhead's Forever tooltips read it on 6 November 2026, a
+/// single 40 yd on ranks 1 to 3 (1310911, 1311590 and 1311595; the frozen rows say 20, a hostile
+/// range the heal never has: Holy Shock's "20 - 40 yd" tooltip is the one that names both). The
+/// Paladin's ladders read the frozen rows, so the ally spell of the healer sim takes the live
+/// range from here.
+pub(crate) const LIGHTS_VIGIL_RANGE_LIVE_20261106: f32 = 40.0;
 
 /// Every rank of Slam, whose cooldown the notes of 2 November cut from 18 to 15 sec.
 pub(crate) const SLAM_RANKS: [i32; 5] = [1240193, 1464, 8820, 11604, 11605];
@@ -501,7 +512,8 @@ fn build() -> HashMap<i32, &'static Spell> {
 
     // Shaman (notes of 2 November, rows as Wowhead states them on 4 November): Lightning Bolt,
     // Chain Lightning and the shocks, then Lightning Overload's copies at half of their primary,
-    // then Chain Lightning's cast time, coefficient and mana from the notes.
+    // then Chain Lightning's cast time and coefficient from the notes and its mana from the live
+    // tooltips.
     for &(spell, id, base, per_level) in SHAMAN_ROWS_20261104 {
         patch(spell, &|row| {
             let effect = effect(row, id);
@@ -525,7 +537,7 @@ fn build() -> HashMap<i32, &'static Spell> {
     for (spell, id, coefficient) in CHAIN_LIGHTNING_COEFFICIENTS_20261102 {
         patch(spell, &|row| effect(row, id).sp_coef = coefficient);
     }
-    for (spell, cost) in CHAIN_LIGHTNING_COSTS_20261102 {
+    for (spell, cost) in CHAIN_LIGHTNING_COSTS_LIVE_20261106 {
         patch(spell, &|row| {
             row.cast_time_ms = CHAIN_LIGHTNING_CAST_MS_20261102;
             row.powers[0].cost = cost;
@@ -627,6 +639,10 @@ mod tests {
             assert_eq!(must_find(id).category_cooldown_ms, 6000, "{id}");
             assert!(!must_find(id).heal_effect().is_nil(), "{id}");
         }
+        for id in [1310911, 1311590, 1311595] {
+            assert_eq!(must_find(id).max_range, 20.0, "{id}");
+        }
+        assert_eq!(LIGHTS_VIGIL_RANGE_LIVE_20261106, 40.0);
         assert_eq!(must_find(1239243).powers[0].cost, 385);
         for (id, base_points, ppl) in STARFIRE_LIVE_20261104 {
             let starfire = hotfixed(id).unwrap();
@@ -759,19 +775,22 @@ mod tests {
         // Chain Lightning rank 4: 510 and 3.3 a level, 523 (was 126).
         assert_eq!(effect_of(10605, 688920).average(60), 523.0);
 
-        // Chain Lightning's mana is about 225% of the comparable Lightning Bolt ranks' (110, 135,
-        // 190 and 220 mana, ranks 6, 7, 9 and 10, the nearest by the level each is learnt), the
-        // notes' number, which Wowhead's tooltips still state as 145, 200, 250 and 315.
-        for ((spell, mana), bolt) in CHAIN_LIGHTNING_COSTS_20261102
+        // Chain Lightning's mana and cast time as Wowhead's Forever tooltips read the live client
+        // on 6 November 2026 ("245 Mana" and "2.5 sec cast" on rank 1, 360 on rank 2, 425 on
+        // rank 3 and 495 on rank 4). The notes' "approximately 225%" of Lightning Bolt's mana,
+        // which the first pass read as 248, 304, 428 and 495, is replaced by the live rows.
+        for ((spell, mana), live) in CHAIN_LIGHTNING_COSTS_LIVE_20261106
             .into_iter()
-            .zip([6041, 10391, 15207, 15208])
+            .zip([245, 360, 425, 495])
         {
-            let bolt_cost = f64::from(must_find(bolt).powers[0].cost);
-            assert_eq!(f64::from(mana), (bolt_cost * 2.25).round(), "spell {spell}");
+            assert_eq!(mana, live, "spell {spell}");
             let chain = row(Rules::Forever, spell);
-            assert_eq!(chain.powers[0].cost, mana);
-            assert_eq!(chain.cast_time_ms, 2500);
-            assert_eq!(must_find(spell).cast_time_ms, 2000);
+            assert_eq!(chain.powers[0].cost, live, "spell {spell}");
+            assert_eq!(chain.cast_time_ms, 2500, "spell {spell}");
+            assert_eq!(must_find(spell).cast_time_ms, 2000, "spell {spell}");
+        }
+        for (spell, frozen) in [(421, 145), (930, 200), (2860, 250), (10605, 315)] {
+            assert_eq!(must_find(spell).powers[0].cost, frozen, "spell {spell}");
         }
         // 2.5 sec of cast at the standard 3.5 sec rate, which Wowhead's spell pages state as
         // "SP mod: 0.714" on all four ranks.

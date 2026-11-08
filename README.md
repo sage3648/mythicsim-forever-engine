@@ -29,6 +29,13 @@ cargo run --locked --release -- sim --infile fixtures/mage/prepared-v2/frost-ref
 and prints the same JSON result that Go prints. You do not need Go to build or test
 the engine.
 
+## Rotation presets
+
+The default rotation of every spec MythicSim sims, and the other playstyles it offers, are in
+[`presets/`](presets/README.md), one APL JSON file per rotation with an index by spec. They are a
+mirror of the presets MythicSim runs; to propose a better rotation, open a pull request against
+the file there.
+
 ## How it works
 
 1. Rust prepares the character from the application's request: gear, stats, auras,
@@ -89,6 +96,48 @@ the Go goldens and exporter uses. The departures:
   17/8 of its master's ranged hit as spell hit (Lightning Breath and the other magic pet hits),
   and a Warlock's demon takes 8/17 of its master's spell hit as melee hit, where the reference
   gives a Hunter pet no spell hit and a demon the whole spell hit.
+- A Hunter's tamed pet, a fitted model from the client's creature table, Forever's pet sheets and
+  level 30 beta logs (levels 11, 17 and 30; extrapolated to level 60). The pet's own attack power
+  is 30% of the creature auto attack dps as attack power, 14 attack power a point of dps (4.2
+  times the dps, 253.9 at level 60), with nothing from Strength; its weapon is the rest of that
+  dps (the dps less that attack power over 14), 42.3 a second at level 60, a fifth either side;
+  and it takes 10% of its owner's higher attack power, melee or ranged. The sheets of a level 11,
+  a level 17 and a level 30 pet read 36, 61 and 103 own attack power, each the client's
+  `ExpectedStat` creature dps (8.60, 14.56 and 24.69) times 4.2 rounded down, with the owner's 10%
+  rounded down beside it (the three rows were checked against the table on 6 November 2026). A
+  level 30 Cat's 152 logged swings before armor, 42 to 55 at 119 attack power and 46 to 59 at 146
+  (1.2 second swing, Unleashed Fury 5/5), all lie inside this weapon's range with the Cat's 10%
+  and happiness: the model gives 42.4 to 55.5 and 46.0 to 59.1, where the whole creature dps as the
+  weapon puts 131 of them outside. The swing counts are those of the analysis of the logs, which
+  are not in this repository; the table rows, the 3 sheet readings and the two swing ranges are
+  reproduced by `the_own_attack_power_is_four_point_two_a_point_of_creature_dps` and
+  `the_weapon_is_the_creature_dps_less_its_attack_power_share`. Only the shares are measured
+  at level 30 and below: that they hold at level 60, where the creature dps row is the one
+  input, is an extrapolation. The owner's higher attack power is the one the owner has at the
+  reset (the ranged one for an Agility Hunter), inherited as a linear term, so it follows Aspect
+  of the Hawk and the other ranged auras but never swaps to the melee one mid fight. The
+  reference gives the pet Classic's numbers: 136 Strength at two attack power each less 20 (252),
+  an 18.17 to 27.66 a second weapon and nothing of its owner's attack power. At level 60 that is
+  41 dps of the pet's own against 60.5 (18.1 of attack power and 42.3 of weapon), plus the owner's
+  tenth: the Beast Mastery Cat on the board request goes from 149 to 220 DPS and its Hunter from
+  895 to 966 (+7.9%). The pet's abilities, focus, hit, crit and expertise are unchanged.
+- A Summon Hawk hawk, a fitted model from Forever's level 30 combat logs (extrapolated to level
+  60). A swing is a roll a third either side of 0.0815 of the creature auto attack dps over its
+  2.5 seconds (10.7 at level 60, before Unleashed Fury) plus 0.0179 (before Unleashed Fury,
+  0.0156) a point of the owner's ranged attack power, taken through the target's armor, on the
+  melee special hit table with a crit roll at Ferocity's flat crit plus half the owner's crit (the
+  higher of melee and ranged, as the pet inherits it). Four logs of 2,862 swings at 407 to 1,023
+  owner ranged attack power read the swing before armor as 3.3 to 6.7 plus 0.0179 a point in every
+  log (the client's level 30 row gives 0.0815 x 24.69 x 2.5 = 3.35 to 6.71), all with Unleashed
+  Fury 5/5, which reaches the hawks as it does the pet; 4,340 swings with Ferocity 5/5 read 10
+  plus half the owner's crit against targets 2 levels below to 3 above, and two logs without
+  Ferocity half the pet's. The fixed part scaling with the creature dps (the hawk's own scaling
+  row is not in the client files) and the slope holding at level 60 are extrapolations. The
+  reference swings 0.35 of the dive bomb's base, 37.8 at level 60, whatever the ranged attack
+  power, without armor and without a crit roll (community #703). On the Summon Hawk request in the
+  fixtures (1,900 ranged attack power, 976 armor) the hawks' swings deal 5.5 thousand damage a
+  fight against 5.0 thousand. The dive bomb, the hawks' hit and expertise (the owner's, as the
+  pet's) and their uptime are unchanged. The prepared `summon_hawk` effect carries `guardian`.
 - Improved Mind Flay, from its Forever tooltip ("Each instance of damage of Mind Flay deals 20%
   more damage than its previous instance of damage"): each tick deals the step more than the tick
   before it, compounding (1, 1.2 and 1.44 times the tick at two points), where the reference adds
@@ -390,11 +439,12 @@ the Go goldens and exporter uses. The departures:
   Lightning's primary target damage: base 215, 348, 428 and 510 (rank 4 was 123) and 1.4, 2.2, 2.7
   and 3.3 a level, so 523 at level 60 (was 126). The shocks are Classic Era's: Earth Shock rank 7
   531 (was 301), Flame Shock rank 6 292 and 80 a tick (was 166 and 44) and Frost Shock rank 4 506
-  base, 509 at level 60 (was 283 and 286). Chain Lightning's other changes are the notes' alone,
-  since Wowhead's tooltips still state the old fields (2 sec, 145, 200, 250 and 315 mana, a 6 sec
-  cooldown, which the notes leave): a 2.5 sec cast (was 2) and mana 225% of the comparable
-  Lightning Bolt ranks' (248, 304, 428 and 495), with the coefficient 0.714 (was 0.571), which
-  Wowhead's spell pages state on all four ranks. Lightning Overload's copies deal half their
+  base, 509 at level 60 (was 283 and 286). Chain Lightning's cast time is the notes' 2.5 sec
+  (was 2), which Wowhead's live tooltips of 6 November 2026 state on every rank, and its mana is
+  those tooltips' 245, 360, 425 and 495 (the notes' "approximately 225%" of the comparable
+  Lightning Bolt rank's, which the first pass read as 248, 304, 428 and 495, is replaced by the
+  live rows; the frozen rows say 145, 200, 250 and 315), with the coefficient 0.714 (was 0.571),
+  which Wowhead's spell pages state on all four ranks. Lightning Overload's copies deal half their
   rank's base and level scaling, since the talent's text says "half damage" ("a second, similar
   spell on the same target at no additional cost that causes half damage and no threat"), where
   Wowhead's tooltips of the copy rows still state the old rows on every rank (rank 10 Lightning
@@ -587,7 +637,8 @@ the Go goldens and exporter uses. The departures:
   page: all effects of the Tamed Pet Passive +5% (the Hunter's pet, kept as the 5% on its
   damage) and "Modifies Damage/Healing Done" +5% on Firebolt and Lash of Pain alone, so an Orc
   Warlock's Imp and Succubus gain 5% on those two spells, added to their other damage
-  modifiers, and its other demons nothing (it was 5% on every pet's damage). Clearcasting is
+  modifiers, and its other demons nothing (it was 5% on every pet's damage; hotfix push 113702
+  undid this, see below). Clearcasting is
   spent as the cast's effects apply rather than as it completes (wowsims/forever #831): an Arcane
   Missiles cast Missile Barrage pays for leaves it standing, and the check at completion found
   Missile Barrage already spent whenever it had been gained before the Clearcasting, which
@@ -945,9 +996,15 @@ the Go goldens and exporter uses. The departures:
   armor, damage, speed and block), such as Worn Cloak (1733) or Crude Bastard Sword (1412), which a
   leveling character wears. The reference refuses them as an unknown item. Forever's rules read
   them from `data/forever-client-items.jsonl` for an id `data/items.jsonl` lacks; the pinned
-  import is untouched and the reference's rules still refuse them. Items with a use, equip or
-  proc effect, a class restriction or a line the generator does not read are left out and stay
-  refused (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`).
+  import is untouched and the reference's rules still refuse them. Since 8 November 2026 the file
+  also holds the items the Forever client adds whose ItemSparse rows the client ships encrypted
+  (wago.tools cannot read them), from their Item row and Wowhead Forever tooltip alone, such as
+  Berserker Shackles (274600), and equip lines that are a plain stat (Defense, Attack Power,
+  spell power, hit, crit, mana per 5 sec, dodge, parry, block) read as `data/items.jsonl` holds
+  the same line of a Classic item. Items with a use, chance on hit or other equip effect, a set
+  bonus or a line the generator does not read are left out and stay refused
+  (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
+  `tests/forever_client_items_20261108.rs`).
 - Items whose live row differs from the reference database: Forever's rules read
   `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
   pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the
@@ -958,6 +1015,40 @@ the Go goldens and exporter uses. The departures:
   healing and 12 damage (was 40 and 13), Therazane's Touch 29 (was 31) and The Immovable Object
   66 block value, its 41 Block and 25 Block Value (was 71). A live row keeps its reference row's
   name and kind (`src/data.rs`, `tests/forever_av_vendor_items_20261106.rs`).
+  The second batch (Wowhead's Forever tooltips of 7 November 2026) comes from reading the tooltip
+  of every item the reference rows state differently from Wowhead's gear planner or from the
+  client's item data, every item a reference, trinket board or race request wears, and every
+  armor bearing item whose reference row has no Armor (910 rows, 908 of which the live tooltip
+  gives an armor). It adds 1,004 rows: 931 state only an Armor the row lacked or had wrong, 31
+  change the weapon damage (a caster weapon rolls lower damage live, Witching Stave 40 - 61 not
+  55 - 83, Elemental Mage Staff 109 - 164 not 147 - 221, Mograine's Might 105 - 159 at 3.40 not
+  87 - 131 at 2.80, and the thrown knives roll a wider range around the same average), 20
+  change a shield's block value (the Premier shields and Evergreen Shield 44, was 58, Wormscale
+  Blocker 57, was 75, Blessed Qiraji Bulwark 70, was 88), 14 state a spell power the reference
+  scaled otherwise (Atiesh 150, 300 healing on the healing version, was 216 and 424, Spellshifter
+  Rod 40, was 54), and the rest fix a primary stat: Gemshale Pauldrons, Dragonclaw Ring,
+  Stonerender Gauntlets, Runemender's Seal and a few more. Two stat-bearing equip effects change
+  too: Mace of Unending Life gives 140 feral attack power (was 280), Hammer of Bestial Fury
+  carries none (its tooltip lists no effect; the reference row had 154), and Shard of the
+  Defiler's "Improves your chance to get a critical strike by 15.0%" and "Increases your attack
+  speed and casting speed by 15.0%" become 210 melee crit rating and 150 melee and spell haste
+  rating, which the reference row left to an effect the engine does not model. Items whose
+  tooltip lists a resistance, mana per 5 sec or spell piercing figure as a base plus an extra for
+  Forest and Grassland areas (Rune of Duty, the Volunteer's and Relentless Raider's seals)
+  already match: the row states the base and an area stat. Tooltips are missing for the hidden
+  stat items (`statsHidden` in the gear catalog) and those rows are left as they were
+  (`tests/forever_live_item_stats_20261106.rs`).
+- Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
+  Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
+  preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two
+  effects: SpellEffect 697942 adds 5 to all effect points (aura 107, misc 8) of the Tamed Pet
+  Passive (DND) (18727 to 18730, class set 5 mask 0x4000000), whose one effect is damage done
+  percent on all schools at 0, so the demon deals 5% more damage of every kind, melee included;
+  SpellEffect 697943 (aura 108, 5% damage on Firebolt and Lash of Pain, mask 0x3000) is rewritten
+  to 0 by hotfix push 113702, the fix for those two spells taking it on top of the first. An Orc
+  Warlock's four demons now deal 5% more of all their damage and Firebolt and Lash of Pain
+  nothing more; a gear guardian such as the Emerald Dragon Whelp gets nothing
+  (`tests/orc_command_20261106.rs`). The Hunter's pet keeps its 5%.
 
 ## Repository layout
 

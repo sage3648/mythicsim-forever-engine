@@ -14,9 +14,18 @@ Sources, at the data's client build (data/manifest.json):
                                                        armor, damage, speed, block, stats
 
 An item is taken when it is a weapon or armor row, not in items.jsonl, with an equipment slot,
-a real name (no deprecated, test, old or placeholder rows) and a tooltip with no use, equip or
-proc effect. An item whose tooltip is missing or has a line this tool does not read is left out
+a real name (no deprecated, test, old or placeholder rows) and a tooltip whose every line this
+tool reads. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
+and healing, hit, crit, mana per 5 sec, dodge, parry, block; EQUIP_STATS) are read as
+data/items.jsonl holds the same line of a Classic item. An item whose tooltip is missing, or has
+a use, chance on hit, set or other equip line, or any line this tool does not read, is left out
 and listed.
+
+Most of the items the Forever client adds (ids from about 270000) have an Item row but no
+readable ItemSparse row: the client ships them encrypted and wago.tools cannot read them, while
+Wowhead's Forever tooltips decode them. Such an item is taken from its tooltip alone: its name,
+item level, damage and speed from the tooltip, which must name the Item row's slot, and its
+class, subclass and slot from the Item row.
 
     python3 tools/rust_client_items.py fetch  --tables DIR --cache DIR
     python3 tools/rust_client_items.py build  --tables DIR --cache DIR [--report FILE]
@@ -113,7 +122,11 @@ STAT_INDEX = {
     "Agility": 1,
     "Stamina": 2,
     "Intellect": 3,
+    "Spell Penetration": 15,
     "Spirit": 16,
+    "Block Value": 27,
+    # A green +N Armor line is bonus armor, as the reference rows hold it (Ardent Custodian).
+    "Armor": 31,
     "Arcane Resistance": 35,
     "Fire Resistance": 36,
     "Frost Resistance": 37,
@@ -135,26 +148,32 @@ def known_ids():
 
 def candidates(tables):
     """The weapon and armor rows with a slot that items.jsonl lacks, as (id, sparse, item), and
-    the rows left out for their name, by id."""
+    the rows left out for their name, by id. sparse is None for an Item row the ItemSparse table
+    has no readable row of (the live client's encrypted rows of the Forever items); its name is
+    known only from its tooltip, which build checks the same way."""
     sparse = {int(row["ID"]): row for row in read_csv(Path(tables) / "ItemSparse.csv")}
     classes = {int(row["ID"]): row for row in read_csv(Path(tables) / "Item.csv")}
     known = known_ids()
     taken, junk = [], {}
-    for item_id in sorted(sparse):
-        row = sparse[item_id]
-        item = classes.get(item_id)
-        if item_id in known or item is None:
+    for item_id in sorted(classes):
+        row = sparse.get(item_id)
+        item = classes[item_id]
+        if item_id in known:
             continue
-        if int(row["InventoryType"]) in NOT_WORN:
+        if inventory_type(row, item) in NOT_WORN:
             continue
         if int(item["ClassID"]) not in (WEAPON_CLASS, ARMOR_CLASS):
             continue
-        name = row["Display_lang"]
-        if JUNK_NAME.search(name):
-            junk[item_id] = name
+        if row is not None and JUNK_NAME.search(row["Display_lang"]):
+            junk[item_id] = row["Display_lang"]
             continue
         taken.append((item_id, row, item))
     return taken, junk
+
+
+def inventory_type(sparse, item):
+    """The slot of an item: its ItemSparse row's, or its Item row's when it has no ItemSparse row."""
+    return int((sparse or item)["InventoryType"])
 
 
 def cache_path(cache, item_id):
@@ -173,12 +192,16 @@ def fetch(tables, cache):
     """Fetch every candidate's tooltip that the cache lacks."""
     Path(cache).mkdir(parents=True, exist_ok=True)
     taken, _ = candidates(tables)
+    # The ItemSparse rows first: they are the rows an earlier run of this tool read.
+    taken.sort(key=lambda candidate: (candidate[1] is None, candidate[0]))
     wanted = [item_id for item_id, _, _ in taken if not cache_path(cache, item_id).exists()]
     print(f"{len(taken)} candidates, {len(wanted)} tooltips to fetch", file=sys.stderr)
     delay = REQUEST_INTERVAL
     index = 0
     while index < len(wanted):
         item_id = wanted[index]
+        # Requests start at most one per delay, a 404 included.
+        started = time.monotonic()
         try:
             text = fetch_tooltip(item_id)
             json.loads(text)
@@ -188,11 +211,9 @@ def fetch(tables, cache):
                 print(f"HTTP {err.code} at {item_id}, waiting {delay:.0f}s", file=sys.stderr)
                 time.sleep(delay * 4)
                 continue
-            if err.code == 404:
-                cache_path(cache, item_id).write_text(json.dumps({"missing": True}))
-                index += 1
-                continue
-            raise
+            if err.code != 404:
+                raise
+            text = json.dumps({"missing": True})
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as err:
             print(f"{item_id}: {err}, retrying", file=sys.stderr)
             time.sleep(5)
@@ -200,7 +221,7 @@ def fetch(tables, cache):
         cache_path(cache, item_id).write_text(text)
         index += 1
         delay = max(REQUEST_INTERVAL, delay * 0.9)
-        time.sleep(delay)
+        time.sleep(max(0.0, delay - (time.monotonic() - started)))
         if index % 50 == 0:
             print(f"{index}/{len(wanted)}", file=sys.stderr)
 
@@ -218,22 +239,98 @@ TYPE_WORDS = {
     "Cloth", "Leather", "Mail", "Plate", "Shield", "Axe", "Mace", "Sword", "Dagger", "Staff",
     "Polearm", "Fist Weapon", "Bow", "Crossbow", "Gun", "Wand", "Thrown", "Miscellaneous",
 }  # fmt: skip
-EFFECT_LINE = re.compile(r"^(Equip|Use|Chance on hit):", re.IGNORECASE)
-STAT_LINE = re.compile(r"^\+(\d+) ([A-Za-z ]+)$")
+EFFECT_LINE = re.compile(r"^(Equip|Use|Chance on hit|Set):", re.IGNORECASE)
+STAT_LINE = re.compile(r"^([+-])(\d+) ([A-Za-z ]+)$")
+# The green regeneration lines of the live client: mana per 5 sec is MP5 (Mindthrust Bracers,
+# Restores +3 mana per 5 sec: 3); health per 5 sec has no stat and the reference rows leave it
+# out (Death Speaker Scepter, Restores +12 health per 5 sec).
+REGEN_LINE = re.compile(r"^Restores \+(\d+) (mana|health) per 5 sec\.?$")
+SET_LINE = re.compile(r"^.+ \(\d+/\d+\)$")
+
+# Rating per percent, as src/prepare/character.rs reads the rating stats back.
+HIT_RATING, CRIT_RATING, DODGE_RATING, PARRY_RATING, BLOCK_RATING = 10, 14, 12, 15, 5
+SCHOOL_DAMAGE = {"Arcane": 6, "Fire": 7, "Frost": 8, "Holy": 9, "Nature": 10, "Shadow": 11}
+NUMBER = r"(\d+(?:\.\d+)?)"
+
+# The equip lines that are a plain stat, as data/items.jsonl holds the same line of a Classic
+# item: (pattern, [(stat, group, rating per point)]). Increased Defense +6 is 6 Defense rating
+# (Ardent Custodian), +20 Attack Power is melee Attack Power alone as most reference rows have
+# it (Mark of Kern), 1.5% hit is 15 melee hit rating (Staff of Jordan), 1% crit 14 (Stronghold
+# Gauntlets), spell damage and healing both spell power stats (Runed Ring), healing and damage
+# the two figures (Naga Battle Gloves), 3 mana per 5 sec 3 MP5 (Mindthrust Bracers).
+EQUIP_STATS = [
+    (rf"Increased Defense \+{NUMBER}", [(25, 1, 1)]),
+    (rf"\+{NUMBER} Attack Power", [(17, 1, 1)]),
+    (rf"\+{NUMBER} ranged Attack Power", [(18, 1, 1)]),
+    (
+        rf"\+{NUMBER} Attack Power in Cat, Bear, Dire Bear,? and Moonkin forms only",
+        [(19, 1, 1)],
+    ),
+    (
+        rf"Increases damage and healing done by magical spells and effects by up to {NUMBER}",
+        [(4, 1, 1), (5, 1, 1)],
+    ),
+    (rf"Increases healing done by spells and effects by up to {NUMBER}", [(4, 1, 1)]),
+    # Damage alone is spell damage (Moss Cinch, 12: 12), healing alone healing power (Death
+    # Speaker Scepter, 68: 68).
+    (rf"Increases damage done by magical spells and effects by up to {NUMBER}", [(5, 1, 1)]),
+    (rf"Increases healing done by magical spells and effects by up to {NUMBER}", [(4, 1, 1)]),
+    (
+        rf"Increases healing done by up to {NUMBER} and damage done by up to {NUMBER} for all "
+        r"magical spells and effects",
+        [(4, 1, 1), (5, 2, 1)],
+    ),
+] + [
+    (rf"Increases damage done by {school} spells and effects by up to {NUMBER}", [(stat, 1, 1)])
+    for school, stat in SCHOOL_DAMAGE.items()
+] + [
+    (rf"Improves your chance to hit by {NUMBER}%", [(20, 1, HIT_RATING)]),
+    (rf"Improves your chance to get a critical strike by {NUMBER}%", [(21, 1, CRIT_RATING)]),
+    (rf"Improves your chance to hit with spells by {NUMBER}%", [(12, 1, HIT_RATING)]),
+    (
+        rf"Improves your chance to get a critical strike with spells by {NUMBER}%",
+        [(13, 1, CRIT_RATING)],
+    ),
+    (rf"Restores {NUMBER} mana per 5 sec", [(34, 1, 1)]),
+    (rf"Increases your chance to Dodge an attack by {NUMBER}%", [(28, 1, DODGE_RATING)]),
+    (rf"Increases your chance to Parry an attack by {NUMBER}%", [(29, 1, PARRY_RATING)]),
+    (
+        rf"Increases your chance to Block attacks with a shield by {NUMBER}%",
+        [(26, 1, BLOCK_RATING)],
+    ),
+    (rf"Increases the block value of your shield by {NUMBER}", [(STAT_BLOCK_VALUE, 1, 1)]),
+]
+
+
+def equip_stats(line):
+    """The stats of an "Equip:" line that is a plain stat, or None."""
+    text = re.sub(r"^Equip:\s*", "", line).rstrip(".").strip()
+    for pattern, stats in EQUIP_STATS:
+        if match := re.fullmatch(pattern, text, re.IGNORECASE):
+            out = {}
+            for stat, group, per_point in stats:
+                value = float(match.group(group)) * per_point
+                if abs(value - round(value)) > 1e-6:
+                    raise Unreadable(f"fractional rating in {line!r}")
+                out[stat] = out.get(stat, 0) + round(value)
+            return out
+    return None
 
 
 def tooltip_lines(tooltip):
     """The visible text of a tooltip, one entry per line, with the data comments kept as text
-    for the numbers this tool reads (<!--ilvl-->15 reads as the number alone)."""
-    text = re.sub(r"<!--(?!itemEffects)[^>]*?-->", "", tooltip)
+    for the numbers this tool reads (<!--ilvl-->15 reads as the number alone), and the number
+    of item effects the tooltip says the item has."""
     effects = re.search(r"<!--itemEffects:(\d+)-->", tooltip)
-    if effects and int(effects.group(1)) > 0:
-        raise Unreadable("has item effects")
+    # A rating inside an effect line sits in its own span: <span><!--rtg41-->60</span>.
+    text = re.sub(r"<span>(?:<!--[^>]*?-->)?([\d.]+)</span>", r"\1", tooltip)
+    text = re.sub(r"<!--[^>]*?-->", "", text)
     text = re.sub(r'<div class="whtt-sellprice">.*?</div>', "", text, flags=re.DOTALL)
     text = re.sub(r"<br\s*/?>|</td>|</tr>|</th>|</span>|</table>|<div[^>]*>|</div>", "\n", text)
     text = re.sub(r"Binds when (?:picked up|equipped)|<(?:table|tr|td|th)[^>]*>", "\n", text)
     text = html.unescape(re.sub(r"<[^>]+>", "", text))
-    return [line.strip() for line in text.split("\n") if line.strip()]
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    return lines, int(effects.group(1)) if effects else 0
 
 
 def parse_tooltip(response):
@@ -242,8 +339,13 @@ def parse_tooltip(response):
         raise Unreadable("no tooltip")
     name = response["name"]
     out = {"name": name, "quality": response.get("quality"), "stats": {}}
-    for line in tooltip_lines(response["tooltip"]):
-        if line == name or line in SLOT_WORDS or line in TYPE_WORDS:
+    lines, effects = tooltip_lines(response["tooltip"])
+    equip_lines = 0
+    for line in lines:
+        if line in SLOT_WORDS and "slot" not in out:
+            out["slot"] = line
+            continue
+        if line == name or line in TYPE_WORDS:
             continue
         if match := re.fullmatch(r"Item Level (\d+)", line):
             out["ilvl"] = int(match.group(1))
@@ -259,34 +361,68 @@ def parse_tooltip(response):
             pass
         elif re.fullmatch(r'"[^"]*"', line):
             pass
-        elif line == "Unique":
+        elif line in ("Unique", "Unique-Equipped"):
+            # Both are the row's unique flag (Emergency Field Cloak is Unique-Equipped).
             out["unique"] = True
         elif match := re.fullmatch(r"Classes: (.+)", line):
             out["classes"] = ["Class" + name.strip().replace(" ", "") for name in match.group(1).split(",")]
         elif re.fullmatch(r"Durability \d+ / \d+|Requires Level \d+", line):
             pass
         elif match := STAT_LINE.match(line):
-            stat = STAT_INDEX.get(match.group(2))
+            stat = STAT_INDEX.get(match.group(3))
             if stat is None:
                 raise Unreadable(f"unread line {line!r}")
-            out["stats"][stat] = out["stats"].get(stat, 0) + int(match.group(1))
+            value = int(match.group(2)) * (-1 if match.group(1) == "-" else 1)
+            out["stats"][stat] = out["stats"].get(stat, 0) + value
+        elif match := REGEN_LINE.match(line):
+            if match.group(2) == "mana":
+                out["stats"][34] = out["stats"].get(34, 0) + int(match.group(1))
+        elif SET_LINE.match(line):
+            raise Unreadable("a set piece")
+        elif line.startswith("Equip:") and (stats := equip_stats(line)) is not None:
+            equip_lines += 1
+            for stat, value in stats.items():
+                out["stats"][stat] = out["stats"].get(stat, 0) + value
         elif EFFECT_LINE.match(line):
-            raise Unreadable("has item effects")
+            raise Unreadable(f"has an effect: {line!r}")
+        elif line.startswith("Added in Season of Discovery"):
+            raise Unreadable("a Season of Discovery item")
         else:
             raise Unreadable(f"unread line {line!r}")
+    if effects and not equip_lines:
+        raise Unreadable("has item effects the tooltip does not state")
     if "ilvl" not in out:
         raise Unreadable("no item level")
     return out
 
 
+# The tooltip's slot word of each InventoryType this tool writes.
+SLOT_WORD = {
+    1: "Head", 2: "Neck", 3: "Shoulder", 5: "Chest", 6: "Waist", 7: "Legs", 8: "Feet",
+    9: "Wrist", 10: "Hands", 11: "Finger", 12: "Trinket", 13: "One-Hand", 14: "Off Hand",
+    15: "Ranged", 16: "Back", 17: "Two-Hand", 20: "Chest", 21: "Main Hand", 22: "Off Hand",
+    23: "Held In Off-hand", 25: "Thrown", 26: "Ranged",
+}  # fmt: skip
+
+
 def row_for(item_id, sparse, item, response):
     """The items.jsonl row for a candidate, or Unreadable."""
     parsed = parse_tooltip(response)
-    inventory = int(sparse["InventoryType"])
+    inventory = inventory_type(sparse, item)
     subclass = int(item["SubclassID"])
-    if parsed["ilvl"] != int(sparse["ItemLevel"]):
-        raise Unreadable(f"item level {parsed['ilvl']} differs from ItemLevel {sparse['ItemLevel']}")
-    row = {"id": item_id, "name": sparse["Display_lang"]}
+    if sparse is not None:
+        if parsed["ilvl"] != int(sparse["ItemLevel"]):
+            raise Unreadable(f"item level {parsed['ilvl']} differs from ItemLevel {sparse['ItemLevel']}")
+        name = sparse["Display_lang"]
+    else:
+        # No ItemSparse row to check the tooltip against: its name passes the same filter, and
+        # its slot is the Item row's.
+        name = parsed["name"]
+        if JUNK_NAME.search(name):
+            raise Unreadable("development name")
+        if parsed.get("slot") != SLOT_WORD.get(inventory):
+            raise Unreadable(f"slot {parsed.get('slot')!r} differs from InventoryType {inventory}")
+    row = {"id": item_id, "name": name}
     damage_expected = False
     if int(item["ClassID"]) == ARMOR_CLASS and subclass == 6:
         if inventory != 14:
@@ -320,9 +456,10 @@ def row_for(item_id, sparse, item, response):
     if damage_expected:
         if "damage" not in parsed or "speed" not in parsed:
             raise Unreadable("weapon without damage or speed")
-        delay = int(sparse["ItemDelay"]) / 1000
-        if abs(delay - parsed["speed"]) > 0.006:
-            raise Unreadable(f"speed {parsed['speed']} differs from ItemDelay {delay}")
+        if sparse is not None:
+            delay = int(sparse["ItemDelay"]) / 1000
+            if abs(delay - parsed["speed"]) > 0.006:
+                raise Unreadable(f"speed {parsed['speed']} differs from ItemDelay {delay}")
         row["weapon_speed"] = parsed["speed"]
         option["weapon_damage_min"], option["weapon_damage_max"] = parsed["damage"]
     elif "damage" in parsed or "speed" in parsed:
@@ -341,6 +478,11 @@ def row_for(item_id, sparse, item, response):
     if parsed.get("classes"):
         row["class_allowlist"] = parsed["classes"]
     return row
+
+
+def reason_kind(reason):
+    """A left out item's reason without the line or numbers it names, to count them by."""
+    return re.sub(r"\d+", "N", reason.split(": '")[0].split(' \'')[0].split(' "')[0])
 
 
 def plain_numbers(value):
@@ -364,13 +506,15 @@ def build(tables, cache, report=None):
     rows, left_out = [], {}
     for item_id, sparse, item in taken:
         path = cache_path(cache, item_id)
+        listed = sparse["Display_lang"] if sparse is not None else ""
         if not path.exists():
-            left_out[item_id] = (sparse["Display_lang"], "tooltip not fetched")
+            left_out[item_id] = (listed, "tooltip not fetched")
             continue
+        response = json.loads(path.read_text())
         try:
-            rows.append(row_for(item_id, sparse, item, json.loads(path.read_text())))
+            rows.append(row_for(item_id, sparse, item, response))
         except Unreadable as err:
-            left_out[item_id] = (sparse["Display_lang"], str(err))
+            left_out[item_id] = (listed or response.get("name", ""), str(err))
     OUT.write_text("".join(dump_row(row) + "\n" for row in rows))
     if report:
         Path(report).write_text(
@@ -423,6 +567,12 @@ def main():
     elif args.command == "build":
         rows, left_out = build(args.tables, args.cache, args.report)
         print(f"{len(rows)} rows, {len(left_out)} left out")
+        kinds = {}
+        for _, reason in left_out.values():
+            kind = reason_kind(reason)
+            kinds[kind] = kinds.get(kind, 0) + 1
+        for kind, count in sorted(kinds.items(), key=lambda entry: -entry[1]):
+            print(f"{count:6}  {kind}")
     else:
         print(f"{check()} rows ok")
 

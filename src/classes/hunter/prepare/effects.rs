@@ -12,19 +12,41 @@ use crate::prepare::export::action_id;
 use crate::prepare::hotfix_113554;
 use crate::prepare::levels::character_level;
 use crate::prepare::parse_effects::{dry_run, ParseOptions};
-use crate::prepare::sim::{Sim, SpellId, UnitId, UnitType, MILLISECOND, NEVER_EXPIRES};
+use crate::prepare::sim::{Rules, Sim, SpellId, UnitId, UnitType, MILLISECOND, NEVER_EXPIRES};
 use crate::prepare::spell::{school, DefenseType, ProcMask};
 use crate::prepare::spelldata::{spell::TickOutcomeKind, Ladder, Spell as Row};
 
+use super::pet::{creature_auto_attack_dps, pet_crit_offset_now};
 use super::spell_data::spell_data;
 use super::spells::{
-    arcane_shot_rap_coefficient, serpent_sting_rap_per_tick, EXPLOSIVE_TRAP_RANGE,
-    SUMMON_HAWK_RAP_SHARE, SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE, VOLLEY_TICK_DAMAGE,
+    arcane_shot_rap_coefficient, serpent_sting_rap_per_tick, EXPLOSIVE_TRAP_RANGE, HAWK_CRIT_SHARE,
+    HAWK_DAMAGE_PER_RANGED_ATTACK_POWER, HAWK_LOGGED_UNLEASHED_FURY_RANK, HAWK_SWING_SECONDS,
+    HAWK_SWING_SHARE_OF_CREATURE_DPS, HAWK_SWING_SPREAD, SUMMON_HAWK_RAP_SHARE,
+    SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE, VOLLEY_TICK_DAMAGE,
 };
 use super::{masks, Hunter};
 
 /// Go `core.SpellBatchWindow`.
 const SPELL_BATCH_WINDOW: i64 = 10 * MILLISECOND;
+
+/// A hawk's swing under Forever's rules (`HawkGuardian`): the fixed part and the slope on the
+/// owner's ranged attack power are what four level 30 logs read, which all had Unleashed Fury
+/// 5/5, so both are stated before it and the owner's rank multiplies them back.
+fn hawk_guardian(sim: &Sim, unit: UnitId) -> Value {
+    let logged = spell_data()
+        .unleashed_fury
+        .multiplier_at(HAWK_LOGGED_UNLEASHED_FURY_RANK);
+    json!({
+        "swing_average": HAWK_SWING_SHARE_OF_CREATURE_DPS
+            * creature_auto_attack_dps()
+            * HAWK_SWING_SECONDS
+            / logged,
+        "swing_spread": HAWK_SWING_SPREAD,
+        "attack_power_coefficient": HAWK_DAMAGE_PER_RANGED_ATTACK_POWER / logged,
+        "crit_share": HAWK_CRIT_SHARE,
+        "crit_offset": pet_crit_offset_now(sim, unit),
+    })
+}
 
 /// Go `hunterTickOutcome`: a crit only where the row states Periodic Can Crit, on the crit of the
 /// row's defense type.
@@ -173,13 +195,17 @@ impl Hunter {
                 .map(|(i, _)| i)
                 .collect();
             // A wrong count is named by `export_notes`.
-            effects.push(json!({
+            let mut effect = json!({
                 "kind": "summon_hawk", "spell_id": rank.id,
                 "base_damage": rank.damage_effect().average(character_level()),
                 "attack_power_share": SUMMON_HAWK_RAP_SHARE, "swing_share": SUMMON_HAWK_SWING_SHARE,
                 "always_hits": rank.always_hits(), "hawk_spells": hawks,
                 "hawk_duration_ns": data.summon_hawk_triggered.by_id(1293248).duration(),
-            }));
+            });
+            if sim.rules == Rules::Forever {
+                effect["guardian"] = hawk_guardian(sim, unit);
+            }
+            effects.push(effect);
         }
         if self.pet.is_some() {
             effects.extend(self.pet_effects(sim, unit));

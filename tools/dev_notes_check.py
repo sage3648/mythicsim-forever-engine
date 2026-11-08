@@ -215,9 +215,10 @@ NOT_IN_DATA = [
     ("Maelstrom Weapon chance doubled (20 PPM)",
      "count stacks over a few minutes of melee with a known weapon speed"),
     ("Stormstrike 150% weapon damage", "Stormstrike hits against a dummy with a known weapon"),
-    ("Chain Lightning cast time 2.5 sec and mana 248/304/428/495 (225% of Lightning Bolt)",
-     "the spell tooltips: Wowhead still states 2 sec and 145/200/250/315 mana on 4 November 2026, "
-     "so the notes stand until it changes"),
+    ("Chain Lightning cast time 2.5 sec (notes) and mana 245/360/425/495 (live tooltips; the "
+     "notes' 225% of Lightning Bolt is an approximation)",
+     "the spell tooltips: Wowhead's live client reads 2.5 sec and 245/360/425/495 mana on 6 "
+     "November 2026"),
     ("Call of Thunder, +5% crit for Lightning Bolt and Chain Lightning, in Lava Burst's slot",
      "the talent's tooltip once it has a row; Lava Burst (1326047) leaves the store with it"),
 ]
