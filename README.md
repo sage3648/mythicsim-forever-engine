@@ -1064,6 +1064,12 @@ the Go goldens and exporter uses. The departures:
   for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
   adds 135 to every rank of Hamstring and gives Shield Bash its damage
   (`tests/forever_warrior_threat_20261107.rs`).
+- A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
+  so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
+  value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
+  bonus; the reference takes off the fraction. Whether the game floors the shield or the product
+  when a multiplier applies is not measured (`src/prepare/enemy/tests.rs`,
+  `tests/forever_physical_damage_20261107.rs`).
 
 ## Repository layout
 
