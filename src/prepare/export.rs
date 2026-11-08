@@ -328,6 +328,9 @@ pub(crate) fn export_spell_of(
     );
     out.insert("bonus_base_damage".into(), json!(spell.bonus_base_damage));
     out.insert("bonus_coefficient".into(), json!(spell.bonus_coefficient));
+    if let Some(coefficient) = spell.physical_school_coefficient {
+        out.insert("physical_school_coefficient".into(), json!(coefficient));
+    }
     out.insert("threat_multiplier".into(), json!(spell.threat_multiplier));
     out.insert("flat_threat_bonus".into(), json!(spell.flat_threat_bonus));
     out.insert("pushback_resist".into(), json!(spell.pushback_resist));
@@ -900,7 +903,18 @@ pub(crate) fn export_state(
         .map(|spell| export_spell_of(env, *spell, &mut timers, &mut unrepresented))
         .collect();
     for (i, spell) in spells.iter().enumerate() {
-        if let Some(effect) = env.agent.damage_effect(&env.sim, *spell) {
+        if let Some(mut effect) = env.agent.damage_effect(&env.sim, *spell) {
+            // Forever's rules: the roll of a physical school damage row lands on a whole number.
+            let sim_spell = env.sim.spell(*spell);
+            if env.sim.rules == super::sim::Rules::Forever
+                && super::physical_damage::school_damage_effect(
+                    &sim_spell.action_id,
+                    sim_spell.spell_school,
+                )
+                .is_some()
+            {
+                effect["physical"] = json!(true);
+            }
             exported_spells[i]["damage_effect"] = effect;
         }
         if let Some(related) = env.sim.spell(*spell).related_dot_spell {
@@ -1140,6 +1154,9 @@ pub(crate) fn export_state(
         // A damage bonus applied after the calculation is damage the target takes, so threat
         // (README, Rust-only mechanics); the reference kept the threat of the damage before it.
         prepared["player"]["threat_follows_damage_bonus"] = json!(true);
+        // A physical hit's roll lands on a whole number (README, Rust-only mechanics); the
+        // reference rolls the span without rounding.
+        prepared["player"]["physical_rolls_are_whole"] = json!(true);
         // A cast begun before the pull finishes on the pull at the earliest, as a player times a
         // precast (README, Rust-only mechanics); the reference finishes a hasted precast early
         // and drops its damage, which lands before 0:00.

@@ -5,7 +5,9 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::sim::{AuraConfig, AuraId, Cooldown, DotId, Duration, Sim, SpellId, UnitId, UnitType};
+use super::sim::{
+    AuraConfig, AuraId, Cooldown, DotId, Duration, Rules, Sim, SpellId, UnitId, UnitType,
+};
 use super::stats::SchoolIndex;
 
 /// Go `SpellFlag` bits, by exported name in bit order.
@@ -510,6 +512,10 @@ pub(crate) struct Spell {
     pub crit_multiplier_additive: f64,
     pub bonus_base_damage: f64,
     pub bonus_coefficient: f64,
+    /// Forever's rules: the bonus coefficient column of a physical row that deals school damage,
+    /// which scales the caster's flat physical damage bonus (`prepare::physical_damage`). None
+    /// for any other spell, which takes the bonus whole, and under the Go reference.
+    pub physical_school_coefficient: Option<f64>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     /// Per target unit index, the dot on that unit.
@@ -634,6 +640,17 @@ impl Sim {
             crit_multiplier_additive: config.crit_multiplier_additive,
             bonus_base_damage: config.bonus_base_damage,
             bonus_coefficient: config.bonus_coefficient,
+            // A spell that names a coefficient of its own keeps it.
+            physical_school_coefficient: (self.rules == Rules::Forever
+                && config.bonus_coefficient == 0.0)
+                .then(|| {
+                    super::physical_damage::school_damage_effect(
+                        &config.action_id,
+                        config.spell_school,
+                    )
+                })
+                .flatten()
+                .map(|effect| effect.coeff()),
             threat_multiplier: config.threat_multiplier,
             flat_threat_bonus: config.flat_threat_bonus,
             dots: Vec::new(),

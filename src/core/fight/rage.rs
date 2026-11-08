@@ -101,7 +101,11 @@ impl<A: Agent> Fight<A> {
         resource.gain += amount;
         resource.actual_gain += new - old;
         let gain = new - old;
-        let threat_multiplier = self.player.threat_multiplier;
+        let threat_multiplier = if self.resources[metrics].unscaled_threat {
+            1.0
+        } else {
+            self.player.threat_multiplier
+        };
         let bar = self.rage.as_mut().expect("the player has a rage bar");
         if gain > 0.0 && bar.threat_multiplied {
             if bar.gain_threat.len() <= metrics {

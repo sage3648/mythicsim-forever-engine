@@ -57,6 +57,7 @@ pub(crate) mod parse_effects;
 pub(crate) mod party_damage;
 pub(crate) mod periodic_action;
 pub(crate) mod pet;
+pub(crate) mod physical_damage;
 pub(crate) mod power_infusion;
 pub(crate) mod presets;
 pub(crate) mod proc_oil;

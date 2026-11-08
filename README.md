@@ -1074,6 +1074,43 @@ the Go goldens and exporter uses. The departures:
   Warlock's four demons now deal 5% more of all their damage and Firebolt and Lash of Pain
   nothing more; a gear guardian such as the Emerald Dragon Whelp gets nothing
   (`tests/orc_command_20261106.rs`). The Hunter's pet keeps its 5%.
+- Warrior threat measurements at levels 20 to 24 (in game, 7 November 2026). The rage of an
+  avoided hit, Shield Specialization's on a block and Master of Defense's on a dodge or parry,
+  makes 5 threat a point in Battle and Defensive Stance alike and Defiance does not scale it, so
+  its energize resource is marked unscaled (`unscaled_threat` on the `rage_on_avoid` trigger),
+  where the reference takes the warrior's threat multiplier at the gain. Whether a threat buff
+  scales it is not measured. Cleave rank 1 adds 30 threat beyond its damage on one target (about
+  15 on each of two), times the stance, where the per level figure of the other ranks (1.53)
+  would give 30.6. Victory Rush's heal, which makes healing threat, is not modelled: Victorious
+  comes up on a kill and nothing in a fight dies, so the spell is never cast
+  (`tests/forever_warrior_threat_20261107.rs`).
+- Hamstring and Shield Bash threat, from the same measurements. Hamstring is 1.25 times its
+  damage (its crits for 8 make 10, where a flat +1 would make 9) and Shield Bash 1.5 times (crits
+  for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
+  adds 135 to every rank of Hamstring and gives Shield Bash its damage
+  (`tests/forever_warrior_threat_20261107.rs`).
+- A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
+  so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
+  value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
+  bonus; the reference takes off the fraction. Whether the game floors the shield or the product
+  when a multiplier applies is not measured (`src/prepare/enemy/tests.rs`,
+  `tests/forever_physical_damage_20261107.rs`).
+- A physical row that deals school damage takes the caster's flat physical damage bonus (from
+  gear) at the row's bonus coefficient column, never as spell power: Revenge and Hamstring state 1
+  and take all of it, Thunder Clap, Victory Rush and Shield Bash state 0 and take none, and Rend's
+  ticks, with no coefficient, take none (the same measurements). A weapon strike keeps taking the
+  bonus whole. Preparation carries the column as `physical_school_coefficient` on the spell, for
+  a spell that names no coefficient of its own; the reference gives every physical spell the
+  whole bonus (`tests/forever_physical_damage_20261107.rs`).
+- A physical hit that deals school damage rolls its base points a half Variance either side and
+  lands on a whole number, with attack power added on top unspread: Revenge rank 1 states 22 with
+  a Variance of 0.154 and lands on 20 to 24, the two ends rarer than the three between, and a
+  pet's Claw and Bite and Eviscerate roll the same way (the same measurements); the pet strikes
+  the exporter has as a literal range, a Cat's Claw 43 to 59, round the same. Every physical
+  school damage row of the client table has no per level gain, which would be added after the
+  rounding, so the row's average is its base points (`physical_rolls_are_whole`,
+  `src/prepare/physical_damage.rs`). The reference rolls the span without rounding
+  (`src/classes/warrior/spells/revenge.rs`).
 
 ## Repository layout
 

@@ -1336,7 +1336,9 @@ impl<A: Agent> Fight<A> {
         if !physical {
             return self.calc_magic_weapon_damage(spell, target, base, attacker, outcome);
         }
-        if coefficient > 0.0 {
+        if let Some(coefficient) = self.spells[spell].physical_school_coefficient {
+            base += self.physical_school_bonus_damage(spell, coefficient);
+        } else if coefficient > 0.0 {
             base += coefficient * self.physical_bonus_damage(spell);
         } else {
             base += self.physical_bonus_damage(spell);
@@ -1518,8 +1520,21 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Spell.BonusDamage` for a physical spell.
-    fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
+    pub(crate) fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
         self.spells[spell].bonus_base_damage + self.unit(self.caster(spell)).powers.physical_damage
+    }
+
+    /// What a physical row that deals school damage adds under Forever's rules: the caster's
+    /// flat physical damage bonus at the row's bonus coefficient, and the spell's own bonus
+    /// whole. A row that states a coefficient of 0 takes none of the bonus from gear, as
+    /// Thunder Clap, Victory Rush and Shield Bash do not; Revenge and Hamstring state 1 and take
+    /// all of it (warrior damage measurements at levels 20 to 24, 7 November 2026).
+    pub(crate) fn physical_school_bonus_damage(&self, spell: SpellId, coefficient: f64) -> f64 {
+        if coefficient > 0.0 {
+            coefficient * self.physical_bonus_damage(spell)
+        } else {
+            self.spells[spell].bonus_base_damage
+        }
     }
 
     /// Go `PhysicalHitChance`: ranged attacks add ranged hit.

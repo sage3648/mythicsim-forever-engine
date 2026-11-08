@@ -872,11 +872,17 @@ pub(crate) struct Spell<S> {
     pub(crate) crit_multiplier_additive: f64,
     pub(crate) bonus_base_damage: f64,
     pub(crate) bonus_coefficient: f64,
+    /// Forever's rule that a physical row dealing school damage takes the flat physical damage
+    /// bonus at this share, its bonus coefficient column (see `prepare::physical_damage`).
+    pub(crate) physical_school_coefficient: Option<f64>,
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
     /// Go `Spell.PushbackResist`, which the pushback chance loses.
     pub(crate) pushback_resist: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
+    /// Forever's rule that the damage effect is a physical school damage row, whose roll lands
+    /// on a whole number.
+    pub(crate) physical_damage_effect: bool,
     pub(crate) dot: Option<DotId>,
     /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
     pub(crate) related_dot_spell: Option<SpellId>,
@@ -1435,6 +1441,9 @@ pub(crate) struct ResourceMetrics {
     /// Go `ResourceMetrics.NoThreat`: a gain from a spell the client flags No Threat adds no
     /// threat at the end of the iteration.
     pub(crate) no_threat: bool,
+    /// Forever's rule: a rage gain from this source makes `threat_per_rage` a point without the
+    /// player's threat multiplier (Shield Specialization, Master of Defense).
+    pub(crate) unscaled_threat: bool,
 }
 
 /// A target's stats and pseudo stats that auras can change during a fight, reset to the
@@ -2033,6 +2042,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autocast_skips_unready_cooldowns: bool,
     /// Forever's rule that a damage bonus applied after the calculation raises threat too.
     pub(crate) threat_follows_damage_bonus: bool,
+    /// Forever's rule that a physical school damage roll lands on a whole number.
+    pub(crate) physical_rolls_are_whole: bool,
     /// A healer sim's burst healing window under Forever's rules (see [`burst`]).
     pub(crate) burst: Option<burst::BurstWindow>,
     /// How each exclusive effect of an aura a rotation asks about reads.
@@ -2419,6 +2430,7 @@ impl<A: Agent> Fight<A> {
                 previous_actual_gain: 0.0,
                 is_mana_regen: regen,
                 no_threat: false,
+                unscaled_threat: false,
             });
             resources.len() - 1
         };
@@ -3150,10 +3162,12 @@ impl<A: Agent> Fight<A> {
                 crit_multiplier_additive: exported.crit_multiplier_additive,
                 bonus_base_damage: exported.bonus_base_damage,
                 bonus_coefficient: exported.bonus_coefficient,
+                physical_school_coefficient: exported.physical_school_coefficient,
                 threat_multiplier: exported.threat_multiplier,
                 flat_threat_bonus: exported.flat_threat_bonus,
                 pushback_resist: exported.pushback_resist,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
+                physical_damage_effect: exported.damage_effect.is_some_and(|e| e.physical),
                 dot,
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
@@ -4269,6 +4283,7 @@ impl<A: Agent> Fight<A> {
             off_hand_waits_from_attack_start: player.off_hand_waits_from_attack_start,
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,
             threat_follows_damage_bonus: player.threat_follows_damage_bonus,
+            physical_rolls_are_whole: player.physical_rolls_are_whole,
             burst: player.burst_window.map(burst::BurstWindow::new),
             aura_refresh: Vec::new(),
             derived_categories: Vec::new(),
