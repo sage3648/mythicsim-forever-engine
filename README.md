@@ -1049,6 +1049,16 @@ the Go goldens and exporter uses. The departures:
   Warlock's four demons now deal 5% more of all their damage and Firebolt and Lash of Pain
   nothing more; a gear guardian such as the Emerald Dragon Whelp gets nothing
   (`tests/orc_command_20261106.rs`). The Hunter's pet keeps its 5%.
+- Warrior threat measurements at levels 20 to 24 (in game, 7 November 2026). The rage of an
+  avoided hit, Shield Specialization's on a block and Master of Defense's on a dodge or parry,
+  makes 5 threat a point in Battle and Defensive Stance alike and Defiance does not scale it, so
+  its energize resource is marked unscaled (`unscaled_threat` on the `rage_on_avoid` trigger),
+  where the reference takes the warrior's threat multiplier at the gain. Whether a threat buff
+  scales it is not measured. Cleave rank 1 adds 30 threat beyond its damage on one target (about
+  15 on each of two), times the stance, where the per level figure of the other ranks (1.53)
+  would give 30.6. Victory Rush's heal, which makes healing threat, is not modelled: Victorious
+  comes up on a kill and nothing in a fight dies, so the spell is never cast
+  (`tests/forever_warrior_threat_20261107.rs`).
 
 ## Repository layout
 

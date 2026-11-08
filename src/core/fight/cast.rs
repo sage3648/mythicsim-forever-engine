@@ -1137,6 +1137,7 @@ impl<A: Agent> Fight<A> {
             previous_actual_gain: 0.0,
             is_mana_regen: false,
             no_threat: false,
+            unscaled_threat: false,
         });
         self.resources.len() - 1
     }

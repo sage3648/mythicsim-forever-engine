@@ -1435,6 +1435,9 @@ pub(crate) struct ResourceMetrics {
     /// Go `ResourceMetrics.NoThreat`: a gain from a spell the client flags No Threat adds no
     /// threat at the end of the iteration.
     pub(crate) no_threat: bool,
+    /// Forever's rule: a rage gain from this source makes `threat_per_rage` a point without the
+    /// player's threat multiplier (Shield Specialization, Master of Defense).
+    pub(crate) unscaled_threat: bool,
 }
 
 /// A target's stats and pseudo stats that auras can change during a fight, reset to the
@@ -2419,6 +2422,7 @@ impl<A: Agent> Fight<A> {
                 previous_actual_gain: 0.0,
                 is_mana_regen: regen,
                 no_threat: false,
+                unscaled_threat: false,
             });
             resources.len() - 1
         };

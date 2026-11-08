@@ -10,7 +10,7 @@ use crate::prepare::buffs::generated;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::levels::character_level;
-use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, NEVER_EXPIRES, SECOND};
+use crate::prepare::sim::{AuraConfig, Cooldown, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{
     school, Cast, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
 };
@@ -25,6 +25,11 @@ use super::Warrior;
 const HEROIC_STRIKE_THREAT_PER_LEVEL: f64 = 2.54;
 /// Go `cleaveThreatPerLevel`.
 const CLEAVE_THREAT_PER_LEVEL: f64 = 1.53;
+/// Cleave rank 1 (845) and the threat it adds beyond its damage under Forever's rules: 30 on one
+/// target and about 15 on each of two, times the stance (warrior threat measurements at levels
+/// 20 to 24, 7 November 2026). The per level figure above would give 30.6 at the rank's level 20.
+const CLEAVE_RANK_1_ID: i32 = 845;
+const CLEAVE_RANK_1_THREAT: f64 = 30.0;
 /// Go `revengeThreatMultiplier`: patch 183.
 const REVENGE_THREAT_MULTIPLIER: f64 = 2.25;
 /// Go `sunderThreatPerAttackPower`: patch 185, a share of the spell's melee attack power that
@@ -509,7 +514,11 @@ impl Warrior {
                 threat_multiplier: 1.0,
                 // Not in the client table (no E_THREAT effect). Patch 184: 1.53 a spell level
                 // (91.8 at Rank 5), split between the targets the cleave lands on at run time.
-                flat_threat_bonus: CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level),
+                flat_threat_bonus: if sim.rules == Rules::Forever && rank.id == CLEAVE_RANK_1_ID {
+                    CLEAVE_RANK_1_THREAT
+                } else {
+                    CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level)
+                },
                 ..SpellConfig::default()
             },
         );

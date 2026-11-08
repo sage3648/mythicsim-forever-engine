@@ -776,6 +776,7 @@ impl WarriorAgent {
                 } => {
                     for trigger in triggers {
                         let metrics = rage_metrics(&mut fight, trigger.spell_id);
+                        fight.resources[metrics].unscaled_threat = trigger.unscaled_threat;
                         fight.agent.avoid_rage.push(AvoidRage {
                             aura: fight.player_aura(&trigger.aura)?,
                             outcomes: rage_on_avoid::outcome_bits(&trigger.outcomes),

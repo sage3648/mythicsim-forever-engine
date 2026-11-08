@@ -1669,6 +1669,11 @@ pub struct AvoidTrigger {
     pub outcomes: Vec<String>,
     pub needs_block: bool,
     pub chance: f64,
+    /// Forever's rule: the rage's threat is `threat_per_rage` a point whatever the warrior's
+    /// threat multiplier, so Defiance and the stance leave it alone. False is the Go reference,
+    /// which takes the multiplier at the gain.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub unscaled_threat: bool,
 }
 
 /// A flat change to a spell's cost, by spellbook position.

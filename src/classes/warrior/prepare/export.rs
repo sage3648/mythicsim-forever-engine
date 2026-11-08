@@ -796,6 +796,14 @@ impl Warrior {
                 "needs_block": true,
                 "chance": data.master_of_defense.fraction_at(self.talent("master_of_defense"))}));
         }
+        // Forever's rules: warrior threat measurements at levels 20 to 24, 7 November 2026. The
+        // rage of an avoided hit makes 5 threat a point in Battle and Defensive Stance alike, and
+        // Defiance does not scale it.
+        if sim.rules == Rules::Forever {
+            for trigger in &mut avoid {
+                trigger["unscaled_threat"] = json!(true);
+            }
+        }
         if !avoid.is_empty() {
             effects.push(json!({"kind": "rage_on_avoid",
                 "can_block": sim.unit(unit).pseudo_stats.can_block, "triggers": avoid}));
