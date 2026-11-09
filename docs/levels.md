@@ -87,7 +87,7 @@ On 9 Nov every reference build and the five healer references at eight levels ea
 
 ## Open
 
-- Spell coefficients below level 20: Classic scaled a low-level spell's coefficient down; whether Forever keeps it is unchecked.
+- Spell coefficients below level 20: checked against public logs on 9 Nov (`docs/levels-logs-2026-11-09.md`). The client rows carry the low rank coefficients and the game takes them with no further penalty, which is what the engine does (`tests/levels_logs_20261109.rs`).
 - Dungeon boss armor: the worker scales the level 63 boss's 3731 armor by level. The client does not carry creature armor.
 - Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas; pets still use level 60 base stats. A Warlock's demons also keep their level 60 abilities (Firebolt rank 7, Lash of Pain, Go literals with no client rows), so a demon does the same damage at 15 as at 50.
 - A cat druid below 20, who has not learned Cat Form, sims in it all the same (with autos only until Claw at 20).

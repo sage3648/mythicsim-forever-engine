@@ -25,6 +25,7 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
         let has_effect = tables.item_effect_ids.contains(&item.id)
             || (env.sim.rules == super::sim::Rules::Forever
                 && (super::forever_items::has_chance_on_hit_item(item.id)
+                    || super::forever_items::versus_attack_power(item.id).is_some()
                     || crate::classes::forever_item_effect(item.id)));
         if has_effect && !seen_items.contains(&item.id) && usable {
             seen_items.push(item.id);

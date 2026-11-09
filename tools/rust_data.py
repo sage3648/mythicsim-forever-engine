@@ -27,7 +27,11 @@ MANIFEST = DATA / "manifest.json"
 # Data written by their own generators, not the import, and checked by them
 # (tools/rust_client_items.py check), and the live rows of items whose reference row the live
 # game has changed, checked by the data tests (src/data.rs, tests/forever_av_vendor_items_20261106.rs).
-OWN_FILES = {"forever-client-items.jsonl", "forever-live-items.jsonl"}
+OWN_FILES = {
+    "forever-client-item-bonuses.jsonl",
+    "forever-client-items.jsonl",
+    "forever-live-items.jsonl",
+}
 
 # SimDatabase list, output file and the key each row is found by.
 DATABASE_TABLES = [

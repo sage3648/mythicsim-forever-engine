@@ -70,6 +70,10 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
         }
     }
     if env.sim.rules == super::sim::Rules::Forever {
+        if let Some(bonus) = versus_attack_power(item) {
+            versus_attack_power_item(env, item, &bonus);
+            return Ok(true);
+        }
         return Ok(apply_chance_on_hit_item(env, item));
     }
     Ok(false)
@@ -138,6 +142,55 @@ pub(crate) fn chance_on_hit_registrations(item: i32) -> Vec<(ProcKind, SpellData
         }
     }
     found
+}
+
+/// An item's melee attack power against creature types, as its equip lines state it ("Equip: +33
+/// Attack Power against Undead."), which the item row cannot hold.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct VersusAttackPower {
+    /// The item's name, which its permanent aura is labelled with.
+    pub(crate) name: String,
+    /// The bonus by the request's creature type (`MobTypeUndead`).
+    pub(crate) bonuses: Vec<(String, f64)>,
+}
+
+/// The creature type bonuses of an item of the live client (`data/forever-client-item-bonuses.jsonl`,
+/// written by `tools/rust_client_items.py`), read under Forever's rules only.
+pub(crate) fn versus_attack_power(item: i32) -> Option<VersusAttackPower> {
+    let text = crate::data::CLIENT_ITEM_BONUSES.row(i64::from(item))?;
+    let row: serde_json::Value = serde_json::from_str(text)
+        .unwrap_or_else(|err| panic!("data/forever-client-item-bonuses.jsonl row {item}: {err}"));
+    let bonuses = row["melee_attack_power_versus"]
+        .as_object()?
+        .iter()
+        .filter_map(|(mob_type, value)| Some((mob_type.clone(), value.as_f64()?)))
+        .collect();
+    Some(VersusAttackPower {
+        name: row["name"].as_str()?.to_string(),
+        bonuses,
+    })
+}
+
+/// An item with a creature type attack power bonus: a permanent aura, which an item swap toggles
+/// as it does Mark of the Champion's, that the export turns into a `mob_type_bonus` effect when
+/// every target is of a type the bonus names. A target of another type never takes it, as Go reads
+/// the target's own type, so nothing else needs describing.
+fn versus_attack_power_item(env: &mut Environment, item: i32, bonus: &VersusAttackPower) {
+    let unit = env.player;
+    let aura = env.sim.register_aura(
+        unit,
+        AuraConfig {
+            label: bonus.name.clone(),
+            action_id: Some(ActionId::item(item)),
+            ..AuraConfig::default()
+        },
+    );
+    let aura = env.sim.make_permanent(aura);
+    env.sim
+        .apply_on_gain(aura, Rc::new(|_: &mut super::sim::Sim, _| {}));
+    env.sim
+        .apply_on_expire(aura, Rc::new(|_: &mut super::sim::Sim, _| {}));
+    env.sim.register_item_proc(unit, item, aura);
 }
 
 /// Whether Forever's rules register a chance on hit for an item the reference has no effect for.
