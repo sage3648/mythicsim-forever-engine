@@ -18,7 +18,6 @@ use serde_json::{json, Value};
 use std::{fs, path::Path};
 
 const SERPENTBANE_CROWN: i64 = 274609;
-const SERPENTBANE: i64 = 1295039;
 const BIGGER_ROCK: i64 = 279480;
 const BIGGER_ROCK_TO_THE_FACE: i64 = 1306816;
 const ROCK_ON_STICK: i64 = 279852;
