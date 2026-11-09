@@ -20,7 +20,8 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   and its name appears nowhere on the tooltip;
 - a generic "+N Attack Power" equip line is melee and ranged: a row that holds the same ranged
   attack power as attack power takes N for both;
-- hit and crit within one rating point of the tooltip's percentage are the same;
+- hit and crit within one rating point of the tooltip's percentage are the same, and a rating
+  the row carries as a percent pseudo stat (Eye of the Beast's 1% spell crit) is not added again;
 - weapon damage and speed follow the tooltip, and so does the item level of a row that changes.
 
 Existing live rows are kept as they are. An item with a "+N" line this tool cannot read is left
@@ -61,6 +62,16 @@ DROPPABLE = {
 }  # fmt: skip
 # "+N Stat" lines the reference rows hold that client items do not carry.
 EXTRA_STAT_LINES = {"Ranged Attack Power": RANGED_ATTACK_POWER}
+# A rating stat the reference row may carry as a percent pseudo stat instead (Eye of the Beast's
+# spell crit): rating index -> (pseudo stat index, rating per percent).
+PSEUDO_PERCENT = {
+    MELEE_HIT: (12, client.HIT_RATING),
+    12: (13, client.HIT_RATING),
+    MELEE_CRIT: (14, client.CRIT_RATING),
+    13: (15, client.CRIT_RATING),
+    28: (4, client.DODGE_RATING),
+    29: (5, client.PARRY_RATING),
+}
 ALL_RESISTANCES = re.compile(r"^\+(\d+) (?:to )?All Resistances\.?$")
 SET_BONUS = re.compile(r"^\(\d+\) Set ?:")
 
@@ -208,6 +219,11 @@ def changes(row, live):
             continue
         if old is None and effects.get(stat) == new:
             continue
+        if old is None and stat in PSEUDO_PERCENT:
+            index, per_percent = PSEUDO_PERCENT[stat]
+            pseudo = row.get("pseudo_stats") or []
+            if index < len(pseudo) and abs(pseudo[index] * per_percent - new) <= 1:
+                continue
         stats[stat] = new
     out = {}
     if stats:

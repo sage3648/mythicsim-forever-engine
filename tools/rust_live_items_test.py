@@ -71,6 +71,14 @@ class ChangesTest(unittest.TestCase):
         stated = live.read_tooltip(tooltip("Item Level 60", "Equip: Improves your chance to hit by 1.0%."))
         self.assertEqual(live.changes(row({20: 9}), stated), {})
 
+    def test_a_rating_the_row_keeps_as_a_percent_pseudo_stat_is_not_added(self):
+        pseudo = [0] * 42
+        pseudo[15] = 1
+        stated = live.read_tooltip(
+            tooltip("Item Level 63", "Equip: Improves your chance to get a critical strike with spells by 1.0%.")
+        )
+        self.assertEqual(live.changes(row({}, pseudo_stats=pseudo), stated), {})
+
     def test_live_row_keeps_the_reference_row_but_the_change(self):
         reference = row({1: 15, 2: 4}, unique=True)
         out = live.live_row(reference, {"stats": {1: 10, 35: 10, 2: None}, "ilvl": 61})
