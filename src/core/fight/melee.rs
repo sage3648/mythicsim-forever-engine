@@ -286,8 +286,8 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// The owner's melee or attack speed change reaching a pet at its heartbeat: Go
-    /// `Unit.MultiplyMeleeSpeed` on a pet still out.
+    /// The owner's melee or attack speed change reaching a pet at its heartbeat: a pet still
+    /// out multiplies its melee speed and rescales its pending swing.
     pub(crate) fn pet_melee_speed(&mut self, side: Side, amount: f64) {
         if !self.active_pet(side).enabled {
             return;
@@ -305,7 +305,7 @@ impl<A: Agent> Fight<A> {
         self.rescale_pet_swing(side);
     }
 
-    /// Go `AutoAttacks.UpdateSwingTimers` of a pet: the remaining part of its pending swing
+    /// A pet's swing timer after a speed change: the remaining part of its pending swing
     /// scales with the change in speed.
     fn rescale_pet_swing(&mut self, side: Side) {
         let autos = self.autos_of(side);
