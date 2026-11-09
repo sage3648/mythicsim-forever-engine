@@ -515,10 +515,13 @@ impl<A: Agent> Fight<A> {
         let binary = self.spells[spell].flags.binary;
         let physical = self.spells[spell].school & 1 != 0;
         // The expected outcomes are read only of ticks, `CalcPeriodicDamage` and
-        // `CalcSnapshotDamage`.
+        // `CalcSnapshotDamage`. A physical tick that can crit takes no armor either, as every
+        // physical dot ignores it (`calc_physical_periodic_damage`): a weapon or set proc's
+        // bleed reaches here through [`Self::periodic_damage_tick_outcome`].
         let periodic = matches!(
             outcome,
             Outcome::Tick
+                | Outcome::TickPhysicalCrit
                 | Outcome::TickMagicCrit
                 | Outcome::TickMagicHitAndCrit
                 | Outcome::ExpectedMagicHit
