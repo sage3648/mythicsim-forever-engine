@@ -1177,8 +1177,33 @@ the Go goldens and exporter uses. The departures:
     (`register_item_proc`), as every other weapon proc's is, so it is up while the weapon is in
     the hand. A weapon worn without a swap is unchanged. Of the 323 weapons with effects, these
     two and Guardian's Dualblade were the swap weapons this refused beyond a swap's own
-    limits; Dragon's Call (10847) is refused too, for a different reason: its Emerald Dragon
-    Whelp is a gear pet that must exist at the pull, which a swap weapon does not give it.
+    limits.
+  - A swap onto Dragon's Call (10847), from the 9 November 2026 follow-up: the weapon's Emerald
+    Dragon Whelp is a gear pet the reference builds only for a Dragon's Call in a hand at the
+    pull (`RegisterGearPetConstructor`), and the proc opted out without it, so a swap set holding
+    the weapon (the Manual Crowd Pummeler opener, an advanced weapon swap set) was refused. Under
+    Forever's rules the whelp is also built for a Dragon's Call in a hand of the swap set. It stays
+    disabled until a proc summons it, the weapon's proc trigger is switched with the weapon as
+    every weapon proc's is, and its proc chances follow the weapon in the hand (the rate is per
+    minute of the weapon's swing speed, so the set's weapon rolls it). The proc can therefore come
+    only while the weapon is equipped, and a whelp already out stays its 15 seconds after a swap
+    away, as any summoned guardian does. The client has no creature rows for the whelp and
+    Wowhead's Forever tooltip (10 November 2026) states no rate or duration ("a short period of
+    time"), so the 1 PPM, the 45 second category cooldown and the 15 second summon are those the
+    worn weapon already used. A Dragon's Call worn without a swap is unchanged, and the
+    reference's rules keep refusing the swap. Of the 1,774 main hand capable weapons the swap
+    survey ran (a Retribution Paladin, the weapon in the swap set against the same weapon worn),
+    184 have an effect that shows in a fight and each follows a swap now, 1,584 show none, and
+    the 6 the swap refuses are limits of the swap itself, not of a weapon proc: Dwarven Tree Chopper (2907),
+    Servomechanic Sledgehammer (4548) and Shard of the Defiler (17142) carry Expertise or cast
+    speed the stat auras hold fixed, Spire of the Stoneshaper (12532) and Headmaster's Charge
+    (13937) are on use weapons whose spell flags a swap changes (only the Pummeler's is followed),
+    and Runeblade of Baron Rivendare (13505) has a movement aura that displaces another. Six more
+    were refused before the creature type fix below.
+  - An item with an attack power bonus against a creature type (Ceremonial Mallet, Mugg's Jabber
+    and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
+    a target of another type: the bonus was described only when it applied, so the swap's toggling
+    of the item's aura was refused. With an item swap the effect is now described at zero.
 
 ## Repository layout
 
