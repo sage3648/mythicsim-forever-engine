@@ -886,6 +886,23 @@ the Go goldens and exporter uses. The departures:
   runtime sets on a Goblin Sapper Charge's hit on its thrower. Its 36 melee Attack Power against
   Dragonkin (aura 102, creature mask 2) is a `mob_type_bonus` with `melee_attack_power` while the
   buff is up and every target is Dragonkin; ranged attacks do not read it.
+- Arcane Concentration at the Arcane Missiles channel start and on Flamestrike's ground ticks,
+  from Forever combat logs: Clearcasting came from 8.9% of 347 channel starts, and 45.3% of
+  5-missile channels gained it, against 46.9% expected with a roll at the start and 41.0%
+  without; and from 13 of 82 Flamestrike ticks, once a tick however many enemies stood in it.
+  Under Forever's rules the channel rolls once as it starts, after the cast has spent any
+  Clearcasting it found, so a start proc is a fresh one for the next cast, and each ground tick
+  rolls once after the first enemy it lands on. Both share the talent's 1 sec cooldown
+  (`tests/classes/mage/arcane_concentration.rs`). The reference rolls on neither.
+- A Hunter's pet swings at its owner's melee and attack speed, from Forever combat logs: the pet
+  swung every 1.965 s under its owner's 2% Wind Blessed, 1.40 s under Rapid Fire's 40% and 1.08 s
+  with its own Frenzy as well, so the two multiply, and the owner's ranged haste (ranged Quick
+  Shots) left it at 1.965 s. Each change reached the pet at its next 5.25 s stat heartbeat and
+  rescaled the swing under way. Under Forever's rules the owner's speed at the summon (Wind
+  Blessed, Battle Squawk's stacks) is in the pet's swing from the pull, and each later change of
+  the owner's melee or attack speed (Rapid Fire, Battle Squawk's expiry, Aspect of the Beast's
+  Quick Strikes, attack speed procs and trinkets) reaches the pet at its next heartbeat
+  (`tests/classes/hunter/pet_melee_speed.rs`). The reference's pet keeps its own speed.
 - Stat aura combinations up to 16 bits, where the reference refuses past 14: an Orc
   Enhancement Shaman with Jom Gabbar takes 15 (the totems, the swap, the imbues and the potion
   10, Blood Fury 1, Jom Gabbar's stacks 4). Each bit doubles the reset simulations: 15 bits

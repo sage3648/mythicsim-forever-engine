@@ -1153,6 +1153,11 @@ pub struct Pet {
     pub active_dismiss_log: Option<String>,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
+    /// Forever's rules: the pet swings at its owner's melee and attack speed. The owner's speed
+    /// at the summon is already in `melee`; each later change reaches the pet at its next stat
+    /// heartbeat and rescales the swing under way.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inherits_melee_speed: bool,
     /// A focus bar, for a pet without a mana bar.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus: Option<PetFocus>,
