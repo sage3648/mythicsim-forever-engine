@@ -987,6 +987,9 @@ pub(crate) struct Powers {
     /// can change.
     pub(crate) physical_hit_percent: f64,
     pub(crate) spell_hit_percent: f64,
+    /// Go `stats.ExpertisePercent`, which `DodgeParrySuppression` takes off the target's dodge
+    /// and parry and an item swap can change.
+    pub(crate) expertise_percent: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -1331,7 +1334,6 @@ pub(crate) struct Config {
     pub(crate) target_auto_swing_melee: bool,
     pub(crate) melee: crate::contracts::prepared_v2::Melee,
     pub(crate) melee_haste_rating: f64,
-    pub(crate) expertise_percent: f64,
     /// A pet's mana regeneration per second while casting and not, as Go computes it.
     pub(crate) fixed_regen: Option<(f64, f64)>,
     /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
@@ -2312,6 +2314,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             spell_piercing: stat(unit.stats, "SpellPiercing")?,
             physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
             spell_hit_percent: stat(unit.stats, "SpellHitPercent")?,
+            expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         },
         school_damage: [
             0.0,
@@ -2357,7 +2360,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         target_auto_swing_melee: target.auto_swing_melee,
         melee: unit.melee.clone(),
         melee_haste_rating: stat(unit.stats, "MeleeHasteRating")?,
-        expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         fixed_regen: unit.fixed_regen,
         ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
         ranged_crit_percent: stat(unit.stats, "RangedCritPercent")?,
@@ -3398,6 +3400,10 @@ impl<A: Agent> Fight<A> {
                         .get("SpellHitPercent")
                         .copied()
                         .unwrap_or(config.powers.spell_hit_percent),
+                    expertise_percent: combo
+                        .get("ExpertisePercent")
+                        .copied()
+                        .unwrap_or(config.powers.expertise_percent),
                 })
             })
             .collect::<Result<_, BuildError>>()?;

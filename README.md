@@ -1223,7 +1223,16 @@ the Go goldens and exporter uses. The departures:
     speed the stat auras hold fixed, Spire of the Stoneshaper (12532) and Headmaster's Charge
     (13937) are on use weapons whose spell flags a swap changes (only the Pummeler's is followed),
     and Runeblade of Baron Rivendare (13505) has a movement aura that displaces another. Six more
-    were refused before the creature type fix below.
+    were refused before the creature type fix below. The two with expertise run since the
+    expertise follow-up below.
+  - Expertise in a swap set, from a Droptimizer run refused on 9 November 2026 (a level 37
+    Retribution Paladin on the Pummeler opener, Servomechanic Sledgehammer's set): the runtime
+    held expertise at the pull's value, so a swap set whose weapon carries expertise rating
+    (Servomechanic Sledgehammer 10, Dwarven Tree Chopper 6) was refused. Expertise is now one of
+    the stats the stat aura combinations carry when one changes it, and the target's dodge and
+    parry against the player read it live. This is not a departure: the reference reads the
+    unit's expertise live too, and a request whose combinations leave expertise alone carries
+    nothing new (`tests/swap_expertise_20261109.rs`).
   - An item with an attack power bonus against a creature type (Ceremonial Mallet, Mugg's Jabber
     and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
     a target of another type: the bonus was described only when it applied, so the swap's toggling
