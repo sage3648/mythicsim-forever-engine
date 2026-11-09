@@ -194,7 +194,7 @@ impl Warrior {
         // pummel.go: the same strike in Berserker Stance. Go's exporter has no effect for it, so
         // only Forever's rules describe it.
         if sim.rules == Rules::Forever {
-            let pummel = data.pummel.by_id(6554);
+            let pummel = data.pummel.highest();
             effects.push(json!({"kind": "pummel", "spell_id": pummel.id,
                 "base_damage": pummel.damage_effect().average(level)}));
         }
@@ -250,7 +250,7 @@ impl Warrior {
         );
         // charge.go: the cast spends no rage, gives rage, triples the warrior's movement speed
         // through its dash aura and runs to 3.5 yards inside the spell's minimum range.
-        let charge_row = data.charge.by_id(11578);
+        let charge_row = data.charge.highest();
         if let Some(charge) = Self::spell_of(sim, unit, charge_row) {
             let charge = sim.spell(charge);
             effects.push(
@@ -484,7 +484,7 @@ impl Warrior {
             "tick_can_crit": rend.periodic_can_crit(),
             "tick_magic": rend.defense_type_core() == DefenseType::Magic}));
         // overpower.go: the client base on normalized main hand damage.
-        let overpower = data.overpower.by_id(11585);
+        let overpower = data.overpower.highest();
         effects.push(json!({"kind": "overpower", "spell_id": overpower.id,
             "base_damage": overpower.damage_effect().average(level)}));
         if self.has_talent("mortal_strike") {

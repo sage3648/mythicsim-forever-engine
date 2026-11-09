@@ -359,9 +359,14 @@ pub(crate) fn known_buff_rank(spell: i32) -> i32 {
     if row.id == 0 {
         return spell;
     }
+    // Only the class's own rows: other spells share a buff's name, such as a level 45 creature
+    // Faerie Fire (13752, "Rank 2") beside the druid's level 42 rank 3 (9749), which a level 46
+    // druid's debuff resolved to while its rotation checked for 9749.
+    let family = row.class_flags.family;
     let highest_known = |name: &str| -> Option<i32> {
         let mut ranks: Vec<&Spell> = crate::prepare::spelldata::all()
             .filter(|candidate| candidate.name == name)
+            .filter(|candidate| family == 0 || candidate.class_flags.family == family)
             .filter(|candidate| knows_buff_row(&character, candidate))
             .collect();
         ranks.sort_by_key(|candidate| (candidate.spell_level, candidate.id));
@@ -455,6 +460,15 @@ pub(crate) fn current() -> Character {
     CURRENT.with(|current| current.borrow().clone())
 }
 
+/// How much of a point of base health and of base mana reaches the character's maximum: 1, or
+/// more under a share of maximum health or mana (Arcane Mind's 10% of mana, a Tauren's 5% of
+/// health). The first preparation measures them.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Slopes {
+    pub health: f64,
+    pub mana: f64,
+}
+
 /// Solves the level 60 numbers from the sheet: `engine` is the player's stats as preparation
 /// made them with no buffs or consumables, using `used` for the calibrated numbers.
 ///
@@ -464,13 +478,16 @@ pub(crate) fn current() -> Character {
 /// `k = (C_s - C_e + k_used A_e) / A_s`. The constant part of crit (base and gear) rides in the
 /// engine's own `C_e`. Health is 10 per stamina above the first 20 and mana 15 per intellect,
 /// so base health is the base used plus what the sheet has over the engine, less what its extra
-/// stamina explains.
+/// stamina explains. A share of maximum health or mana scales what the sheet has over the
+/// engine, so that difference is divided by its [`Slopes`] first: solved without it, a level 10
+/// arcane mage's base mana went negative and the level 60 base stood, 1300 mana over its sheet.
 pub(crate) fn calibrate(
     sheet: &Sheet,
     engine: &Stats,
     used: &Stats,
     k_agi: f64,
     k_int: f64,
+    slopes: Slopes,
 ) -> Calibration {
     let solve = |sheet_crit: f64, engine_crit: f64, used_k: f64, stat: Stat| -> Option<f64> {
         let sheet_stat = sheet.attribute(stat);
@@ -498,13 +515,13 @@ pub(crate) fn calibrate(
         // level 60 base stays rather than leave the character with no health or mana.
         base_health: (sheet.health > 0.0)
             .then(|| {
-                used[Stat::Health] + (sheet.health - engine[Stat::Health])
+                used[Stat::Health] + (sheet.health - engine[Stat::Health]) / slopes.health
                     - 10.0 * (sheet.attribute(Stat::Stamina) - engine[Stat::Stamina])
             })
             .filter(|health| *health > 0.0),
         base_mana: (sheet.mana > 0.0 && used[Stat::Mana] > 0.0)
             .then(|| {
-                used[Stat::Mana] + (sheet.mana - engine[Stat::Mana])
+                used[Stat::Mana] + (sheet.mana - engine[Stat::Mana]) / slopes.mana
                     - 15.0 * (sheet.attribute(Stat::Intellect) - engine[Stat::Intellect])
             })
             .filter(|mana| *mana > 0.0),
@@ -657,5 +674,55 @@ mod tests {
             ..Character::default()
         };
         assert_eq!(with_character(character, || frostbolt().highest().id), 837);
+    }
+
+    /// A share of maximum mana (Arcane Mind) scales the base too: with the engine's mana 1.1
+    /// times base plus intellect's, the solve still lands on the sheet's base.
+    #[test]
+    fn a_share_of_maximum_mana_is_solved_through() {
+        let from_intellect = 15.0 * 100.0;
+        let mut used = Stats::default();
+        used[Stat::Mana] = 1000.0;
+        used[Stat::Health] = 1000.0;
+        let mut engine = Stats::default();
+        engine[Stat::Intellect] = 100.0;
+        engine[Stat::Stamina] = 50.0;
+        engine[Stat::Mana] = 1.1 * (1000.0 + from_intellect);
+        engine[Stat::Health] = 1.05 * (1000.0 + 500.0);
+        let sheet = Sheet {
+            attributes: [0.0, 0.0, 50.0, 100.0, 0.0],
+            mana: 1.1 * (300.0 + from_intellect),
+            health: 1.05 * (400.0 + 500.0),
+            ..Sheet::default()
+        };
+        let slopes = Slopes {
+            health: 1.05,
+            mana: 1.1,
+        };
+        let solved = calibrate(&sheet, &engine, &used, 0.0, 0.0, slopes);
+        assert!(
+            (solved.base_mana.unwrap() - 300.0).abs() < 1e-9,
+            "{solved:?}"
+        );
+        assert!(
+            (solved.base_health.unwrap() - 400.0).abs() < 1e-9,
+            "{solved:?}"
+        );
+        // Without the share the solve comes out 70 short of the sheet's base.
+        let unscaled = calibrate(
+            &sheet,
+            &engine,
+            &used,
+            0.0,
+            0.0,
+            Slopes {
+                health: 1.0,
+                mana: 1.0,
+            },
+        );
+        assert!(
+            (unscaled.base_mana.unwrap() - 230.0).abs() < 1e-9,
+            "{unscaled:?}"
+        );
     }
 }

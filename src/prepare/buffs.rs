@@ -130,6 +130,23 @@ impl Meta {
             .map_or(0.0, |applied| applied.value)
     }
 
+    /// [`Meta::value`] at the rank [`Meta::aura`] gives a levelling character under Forever's
+    /// rules (`levels::known_buff_rank`); at level 60 the meta's own. A level 42 shaman's Mana
+    /// Tide is rank 2's 133 every 3 sec (17355), and the checks that read the aura's MP5 read it
+    /// too.
+    pub(crate) fn known_value(&self, talent_points: i32) -> f64 {
+        if super::levels::character_level() == super::levels::MAX_LEVEL {
+            return self.value(talent_points);
+        }
+        let forever = forever_buff_rank(self.spell).unwrap_or(self.spell);
+        let known = super::levels::known_buff_rank(forever);
+        Meta {
+            spell: known,
+            ..*self
+        }
+        .value(talent_points)
+    }
+
     /// Go `Meta.Duration`.
     pub(crate) fn duration(&self, talent_points: i32) -> Duration {
         if self.talent_scales_duration {

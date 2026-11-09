@@ -301,8 +301,9 @@ impl Shaman {
         let data = spell_data();
         let rank = data.mana_tide_totem.highest();
         let duration = rank.duration();
-        // The raid's external Mana Tide Totem reads the same row, so it is the same MP5 to the bit.
-        let value = MANA_TIDE_TOTEMS.value(0);
+        // The raid's external Mana Tide Totem reads the same row, so it is the same MP5 to the bit;
+        // a levelling shaman's is the rank it knows (rank 2's 133 every 3 sec at level 42).
+        let value = MANA_TIDE_TOTEMS.known_value(0);
         let mut config = rank_totem_config(rank, masks::BASIC_TOTEM);
         config.cast.cd = Cooldown {
             timer: Some(sim.new_timer(unit)),

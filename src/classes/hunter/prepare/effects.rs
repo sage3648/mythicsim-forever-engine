@@ -244,7 +244,7 @@ impl Hunter {
         }
         // newScorpidPoison: a melee special hit roll, then a dot whose stack Apply resets, so
         // each landed cast is one stack of the Go literal tick.
-        if id == 24587 {
+        if super::pet::is_scorpid_poison(id) {
             return Some(json!({
                 "kind": "hunter_pet_scorpid_poison", "spell_id": id, "tick_base": 5.0,
                 "tick_can_crit": data.scorpid_poison_triggered.rank(4).periodic_can_crit(),
@@ -271,6 +271,14 @@ impl Hunter {
                 id,
                 crate::prepare::spelldata::find(id),
                 "melee_special",
+            ));
+        }
+        // Lightning Breath's lower ranks the same way, rolled on the magic table.
+        if super::pet::is_lightning_breath(id) {
+            return Some(pet_row_strike(
+                id,
+                crate::prepare::spelldata::find(id),
+                "magic",
             ));
         }
         let strike_rows = [

@@ -238,7 +238,7 @@ impl Warrior {
 
     /// Go `registerCharge`.
     pub(super) fn register_charge(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().charge.by_id(11578);
+        let rank = spell_data().charge.highest();
         let action = spell_action(rank.id);
         let charge_cd = cooldown_of(rank);
         register_dash_aura(sim, unit, "Charge", &action, charge_cd);
@@ -293,7 +293,7 @@ impl Warrior {
 
     /// Go `registerPummel`.
     pub(super) fn register_pummel(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().pummel.by_id(6554);
+        let rank = spell_data().pummel.highest();
         let cd = new_cooldown(sim, unit, cooldown_of(rank));
         sim.register_spell(
             unit,
@@ -583,7 +583,7 @@ impl Warrior {
 
     /// Go `registerOverpower`.
     pub(super) fn register_overpower(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().overpower.by_id(11585);
+        let rank = spell_data().overpower.highest();
         let window = spell_data().offensive_state_triggered.highest();
         let cd = new_cooldown(sim, unit, cooldown_of(rank));
 

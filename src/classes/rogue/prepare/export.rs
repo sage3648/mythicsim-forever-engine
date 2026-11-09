@@ -166,21 +166,33 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
     };
     let bonus = poison_bonus(rogue);
     let hands = |imbue: i32| poison_proc_mask(sim, env.player, imbue).names();
+    // A levelling rogue's Instant Poison is the rank it brews (Instant Poison II: 20 to 26 from
+    // 28); at level 60 Go's 76 to 100, rank VI.
+    let level = crate::prepare::levels::character_level();
+    let instant_damage = match super::poisons::imbue_poison_rank(IMBUES.instant) {
+        super::poisons::PoisonRank::Known(rank) => {
+            (rank.effect_n(1).min(level), rank.effect_n(1).max(level))
+        }
+        _ => (76.0, 100.0),
+    };
     if let Some(spell) = rogue.spells.instant_poison {
         effects.push(json!({
             "kind": "instant_poison", "trigger_aura": "Instant Poison",
             "spell_id": sim.spell(spell).action_id.spell_id,
             "proc_mask": hands(IMBUES.instant), "proc_chance": 0.2 + bonus,
-            "min_damage": 76.0, "max_damage": 100.0, "attack_power_share": instant_share,
+            "min_damage": instant_damage.0, "max_damage": instant_damage.1,
+            "attack_power_share": instant_share,
         }));
     }
     if let Some(spell) = rogue.spells.deadly_poison {
         let id = &sim.spell(spell).action_id;
         // Deadly Poison V (dot 25349, 23 a tick) is taught by an Ahn'Qiraj 20 book, so under
         // Forever's rules the rogue brews rank IV (dot 11354, 18 a tick); see book_ranks.
-        let tick_damage = match env.rules {
-            Rules::Forever => 18.0,
-            Rules::GoReference => 23.0,
+        let tick_damage = match (env.rules, super::poisons::imbue_poison_rank(IMBUES.deadly)) {
+            // A levelling rogue's rank, the dot's tick (Deadly Poison II: 9 a tick from 38).
+            (_, super::poisons::PoisonRank::Known(rank)) => rank.effect_n(1).average(level),
+            (Rules::Forever, _) => 18.0,
+            (Rules::GoReference, _) => 23.0,
         };
         effects.push(json!({
             "kind": "deadly_poison", "trigger_aura": "Deadly Poison", "spell_id": id.spell_id,

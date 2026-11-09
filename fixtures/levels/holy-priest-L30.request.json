@@ -1,0 +1,377 @@
+{
+ "encounter": {
+  "duration": 120,
+  "durationVariation": 15,
+  "executeProportion20": 0.2,
+  "executeProportion25": 0.25,
+  "executeProportion35": 0.35,
+  "executeProportion45": 0.45,
+  "executeProportion90": 0.9,
+  "noHitSuppression": true,
+  "targets": [
+   {
+    "canCrush": true,
+    "damageSpread": 0.3333,
+    "id": 213336,
+    "level": 32,
+    "minBaseDamage": 3000,
+    "name": "Level 32",
+    "parryHaste": true,
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     805,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1895,
+     0,
+     127393,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "swingSpeed": 2
+   }
+  ]
+ },
+ "raid": {
+  "buffs": {},
+  "debuffs": {},
+  "parties": [
+   {
+    "buffs": {},
+    "players": [
+     {
+      "buffs": {},
+      "characterSheet": {
+       "attributes": [
+        25,
+        25,
+        139,
+        252,
+        154
+       ],
+       "base": [
+        25,
+        25,
+        32,
+        38,
+        38
+       ],
+       "equipment": {
+        "items": [
+         {
+          "enchant": 1509,
+          "id": 16693
+         },
+         {
+          "enchant": 8218,
+          "id": 18723
+         },
+         {
+          "id": 16695
+         },
+         {
+          "id": 18389
+         },
+         {
+          "enchant": 8492,
+          "id": 16690
+         },
+         {
+          "enchant": 7665,
+          "id": 18497
+         },
+         {
+          "enchant": 8492,
+          "id": 12554
+         },
+         {
+          "id": 12466
+         },
+         {
+          "enchant": 8492,
+          "id": 18386
+         },
+         {
+          "enchant": 8492,
+          "id": 18507
+         },
+         {
+          "id": 12543
+         },
+         {
+          "id": 16058
+         },
+         {
+          "enchant": 7662,
+          "id": 812
+         },
+         {
+          "id": 18761
+         }
+        ]
+       },
+       "health": 1717,
+       "level": 30,
+       "mana": 4059,
+       "meleeCrit": 4.66,
+       "spellCrit": [
+        7.01,
+        7.01,
+        7.01,
+        7.01,
+        7.01,
+        7.01
+       ]
+      },
+      "class": "ClassPriest",
+      "consumables": {},
+      "distanceFromTarget": 20,
+      "equipment": {
+       "items": [
+        {
+         "enchant": 1509,
+         "id": 16693
+        },
+        {
+         "enchant": 8218,
+         "id": 18723
+        },
+        {
+         "id": 16695
+        },
+        {
+         "id": 18389
+        },
+        {
+         "enchant": 8492,
+         "id": 16690
+        },
+        {
+         "enchant": 7665,
+         "id": 18497
+        },
+        {
+         "enchant": 8492,
+         "id": 12554
+        },
+        {
+         "id": 12466
+        },
+        {
+         "enchant": 8492,
+         "id": 18386
+        },
+        {
+         "enchant": 8492,
+         "id": 18507
+        },
+        {
+         "id": 12543
+        },
+        {
+         "id": 16058
+        },
+        {
+         "enchant": 7662,
+         "id": 812
+        },
+        {
+         "id": 18761
+        }
+       ]
+      },
+      "healerPriest": {
+       "options": {
+        "classOptions": {}
+       }
+      },
+      "level": 30,
+      "name": "holy-priest",
+      "profession1": "Engineering",
+      "race": "RaceHuman",
+      "reactionTimeMs": 100,
+      "rotation": {
+       "priorityList": [
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1277328
+           }
+          },
+          "condition": {
+           "const": {
+            "val": "false"
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "autocastOtherCooldowns": {}
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1316995
+           },
+           "target": {
+            "type": "Self"
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1240827
+           },
+           "target": {
+            "type": "Self"
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 10901
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "80%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25315
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "not": {
+            "val": {
+             "auraIsActive": {
+              "auraId": {
+               "spellId": 25315
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 14751
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25314
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "35%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 10917
+           },
+           "target": {
+            "type": "Self"
+           }
+          }
+         }
+        }
+       ],
+       "type": "TypeAPL"
+      },
+      "talentsString": "-0350500303011"
+     }
+    ]
+   }
+  ]
+ },
+ "simOptions": {
+  "iterations": 200,
+  "randomSeed": "42"
+ }
+}

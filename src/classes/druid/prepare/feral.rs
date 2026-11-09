@@ -92,9 +92,12 @@ pub(super) fn rip_attack_power_share_per_combo_point(rules: Rules) -> f64 {
     }
 }
 
-/// The row of a cat spell's highest rank under `rules`: the live row under Forever's rules.
+/// The row of the highest rank of a cat spell the character knows under `rules`: the live row
+/// under Forever's rules. At level 60 that is the top rank; a levelling cat knows the rank its
+/// spellbook or level gives it. Taken as the top rank at every level, a level 58 cat's Rip (rank
+/// 6, level 60) and a level 30 cat's Rake (rank 4, level 54) were unlearned and never cast.
 pub(super) fn cat_rank(rules: Rules, ranks: &[i32]) -> &'static Spell {
-    hotfix_113554::row(rules, *ranks.last().expect("ranks"))
+    hotfix_113554::row(rules, Ladder::ranked(ranks).highest().id)
 }
 
 /// Rend and Tear's damage multiplier at a rank: 2% a rank in the client rows, 3% a rank under
@@ -432,7 +435,7 @@ impl Druid {
         let mut armor =
             per_defense.mul_add(defense_skill, per_level * f64::from(character_level()));
         if self.st.starting_form & BEAR != 0 {
-            armor *= super::forms::BASE_BEAR_ARMOR_MULTI;
+            armor *= super::forms::known_bear_form().armor_multiplier;
         }
         sim.add_stat(unit, Stat::Armor, armor);
     }

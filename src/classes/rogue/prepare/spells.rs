@@ -318,7 +318,7 @@ impl Rogue {
 
     /// Go `registerSliceAndDice`.
     pub(super) fn register_slice_and_dice(&mut self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().slice_and_dice.by_id(6774);
+        let rank = spell_data().slice_and_dice.highest();
         let action = spell_action(rank.id);
         let state = Rc::clone(&self.state);
 
