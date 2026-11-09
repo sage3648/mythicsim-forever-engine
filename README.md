@@ -886,6 +886,14 @@ the Go goldens and exporter uses. The departures:
   runtime sets on a Goblin Sapper Charge's hit on its thrower. Its 36 melee Attack Power against
   Dragonkin (aura 102, creature mask 2) is a `mob_type_bonus` with `melee_attack_power` while the
   buff is up and every target is Dragonkin; ranged attacks do not read it.
+- Arcane Concentration at the Arcane Missiles channel start and on Flamestrike's ground ticks,
+  from Forever combat logs: Clearcasting came from 8.9% of 347 channel starts, and 45.3% of
+  5-missile channels gained it, against 46.9% expected with a roll at the start and 41.0%
+  without; and from 13 of 82 Flamestrike ticks, once a tick however many enemies stood in it.
+  Under Forever's rules the channel rolls once as it starts, after the cast has spent any
+  Clearcasting it found, so a start proc is a fresh one for the next cast, and each ground tick
+  rolls once after the first enemy it lands on. Both share the talent's 1 sec cooldown
+  (`tests/classes/mage/arcane_concentration.rs`). The reference rolls on neither.
 - Stat aura combinations up to 16 bits, where the reference refuses past 14: an Orc
   Enhancement Shaman with Jom Gabbar takes 15 (the totems, the swap, the imbues and the potion
   10, Blood Fury 1, Jom Gabbar's stacks 4). Each bit doubles the reset simulations: 15 bits

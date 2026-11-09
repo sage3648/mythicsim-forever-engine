@@ -777,7 +777,14 @@ impl Agent for MageAgent {
                 let chill = frozen.then(|| fight.agent.winters_chill.clone()).flatten();
                 ice_lance::apply(fight, spell, target, multiplier, chill.as_deref());
             }
-            MageSpell::ArcaneMissiles => arcane_missiles::apply_channel(fight, spell),
+            MageSpell::ArcaneMissiles => {
+                // Called directly, not as a landed outcome, so no other hit listener (Missile
+                // Barrage, Judgement of Wisdom) hears the channel's cast.
+                if let Some(state) = fight.agent.arcane_concentration.clone() {
+                    state.on_channel_start(fight);
+                }
+                arcane_missiles::apply_channel(fight, spell);
+            }
             MageSpell::ArcaneMissile => arcane_missiles::apply_missile(fight, spell, target),
             MageSpell::ArcaneWrath => {
                 let wrath = fight.agent.arcane_wrath;
@@ -862,7 +869,12 @@ impl Agent for MageAgent {
                 .iter()
                 .find(|(rank, _)| *rank == spell)
                 .expect("every Flamestrike rank has a tick amount");
-            flamestrike::tick(fight, dot, tick_base);
+            let state = fight.agent.arcane_concentration.clone();
+            flamestrike::tick(fight, dot, tick_base, |fight| {
+                if let Some(state) = &state {
+                    state.on_flamestrike_tick(fight);
+                }
+            });
             return;
         }
         if behavior == MageSpell::Blizzard {
