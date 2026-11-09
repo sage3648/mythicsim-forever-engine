@@ -24,17 +24,23 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   (src/prepare/items.rs);
 - hit and crit within one rating point of the tooltip's percentage are the same, and a rating
   the row carries as a percent pseudo stat (Eye of the Beast's 1% spell crit) is not added again;
-- weapon damage and speed follow the tooltip, and so does the item level of a row that changes.
+- weapon damage and speed follow the tooltip, and so does the item level of a row that changes;
+- the cooldown of the "Use:" line, "(5 Min Cooldown)", replaces the on use cooldown of a row
+  with one item effect on use, when the tooltip has one such line (Adaptive Combat Assistant,
+  272437: 5 minutes where the reference row says 90 seconds). The shared category cooldown
+  stays the row's.
 
-Existing live rows are kept as they are. An item with a "+N" line this tool cannot read is left
-out and listed.
+Existing live rows keep their stats, damage and speed as they are; only their on use cooldown
+follows a tooltip the cache holds. An item with a "+N" line this tool cannot read is left out
+and listed.
 
-    python3 tools/rust_live_items.py fetch --cache DIR
+    python3 tools/rust_live_items.py fetch --cache DIR [ID ...]
     python3 tools/rust_live_items.py build --cache DIR [--report FILE]
     python3 tools/rust_live_items.py check
 
 fetch asks for every reference weapon and armor tooltip the cache lacks (the cache format is
-tools/rust_client_items.py's, so one cache serves both); build and check run offline.
+tools/rust_client_items.py's, so one cache serves both), or for the given ids alone, live rows
+included; build and check run offline.
 """
 
 import argparse
@@ -75,6 +81,10 @@ PSEUDO_PERCENT = {
     29: (5, client.PARRY_RATING),
 }
 ALL_RESISTANCES = re.compile(r"^\+(\d+) (?:to )?All Resistances\.?$")
+# The cooldown at the end of a "Use:" line: "(5 Min Cooldown)", "(30 Sec Cooldown)",
+# "(1 Hour Cooldown)".
+USE_COOLDOWN = re.compile(r"^Use:.*\((\d+) (Sec|Min|Hour|Hours) Cooldown\)$")
+COOLDOWN_UNIT_MS = {"Sec": 1000, "Min": 60_000, "Hour": 3_600_000, "Hours": 3_600_000}
 SET_BONUS = re.compile(r"^\(\d+\) Set ?:")
 
 
@@ -92,15 +102,18 @@ def is_gear(row):
     return row.get("type") not in (None, "ItemTypeUnknown")
 
 
-def fetch(cache):
-    """Fetch every reference weapon and armor tooltip the cache lacks."""
+def fetch(cache, ids=None):
+    """Fetch every reference weapon and armor tooltip the cache lacks, or the given ids'."""
     Path(cache).mkdir(parents=True, exist_ok=True)
     live = live_rows()
-    wanted = [
-        item_id
-        for item_id, row in sorted(reference_rows().items())
-        if is_gear(row) and item_id not in live and not client.cache_path(cache, item_id).exists()
-    ]
+    if ids:
+        wanted = [item_id for item_id in ids if not client.cache_path(cache, item_id).exists()]
+    else:
+        wanted = [
+            item_id
+            for item_id, row in sorted(reference_rows().items())
+            if is_gear(row) and item_id not in live and not client.cache_path(cache, item_id).exists()
+        ]
     print(f"{len(wanted)} tooltips to fetch", file=sys.stderr)
     delay = client.REQUEST_INTERVAL
     index = 0
@@ -138,7 +151,7 @@ def read_tooltip(response):
     if response.get("missing") or response.get("error") or "tooltip" not in response:
         return None
     lines, _ = client.tooltip_lines(response["tooltip"])
-    out = {"stats": {}, "text": " ".join(lines)}
+    out = {"stats": {}, "text": " ".join(lines), "use_cooldowns": []}
 
     def add(stat, value):
         out["stats"][stat] = out["stats"].get(stat, 0) + value
@@ -181,7 +194,25 @@ def read_tooltip(response):
                 del stats[RANGED_ATTACK_POWER]
             for stat, value in stats.items():
                 add(stat, value)
+        elif match := USE_COOLDOWN.match(line):
+            out["use_cooldowns"].append(int(match.group(1)) * COOLDOWN_UNIT_MS[match.group(2)])
     return out
+
+
+def on_use_effect(row):
+    """The index of the row's one item effect on use, or None when it has none or several."""
+    uses = [i for i, effect in enumerate(row.get("item_effects") or []) if effect.get("on_use")]
+    return uses[0] if len(uses) == 1 else None
+
+
+def cooldown_change(row, live):
+    """The on use cooldown the tooltip states when it differs from the row's, else None."""
+    index = on_use_effect(row)
+    if index is None or len(live.get("use_cooldowns", [])) != 1:
+        return None
+    current = row["item_effects"][index]["on_use"].get("cooldown_ms", 0)
+    stated = live["use_cooldowns"][0]
+    return stated if current and stated != current else None
 
 
 def effect_stats(row):
@@ -241,6 +272,9 @@ def changes(row, live):
     speed = row.get("weapon_speed")
     if speed and live.get("speed") and abs(speed - live["speed"]) > 0.001:
         out["speed"] = live["speed"]
+    cooldown = cooldown_change(row, live)
+    if cooldown is not None:
+        out["cooldown_ms"] = cooldown
     if out and live.get("ilvl") and live["ilvl"] != option.get("ilvl"):
         out["ilvl"] = live["ilvl"]
     return out
@@ -266,6 +300,8 @@ def live_row(row, change):
         row["weapon_speed"] = change["speed"]
     if "ilvl" in change:
         option["ilvl"] = change["ilvl"]
+    if "cooldown_ms" in change:
+        row["item_effects"][on_use_effect(row)]["on_use"]["cooldown_ms"] = change["cooldown_ms"]
     order = ["rand_prop_points", "weapon_damage_min", "weapon_damage_max", "stats", "ilvl"]
     row["scaling_options"]["0"] = {
         **{k: option[k] for k in order if k in option},
@@ -280,10 +316,21 @@ def build(cache, report=None):
     live = live_rows()
     added, left_out = {}, {}
     for item_id, row in sorted(reference.items()):
-        if item_id in live or not is_gear(row):
+        if not is_gear(row):
             continue
         path = client.cache_path(cache, item_id)
         if not path.exists():
+            continue
+        if item_id in live:
+            # A live row keeps what it has but its on use cooldown.
+            try:
+                stated = read_tooltip(json.loads(path.read_text()))
+            except client.Unreadable:
+                continue
+            cooldown = stated and cooldown_change(live[item_id], stated)
+            if cooldown:
+                added[item_id] = (row["name"], {"cooldown_ms": cooldown})
+                live[item_id] = live_row(live[item_id], {"cooldown_ms": cooldown})
             continue
         try:
             stated = read_tooltip(json.loads(path.read_text()))
@@ -333,11 +380,12 @@ def check():
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("command", choices=["fetch", "build", "check"])
+    parser.add_argument("ids", nargs="*", type=int)
     parser.add_argument("--cache")
     parser.add_argument("--report")
     args = parser.parse_args()
     if args.command == "fetch":
-        fetch(args.cache)
+        fetch(args.cache, args.ids)
     elif args.command == "build":
         added, left_out = build(args.cache, args.report)
         print(f"{len(added)} rows added, {len(left_out)} left out")

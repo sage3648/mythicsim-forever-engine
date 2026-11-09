@@ -1263,6 +1263,14 @@ the Go goldens and exporter uses. The departures:
     Power" suffixes and enchants, which carry their own, are unchanged. Death's Embrace (2585)
     stays melee: its spell 24153 is aura 99 alone. `tools/rust_client_items.py` writes both for
     the line (`tests/forever_gear_attack_power_20261110.rs`).
+  - The Undermine Engineering trinkets take the cooldowns of their Wowhead Forever tooltips and
+    client rows: Adaptive Combat Assistant (272437) 5 minutes, Weakness Analyzer (272438) and
+    Serenity Field (272439) 6 minutes, where the reference rows give 90 seconds; the category
+    cooldown they share stays 15 or 20 seconds. `tools/rust_live_items.py` reads the "(N Min
+    Cooldown)" of a "Use:" line into the live row, which also gives the Assistant the tooltip's
+    1.1% expertise (11 rating, the reference row has 20), and the on use helpers read the live
+    row of an item as the equipped item does
+    (`tests/forever_engineering_trinket_cooldowns_20261110.rs`).
 
 ## Repository layout
 

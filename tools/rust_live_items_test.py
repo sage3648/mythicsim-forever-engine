@@ -42,6 +42,14 @@ class ReadTooltipTest(unittest.TestCase):
             {1: 10, 35: 7, 36: 7, 37: 7, 38: 7, 39: 7, 18: 5, 17: 12, 20: 10},
         )
 
+    def test_reads_the_use_cooldown(self):
+        stated = live.read_tooltip(
+            tooltip("Item Level 65", "Use: Increases Spirit by 72 for 15 sec. (6 Min Cooldown)")
+        )
+        self.assertEqual(stated["use_cooldowns"], [360000])
+        stated = live.read_tooltip(tooltip("Item Level 65", "Use: Restores 375 mana. (30 Sec Cooldown)"))
+        self.assertEqual(stated["use_cooldowns"], [30000])
+
     def test_no_tooltip_is_none(self):
         self.assertIsNone(live.read_tooltip({"missing": True}))
         self.assertIsNone(live.read_tooltip({"error": "Entity not found"}))
@@ -62,6 +70,23 @@ class ChangesTest(unittest.TestCase):
         stated = live.read_tooltip(tooltip("Item Level 58", "Equip: +28 Attack Power."))
         self.assertEqual(stated["stats"], {17: 28})
         self.assertEqual(live.changes(row({17: 28}), stated), {})
+
+    def test_the_use_cooldown_replaces_the_rows(self):
+        effect = {"buff_id": 1291103, "on_use": {"cooldown_ms": 90000, "category_id": 1141, "category_cooldown_ms": 15000}}
+        reference = row({}, item_effects=[effect])
+        stated = live.read_tooltip(tooltip("Item Level 60", "Use: Increases Spirit by 72 for 15 sec. (6 Min Cooldown)"))
+        change = live.changes(reference, stated)
+        self.assertEqual(change, {"cooldown_ms": 360000})
+        out = live.live_row(reference, change)
+        self.assertEqual(
+            out["item_effects"][0]["on_use"],
+            {"cooldown_ms": 360000, "category_id": 1141, "category_cooldown_ms": 15000},
+        )
+        self.assertEqual(reference["item_effects"][0]["on_use"]["cooldown_ms"], 90000)
+        stated = live.read_tooltip(tooltip("Item Level 60", "Use: Increases Spirit by 72 for 15 sec. (1 Min Cooldown)"))
+        self.assertEqual(live.changes(reference, stated), {"cooldown_ms": 60000})
+        stated = live.read_tooltip(tooltip("Item Level 60", "Use: Increases Spirit by 72 for 15 sec. (90 Sec Cooldown)"))
+        self.assertEqual(live.changes(reference, stated), {})
 
     def test_drops_a_named_stat_only_when_the_tooltip_never_names_it(self):
         stated = live.read_tooltip(tooltip("Item Level 60", "+5 Stamina"))
