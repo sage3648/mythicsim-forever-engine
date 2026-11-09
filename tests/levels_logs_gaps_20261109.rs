@@ -234,7 +234,9 @@ fn hunter_shots_match_the_logs_with_mark_and_aspect() {
     // Serpent Sting's tick
     for (name, sheet, hawk, mark, arcane_base, sting_base) in [
         ("marksmanship-hunter-L17", 130.0, 20.0, 26.0, 35.0, 7.0),
-        ("marksmanship-hunter-L22", 178.0, 35.0, 59.0, 50.0, 14.0),
+        // Level 22: 181 since gear attack power counts for ranged too (Catacomb Cloak's "Equip:
+        // +3 Attack Power.", 178 before), which brings the shots below nearer the logs.
+        ("marksmanship-hunter-L22", 181.0, 35.0, 59.0, 50.0, 14.0),
     ] {
         let prepared = prepared(name);
         assert_eq!(stat(&prepared, "RangedAttackPower"), sheet, "{name}");
@@ -275,10 +277,10 @@ fn hunter_shots_match_the_logs_with_mark_and_aspect() {
     }
     // Level 22 (another report), Hawk taken as up.
     for (engine, logged, what) in [
-        (shot(50.0, 213.0), 83.08, "Arcane Shot (38)"),
-        (shot(50.0, 272.0), 91.89, "Arcane Shot, Mark (27)"),
-        (tick(14.0, 213.0), 24.71, "Serpent Sting (96)"),
-        (tick(14.0, 272.0), 27.81, "Serpent Sting, Mark (69)"),
+        (shot(50.0, 216.0), 83.08, "Arcane Shot (38)"),
+        (shot(50.0, 275.0), 91.89, "Arcane Shot, Mark (27)"),
+        (tick(14.0, 216.0), 24.71, "Serpent Sting (96)"),
+        (tick(14.0, 275.0), 27.81, "Serpent Sting, Mark (69)"),
     ] {
         within(engine, logged, 0.02, &format!("level 22 {what}"));
     }

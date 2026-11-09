@@ -696,8 +696,9 @@ fn hammer_of_the_righteous_cleaves() {
     // 980 since push 113554's tree (978 before): the fixture's talents read in it. 961 since the
     // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
     // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
-    // Plate of the Shaman King and Eye of Orgrimmar.
-    assert_eq!(casts, 971.0);
+    // Plate of the Shaman King and Eye of Orgrimmar. 980 since Judgement of Wisdom pays only on
+    // landed hits, which moved the rolls after a miss.
+    assert_eq!(casts, 980.0);
     assert!(damage > 0.0);
 }
 
@@ -717,8 +718,9 @@ fn seal_of_wisdom_restores_mana_beside_the_raids_judgement() {
 fn seal_of_justice_judges_justice() {
     let (value, player) = run("retribution-paladin-seal-of-justice");
     assert!(!effects(&value, "seal_of_justice").is_empty());
-    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it.
-    assert_eq!(action(&player, 20164, 0).0, 3298.0);
+    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3280 since
+    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss.
+    assert_eq!(action(&player, 20164, 0).0, 3280.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before).
     assert_eq!(action(&player, 20184, 0).0, 756.0);
@@ -771,8 +773,9 @@ fn a_druids_own_thorns_strikes_back() {
     // 1634 since a missed Wrath banks no Eclipse charges (1631 before, with the rotation's
     // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that). 1680
     // since the 9 November live rows of Crimson Felt Hat, Star of Mystaria, Waterspout Boots and
-    // Songstone of Ironforge.
-    assert_eq!(action(&player, 9910, 0).0, 1680.0);
+    // Songstone of Ironforge. 1659 since Judgement of Wisdom pays only on landed hits, which
+    // moved the rolls after a missed spell.
+    assert_eq!(action(&player, 9910, 0).0, 1659.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
