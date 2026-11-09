@@ -778,6 +778,9 @@ const DYNAMIC_STATS: &[&str] = &[
     // changes them.
     "PhysicalHitPercent",
     "SpellHitPercent",
+    // Expertise, which the target's dodge and parry read: the combinations carry it when one
+    // changes it, as a swapped weapon's expertise rating does.
+    "ExpertisePercent",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -1447,6 +1450,8 @@ const INERT_STATS: &[&str] = &[
     "MeleeHitRating",
     "SpellHitRating",
     "MeleeCritRating",
+    // Expertise rating, whose percent the combinations carry.
+    "ExpertiseRating",
     "Health",
     "Armor",
     "BonusArmor",
