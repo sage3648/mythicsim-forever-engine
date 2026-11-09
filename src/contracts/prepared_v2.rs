@@ -2449,6 +2449,15 @@ pub enum Effect {
         /// such as a landed Mutilate's own roll, does not reach it.
         trigger_require_damage: bool,
         spend_require_damage: bool,
+        /// Forever's rules: the proc grants every charge and the main hand auto that fired it
+        /// spends none, so the next off hand auto keeps the attack power (Forever combat logs,
+        /// 46 of 47). Without it an auto that fires the proc takes one charge off.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules: every outcome of a spending auto spends a charge, a miss included
+        /// (Forever combat logs, 8 of 8 missed swings). Without it only landed autos do.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -4147,6 +4156,18 @@ pub enum Effect {
         contested: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         one_aura: bool,
+        /// Forever's rules: a landed hit rolls the trigger whether or not it deals damage, as
+        /// a Sunder Armor application does. Without it the hit must deal damage.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_without_damage: bool,
+        /// Forever's rules, as on the party's totem: the auto that fires the proc spends no
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules, as on the party's totem: every outcome of a spending auto spends a
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// Mana Spring Totem: the water totem's aura, whose MP5 is a class stat aura.
     ManaSpringTotem {

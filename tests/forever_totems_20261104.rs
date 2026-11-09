@@ -309,3 +309,32 @@ fn own_windfury_totem_alone_procs() {
     assert!(own > 0.0);
     assert_eq!(party, 0.0);
 }
+
+/// The shaman's own totem gives the party's aura and follows its Forever rules (Forever combat
+/// logs): a landed hit rolls it without damage, the auto that fires it spends no charge and
+/// every outcome of an auto spends one. The reference keeps its own rules.
+#[test]
+fn own_windfury_totem_follows_the_partys_rules() {
+    let request = enhancement_with_own_windfury(false, "RockbiterWeapon");
+    let own = |rules: Rules| -> Value {
+        let prepared = prepare_json_with(request.to_string().as_bytes(), "rust", rules).unwrap();
+        prepared["effects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|effect| effect["kind"] == "windfury_totem_self")
+            .expect("the own totem's effect")
+            .clone()
+    };
+    let flags = [
+        "trigger_without_damage",
+        "trigger_spends_no_charge",
+        "any_outcome_spends",
+    ];
+    let forever = own(Rules::Forever);
+    let reference = own(Rules::GoReference);
+    for flag in flags {
+        assert_eq!(forever[flag], json!(true), "{flag}");
+        assert!(reference.get(flag).is_none(), "{flag}");
+    }
+}

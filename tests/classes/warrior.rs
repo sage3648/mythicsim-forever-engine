@@ -2,6 +2,7 @@
 //! and first-fight log are compared with the rest of the fixture family.
 
 mod prepare;
+mod windfury_totem;
 
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepared_coverage, PreparedError,

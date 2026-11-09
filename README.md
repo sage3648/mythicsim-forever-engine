@@ -1002,6 +1002,21 @@ the Go goldens and exporter uses. The departures:
   totem is cast (air slot, mana, global cooldown) and its trigger stays off while the party's
   totem stands or the imbue is up; an item swap that takes the imbue off lets it back on at
   once. The reference refuses the request, as before (`one_aura` on `windfury_totem_self`).
+- Windfury Totem's triggers and charges, from Forever combat logs. An ability rolls the totem
+  only when its client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off on the
+  next swing (`Attributes[0]` 0x4); main hand autos and extra swings always roll it. Unflagged
+  abilities never proc it: Bloodthirst 0 of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of
+  97, Holy Strike 0 of 78. Flagged ones proc it at the swing rate (Mortal Strike 29 of 150), and
+  Maul, which goes off on the next swing, on 27.2% of its landed hits. No off hand special rolls
+  it, a shield strike included. A landed hit rolls it without dealing damage (Sunder Armor
+  applications at 15%); a miss still does not. The proc grants every charge and the auto that
+  fired it spends none, so the next off hand auto keeps the attack power (46 of 47), and every
+  outcome of a later auto spends one (8 of 8 missed swings). The reference rolls it off every
+  main hand melee spell (and off hand specials without an off hand weapon), wants damage, takes
+  a charge off for the triggering auto and spends charges on landed autos only. The shaman's own
+  totem gives the same aura and follows the same rules (`trigger_spends_no_charge` and
+  `any_outcome_spends` on `windfury_totem` and `windfury_totem_self`, `trigger_without_damage`
+  on the latter, `tests/classes/warrior/windfury_totem.rs`).
 - Soul Siphon counts the Affliction effects active at each tick. Its client 1.60.1.70755 text:
   Drain Life, Drain Soul and Wrack deal "12% per each of your other Affliction effects active on
   the target, up to a maximum increase of 36%". The talent is a dummy aura, so the server counts,

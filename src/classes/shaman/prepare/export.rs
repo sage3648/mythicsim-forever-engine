@@ -575,9 +575,15 @@ impl Shaman {
                     // 10612, which does not stack, and a main hand Windfury Weapon "disables any
                     // benefit you personally receive from Windfury Totem" (every rank's
                     // tooltip). So the own totem adds nothing beside either.
+                    // The same aura follows the party totem's Forever rules: a landed hit rolls
+                    // it without damage, the auto that fires it spends no charge and every
+                    // outcome of an auto spends one (src/prepare/buffs/windfury_effect.rs).
                     if sim.rules == Rules::Forever {
                         let last = effects.len() - 1;
                         effects[last]["one_aura"] = json!(true);
+                        effects[last]["trigger_without_damage"] = json!(true);
+                        effects[last]["trigger_spends_no_charge"] = json!(true);
+                        effects[last]["any_outcome_spends"] = json!(true);
                     }
                 }
                 _ => notes.push(
