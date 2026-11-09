@@ -76,7 +76,7 @@ On 8 Nov all 34 reference builds at levels 10, 20, 30, 40 and 50 (170 requests) 
 
 ## Open
 
-- Spell coefficients below level 20: Classic scaled a low-level spell's coefficient down; whether Forever keeps it is unchecked.
+- Spell coefficients below level 20: checked against public logs on 9 Nov (`docs/levels-logs-2026-11-09.md`). The client rows carry the low rank coefficients and the game takes them with no further penalty, which is what the engine does (`tests/levels_logs_20261109.rs`).
 - Dungeon boss armor: the worker scales the level 63 boss's 3731 armor by level. The client does not carry creature armor.
 - Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas; pets still use level 60 base stats.
 - Other class buffs and debuffs built from core's fixed rows (Shaman totems' triggered buffs resolve by level already; Sunder and Expose Armor, Hunter's Mark and the external raid rows have not been checked below 60). The worker sims a levelling character solo, so the external rows do not reach it.
