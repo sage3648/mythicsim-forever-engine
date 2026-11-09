@@ -569,8 +569,11 @@ only logs that no pet is summoned; a disabled pet's focus stops and its auras no
 expire, as Go removes its tracker. Several pets may be simulated at once, as a hunter pet or
 a demon beside Dragon's Call's whelp: `pets` lists them in unit index order, each its own
 unit, and each enabled pet's aura tracker joins Go's tracker list as it is enabled and
-leaves it by swap removal as it is disabled. Other guardians, inherited speed or
-regeneration, a delayed first
+leaves it by swap removal as it is disabled. A pet marked `inherits_melee_speed` (a Hunter's
+pet under Forever's rules) swings at its owner's melee and attack speed: the owner's speed at
+the summon is already in its `melee`, and each later change of the owner's melee or attack
+speed reaches it at its next heartbeat and rescales the swing under way. Other guardians,
+inherited cast speed or regeneration, a delayed first
 attack, enable callbacks, energy bars and pet cooldowns are unrepresented, and a change of
 an inherited owner stat outside spell damage, attack power, ranged attack power and crit is
 refused. A rotation's

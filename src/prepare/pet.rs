@@ -658,10 +658,6 @@ pub(crate) fn export_pets(
             format!("pet {label} has both mana and focus"),
         );
         note(
-            data.has_dynamic_melee_speed_inheritance,
-            format!("pet {label} inherits melee speed"),
-        );
-        note(
             data.has_dynamic_cast_speed_inheritance,
             format!("pet {label} inherits cast speed"),
         );
@@ -744,6 +740,9 @@ pub(crate) fn export_pets(
         exported.insert("summon_log".into(), json!(summon));
         exported.insert("dismiss_log".into(), json!(dismiss));
         exported.insert("dynamic_stats".into(), json!(data.is_dynamic));
+        if data.has_dynamic_melee_speed_inheritance {
+            exported.insert("inherits_melee_speed".into(), json!(true));
+        }
         if unit.focus_bar.enabled {
             exported.insert(
                 "focus".into(),

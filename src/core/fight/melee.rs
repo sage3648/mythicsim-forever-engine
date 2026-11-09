@@ -245,18 +245,55 @@ impl<A: Agent> Fight<A> {
                     / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
     }
 
-    /// Go `Unit.MultiplyMeleeSpeed`.
+    /// Go `Unit.MultiplyMeleeSpeed`. A pet that swings at its owner's melee speed takes the
+    /// change at its next heartbeat.
     #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn multiply_melee_speed(&mut self, amount: f64) {
         self.player.melee_speed_multiplier *= amount;
+        self.pass_melee_speed_to_pets(amount);
         self.update_swing_timers();
     }
 
-    /// Go `Unit.MultiplyAttackSpeed`.
+    /// Go `Unit.MultiplyAttackSpeed`. A pet that swings at its owner's attack speed takes the
+    /// change at its next heartbeat.
     #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn multiply_attack_speed(&mut self, amount: f64) {
         self.player.attack_speed_multiplier *= amount;
+        self.pass_melee_speed_to_pets(amount);
         self.update_swing_timers();
+    }
+
+    /// Forever's rules: each enabled pet that swings at its owner's melee and attack speed
+    /// takes the owner's change at its next stat heartbeat, a pending action of its own for
+    /// each change.
+    fn pass_melee_speed_to_pets(&mut self, amount: f64) {
+        let (now, offset) = (self.now, self.heartbeat_offset);
+        for index in 0..self.active_pets.len() {
+            let pet = &self.active_pets[index];
+            if !pet.inherits_melee_speed || !pet.enabled {
+                continue;
+            }
+            let heartbeats = (now - offset) / super::pet::PET_UPDATE_INTERVAL;
+            let at = super::pet::PET_UPDATE_INTERVAL * (heartbeats + 1) + offset;
+            self.schedule(
+                at,
+                super::PRIORITY_DOT,
+                super::Action::PetMeleeSpeed {
+                    pet: Side::Pet(index as u8),
+                    amount,
+                },
+            );
+        }
+    }
+
+    /// The owner's melee or attack speed change reaching a pet at its heartbeat: Go
+    /// `Unit.MultiplyMeleeSpeed` on a pet still out.
+    pub(crate) fn pet_melee_speed(&mut self, side: Side, amount: f64) {
+        if !self.active_pet(side).enabled {
+            return;
+        }
+        self.unit_mut(side).melee_speed_multiplier *= amount;
+        self.rescale_pet_swing(side);
     }
 
     /// Go `Unit.MultiplyAttackSpeed` of an acting unit. A pet has no ranged swing.
@@ -265,6 +302,12 @@ impl<A: Agent> Fight<A> {
             return self.multiply_attack_speed(amount);
         }
         self.unit_mut(side).attack_speed_multiplier *= amount;
+        self.rescale_pet_swing(side);
+    }
+
+    /// Go `AutoAttacks.UpdateSwingTimers` of a pet: the remaining part of its pending swing
+    /// scales with the change in speed.
+    fn rescale_pet_swing(&mut self, side: Side) {
         let autos = self.autos_of(side);
         if !autos.any_enabled() || !autos.melee || !autos.mh.enabled {
             return;
