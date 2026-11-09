@@ -3455,12 +3455,14 @@ impl<A: Agent> Fight<A> {
                         mana,
                         metrics_action_id,
                         delay_ns,
+                        landed_only,
                         ..
                     } if side == Side::Target && *aura == exported.label => Some((
                         *proc_chance,
                         *mana,
                         metrics_action_id.clone(),
                         *delay_ns,
+                        *landed_only,
                     )),
                     _ => None,
                 }) {
@@ -3473,6 +3475,7 @@ impl<A: Agent> Fight<A> {
                         id: jow.2.clone(),
                         metrics,
                         delay: jow.3,
+                        landed_only: jow.4,
                     }
                 } else if let Some((chance, delay, drain)) =
                     effects.iter().find_map(|effect| match effect {

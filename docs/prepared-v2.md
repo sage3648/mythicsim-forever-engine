@@ -119,7 +119,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `missile_barrage` | sim/mage/talents_arcane.go | Arcane Blast's chance at the talent's rank, a missile's quarter and Arcane Wrath's and the bolts' half of it from the trigger row, the buff's cost and tick changes from its row; the trigger rolls when a landed hit arrives |
 | `fingers_of_frost` | sim/mage/talents_frost.go | Proc chance, charges, Shatter crit, duration; Frostbolt and Frostfire Bolt roll it when their cast ends, the chill spells on landing (community #776) |
 | `winters_chill` | sim/mage/talents_frost.go | Proc chance, stacks, Cone of Cold's damage a stack (client 70425), duration |
-| `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay |
+| `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay; under Forever's rules `landed_only` (only a landed hit rolls) |
 | `judgement_of_light` | sim/core/buffs/paladin.go | The raid's Judgement of Light: a landed melee hit on the target that is no proc runs the handler a batch window later, which rolls the chance under `rng_label` and heals the attacker for the top rank's `heal` under health metrics of the target (`metrics_action_id`). The gate refuses it beside a pet that strikes in melee and against copies of the target |
 | `potion_mana` | sim/core/consumes.go | Gain range, label, alchemist stone multiplier |
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |

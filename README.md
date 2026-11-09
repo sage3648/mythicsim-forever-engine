@@ -1271,6 +1271,12 @@ the Go goldens and exporter uses. The departures:
     1.1% expertise (11 rating, the reference row has 20), and the on use helpers read the live
     row of an item as the equipped item does
     (`tests/forever_engineering_trinket_cooldowns_20261110.rs`).
+  - Judgement of Wisdom pays only on landed hits. A level 41 log counted its mana on 164 of 336
+    landed melee swings, 59 of 116 direct spells and 44 of 102 ranged shots, the 50% chance,
+    against 1 of 52 misses, 3 of 401 dot ticks and none of 33 damage shield hits. The reference
+    rolls on every direct hit and lets a melee or ranged miss, dodge or parry pay; now a hit that
+    does not land rolls nothing (`landed_only` on the effect,
+    `tests/forever_judgement_of_wisdom_landed_20261110.rs`).
 
 ## Repository layout
 
