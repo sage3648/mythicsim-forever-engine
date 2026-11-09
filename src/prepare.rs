@@ -294,6 +294,17 @@ fn in_sheet_gear(request: &mut serde_json::Value) {
             if let (Some(gear), Some(player)) = (gear, player.as_object_mut()) {
                 player.remove("equipment");
                 player.insert("equipment".to_string(), gear);
+                // The swap set belongs to the simmed gear: swapped over the sheet's own weapons
+                // (a two-hander over a one-hander and shield) it can be one the engine refuses,
+                // and the sheet was read with nothing swapped.
+                for key in [
+                    "itemSwap",
+                    "item_swap",
+                    "enableItemSwap",
+                    "enable_item_swap",
+                ] {
+                    player.remove(key);
+                }
             }
         }
     }

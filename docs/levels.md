@@ -27,6 +27,8 @@ Base stats (`character::base_stats`) move to the level (`levels::base_stats_at_l
 
 The sheet describes the character in its own gear, which a Best Gear or Droptimizer set swaps out. The worker sends that gear as `characterSheet.equipment`, and the calibration pass wears it, so a candidate is simmed with the character's own calibration: solved against the swapped gear, the solve would absorb most of a candidate's own crit (Robe of the Archmage's 1% read as 0.47%, `tests/levels_20261108.rs`).
 
+The calibration pass also drops the request's item swap (`itemSwap`, `enableItemSwap`). The sheet was read with nothing swapped, and a swap set built for the simmed gear can be one the engine refuses over the sheet's own weapons: a Droptimizer's two-hander candidate swapped over a sheet read in a one-hander and shield was refused as an off hand swap (a level 27 Retribution Paladin, 9 Nov, `tests/levels_20261108.rs`).
+
 The client carries no per-level crit tables and wago.tools was down on 7 Nov, so the calibration is the source today. It makes the character's total crit, health and mana match its sheet; the marginal crit of a point of agility is then exact only to the extent that the constant part of crit (base and gear) is what the engine has.
 
 ## Spells the character has not trained
@@ -35,6 +37,8 @@ A ladder the character knows no rank of resolves to its first rank, noted as unl
 
 - exports with `SpellFlagUnlearned` and without its APL and MCD flags, so the rotation, the major cooldowns and the coverage gate's reach skip it;
 - never makes its aura permanent (`Sim::make_permanent`), so an armor or aspect it would put up never goes up.
+
+A trait-tree talent is never unlearned (`Ladder::talent`, `ladder::is_talent_row`): a class registers it only when the character has points in it, and most talent rows of client 1.60.1 state spell level 60. Read by level, Pursuit of Justice (26022) was unlearned for a level 27 Paladin, so its permanent aura had no duration, preparation panicked activating it and the gate refused the tank as if the talent changed the target's swings (9 Nov).
 
 The calibration pass collects every unlearned spell, and the real pass starts with that set, so every export of a spell (the item swap's included) flags it alike.
 

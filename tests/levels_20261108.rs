@@ -174,3 +174,38 @@ fn a_levelling_class_buffs_with_the_rank_it_knows() {
         .expect("the mage's own raid buff");
     assert_eq!(brilliance["action_id"]["spell_id"], 1460);
 }
+
+/// A talent the character has points in is known at any level. Pursuit of Justice's row (26022)
+/// states spell level 60, like most talent rows of client 1.60.1, so a level 27 Paladin read it
+/// as untrained: its permanent aura kept no duration, preparation panicked activating it and
+/// the gate refused the tank as if the talent changed the target's swings (MythicSim
+/// Droptimizer, 9 November 2026).
+#[test]
+fn a_talent_is_known_below_its_rows_level() {
+    let prepared = prepare(&request("protection-paladin-L27")).expect("prepares");
+    let typed: PreparedV2 = serde_json::from_value(prepared.clone()).unwrap();
+    assert_eq!(
+        prepared_refusals(&typed),
+        vec![],
+        "the gate passes the tank"
+    );
+    let pursuit = prepared["player"]["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|aura| aura["label"] == "Pursuit of Justice")
+        .expect("the talent's aura is prepared");
+    assert_eq!(pursuit["active"], true, "the talent's permanent aura is up");
+    assert!(dps(&prepared) > 0.0);
+}
+
+/// The sheet is solved in the gear it was read in, without the request's swap set: a level 27
+/// Retribution Paladin read in a one-hander and shield, simmed with a two-hander and its swap
+/// set, prepares where the swap over the sheet's shield was refused as an off hand swap.
+#[test]
+fn the_sheet_is_solved_without_the_swap_set() {
+    let request = request("retribution-paladin-L27-swap");
+    assert!(request["raid"]["parties"][0]["players"][0]["itemSwap"].is_object());
+    let prepared = prepare(&request).expect("prepares");
+    assert!(dps(&prepared) > 0.0);
+}
