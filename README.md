@@ -1277,6 +1277,13 @@ the Go goldens and exporter uses. The departures:
     rolls on every direct hit and lets a melee or ranged miss, dodge or parry pay; now a hit that
     does not land rolls nothing (`landed_only` on the effect,
     `tests/forever_judgement_of_wisdom_landed_20261110.rs`).
+  - A damage shield takes none of the target's flat school damage bonus. Levels 1 to 19 logs
+    (client 1.60.1.70790) show 9 rank 1 Retribution Aura hits on beasts under the paladin's own
+    rank 2 Judgement of the Crusader, all 5 or 6, the flat 5 at a Dwarf's 5% against beasts,
+    where the reference adds the judgement's Holy bonus times the shield's 0.06 coefficient.
+    The shields of `new_damage_shield` (Retribution Aura and Thorns) carry
+    `SpellFlagIgnoreTargetSchoolBonus`, which skips the target's school bonus and keeps the
+    wearer's spell power share (`tests/forever_damage_shield_school_bonus_20261110.rs`).
 
 ## Repository layout
 

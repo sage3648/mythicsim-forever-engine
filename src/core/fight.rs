@@ -622,6 +622,8 @@ pub(crate) struct Flags {
     /// A spell the levelling character has not trained (`prepare::levels`): registered for
     /// what refers to it, never pressed by the rotation.
     pub(crate) unlearned: bool,
+    /// Forever's damage shields: none of the target's flat school damage bonus.
+    pub(crate) ignore_target_school_bonus: bool,
 }
 
 impl Flags {
@@ -652,6 +654,7 @@ impl Flags {
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
                 "SpellFlagPushback" => flags.pushback = true,
                 "SpellFlagUnlearned" => flags.unlearned = true,
+                "SpellFlagIgnoreTargetSchoolBonus" => flags.ignore_target_school_bonus = true,
                 _ => {}
             }
         }
