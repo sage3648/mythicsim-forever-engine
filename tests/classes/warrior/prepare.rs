@@ -200,7 +200,7 @@ fn frost_oil_registers_a_proc_for_its_hand() {
     );
 }
 
-/// Patches 182 to 185 (wowsims/forever's in-game threat captures): Revenge is 2.25 times its
+/// Patches 182 to 185 (in-game threat captures): Revenge is 2.25 times its
 /// damage with no flat bonus, Heroic Strike and Cleave add flat threat a spell level, Sunder Armor
 /// adds 0.05 of the attack power to the client's 206 at each cast, a Cleave on several targets
 /// splits its flat threat, and rage gained counts the threat multiplier.
