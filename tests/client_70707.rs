@@ -1,6 +1,9 @@
 //! The rows of client 1.60.1.70707 that change what the engine computes, which only Forever's
 //! rules prepare (the frozen spell data is client 1.60.1.70425, and the Go reference keeps it).
 
+#[path = "support/live_items.rs"]
+mod live_items;
+
 use forever_engine::{prepare_json_with, Rules};
 use serde_json::Value;
 use std::{fs, path::Path};
@@ -31,7 +34,9 @@ fn has_aura(prepared: &Value, spell_id: i64) -> bool {
 /// keeps rank 4 at the frozen data's 75.
 #[test]
 fn trueshot_aura_is_rank_5() {
-    let request = request("production-marksmanship-hunter");
+    // Without the items whose live rows move ranged Attack Power under Forever's rules.
+    let mut request = request("production-marksmanship-hunter");
+    live_items::take_off_live_items(&mut request["raid"]["parties"][0]["players"][0]);
     let forever = prepared(&request, Rules::Forever);
     let reference = prepared(&request, Rules::GoReference);
     assert!(has_aura(&forever, 20906));

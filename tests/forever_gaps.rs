@@ -695,8 +695,9 @@ fn hammer_of_the_righteous_cleaves() {
     let (casts, damage, _) = action(&player, 407632, 0);
     // 980 since push 113554's tree (978 before): the fixture's talents read in it. 961 since the
     // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
-    // Ahn'Qiraj 20 books, which Forever's rules leave out.
-    assert_eq!(casts, 961.0);
+    // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
+    // Plate of the Shaman King and Eye of Orgrimmar.
+    assert_eq!(casts, 971.0);
     assert!(damage > 0.0);
 }
 
@@ -718,7 +719,9 @@ fn seal_of_justice_judges_justice() {
     assert!(!effects(&value, "seal_of_justice").is_empty());
     // 3298 since push 113554's tree (3983 before): the fixture's talents read in it.
     assert_eq!(action(&player, 20164, 0).0, 3298.0);
-    assert_eq!(action(&player, 20184, 0).0, 754.0);
+    // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
+    // Ironforge (754 before).
+    assert_eq!(action(&player, 20184, 0).0, 756.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -759,14 +762,17 @@ fn a_druids_own_thorns_strikes_back() {
     // core.NewDamageShield's fixed amount, which draws nothing.
     assert!(shield["roll"].is_null());
     // 991 with the raid's Battle Shout VII, Strength of Earth V and Grace of Air III at the
-    // ranks below their Ahn'Qiraj 20 books (993 before).
-    assert_eq!(action(&player, 9910, 0).0, 991.0);
+    // ranks below their Ahn'Qiraj 20 books (993 before). 993 again since the 9 November live row
+    // of Tarnished Elven Ring (10 Agility, was 15), which the bear wears twice.
+    assert_eq!(action(&player, 9910, 0).0, 993.0);
     assert!(action(&player, 9910, 2).1 > 0.0);
     // Off the target's threat nothing hits the druid, so the shield never strikes.
     let (_, player) = run("balance-druid-thorns");
     // 1634 since a missed Wrath banks no Eclipse charges (1631 before, with the rotation's
-    // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that).
-    assert_eq!(action(&player, 9910, 0).0, 1634.0);
+    // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that). 1680
+    // since the 9 November live rows of Crimson Felt Hat, Star of Mystaria, Waterspout Boots and
+    // Songstone of Ironforge.
+    assert_eq!(action(&player, 9910, 0).0, 1680.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
