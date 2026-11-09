@@ -19,7 +19,9 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   spell penetration, mana per 5 sec, defense or bonus armor, the row's effects do not carry it,
   and its name appears nowhere on the tooltip;
 - a generic "+N Attack Power" equip line is melee and ranged: a row that holds the same ranged
-  attack power as attack power takes N for both;
+  attack power as attack power takes N for both, and a row that holds attack power alone keeps
+  it alone, since Forever's preparation gives an item's attack power to ranged as well
+  (src/prepare/items.rs);
 - hit and crit within one rating point of the tooltip's percentage are the same, and a rating
   the row carries as a percent pseudo stat (Eye of the Beast's 1% spell crit) is not added again;
 - weapon damage and speed follow the tooltip, and so does the item level of a row that changes.
@@ -172,7 +174,12 @@ def read_tooltip(response):
                 stats = client.equip_stats(line)
             except client.Unreadable:
                 stats = None
-            for stat, value in (stats or {}).items():
+            stats = dict(stats or {})
+            # A generic attack power line is read as the reference rows hold it, attack power
+            # alone: preparation gives it to ranged too (changes() moves a row's equal ranged).
+            if stats.get(ATTACK_POWER) and stats.get(RANGED_ATTACK_POWER) == stats[ATTACK_POWER]:
+                del stats[RANGED_ATTACK_POWER]
+            for stat, value in stats.items():
                 add(stat, value)
     return out
 

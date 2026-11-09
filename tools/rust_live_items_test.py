@@ -56,6 +56,13 @@ class ChangesTest(unittest.TestCase):
         stated = live.read_tooltip(tooltip("Item Level 58", "Equip: +12 Attack Power."))
         self.assertEqual(live.changes(row({17: 20, 18: 20}), stated), {"stats": {17: 12, 18: 12}, "ilvl": 58})
 
+    def test_attack_power_alone_stays_alone(self):
+        # Preparation gives an item's attack power to ranged too, so a row that holds attack
+        # power alone keeps it alone (Devilsaur Gauntlets).
+        stated = live.read_tooltip(tooltip("Item Level 58", "Equip: +28 Attack Power."))
+        self.assertEqual(stated["stats"], {17: 28})
+        self.assertEqual(live.changes(row({17: 28}), stated), {})
+
     def test_drops_a_named_stat_only_when_the_tooltip_never_names_it(self):
         stated = live.read_tooltip(tooltip("Item Level 60", "+5 Stamina"))
         self.assertEqual(live.changes(row({2: 5, 16: 4}), stated), {"stats": {16: None}})

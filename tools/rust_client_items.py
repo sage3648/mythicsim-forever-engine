@@ -270,13 +270,14 @@ NUMBER = r"(\d+(?:\.\d+)?)"
 
 # The equip lines that are a plain stat, as data/items.jsonl holds the same line of a Classic
 # item: (pattern, [(stat, group, rating per point)]). Increased Defense +6 is 6 Defense rating
-# (Ardent Custodian), +20 Attack Power is melee Attack Power alone as most reference rows have
-# it (Mark of Kern), 1.5% hit is 15 melee hit rating (Staff of Jordan), 1% crit 14 (Stronghold
+# (Ardent Custodian), +20 Attack Power is 20 melee and 20 ranged Attack Power, as the equip
+# spells of that line state auras 99 and 124 at the same value (Attack Power 22, 9332; Mark of
+# Kern), 1.5% hit is 15 melee hit rating (Staff of Jordan), 1% crit 14 (Stronghold
 # Gauntlets), spell damage and healing both spell power stats (Runed Ring), healing and damage
 # the two figures (Naga Battle Gloves), 3 mana per 5 sec 3 MP5 (Mindthrust Bracers).
 EQUIP_STATS = [
     (rf"Increased Defense \+{NUMBER}", [(25, 1, 1)]),
-    (rf"\+{NUMBER} Attack Power", [(17, 1, 1)]),
+    (rf"\+{NUMBER} Attack Power", [(17, 1, 1), (18, 1, 1)]),
     (rf"\+{NUMBER} ranged Attack Power", [(18, 1, 1)]),
     (
         rf"\+{NUMBER} Attack Power in Cat, Bear, Dire Bear,? and Moonkin forms only",

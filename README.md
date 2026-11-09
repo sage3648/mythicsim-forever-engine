@@ -1253,6 +1253,16 @@ the Go goldens and exporter uses. The departures:
     table gives both -1, +1, -1, +1, 0. A High Order Mage has 4 more Intellect and 3 less Spirit
     than a Human one. A levelling character's attributes are still its sheet's own
     (`src/prepare/character.rs`, `base_stats_tests`).
+  - Attack power on gear raises ranged attack power by as much. The equip spells that read "+N
+    Attack Power" state auras 99 and 124 at the same value (Attack Power 22, 9332, the equip
+    spell of Counterattack Lodestone 18537), where about 555 item rows carry attack power alone,
+    so a Hunter lost up to 156 ranged attack power on its reference gear (Devilsaur Gauntlets
+    15063 and Leggings 15062, Cape of the Black Baron 13340, Arcanite Reaper 12784, Don Julio's
+    Band 19325). An item row with attack power and no ranged attack power now takes the same
+    ranged attack power; a row that states its own (the Lodestone's 22) keeps it, and the "of
+    Power" suffixes and enchants, which carry their own, are unchanged. Death's Embrace (2585)
+    stays melee: its spell 24153 is aura 99 alone. `tools/rust_client_items.py` writes both for
+    the line (`tests/forever_gear_attack_power_20261110.rs`).
 
 ## Repository layout
 
