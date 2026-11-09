@@ -1245,6 +1245,35 @@ the Go goldens and exporter uses. The departures:
     and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
     a target of another type: the bonus was described only when it applied, so the swap's toggling
     of the item's aura was refused. With an item swap the effect is now described at zero.
+- Two Forever effect items that refused real sims on 9 November 2026, whose client spell rows are
+  partly encrypted (`tests/forever_effect_items_20261110.rs`, fixtures `forever-gaps/*serpentbane*`
+  and `*bigger-rock*`). `tools/rust_client_items.py` takes their rows with the use or chance on
+  hit line left out (`ENGINE_EFFECT`, the exact line, numbers included), and
+  `src/data/forever_client_spells.rs` restates the spell rows the pinned store lacks, read after
+  it: the readable client rows (wago.tools SpellEffect, SpellCategories and ItemEffect, 10
+  November 2026) and, for the encrypted ones, the Wowhead Forever tooltip. Fields neither states
+  stay zero (no range, no missile travel, no spell power or attack power share); the ticks may
+  crit, as 19 of the 20 Forever-added periodic damage rows in the pinned store state
+  (`src/prepare/forever_effect_items.rs`).
+  - Serpentbane Crown (274609), head, mail, item level 42, 213 armor, +16 Stamina, +8 Nature
+    Resistance. Its use (spell 1295039, ItemEffect 234016: 5 min cooldown, 10 sec on the shared
+    on-use category 1141) is a damage on-use item as Everlook Pathcarver's: a Fire hit of 100
+    (variance 0.23, the tooltip's 89 to 112) on the magic table, and five ticks of 45 every 2
+    sec (225 over 10 sec), both with no coefficient (client SpellEffect). School and duration
+    are the tooltip's. "Inflicts 2 times as much damage to Beast and Serpentine targets": against
+    a Beast target the hit and the ticks are doubled; a Serpentine target is no creature type a
+    request names.
+  - Bigger Rock on Bigger Stick (279480), two-hand mace, item level 47, 112 to 168, speed 3.40,
+    +14 Strength, and Rock on Stick (279852), its one-hand twin (57 to 107, speed 2.60, +4
+    Strength). "Chance on hit: Bash the target in the face, causing 14 (7) Physical damage every
+    2 sec for 20 sec." The client states no rate (ItemEffect trigger type 2), so it rolls the
+    rate the reference's chance on hit items without one roll here (1.8% per second of weapon
+    speed, `docs/forever-chance-on-hit.md`), on the weapon's own landed hits, and puts ten ticks
+    on the unit hit with no hit roll of its own. Melee defense and the bleed mechanic are the
+    client's (SpellCategories); the amount, period, duration and Physical school the tooltip's,
+    as the spell's SpellEffect row is encrypted. The ticks take no armor, as every physical
+    damage over time here.
+  The reference's rules still refuse the three items as unknown.
 
 ## Repository layout
 

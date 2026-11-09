@@ -4,6 +4,7 @@
 //! key first. A table is indexed on first use by reading only each line's key, and a row is
 //! parsed only when asked for, so preparing a request touches the few rows it needs.
 
+mod forever_client_spells;
 pub(crate) mod spells;
 pub(crate) mod tables;
 

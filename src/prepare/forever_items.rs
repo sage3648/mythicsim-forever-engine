@@ -70,6 +70,10 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
         }
     }
     if env.sim.rules == super::sim::Rules::Forever {
+        if let Some(use_) = super::forever_effect_items::on_use_damage_item(item) {
+            super::forever_effect_items::apply_on_use_damage(env, use_);
+            return Ok(true);
+        }
         if let Some(bonus) = versus_attack_power(item) {
             versus_attack_power_item(env, item, &bonus);
             return Ok(true);
@@ -129,10 +133,12 @@ fn chance_on_hit_defense(env: &mut Environment, cfg: &SpellDataProc) {
     }
 }
 
-/// The Forever chance on hit registrations of an item, expanded to its variant.
+/// The Forever chance on hit registrations of an item, expanded to its variant: the reference's,
+/// then the live client items' (`forever_effect_items`).
 pub(crate) fn chance_on_hit_registrations(item: i32) -> Vec<(ProcKind, SpellDataProc)> {
     let mut found = Vec::new();
-    for registration in CHANCE_ON_HIT_ITEMS {
+    let client = super::forever_effect_items::CHANCE_ON_HIT_ITEMS;
+    for registration in CHANCE_ON_HIT_ITEMS.iter().chain(client) {
         if let Registration::Proc(kind, cfg, variants) = registration {
             for expanded in expand_variants(*cfg, variants) {
                 if expanded.item_id == item {
