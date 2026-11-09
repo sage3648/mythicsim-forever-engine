@@ -16,10 +16,12 @@ Sources, at the data's client build (data/manifest.json):
 An item is taken when it is a weapon or armor row, not in items.jsonl, with an equipment slot,
 a real name (no deprecated, test, old or placeholder rows) and a tooltip whose every line this
 tool reads. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
-and healing, hit, crit, mana per 5 sec, dodge, parry, block; EQUIP_STATS) are read as
-data/items.jsonl holds the same line of a Classic item. An item whose tooltip is missing, or has
-a use, chance on hit, set or other equip line, or any line this tool does not read, is left out
-and listed.
+and healing, hit, crit, mana per 5 sec, dodge, parry, block, expertise, weapon damage;
+EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/items.jsonl holds
+the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
+profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
+row. An item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or
+any line this tool does not read, is left out and listed.
 
 Most of the items the Forever client adds (ids from about 270000) have an Item row but no
 readable ItemSparse row: the client ships them encrypted and wago.tools cannot read them, while
@@ -34,7 +36,9 @@ class, subclass and slot from the Item row.
 An equip line "+N Attack Power against <creature type>" is a creature type bonus the item row
 cannot state. The item is taken, the row carries its other stats, and the bonus goes to
 data/forever-client-item-bonuses.jsonl ({"id":..,"name":..,"melee_attack_power_versus":
-{"MobTypeUndead":33}}), which Forever's preparation reads (src/prepare/forever_items.rs).
+{"MobTypeUndead":33}}), which Forever's preparation reads (src/prepare/forever_items.rs). A line
+"Increases damage done to <creature type> by magical spells and effects by up to N" goes there as
+spell_damage_versus, as Mark of the Champion's spell damage against Undead and Demons.
 
     python3 tools/rust_client_items.py add    --tables DIR --cache DIR ID [ID ...]
 
@@ -311,7 +315,75 @@ EQUIP_STATS = [
         [(26, 1, BLOCK_RATING)],
     ),
     (rf"Increases the block value of your shield by {NUMBER}", [(STAT_BLOCK_VALUE, 1, 1)]),
+    # Expertise, 10 rating a percent: Servomechanic Sledgehammer's "Reduces chance to be Dodged or
+    # Parried by 1.0%" is 10 ExpertiseRating, Dwarven Tree Chopper's 0.6% is 6.
+    (rf"Reduces chance to be Dodged or Parried by {NUMBER}%", [(24, 1, 10)]),
+    # Bonus weapon damage: Might of Cenarius's "+4 Weapon Damage" is 4 PhysicalDamage.
+    (rf"\+{NUMBER} Weapon Damage", [(40, 1, 1)]),
 ]
+
+# The weapon skill lines, by their proto.PseudoStat index from PseudoStatAxesSkill (28), as the
+# reference rows hold them: Servomechanic Sledgehammer's "Increased Two-Handed Maces +1" is 1 at
+# 35, Edgemaster's Handguards' Axes, Swords and Daggers are 28, 29 and 31. Fist Weapons is the
+# Unarmed skill (src/prepare/weapon_skill.rs). The proto has 42 pseudo stats.
+WEAPON_SKILLS = {
+    name: 28 + offset
+    for offset, name in enumerate([
+        "Axes", "Swords", "Maces", "Daggers", "Fist Weapons", "Two-Handed Axes",
+        "Two-Handed Swords", "Two-Handed Maces", "Polearms", "Staves", "Bows", "Guns",
+        "Crossbows", "Thrown",
+    ])
+}  # fmt: skip
+PSEUDO_STATS_LEN = 42
+SKILL_LINE = re.compile(rf"Equip: Increased ({'|'.join(WEAPON_SKILLS)}) \+(\d+)\.?")
+# "+7 to All Resistances" is each of the five resistances, as the reference rows hold a Classic
+# item's "+N All Resistances" (Chromatic Sword).
+ALL_RESISTANCES_LINE = re.compile(r"\+(\d+) to All Resistances")
+RESISTANCES = [35, 36, 37, 38, 39]
+
+# Lines that change nothing a sim of a fight reads, so the item is taken with the line left out:
+# travel, mount and swim speed, a zone the fight is never in, falling, stealth detection, a
+# gathering or crafting profession, quest text, and uses and procs that only control or dispel
+# an enemy, or only raise the damage the wearer takes. Each names the items it was written for.
+NO_FIGHT_EFFECT = [
+    re.compile(pattern)
+    for pattern in [
+        # Medal of Valor 270095.
+        r"Equip: Reduces the hit chance of Fear effects against you by \d+%\.",
+        # The Desert Rose 274648, Xorothian Footwraps 282631, Outrider's Gloves 287010.
+        r"Equip: Increases mount speed by \d+% in [A-Za-z ]+ areas\.",
+        r"Equip: Increases movement speed while mounted by \d+%\. This effect does not stack "
+        r"with similar effects\.",
+        # Guidance of Ursoc 279891, Wisdom of Ursol 279892.
+        r"Equip: Movement speed increased by \d+% in [A-Za-z ]+ areas\.",
+        r"Equip: Restores \d+ Mana per 5 sec in [A-Za-z ]+ areas\.",
+        # Gill's Gills 286646, Deep Flora Bindings 286998.
+        r"Equip: Underwater Breath lasts \d+% longer than normal\.",
+        # Grimm's Packing Gloves 276395, Enchantresses' Spire 287025.
+        r"Equip: Increased (?:Herbalism|Mining|Skinning|Fishing) \+\d+\.",
+        r"Equip: Reduces the cast time of Disenchant by \d+%\.",
+        # Cliff Jumpers 284040, Brewmancer Nightcap 276877.
+        r"Equip: Reduces damage from falling\.",
+        r"Equip: Increases your effective stealth detection level by \d+\.",
+        # Wicked Ritualist's Kris 273832; Razza's Heart, Skarr's Broken Gauntlet, Mushgog's Crown
+        # of Thorns 277556 to 277558.
+        r"Quest Item",
+        r"This Item Begins a Quest",
+        # Theka's Last Breath 274641, Emblem of Slamming 275009, Sand-Covered Silk Sash 286612,
+        # Scalding Flamehoof 280074, Shen'dralar Relic 277559.
+        r"Use: Transform all enemies within \d+ yds into scarabs, .*",
+        r"Use: Stuns target and yourself for \d+ sec\. .*",
+        r"Use: Removes existing Immobilizing effects .*",
+        r"Use: Increases Fire damage taken by \d+% and movement speed by \d+% for \d+ sec\. .*",
+        r"Use: Dispel \d+ beneficial magic effect .*",
+        # Ankle Slicers 284587, Earthshaker 288900.
+        r"Chance on hit: Slice the target's ankle, slowing movement speed by \d+% for \d+ sec\.",
+        r"Chance on hit: Knocks down all nearby enemies for \d+ sec\.",
+    ]
+]
+# A clause that doubles an equip line in a city or stronghold, where no fight is (Black Horn
+# Necklace 279863): the line reads as its base amount.
+CITY_CLAUSE = re.compile(r" This effect is doubled in Strongholds and Cities\.$")
 
 
 # The creature types an equip line names, by the request's MobType enum (proto.MobType).
@@ -330,6 +402,14 @@ CREATURE_TYPES = {
 # bonuses are), applied while the target is of the type.
 VERSUS_LINE = re.compile(
     rf"Equip: \+{NUMBER} Attack Power against ({'|'.join(CREATURE_TYPES)})\.?", re.IGNORECASE
+)
+# "Equip: Increases damage done to Humanoids by magical spells and effects by up to 10." Spell
+# damage against a creature type, as Mark of the Champion's against Undead and Demons, applied
+# while the target is of the type.
+VERSUS_SPELL_LINE = re.compile(
+    rf"Equip: Increases damage done to ({'|'.join(CREATURE_TYPES)}) by magical spells and effects "
+    rf"by up to {NUMBER}\.?",
+    re.IGNORECASE,
 )
 
 
@@ -378,6 +458,7 @@ def parse_tooltip(response):
     lines, effects = tooltip_lines(response["tooltip"])
     equip_lines = 0
     for line in lines:
+        line = CITY_CLAUSE.sub("", line)
         if line in SLOT_WORDS and "slot" not in out:
             out["slot"] = line
             continue
@@ -404,6 +485,9 @@ def parse_tooltip(response):
             out["classes"] = ["Class" + name.strip().replace(" ", "") for name in match.group(1).split(",")]
         elif re.fullmatch(r"Durability \d+ / \d+|Requires Level \d+", line):
             pass
+        elif match := ALL_RESISTANCES_LINE.fullmatch(line):
+            for stat in RESISTANCES:
+                out["stats"][stat] = out["stats"].get(stat, 0) + int(match.group(1))
         elif match := STAT_LINE.match(line):
             stat = STAT_INDEX.get(match.group(3))
             if stat is None:
@@ -415,6 +499,21 @@ def parse_tooltip(response):
                 out["stats"][34] = out["stats"].get(34, 0) + int(match.group(1))
         elif SET_LINE.match(line):
             raise Unreadable("a set piece")
+        elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT):
+            equip_lines += 1
+        elif match := SKILL_LINE.fullmatch(line):
+            equip_lines += 1
+            pseudo = out.setdefault("pseudo", {})
+            index = WEAPON_SKILLS[match.group(1)]
+            pseudo[index] = pseudo.get(index, 0) + int(match.group(2))
+        elif match := VERSUS_SPELL_LINE.fullmatch(line):
+            equip_lines += 1
+            mob_type = CREATURE_TYPES[match.group(1).capitalize()]
+            value = float(match.group(2))
+            if value != round(value):
+                raise Unreadable(f"fractional spell damage in {line!r}")
+            versus = out.setdefault("versus_spell", {})
+            versus[mob_type] = versus.get(mob_type, 0) + round(value)
         elif match := VERSUS_LINE.fullmatch(line):
             equip_lines += 1
             mob_type = CREATURE_TYPES[match.group(2).capitalize()]
@@ -519,6 +618,11 @@ def row_for(item_id, sparse, item, response):
     row["scaling_options"] = {"0": option}
     if parsed.get("unique"):
         row["unique"] = True
+    if parsed.get("pseudo"):
+        pseudo = [0] * PSEUDO_STATS_LEN
+        for index, value in parsed["pseudo"].items():
+            pseudo[index] = value
+        row["pseudo_stats"] = pseudo
     if parsed.get("classes"):
         row["class_allowlist"] = parsed["classes"]
     return row
@@ -526,10 +630,12 @@ def row_for(item_id, sparse, item, response):
 
 def bonus_row(item_id, name, parsed):
     """The data/forever-client-item-bonuses.jsonl row of an item whose tooltip states attack power
-    against creature types, or None."""
-    if not parsed.get("versus"):
-        return None
-    return {"id": item_id, "name": name, "melee_attack_power_versus": dict(sorted(parsed["versus"].items()))}
+    or spell damage against creature types, or None."""
+    row = {"id": item_id, "name": name}
+    for key, field in (("versus", "melee_attack_power_versus"), ("versus_spell", "spell_damage_versus")):
+        if parsed.get(key):
+            row[field] = dict(sorted(parsed[key].items()))
+    return row if len(row) > 2 else None
 
 
 def reason_kind(reason):
@@ -615,7 +721,7 @@ def add(tables, cache, ids):
 
 ROW_KEYS = {
     "id", "name", "type", "armor_type", "weapon_type", "hand_type", "ranged_weapon_type",
-    "weapon_speed", "scaling_options", "unique", "class_allowlist",
+    "weapon_speed", "scaling_options", "unique", "pseudo_stats", "class_allowlist",
 }  # fmt: skip
 
 
@@ -653,10 +759,11 @@ def check():
             problems.append("is not in increasing id order")
         if row["id"] not in ids:
             problems.append(f"is not an item {OUT.name} holds")
-        if set(row) != {"id", "name", "melee_attack_power_versus"}:
-            problems.append("does not have exactly id, name and melee_attack_power_versus")
-        elif not row["melee_attack_power_versus"] or not set(row["melee_attack_power_versus"]) <= set(
-            CREATURE_TYPES.values()
+        fields = set(row) - {"id", "name"}
+        if not fields or not fields <= {"melee_attack_power_versus", "spell_damage_versus"}:
+            problems.append("does not have id, name and melee_attack_power_versus or spell_damage_versus")
+        elif any(
+            not row[field] or not set(row[field]) <= set(CREATURE_TYPES.values()) for field in fields
         ):
             problems.append("names a creature type the tool does not write")
         if dump_row(row) != line:

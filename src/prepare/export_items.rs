@@ -2719,9 +2719,10 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             }));
         }
     }
-    // Under Forever's rules: an item's melee attack power against creature types (Ceremonial
-    // Mallet's 33 against Undead), when every target is of a type its equip line names. A
-    // target of another type, or none, never takes it.
+    // Under Forever's rules: an item's melee attack power and spell damage against creature
+    // types (Ceremonial Mallet's 33 attack power against Undead, Courier's Clasp's 10 spell damage
+    // against Humanoids), when every target is of a type its equip line names. A target of
+    // another type, or none, never takes it. The spell damage is Mark of the Champion's kind.
     if env.sim.rules == super::sim::Rules::Forever {
         let swaps_items = env.sim.item_swap(env.player).is_some();
         for item in chance_on_hit_items(env) {
@@ -2731,23 +2732,27 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             if aura_named(env, &bonus.name).is_none() {
                 continue;
             }
-            let power: f64 = bonus
-                .bonuses
-                .iter()
-                .filter(|(mob_type, _)| {
-                    env.encounter
-                        .targets
-                        .iter()
-                        .all(|&target| env.sim.unit(target).mob_type == *mob_type)
-                })
-                .map(|(_, power)| power)
-                .sum();
+            let against_targets = |bonuses: &[(String, f64)]| -> f64 {
+                bonuses
+                    .iter()
+                    .filter(|(mob_type, _)| {
+                        env.encounter
+                            .targets
+                            .iter()
+                            .all(|&target| env.sim.unit(target).mob_type == *mob_type)
+                    })
+                    .map(|(_, value)| value)
+                    .sum()
+            };
+            let power = against_targets(&bonus.bonuses);
+            let spell_damage = against_targets(&bonus.spell_bonuses);
             // With an item swap the effect is described even at zero, so that the swap's toggling
             // of the aura is one the runtime follows: a target of another type takes nothing.
-            if power != 0.0 || swaps_items {
+            if power != 0.0 || spell_damage != 0.0 || swaps_items {
                 effects.push(json!({
                     "kind": "mob_type_bonus", "aura": bonus.name, "attack_power": 0.0,
-                    "ranged_attack_power": 0.0, "spell_damage": 0.0, "melee_attack_power": power,
+                    "ranged_attack_power": 0.0, "spell_damage": spell_damage,
+                    "melee_attack_power": power,
                 }));
             }
         }

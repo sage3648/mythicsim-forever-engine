@@ -144,14 +144,17 @@ pub(crate) fn chance_on_hit_registrations(item: i32) -> Vec<(ProcKind, SpellData
     found
 }
 
-/// An item's melee attack power against creature types, as its equip lines state it ("Equip: +33
-/// Attack Power against Undead."), which the item row cannot hold.
+/// An item's melee attack power and spell damage against creature types, as its equip lines state
+/// them ("Equip: +33 Attack Power against Undead.", "Equip: Increases damage done to Humanoids by
+/// magical spells and effects by up to 10."), which the item row cannot hold.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct VersusAttackPower {
     /// The item's name, which its permanent aura is labelled with.
     pub(crate) name: String,
-    /// The bonus by the request's creature type (`MobTypeUndead`).
+    /// The melee attack power by the request's creature type (`MobTypeUndead`).
     pub(crate) bonuses: Vec<(String, f64)>,
+    /// The spell damage by the request's creature type, as Mark of the Champion's.
+    pub(crate) spell_bonuses: Vec<(String, f64)>,
 }
 
 /// The creature type bonuses of an item of the live client (`data/forever-client-item-bonuses.jsonl`,
@@ -160,14 +163,18 @@ pub(crate) fn versus_attack_power(item: i32) -> Option<VersusAttackPower> {
     let text = crate::data::CLIENT_ITEM_BONUSES.row(i64::from(item))?;
     let row: serde_json::Value = serde_json::from_str(text)
         .unwrap_or_else(|err| panic!("data/forever-client-item-bonuses.jsonl row {item}: {err}"));
-    let bonuses = row["melee_attack_power_versus"]
-        .as_object()?
-        .iter()
-        .filter_map(|(mob_type, value)| Some((mob_type.clone(), value.as_f64()?)))
-        .collect();
+    let by_type = |field: &str| -> Vec<(String, f64)> {
+        row[field]
+            .as_object()
+            .into_iter()
+            .flatten()
+            .filter_map(|(mob_type, value)| Some((mob_type.clone(), value.as_f64()?)))
+            .collect()
+    };
     Some(VersusAttackPower {
         name: row["name"].as_str()?.to_string(),
-        bonuses,
+        bonuses: by_type("melee_attack_power_versus"),
+        spell_bonuses: by_type("spell_damage_versus"),
     })
 }
 
