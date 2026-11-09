@@ -741,8 +741,9 @@ fn warrior_strikes_and_freezing_trap_run() {
         ("arms-warrior-revenge", 25288, 0.0),
         // Hotfix push 113554 puts Freezing Trap on Explosive Trap's cooldown (category 411).
         // 212 since the Aimed Shot precast at -1.75 s, which haste finished at -0.01 s, finishes
-        // on the pull (docs/prepull-damage.md); 213 before.
-        ("hunter-freezing-trap", 1499, 212.0),
+        // on the pull (docs/prepull-damage.md); 213 before. 215 since the Cat swings at its
+        // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws.
+        ("hunter-freezing-trap", 1499, 215.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");

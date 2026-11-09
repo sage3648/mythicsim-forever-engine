@@ -1635,6 +1635,12 @@ pub(crate) enum Action {
     /// Go `Pet.statInheritanceAction`: the pet takes its owner's pending stat changes at its
     /// heartbeat.
     PetInheritance(Side),
+    /// Forever's rules: an owner's melee or attack speed change reaching a pet that swings at
+    /// it, at the pet's heartbeat.
+    PetMeleeSpeed {
+        pet: Side,
+        amount: f64,
+    },
     /// Go `Pet.timeoutAction`: a summoned pet's time is up.
     PetTimeout(Side),
     /// A class's own pending action, which it may cancel: [`Agent::on_class_action`].
@@ -6342,6 +6348,7 @@ impl<A: Agent> Fight<A> {
                 self.schedule(self.now + period, PRIORITY_AUTO, Action::WindfuryRefresh);
             }
             Action::PetInheritance(side) => self.pet_inheritance(side),
+            Action::PetMeleeSpeed { pet, amount } => self.pet_melee_speed(pet, amount),
             Action::PetTimeout(side) => {
                 let pet = self.active_pet_mut(side);
                 if pet.timeout == Some(handle) {

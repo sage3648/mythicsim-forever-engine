@@ -16,6 +16,8 @@ pub(crate) struct OmenOfClarity {
     trigger_spells: Vec<bool>,
     /// The spells that never trigger it in Cat or Bear Form.
     pub(crate) form_excluded: Vec<bool>,
+    /// Forever rules: the spells that roll at half the chance (Maul).
+    half_chance: Vec<bool>,
     /// Spells whose proc mask names spell damage or healing, which take the cast time.
     spell_masked: Vec<bool>,
     cost_spells: Vec<bool>,
@@ -37,6 +39,7 @@ pub(crate) struct Params<'a> {
     pub(crate) trigger: &'a str,
     pub(crate) trigger_spells: &'a [usize],
     pub(crate) form_excluded_spells: &'a [usize],
+    pub(crate) half_chance_spells: &'a [usize],
     pub(crate) spell_masked: Vec<bool>,
     pub(crate) cost_spells: &'a [usize],
     pub(crate) icd: i64,
@@ -93,6 +96,7 @@ pub(crate) fn bind<A: Agent>(
         trigger,
         trigger_spells: mask(len, params.trigger_spells),
         form_excluded: mask(len, params.form_excluded_spells),
+        half_chance: mask(len, params.half_chance_spells),
         spell_masked: params.spell_masked,
         cost_spells: mask(len, params.cost_spells),
         icd_timer,
@@ -131,6 +135,9 @@ impl OmenOfClarity {
             fight.autos.mh.weapon.swing_speed
         };
         let mut chance = self.ppm * seconds / 60.0;
+        if self.half_chance[spell] {
+            chance *= 0.5;
+        }
         let mut icd = self.icd;
         if self
             .moonkin

@@ -1153,6 +1153,11 @@ pub struct Pet {
     pub active_dismiss_log: Option<String>,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
+    /// Forever's rules: the pet swings at its owner's melee and attack speed. The owner's speed
+    /// at the summon is already in `melee`; each later change reaches the pet at its next stat
+    /// heartbeat and rescales the swing under way.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inherits_melee_speed: bool,
     /// A focus bar, for a pet without a mana bar.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus: Option<PetFocus>,
@@ -2096,6 +2101,10 @@ pub enum Effect {
         /// The spells that never trigger it in Cat or Bear Form: Faerie Fire since the 16 October
         /// 2026 beta notes.
         form_excluded_spells: Vec<usize>,
+        /// Forever rules: the spells that roll at half the chance. Maul procs it on 14 of 342
+        /// hits in bear logs (4.1%), where every other special fits the full chance.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        half_chance_spells: Vec<usize>,
     },
     /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
     NaturesGrace {
@@ -2270,6 +2279,10 @@ pub enum Effect {
         max_stacks: i32,
         tick_can_crit: bool,
         tick_magic: bool,
+        /// Forever rules: the weapon hit's own spell (414647). The cast rolls miss, dodge and
+        /// parry; a landed cast's hit rolls only crit, on this spell's crit multiplier.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        hit_spell: Option<usize>,
     },
     /// Primal Bite: flat damage plus main hand weapon damage; Berserk lifts its cooldown.
     PrimalBite {
