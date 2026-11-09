@@ -56,7 +56,7 @@ class DataManifestTests(unittest.TestCase):
     def test_current_manifest_is_accepted(self):
         result = self.check(self.manifest)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Rust data checked: 11 files", result.stdout)
+        self.assertIn(f"Rust data checked: {len(self.manifest['files'])} files", result.stdout)
         self.assertEqual(result.stderr, "")
 
     def test_missing_manifest_version_is_rejected(self):
