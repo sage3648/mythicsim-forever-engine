@@ -47,6 +47,7 @@ jobs:
       - run: python3 tools/inventory.py check
       - run: python3 tools/prepared_v2.py check
       - run: python3 tools/upstream.py check
+      - run: python3 tools/rust_data.py check
 
   # The test suite is most of the run, so it gets its own job and the
   # other checks report while it is still going.
