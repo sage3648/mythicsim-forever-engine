@@ -39,6 +39,62 @@ const CLEAVE_THREAT_PER_LEVEL: f64 = 1.53;
 /// 20 to 24, 7 November 2026). The per level figure above would give 30.6 at the rank's level 20.
 const CLEAVE_RANK_1_ID: i32 = 845;
 const CLEAVE_RANK_1_THREAT: f64 = 30.0;
+/// Cleave rank 2 (7369, spell level 30) adds 46 under Forever's rules; ranks 3 to 5 carry the
+/// 1.5 a spell level ranks 1 and 2 measure, as whole numbers (60, 75 and 90).
+const CLEAVE_RANK_2_ID: i32 = 7369;
+const CLEAVE_RANK_2_THREAT: f64 = 46.0;
+const FOREVER_CLEAVE_THREAT_PER_LEVEL: f64 = 1.5;
+/// Heroic Strike ranks 1 to 4 (78, 284, 285, 1608) under Forever's rules: whole numbers, Rank 4
+/// measured at 60.08 over 104 clean threat readings on client 1.60.1.70862 (8 November 2026),
+/// Rank 3 at 39.99. Ranks 5 and up carry Rank 4's 2.5 a spell level (80 to 150).
+const HEROIC_STRIKE_LOW_RANK_THREAT: [(i32, f64); 4] =
+    [(78, 17.0), (284, 28.0), (285, 40.0), (1608, 60.0)];
+const FOREVER_HEROIC_STRIKE_THREAT_PER_LEVEL: f64 = 2.5;
+/// Slam under Forever's rules: 1.5 a spell level on every rank, rounded to a whole number. Rank 1
+/// at spell level 20 adds 30 (client 1.60.1.70862, 8 November 2026), rank 2 45. The reference
+/// adds a flat 140 to every rank.
+const FOREVER_SLAM_THREAT_PER_LEVEL: f64 = 1.5;
+const SLAM_REFERENCE_FLAT_THREAT: f64 = 140.0;
+
+/// A rank's flat threat at so much a spell level, as the whole number Forever adds.
+fn whole_threat_per_level(per_level: f64, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    (per_level * f64::from(rank.spell_level)).round()
+}
+
+/// Heroic Strike's flat threat for a rank: the reference's 2.54 a spell level, or Forever's
+/// whole numbers.
+fn heroic_strike_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return HEROIC_STRIKE_THREAT_PER_LEVEL * f64::from(rank.spell_level);
+    }
+    HEROIC_STRIKE_LOW_RANK_THREAT
+        .iter()
+        .find(|(id, _)| *id == rank.id)
+        .map_or_else(
+            || whole_threat_per_level(FOREVER_HEROIC_STRIKE_THREAT_PER_LEVEL, rank),
+            |(_, threat)| *threat,
+        )
+}
+
+/// Cleave's flat threat for a rank, split between the targets it lands on at run time.
+fn cleave_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level);
+    }
+    match rank.id {
+        CLEAVE_RANK_1_ID => CLEAVE_RANK_1_THREAT,
+        CLEAVE_RANK_2_ID => CLEAVE_RANK_2_THREAT,
+        _ => whole_threat_per_level(FOREVER_CLEAVE_THREAT_PER_LEVEL, rank),
+    }
+}
+
+/// Slam's flat threat for a rank.
+fn slam_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return SLAM_REFERENCE_FLAT_THREAT;
+    }
+    whole_threat_per_level(FOREVER_SLAM_THREAT_PER_LEVEL, rank)
+}
 /// Go `revengeThreatMultiplier`: patch 183.
 const REVENGE_THREAT_MULTIPLIER: f64 = 2.25;
 /// Go `sunderThreatPerAttackPower`: patch 185, a share of the spell's melee attack power that
@@ -494,8 +550,8 @@ impl Warrior {
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
                 // Not in the client table (no E_THREAT effect). Patch 184: 2.54 a spell level
-                // (152.4 at Rank 9).
-                flat_threat_bonus: HEROIC_STRIKE_THREAT_PER_LEVEL * f64::from(rank.spell_level),
+                // (152.4 at Rank 9); whole numbers under Forever's rules.
+                flat_threat_bonus: heroic_strike_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );
@@ -526,12 +582,9 @@ impl Warrior {
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
                 // Not in the client table (no E_THREAT effect). Patch 184: 1.53 a spell level
-                // (91.8 at Rank 5), split between the targets the cleave lands on at run time.
-                flat_threat_bonus: if sim.rules == Rules::Forever && rank.id == CLEAVE_RANK_1_ID {
-                    CLEAVE_RANK_1_THREAT
-                } else {
-                    CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level)
-                },
+                // (91.8 at Rank 5), split between the targets the cleave lands on at run time;
+                // whole numbers under Forever's rules.
+                flat_threat_bonus: cleave_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );
@@ -653,7 +706,7 @@ impl Warrior {
                 },
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                flat_threat_bonus: 140.0,
+                flat_threat_bonus: slam_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );

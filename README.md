@@ -1165,6 +1165,13 @@ the Go goldens and exporter uses. The departures:
   for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
   adds 135 to every rank of Hamstring and gives Shield Bash its damage
   (`tests/forever_warrior_threat_20261107.rs`).
+- Heroic Strike, Cleave and Slam add whole numbers of flat threat, from Forever combat logs on
+  client 1.60.1.70862 (8 November 2026). Heroic Strike ranks 1 to 4 add 17, 28, 40 and 60 (Rank
+  4 measured at 60.08 over 104 clean readings, Rank 3 at 39.99) and ranks 5 and up 2.5 a spell
+  level (80 to 150); Cleave rank 2 adds 46 and ranks 3 to 5 the 1.5 a spell level ranks 1 and 2
+  measure (60, 75 and 90); Slam adds 1.5 a spell level on every rank, rounded (Rank 1 at spell
+  level 20 adds 30, rank 2 45). The reference adds 2.54 a spell level for Heroic Strike, 1.53 for
+  Cleave and a flat 140 for every rank of Slam (`tests/classes/warrior/flat_threat.rs`).
 - A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
   so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
   value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
