@@ -1245,6 +1245,14 @@ the Go goldens and exporter uses. The departures:
     and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
     a target of another type: the bonus was described only when it applied, so the swap's toggling
     of the item's aura was refused. With an item swap the effect is now described at zero.
+- Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
+  2026 (Forever preparation; the reference keeps its own):
+  - Each Skyborne race has its own attribute offset from a Human of the same class, read from
+    level 1 naked character sheets of 6 November 2026 (Strength, Agility, Stamina, Intellect,
+    Spirit): High Order -3, +4, -1, +4, -3 and Windshaper -4, +3, 0, -1, +3, where the reference
+    table gives both -1, +1, -1, +1, 0. A High Order Mage has 4 more Intellect and 3 less Spirit
+    than a Human one. A levelling character's attributes are still its sheet's own
+    (`src/prepare/character.rs`, `base_stats_tests`).
 
 ## Repository layout
 
