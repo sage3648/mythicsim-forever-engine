@@ -4,7 +4,7 @@
 //! Ranks are the store's own rows, or, for a trait talent, copies kept for the process: Go hands
 //! out pointers to them, so a rank is a `&'static Spell` here and never written through.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, OnceLock};
 
 use super::book_ranks;
@@ -22,6 +22,25 @@ type TalentRanks = HashMap<(i32, i32), Vec<&'static Spell>>;
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Ladder {
     ranks: Vec<&'static Spell>,
+    /// A trait-tree talent's ranks: copies of one row, which a class registers only when the
+    /// character has points in the talent, so the character knows them at any level.
+    talent: bool,
+}
+
+/// The rows trait-tree talents are built over ([`Ladder::talent`] and its kin).
+fn talent_rows() -> &'static Mutex<HashSet<i32>> {
+    static ROWS: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
+    ROWS.get_or_init(Default::default)
+}
+
+/// Whether `spell_id` is the row of a trait-tree talent. A levelling character knows a talent it
+/// has points in whatever level the row states: Pursuit of Justice's row (26022), like most
+/// talent rows of client 1.60.1, states spell level 60.
+pub(crate) fn is_talent_row(spell_id: i32) -> bool {
+    talent_rows()
+        .lock()
+        .expect("talent rows")
+        .contains(&spell_id)
 }
 
 /// Which effect of a rank a [`LadderEffect`] reads (Go's `pick` closure).
@@ -48,6 +67,7 @@ impl Ladder {
     pub(crate) fn ranked(ids: &[i32]) -> Ladder {
         Ladder {
             ranks: ids.iter().map(|&id| must_find(id)).collect(),
+            talent: false,
         }
     }
 
@@ -66,7 +86,10 @@ impl Ladder {
             .get(&key)
             .cloned();
         if let Some(ranks) = cached {
-            return Ladder { ranks };
+            return Ladder {
+                ranks,
+                talent: true,
+            };
         }
 
         let copies = talent_ranks(
@@ -79,7 +102,10 @@ impl Ladder {
             .lock()
             .expect("talent ladder cache")
             .insert(key, ranks.clone());
-        Ladder { ranks }
+        Ladder {
+            ranks,
+            talent: true,
+        }
     }
 
     /// A ladder of a trait-tree talent over a curve stated by the caller instead of the imported
@@ -100,7 +126,11 @@ impl Ladder {
 
     /// A ladder over rank copies, kept for the process.
     fn keep(copies: Vec<Spell>) -> Ladder {
+        if let Some(row) = copies.first() {
+            talent_rows().lock().expect("talent rows").insert(row.id);
+        }
         Ladder {
+            talent: true,
             ranks: copies
                 .into_iter()
                 .map(|rank| &*Box::leak(Box::new(rank)))
@@ -121,6 +151,9 @@ impl Ladder {
     /// rank at level 60 without a spellbook. When it knows none, the first rank stands in,
     /// noted as unlearned ([`crate::prepare::levels::unlearned_rank`]); Nil for an empty ladder.
     pub(crate) fn highest(&self) -> &'static Spell {
+        if self.talent {
+            return self.ranks.last().copied().unwrap_or_else(nil);
+        }
         crate::prepare::levels::known_rank(&self.ranks)
             .or_else(|| crate::prepare::levels::unlearned_rank(&self.ranks))
             .unwrap_or_else(nil)
@@ -129,6 +162,9 @@ impl Ladder {
     /// The highest rank a player knows under these rules: under Forever's, a rank taught by an
     /// Ahn'Qiraj 20 book is not known (see [`super::book_ranks`]).
     pub(crate) fn highest_for(&self, rules: Rules) -> &'static Spell {
+        if self.talent {
+            return self.highest();
+        }
         let ranks: Vec<&'static Spell> = self
             .ranks
             .iter()

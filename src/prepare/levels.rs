@@ -531,7 +531,8 @@ pub(crate) fn unlearned_rank<'a>(ranks: &[&'a Spell]) -> Option<&'a Spell> {
 /// ranked spell above its level or missing from its spellbook, which a class that registers
 /// every rank of a spell (Arcane Missiles, Wrath) registers all the same.
 pub(crate) fn is_unlearned(spell_id: i32) -> bool {
-    if spell_id == 0 {
+    // A talent is registered only with points in it, so it is known at any level.
+    if spell_id == 0 || crate::prepare::spelldata::ladder::is_talent_row(spell_id) {
         return false;
     }
     CURRENT.with(|current| {
