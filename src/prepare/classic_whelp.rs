@@ -26,11 +26,22 @@ use super::stats::{Stat, Stats};
 pub(crate) const WHELP_NAME: &str = "Emerald Dragon Whelp";
 
 /// Go `core.RegisterGearPetConstructor`'s function of this package: only a Dragon's Call
-/// equipped in a hand at the start gets a whelp.
+/// equipped in a hand at the start gets a whelp. Under Forever's rules a Dragon's Call in a hand
+/// of the item swap set gets one too, so the weapon's proc can summon it once the swap puts the
+/// weapon in the hand (the whelp is disabled until a proc summons it, as for a worn weapon).
 pub(crate) fn construct_gear_pets(sim: &mut Sim, player: UnitId) {
-    let equipment = &sim.character(player).equipment;
-    if equipment[slot::MAIN_HAND].id == DRAGONS_CALL || equipment[slot::OFF_HAND].id == DRAGONS_CALL
-    {
+    let character = sim.character(player);
+    let in_hand = |equipment: &super::items::Equipment| {
+        [slot::MAIN_HAND, slot::OFF_HAND]
+            .into_iter()
+            .any(|hand| equipment[hand].id == DRAGONS_CALL)
+    };
+    let in_swap_set = sim.rules == super::sim::Rules::Forever
+        && character
+            .item_swap
+            .as_ref()
+            .is_some_and(|swap| in_hand(&swap.swap_equip));
+    if in_hand(&character.equipment) || in_swap_set {
         new_emerald_dragon_whelp(sim, player);
     }
 }

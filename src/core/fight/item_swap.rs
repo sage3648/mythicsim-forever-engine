@@ -95,6 +95,8 @@ struct Variants {
     sulfuras: Option<[Vec<Option<f64>>; 2]>,
     /// Thunderfury's chances, likewise.
     thunderfury: Option<[Vec<Option<f64>>; 2]>,
+    /// Dragon's Call's chances, which its weapon proc manager rebuilds for the weapon in the hand.
+    whelp: Option<[Vec<Option<f64>>; 2]>,
     /// The stacking on-use trinkets whose proc manager the swap rebuilds, as Badge of the
     /// Swarmguard's rate for the main hand's speed, by their position.
     stacking_cds: Vec<(usize, [Vec<Option<f64>>; 2])>,
@@ -435,6 +437,19 @@ impl<A: Agent> Fight<A> {
                 variants.thunderfury = Some([main, swapped]);
             }
         }
+        let whelp = |effects: &[Effect]| {
+            effects.iter().find_map(|effect| match effect {
+                Effect::EmeraldDragonWhelp { chances, .. } => {
+                    Some(super::chances_by_spell(chances, spells))
+                }
+                _ => None,
+            })
+        };
+        if let (Some(main), Some(swapped)) = (whelp(effects), whelp(&worn)) {
+            if main != swapped {
+                variants.whelp = Some([main, swapped]);
+            }
+        }
         // The chances `bind` gives a stacking trinket: the manager's own, else its flat chance
         // on each spell it hears.
         let stacking_cds = |effects: &[Effect]| -> Vec<Vec<Option<f64>>> {
@@ -716,6 +731,9 @@ impl<A: Agent> Fight<A> {
         if let (Some(by_set), Some(thunderfury)) = (variants.thunderfury, self.thunderfury.as_mut())
         {
             thunderfury.chances = by_set[index].clone();
+        }
+        if let (Some(by_set), Some(whelp)) = (variants.whelp, self.whelp.as_mut()) {
+            whelp.chances = by_set[index].clone();
         }
         if let (Some(by_set), Some(target)) =
             (variants.reduced_crit_taken, self.self_target.as_mut())

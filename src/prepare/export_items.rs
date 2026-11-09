@@ -2723,6 +2723,7 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     // Mallet's 33 against Undead), when every target is of a type its equip line names. A
     // target of another type, or none, never takes it.
     if env.sim.rules == super::sim::Rules::Forever {
+        let swaps_items = env.sim.item_swap(env.player).is_some();
         for item in chance_on_hit_items(env) {
             let Some(bonus) = super::forever_items::versus_attack_power(item) else {
                 continue;
@@ -2741,7 +2742,9 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                 })
                 .map(|(_, power)| power)
                 .sum();
-            if power != 0.0 {
+            // With an item swap the effect is described even at zero, so that the swap's toggling
+            // of the aura is one the runtime follows: a target of another type takes nothing.
+            if power != 0.0 || swaps_items {
                 effects.push(json!({
                     "kind": "mob_type_bonus", "aura": bonus.name, "attack_power": 0.0,
                     "ranged_attack_power": 0.0, "spell_damage": 0.0, "melee_attack_power": power,
