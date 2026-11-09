@@ -59,6 +59,34 @@ Class tables kept for the process (the mage's, warlock's and shaman's damage row
 
 A class's own raid and party buffs (`add_raid_buffs`, `add_party_buffs`: Arcane Brilliance, the Prayers, Battle Shout, Blood Pact, Trueshot Aura and the rest of core's buff rows) resolve in `Meta::aura` to the highest rank of the same name and class the character knows, or to the single-target spell for a group buff it has not learned (`levels::known_buff_rank`: Arcane Intellect for Arcane Brilliance, Power Word: Fortitude, Divine Spirit, Shadow Protection, Mark of the Wild). One it knows no rank of is noted unlearned and never goes up. Only the class's own rows count: a creature's Faerie Fire (13752, "Rank 2", level 45) outranked the druid's rank 3 from 45, and a level 46 bear's rotation, checking for its own rank, pressed Faerie Fire all fight. A buff whose MP5 is checked against its row reads the same rank (`Meta::known_value`): a level 42 shaman's Mana Tide Totem is rank 2's, where the check read rank 4's and refused the sim.
 
+## A Warlock's demons
+
+Until 9 Nov a demon was the level 60 one at every level: Firebolt rank 7 and Lash of Pain rank 6 (Go literals the engine data has no rows for), and the level 60 Strength, Agility and melee weapon, so a level 10 Succubus did what a level 47 one did. Under Forever's rules a levelling demon now (`classes/warlock/prepare/pets.rs`, README, Rust-only mechanics):
+
+- casts the rank of Firebolt (ranks 1 to 7, 3110 to 11763) and Lash of Pain (ranks 1 to 6, 7814 to 11780, from level 20) its Warlock's level teaches, each from the client's row (base, points per level to the rank's cap, variance, coefficient, cost; `FIREBOLT_RANKS`, `LASH_OF_PAIN_RANKS`), with the rank's cost as the mana it keeps before casting. A rank the spellbook lists wins, but the addon exports the Warlock's spellbook, not the demon's, so today every rank counts as trained. A Succubus below 20 knows no Lash;
+- swings its level 60 weapon and has its level 60 Strength and Agility times the client's creature auto attack dps at the level over level 60's (`ExpectedStat`, `levels::creature_dps_share`), so its whole own swing follows the creature row;
+- keeps its level 60 mana, Intellect, Spirit and base crit. Public logs show levelling Imps casting Firebolt every 2.44 sec in runs of 13 to 19 (levels 12 to 18); the engine's demon regenerates no mana while casting, so a pool scaled with the level would run dry after 5.
+
+Checked against foreverlogs.gg public reports (5 to 8 Nov, 7 Warlocks with captures, levels 12 to 31; `tests/levels_demon_logs_20261109.rs`, fixtures `fixtures/levels/logs/*-imp`, `*-succubus`):
+
+| Level, demon | Spell, rank | Samples | Engine | Logged mean | Level 60 demon |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 12 (or 13), Imp | Firebolt 2 (7799) | 188 | 7.0 | 8.5 | 44 |
+| 16 to 17, Imp | Firebolt 2 (7799) | 386 | 8.9 | 9.6 | 46 |
+| 18, Imp | Firebolt 3 (7800) | 83 | 12.5 | 12.9 | 45 |
+| 20, Imp | Firebolt 3 (7800) | 95 | 12.7 | 13.5 | 45 |
+| 31, Imp | Firebolt 4 (7801) | 270 | 21.1 | 23.8 | 48 |
+| 25, Succubus | Lash of Pain 1 (7814) | 233 | 17.5 | 17.2 | 52 |
+| 25, Succubus | white swing through level 26 armor | 46 | 32.4 to 41.1 | 32 to 41 | 93 to 118 |
+
+The logs read 3 to 21% over the Imp's Firebolt: the Warlocks' own spells in the same reports read 3% over too, the level 12 capture may be a level 13 Warlock (8.0), and two of the five have 7 or 8 Demonology points, where an Improved Imp the capture cannot show would add 10% a rank. Two more Imps cast a rank behind their level (rank 2 at 18 and 24) and read 4% and 20% over rank 2; the level 24 one wears 81 fire and shadow spell damage the demon does not inherit. The swing check takes the target's armor from the client's level 26 creature row, as the client has no armor for the creature itself.
+
+Not settled:
+
+- Imps of a Demonology Warlock are fed by its Life Tap (31818, 19 times in one report): a level 31 Imp cast 25 Firebolts in 58 sec, which 576 mana cannot pay for. The engine has no Life Tap feed, at any level.
+- A level 25 Succubus crit 3 of about 1,000 swings; the engine gives it its Agility's crit plus its Warlock's spell crit, about 5% there, as at level 60.
+- Four Voidwalkers whose level only their Warlock's ranks bound (about 10, 16 to 17, 30 to 33 and 46 or more; 109 swings on open world and dungeon creatures) swing 25 to 45% under the engine's level 60 Voidwalker scaled to their level, through the client's creature armor, in every band; the Succubi at 24 to 28 read within 5 to 17%. The scaling holds across the levels, so the gap looks like the level 60 Voidwalker's (31 to 46 and 258 attack power, the reference's), which only level 60 logs can settle.
+
 ## Gate
 
 `levels::level_refusal` refuses, before preparation and again in the coverage gate:
@@ -89,7 +117,7 @@ On 9 Nov every reference build and the five healer references at eight levels ea
 
 - Spell coefficients below level 20: checked against public logs on 9 Nov (`docs/levels-logs-2026-11-09.md`). The client rows carry the low rank coefficients and the game takes them with no further penalty, which is what the engine does (`tests/levels_logs_20261109.rs`).
 - Dungeon boss armor: the worker scales the level 63 boss's 3731 armor by level. The client does not carry creature armor.
-- Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas; pets still use level 60 base stats. A Warlock's demons also keep their level 60 abilities (Firebolt rank 7, Lash of Pain, Go literals with no client rows), so a demon does the same damage at 15 as at 50.
+- Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas. A Hunter's pet still uses the level 60 creature row; a Warlock's demon follows the level (below).
 - A cat druid below 20, who has not learned Cat Form, sims in it all the same (with autos only until Claw at 20).
 - Other class buffs and debuffs built from core's fixed rows (Shaman totems' triggered buffs resolve by level already; Sunder and Expose Armor, Hunter's Mark and the external raid rows have not been checked below 60). The worker sims a levelling character solo, so the external rows do not reach it.
 - No real levelling export has been simmed yet. The first ones (addon 0.4.0) check the sheet readers (`UnitStat` base without gear, `C_SpellBook` item types) and the calibration.

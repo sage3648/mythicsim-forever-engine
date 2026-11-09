@@ -1,0 +1,982 @@
+{
+ "encounter": {
+  "duration": 120,
+  "durationVariation": 15,
+  "executeProportion20": 0.2,
+  "executeProportion25": 0.25,
+  "executeProportion35": 0.35,
+  "executeProportion45": 0.45,
+  "executeProportion90": 0.9,
+  "noHitSuppression": true,
+  "targets": [
+   {
+    "canCrush": true,
+    "damageSpread": 0.3333,
+    "id": 213336,
+    "level": 14,
+    "minBaseDamage": 3000,
+    "name": "Level 22",
+    "parryHaste": true,
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     805,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1303,
+     0,
+     127393,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "swingSpeed": 2
+   }
+  ]
+ },
+ "raid": {
+  "buffs": {},
+  "debuffs": {},
+  "parties": [
+   {
+    "buffs": {},
+    "players": [
+     {
+      "buffs": {},
+      "channelClipDelayMs": 150,
+      "characterSheet": {
+       "attributes": [
+        26,
+        21,
+        32,
+        31,
+        37
+       ],
+       "base": [
+        26,
+        21,
+        32,
+        31,
+        37
+       ],
+       "equipment": {
+        "items": [
+         {
+          "id": 4916
+         },
+         {
+          "id": 4919
+         },
+         {
+          "id": 6713
+         },
+         {
+          "id": 14086
+         },
+         {
+          "id": 6062
+         },
+         {
+          "id": 281268
+         },
+         {
+          "id": 4944
+         },
+         {
+          "id": 4925
+         },
+         {
+          "id": 11287
+         }
+        ]
+       },
+       "health": 560,
+       "level": 12,
+       "mana": 705,
+       "meleeCrit": 5,
+       "spellCrit": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+       ]
+      },
+      "class": "ClassWarlock",
+      "consumables": {},
+      "distanceFromTarget": 25,
+      "equipment": {
+       "items": [
+        {
+         "id": 4916
+        },
+        {
+         "id": 4919
+        },
+        {
+         "id": 6713
+        },
+        {
+         "id": 14086
+        },
+        {
+         "id": 6062
+        },
+        {
+         "id": 281268
+        },
+        {
+         "id": 4944
+        },
+        {
+         "id": 4925
+        },
+        {
+         "id": 11287
+        }
+       ]
+      },
+      "level": 12,
+      "name": "affliction-warlock",
+      "profession1": "Engineering",
+      "race": "RaceTroll",
+      "reactionTimeMs": 100,
+      "rotation": {
+       "prepullActions": [
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25307
+           }
+          }
+         },
+         "doAtValue": {
+          "const": {
+           "val": "-2.5s"
+          }
+         }
+        }
+       ],
+       "priorityList": [
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1259821
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "or": {
+               "vals": [
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 11713
+                  }
+                 }
+                },
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 603
+                  }
+                 }
+                }
+               ]
+              }
+             },
+             {
+              "dotIsActive": {
+               "spellId": {
+                "spellId": 25311
+               }
+              }
+             },
+             {
+              "or": {
+               "vals": [
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 25309
+                  }
+                 }
+                },
+                {
+                 "cmp": {
+                  "lhs": {
+                   "spellCastTime": {
+                    "spellId": {
+                     "spellId": 25309
+                    }
+                   }
+                  },
+                  "op": "OpGt",
+                  "rhs": {
+                   "const": {
+                    "val": "1.5s"
+                   }
+                  }
+                 }
+                }
+               ]
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "currentTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "10s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 20572
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "or": {
+               "vals": [
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 11713
+                  }
+                 }
+                },
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 603
+                  }
+                 }
+                }
+               ]
+              }
+             },
+             {
+              "dotIsActive": {
+               "spellId": {
+                "spellId": 25311
+               }
+              }
+             },
+             {
+              "or": {
+               "vals": [
+                {
+                 "dotIsActive": {
+                  "spellId": {
+                   "spellId": 25309
+                  }
+                 }
+                },
+                {
+                 "cmp": {
+                  "lhs": {
+                   "spellCastTime": {
+                    "spellId": {
+                     "spellId": 25309
+                    }
+                   }
+                  },
+                  "op": "OpGt",
+                  "rhs": {
+                   "const": {
+                    "val": "1.5s"
+                   }
+                  }
+                 }
+                }
+               ]
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "otherId": "OtherActionPotion"
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "math": {
+              "lhs": {
+               "currentMana": {}
+              },
+              "op": "OpAdd",
+              "rhs": {
+               "const": {
+                "val": "2250"
+               }
+              }
+             }
+            },
+            "op": "OpLt",
+            "rhs": {
+             "maxMana": {}
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "itemId": 12662
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "15s"
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "currentManaPercent": {}
+               },
+               "op": "OpLe",
+               "rhs": {
+                "const": {
+                 "val": "60%"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "autocastOtherCooldowns": {}
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 18871
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "remainingTime": {}
+            },
+            "op": "OpLe",
+            "rhs": {
+             "const": {
+              "val": "1.5"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 17923
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpLe",
+               "rhs": {
+                "const": {
+                 "val": "3.5"
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "spellCastTime": {
+                 "spellId": {
+                  "spellId": 25309
+                 }
+                }
+               },
+               "op": "OpLe",
+               "rhs": {
+                "const": {
+                 "val": "1.5s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 11689
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpLt",
+            "rhs": {
+             "const": {
+              "val": "10%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 603
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "60s"
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "numberTargets": {}
+               },
+               "op": "OpLt",
+               "rhs": {
+                "const": {
+                 "val": "3"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1311680
+           }
+          },
+          "condition": {
+           "not": {
+            "val": {
+             "auraIsActive": {
+              "auraId": {
+               "spellId": 1311680
+              },
+              "sourceUnit": {
+               "type": "CurrentTarget"
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "numberTargets": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "2"
+             }
+            }
+           }
+          },
+          "multidot": {
+           "maxDots": 5,
+           "maxOverlap": {
+            "const": {
+             "val": "0ms"
+            }
+           },
+           "spellId": {
+            "spellId": 25311
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "numberTargets": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "2"
+             }
+            }
+           }
+          },
+          "multidot": {
+           "maxDots": 5,
+           "maxOverlap": {
+            "const": {
+             "val": "0ms"
+            }
+           },
+           "spellId": {
+            "spellId": 11713
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 11684
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "numberTargets": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "3"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25307
+           }
+          },
+          "condition": {
+           "auraIsActive": {
+            "auraId": {
+             "spellId": 17941
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 603
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "remainingTime": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "60s"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 18288
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "not": {
+               "val": {
+                "dotIsActive": {
+                 "spellId": {
+                  "spellId": 603
+                 }
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "currentTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "2s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 11713
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "not": {
+               "val": {
+                "dotIsActive": {
+                 "spellId": {
+                  "spellId": 603
+                 }
+                }
+               }
+              }
+             },
+             {
+              "not": {
+               "val": {
+                "dotIsActive": {
+                 "spellId": {
+                  "spellId": 11713
+                 }
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "14s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25311
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "dotRemainingTime": {
+                 "spellId": {
+                  "spellId": 25311
+                 }
+                }
+               },
+               "op": "OpLe",
+               "rhs": {
+                "spellCastTime": {
+                 "spellId": {
+                  "spellId": 25311
+                 }
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "9s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25309
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "dotRemainingTime": {
+                 "spellId": {
+                  "spellId": 25309
+                 }
+                }
+               },
+               "op": "OpLe",
+               "rhs": {
+                "spellCastTime": {
+                 "spellId": {
+                  "spellId": 25309
+                 }
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "spellCastTime": {
+                 "spellId": {
+                  "spellId": 25309
+                 }
+                }
+               },
+               "op": "OpLe",
+               "rhs": {
+                "const": {
+                 "val": "1.5s"
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "15s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 18881
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "cmp": {
+               "lhs": {
+                "dotRemainingTime": {
+                 "spellId": {
+                  "spellId": 18881
+                 }
+                }
+               },
+               "op": "OpLe",
+               "rhs": {
+                "spellCastTime": {
+                 "spellId": {
+                  "spellId": 18881
+                 }
+                }
+               }
+              }
+             },
+             {
+              "cmp": {
+               "lhs": {
+                "remainingTime": {}
+               },
+               "op": "OpGe",
+               "rhs": {
+                "const": {
+                 "val": "15s"
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25307
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 686
+           }
+          }
+         }
+        }
+       ],
+       "type": "TypeAPL"
+      },
+      "talentsString": "",
+      "warlock": {
+       "options": {
+        "classOptions": {
+         "armor": "DemonArmor",
+         "summon": "Imp",
+         "weaponStone": "Spellstone"
+        }
+       }
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "simOptions": {
+  "iterations": 500,
+  "randomSeed": "42"
+ }
+}

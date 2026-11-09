@@ -8,7 +8,6 @@ use std::sync::OnceLock;
 use serde_json::{json, Map, Value};
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::data::spells::Effect;
 use crate::prepare::aura_helpers::ProcTrigger;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
@@ -137,18 +136,6 @@ fn warlock_tick(row: &Row, unrepresented: &mut Vec<String>) -> Map<String, Value
 fn with_kind(kind: &str, mut fields: Map<String, Value>) -> Value {
     fields.insert("kind".into(), json!(kind));
     Value::Object(fields)
-}
-
-/// The Imp's Firebolt rank 7 damage effect (`impFireboltEffect`), client 1.60.1.70094 11763.
-fn imp_firebolt_effect() -> Effect {
-    Effect {
-        base_points: 44.0,
-        ppl: 0.6000000238418579,
-        variance: 0.11363636702,
-        spell_level: 58,
-        max_level: 63,
-        ..Effect::default()
-    }
 }
 
 /// The names `resistanceStatNames` gives the stats a curse lowers.
@@ -433,9 +420,11 @@ impl Warlock {
                 "wait_ns": nanos(100 * MILLISECOND),
             }));
         }
-        if self.pets.imp.is_some() {
-            // pets.go registerFireboltSpell: impFireboltEffect, unexported, mirrored here
-            let effect = imp_firebolt_effect();
+        let firebolt = super::pets::demon_rank(&super::pets::FIREBOLT_RANKS, sim.rules);
+        if let (Some(_), Some(rank)) = (self.pets.imp, firebolt) {
+            // pets.go registerFireboltSpell: impFireboltEffect, unexported, mirrored here at the
+            // rank the level teaches (rank 7, 11763, at 60)
+            let effect = rank.effect();
             let average = effect.average(character_level());
             effects.push(json!({
                 "kind": "firebolt",
@@ -444,9 +433,10 @@ impl Warlock {
                 "average": average, "variance": effect.variance,
             }));
         }
-        if self.pets.succubus.is_some() {
-            // pets.go registerLashOfPainSpell: a Go literal base
-            effects.push(json!({"kind": "lash_of_pain", "base_damage": 50.0}));
+        let lash = super::pets::demon_rank(&super::pets::LASH_OF_PAIN_RANKS, sim.rules);
+        if let (Some(_), Some(rank)) = (self.pets.succubus, lash) {
+            // pets.go registerLashOfPainSpell: the rank's base, the Go literal 50 at rank 6
+            effects.push(json!({"kind": "lash_of_pain", "base_damage": rank.base_points}));
         }
         // talents_demonology.go applyFelEnergy: the Voidwalker's sacrifice restores a share of
         // maximum mana every period, from a periodic action its permanent aura starts.
