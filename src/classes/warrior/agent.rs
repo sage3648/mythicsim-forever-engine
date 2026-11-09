@@ -1000,9 +1000,11 @@ impl WarriorAgent {
                     period_ns,
                     health_cost,
                     rage_threshold,
+                    instant_threat_unscaled,
                 } => {
                     let metrics = rage_metrics(&mut fight, *spell_id);
                     fight.agent.bloodrage = Some(Bloodrage {
+                        instant_threat_unscaled: *instant_threat_unscaled,
                         instant_rage: *instant_rage,
                         rage_per_tick: *rage_per_tick,
                         ticks: *ticks,

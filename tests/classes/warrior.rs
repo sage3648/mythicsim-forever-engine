@@ -1,6 +1,7 @@
 //! Warrior tests: the prepared v2 gate on the production Fury Warrior request. Its Go result
 //! and first-fight log are compared with the rest of the fixture family.
 
+mod bloodrage;
 mod flat_threat;
 mod prepare;
 mod sword_specialization;

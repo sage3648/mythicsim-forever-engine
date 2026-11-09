@@ -232,14 +232,20 @@ impl Warrior {
         let improved_bloodrage = data
             .improved_bloodrage
             .multiplier_at(talent("improved_bloodrage"));
-        effects.push(json!({"kind": "bloodrage", "spell_id": bloodrage.id,
+        let mut bloodrage_effect = json!({"kind": "bloodrage", "spell_id": bloodrage.id,
             "instant_rage": data.bloodrage.effect_at(1).tenths_at(1) * improved_bloodrage,
             "rage_per_tick": over_time.periodic_effect().tenths() * improved_bloodrage,
             "ticks": (over_time.duration() / over_time.periodic_effect().period()) as i32,
             "period_ns": over_time.periodic_effect().period(),
             "health_cost": sim.character(unit).base_stats[Stat::Health]
                 * f64::from(bloodrage.power(dbcenums::POWER_HEALTH).cost_pct) / 100.0,
-            "rage_threshold": 70.0}));
+            "rage_threshold": 70.0});
+        // Forever combat logs: the instant 10 rage makes 50 threat in Battle and Defensive
+        // Stance alike; the ticks take the stance.
+        if sim.rules == Rules::Forever {
+            bloodrage_effect["instant_threat_unscaled"] = json!(true);
+        }
+        effects.push(bloodrage_effect);
         // berserker_rage.go: Improved Berserker Rage's rage.
         let berserker_rage = data.berserker_rage.highest();
         effects.push(

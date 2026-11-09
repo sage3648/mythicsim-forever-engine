@@ -4321,6 +4321,10 @@ pub enum Effect {
         /// in Go, a two-hander's crit adds the rage of the swing before that factor.
         #[serde(default, skip_serializing_if = "is_false")]
         crit_multiplies_swing: bool,
+        /// Forever's rules: rage gained before the pull makes no threat (Forever combat logs).
+        /// Without it, as in Go, it counts as any other gain.
+        #[serde(default, skip_serializing_if = "is_false")]
+        no_threat_before_pull: bool,
     },
     /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
     /// auras that are not up from the reset: the gain multiplies, the expiry divides.
@@ -4486,6 +4490,11 @@ pub enum Effect {
         period_ns: i64,
         health_cost: f64,
         rage_threshold: f64,
+        /// Forever's rules: the instant rage makes its threat unscaled by the stance, 50 for its
+        /// 10 rage in Battle and Defensive Stance alike (Forever combat logs); the ticks take
+        /// the stance. Without it the instant rage takes the stance too.
+        #[serde(default, skip_serializing_if = "is_false")]
+        instant_threat_unscaled: bool,
     },
     /// Berserker Rage: rage from Improved Berserker Rage and an aura.
     BerserkerRage {

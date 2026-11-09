@@ -1172,6 +1172,12 @@ the Go goldens and exporter uses. The departures:
   measure (60, 75 and 90); Slam adds 1.5 a spell level on every rank, rounded (Rank 1 at spell
   level 20 adds 30, rank 2 45). The reference adds 2.54 a spell level for Heroic Strike, 1.53 for
   Cleave and a flat 140 for every rank of Slam (`tests/classes/warrior/flat_threat.rs`).
+- Bloodrage's threat, from Forever combat logs: its instant 10 rage makes 50 threat in Battle
+  and Defensive Stance alike while its ticks take the stance, and rage gained before the pull
+  (a prepull Bloodrage's, which the protection presets cast 10 seconds out) makes none. The
+  reference scales all of it by the stance and books the prepull rage too
+  (`instant_threat_unscaled` on `bloodrage`, `no_threat_before_pull` on `rage_bar`,
+  `tests/classes/warrior/bloodrage.rs`).
 - A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
   so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
   value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
