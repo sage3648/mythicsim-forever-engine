@@ -836,6 +836,8 @@ const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
     ("stat_proc", &["chances"]),
     ("sulfuras_hand_of_ragnaros", &["chances"]),
     ("thunderfury", &["chances"]),
+    // Dragon's Call's proc manager, rebuilt for the weapon in the hand.
+    ("emerald_dragon_whelp", &["chances"]),
     ("spell_data_damage_proc", &["chances", "trigger_spells"]),
     ("extra_attack_proc", &["chances"]),
     ("stacking_cd_on_use", &["chances"]),
