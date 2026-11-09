@@ -436,7 +436,7 @@ impl Shaman {
     pub(super) fn register_magma_totem_spell(&mut self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
         let rank = data.magma_totem.highest();
-        let pulse = data.magma_totem_triggered.by_id(10581);
+        let pulse = super::spell_data::magma_totem_pulse();
         // Trial by Fire (client 70425) lengthens it by 10 sec a point.
         let duration = rank.duration() + magma_totem_bonus(self.talent("trial_by_fire"));
         let tick_length = crate::prepare::sim::seconds(2.0);

@@ -344,7 +344,9 @@ impl Rogue {
         // by the target's stun duration multiplier, and raises the rogue's damage on the target by
         // Improved Kidney Shot. A stun immune target ignores it. A stun also pauses the target's
         // swings, which only matter when it tanks the player.
-        if let Some(spell) = sim.get_spell(player, &spell_action(8643)) {
+        if let Some(spell) =
+            sim.get_spell(player, &spell_action(spell_data().kidney_shot.highest().id))
+        {
             let spell_id = sim.spell(spell).action_id.clone();
             let stun = sim
                 .unit(target)

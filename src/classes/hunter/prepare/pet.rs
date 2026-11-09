@@ -460,12 +460,40 @@ static CLAW_RANKS: std::sync::LazyLock<crate::prepare::spelldata::Ladder> =
         ])
     });
 
+/// Lightning Breath's ranks, lowest first: rank 6 (25012, 86 to 98) at level 60, and below it
+/// the rank the pet's level teaches, as Bite and Claw.
+static LIGHTNING_BREATH_RANKS: std::sync::LazyLock<crate::prepare::spelldata::Ladder> =
+    std::sync::LazyLock::new(|| {
+        crate::prepare::spelldata::Ladder::ranked(&[24844, 25008, 25009, 25010, 25011, 25012])
+    });
+
+/// Scorpid Poison's ranks, lowest first. Every rank's row ticks for 5 (`effects.rs`), so a
+/// levelling pet's rank changes only the spell its poison is listed as.
+pub(super) static SCORPID_POISON_RANKS: std::sync::LazyLock<crate::prepare::spelldata::Ladder> =
+    std::sync::LazyLock::new(|| {
+        crate::prepare::spelldata::Ladder::ranked(&[24640, 24583, 24586, 24587])
+    });
+
 /// Whether `id` is a rank of the pet's Bite or Claw.
 pub(super) fn is_bite_or_claw(id: i32) -> bool {
     let mut found = false;
     for ladder in [&*BITE_RANKS, &*CLAW_RANKS] {
         ladder.each(|_, rank| found |= rank.id == id);
     }
+    found
+}
+
+/// Whether `id` is a rank of the pet's Lightning Breath.
+pub(super) fn is_lightning_breath(id: i32) -> bool {
+    let mut found = false;
+    LIGHTNING_BREATH_RANKS.each(|_, rank| found |= rank.id == id);
+    found
+}
+
+/// Whether `id` is a rank of the pet's Scorpid Poison.
+pub(super) fn is_scorpid_poison(id: i32) -> bool {
+    let mut found = false;
+    SCORPID_POISON_RANKS.each(|_, rank| found |= rank.id == id);
     found
 }
 
@@ -509,7 +537,8 @@ fn new_claw(sim: &mut Sim, pet: UnitId) -> SpellId {
     )
 }
 
-/// Beta client: every rank lower than Classic's, and no more growth per level. Rank 6 is 86-98.
+/// Beta client: every rank lower than Classic's, and no more growth per level. Rank 6 is 86-98;
+/// a levelling pet breathes the rank its level teaches.
 fn new_lightning_breath(sim: &mut Sim, pet: UnitId) -> SpellId {
     sim.register_spell(
         pet,
@@ -518,7 +547,11 @@ fn new_lightning_breath(sim: &mut Sim, pet: UnitId) -> SpellId {
             max_range: 20.0,
             cost: focus(50),
             cast: pet_cast(None),
-            ..ability_base(ActionId::spell(25012), school::NATURE, DefenseType::Magic)
+            ..ability_base(
+                ActionId::spell(LIGHTNING_BREATH_RANKS.highest().id),
+                school::NATURE,
+                DefenseType::Magic,
+            )
         },
     )
 }
@@ -547,7 +580,11 @@ fn new_scorpid_poison(sim: &mut Sim, pet: UnitId) -> SpellId {
                 tick_length: 2 * SECOND,
                 ..DotConfig::default()
             },
-            ..ability_base(ActionId::spell(24587), school::NATURE, DefenseType::Melee)
+            ..ability_base(
+                ActionId::spell(SCORPID_POISON_RANKS.highest().id),
+                school::NATURE,
+                DefenseType::Melee,
+            )
         },
     )
 }

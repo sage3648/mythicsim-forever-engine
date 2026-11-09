@@ -215,13 +215,32 @@ fn calibrate_level(
         }
     }
     let digest = request.sha256();
-    let (prepared, first) = levels::with_character(character.clone(), || {
+    let (prepared, first, slopes) = levels::with_character(character.clone(), || {
         let mut env =
             env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
                 .map_err(PrepareError::Refused)?;
         let prepared =
             export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)?;
-        Ok::<_, PrepareError>((prepared, levels::current()))
+        // How much of a point of base health or mana reaches the maximum: a talent or racial that
+        // raises maximum health or mana by a share (Arcane Mind, Tauren Endurance) scales the base
+        // too, and the solve divides by it.
+        let unit = env.sim.unit(env.player);
+        let slope = |stat: stats::Stat| {
+            let before = unit.sdm.apply_stat_dependencies(unit.stats_without_deps);
+            let mut plus = unit.stats_without_deps;
+            plus[stat] += 1000.0;
+            let slope = (unit.sdm.apply_stat_dependencies(plus)[stat] - before[stat]) / 1000.0;
+            if slope > 0.0 {
+                slope
+            } else {
+                1.0
+            }
+        };
+        let slopes = levels::Slopes {
+            health: slope(stats::Stat::Health),
+            mana: slope(stats::Stat::Mana),
+        };
+        Ok::<_, PrepareError>((prepared, levels::current(), slopes))
     })?;
     let player = &prepared["player"];
     let mut first = first;
@@ -264,7 +283,7 @@ fn calibrate_level(
         .copied()
         .unwrap_or(0.0);
     Ok((
-        levels::calibrate(sheet, &engine, &used, k_agi, k_int),
+        levels::calibrate(sheet, &engine, &used, k_agi, k_int, slopes),
         first,
     ))
 }

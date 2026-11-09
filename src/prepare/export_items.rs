@@ -1627,7 +1627,7 @@ fn party_flametongue_totem_effect(
     unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
     use super::buffs::flametongue::{
-        flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
+        flametongue_totem_base_damage, flametongue_totem_proc, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
     };
     let player = env.player;
     let trigger_aura = aura_named(env, FLAMETONGUE_TOTEM_TRIGGER_LABEL)?;
@@ -1644,7 +1644,7 @@ fn party_flametongue_totem_effect(
         return None;
     }
     let weapon = &sim.character(player).equipment[super::items::slot::MAIN_HAND];
-    let attack = spell_position(env, &ActionId::spell(16389));
+    let attack = spell_position(env, &ActionId::spell(flametongue_totem_proc().id));
     let mut trigger = proc_trigger(sim, Some(player), must_find(15036), &[]);
     trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
     let names = callback_names(trigger.callback);

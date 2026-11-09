@@ -23,7 +23,9 @@ use super::spell_data::spell_data;
 /// so a frozen hit deals 3 times an unfrozen one.
 const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 3.0;
 
-/// `mageDamageRows`: the rows by spell ID.
+/// `mageDamageRows`: the rows by spell ID, every rank of each spell. The map is kept for the
+/// process, so it holds no one character's rank: built from the highest rank the first character
+/// prepared knew, a later character of another level found no row for its own rank.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
     static ROWS: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     ROWS.get_or_init(|| {
@@ -34,29 +36,23 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
                 rows.insert(row.id, row);
             });
         };
-        let highest = |rows: &mut HashMap<i32, &'static Row>, ladder: &Ladder| {
-            let row = ladder.highest();
-            if !row.is_nil() {
-                rows.insert(row.id, row);
-            }
-        };
         each(&mut rows, &data.frostbolt);
         each(&mut rows, &data.arcane_missiles_triggered);
-        highest(&mut rows, &data.ice_lance);
-        highest(&mut rows, &data.arcane_blast);
-        highest(&mut rows, &data.arcane_wrath);
-        highest(&mut rows, &data.fire_blast);
+        each(&mut rows, &data.ice_lance);
+        each(&mut rows, &data.arcane_blast);
+        each(&mut rows, &data.arcane_wrath);
+        each(&mut rows, &data.fire_blast);
         each(&mut rows, &data.scorch);
         each(&mut rows, &data.fireball);
         each(&mut rows, &data.frostfire_bolt);
-        highest(&mut rows, &data.pyroblast);
+        each(&mut rows, &data.pyroblast);
         for ladder in [
             &data.arcane_explosion,
             &data.blast_wave,
             &data.cone_of_cold,
             &data.frost_nova,
         ] {
-            highest(&mut rows, ladder);
+            each(&mut rows, ladder);
         }
         each(&mut rows, &data.flamestrike_ranks);
         rows

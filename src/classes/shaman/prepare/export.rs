@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 
 use crate::prepare::aura_helpers::ProcTrigger;
 use crate::prepare::buffs::flametongue::{
-    flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
+    flametongue_totem_base_damage, flametongue_totem_proc, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
     WINDFURY_WEAPON_MAIN_HAND_STRIKE,
 };
 use crate::prepare::common_effects::{action_id_string, flat_string};
@@ -42,9 +42,11 @@ fn nanos(d: Duration) -> i64 {
 }
 
 /// `shamanDamageRows`: the rows by spell ID, those whose `ApplyEffects` roll a client damage
-/// effect: every Lightning Bolt and Chain Lightning rank, Lava Burst's, Flame Shock's, Earth
-/// Shock's and Frost Shock's highest rank. Under Forever's rules the rows are the notes of 2
-/// November 2026's, and Lava Burst has none.
+/// effect: every rank of Lightning Bolt, Chain Lightning, Lava Burst, Flame Shock, Earth Shock and
+/// Frost Shock. Under Forever's rules the rows are the notes of 2 November 2026's, and Lava Burst
+/// has none. The map is kept for the process, so it holds every rank: built from the highest rank
+/// the first character prepared knew, a level 22 shaman prepared after a level 60 one found no
+/// row for its Earth Shock rank 3 and its fight panicked on a spell with no behavior.
 fn damage_rows(rules: Rules) -> &'static HashMap<i32, &'static Row> {
     static GO: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     static FOREVER: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
@@ -60,20 +62,14 @@ fn damage_rows(rules: Rules) -> &'static HashMap<i32, &'static Row> {
                 rows.insert(row.id, rules_row(rules, row));
             });
         };
-        let highest = |rows: &mut HashMap<i32, &'static Row>, ladder: &Ladder| {
-            let row = ladder.highest();
-            if !row.is_nil() {
-                rows.insert(row.id, rules_row(rules, row));
-            }
-        };
         each(&mut rows, &data.lightning_bolt);
         each(&mut rows, &data.chain_lightning);
         if rules == Rules::GoReference {
-            highest(&mut rows, &data.lava_burst);
+            each(&mut rows, &data.lava_burst);
         }
-        highest(&mut rows, &data.flame_shock);
-        highest(&mut rows, &data.earth_shock);
-        highest(&mut rows, &data.frost_shock);
+        each(&mut rows, &data.flame_shock);
+        each(&mut rows, &data.earth_shock);
+        each(&mut rows, &data.frost_shock);
         rows
     })
 }
@@ -420,7 +416,7 @@ impl Shaman {
         // registerMagmaTotemSpell: an area dot on the shaman whose pulses roll hit and crit on
         // each target from the pulse's damage row average.
         let magma = data.magma_totem.highest();
-        let pulse = data.magma_totem_triggered.by_id(10581);
+        let pulse = super::spell_data::magma_totem_pulse();
         let mut magma_totem = json!({
             "kind": "magma_totem", "spell_id": magma.id,
             "pulse_damage": pulse.damage_effect().average(character_level()),
@@ -627,7 +623,7 @@ impl Shaman {
                     })
                     .collect();
             }
-            let attack = spell_positions(env, &spell_id_action(16389))
+            let attack = spell_positions(env, &spell_id_action(flametongue_totem_proc().id))
                 .last()
                 .copied();
             let weapon = &sim.character(player).equipment[crate::prepare::items::slot::MAIN_HAND];
@@ -658,7 +654,7 @@ impl Shaman {
         // RegisterFlametongueImbue: one trigger and one hit spell for each imbued weapon, main
         // hand first, registered in that order, the hit from the weapon's speed held to 1.3 to
         // 4.0.
-        let imbue_hit = data.flametongue_weapon_triggered.by_id(16344);
+        let imbue_hit = super::spell_data::flametongue_weapon_proc();
         let hits = spell_positions(env, &spell_id_action(imbue_hit.id));
         let equipment = &sim.character(player).equipment;
         let mut flametongue: Vec<Value> = Vec::new();

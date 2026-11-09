@@ -435,7 +435,7 @@ fn raw_mp5_bonuses(
         {
             continue;
         }
-        let value = MANA_TIDE_TOTEMS.value(0);
+        let value = MANA_TIDE_TOTEMS.known_value(0);
         if (label == EXTERNAL_MANA_TIDE_LABEL || label == SELF_MANA_TIDE_LABEL)
             && raw[0] + value == first
         {

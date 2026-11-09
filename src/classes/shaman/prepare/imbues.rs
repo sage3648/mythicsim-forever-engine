@@ -193,7 +193,7 @@ impl Shaman {
     /// totem's base damage, so a shaman's carries the imbue's class mask and the shaman spell
     /// flag.
     fn new_flametongue_imbue_spell(&self, sim: &mut Sim, unit: UnitId) {
-        let imbue = spell_data().flametongue_weapon_triggered.by_id(16344);
+        let imbue = super::spell_data::flametongue_weapon_proc();
         sim.register_spell(
             unit,
             SpellConfig {

@@ -636,7 +636,7 @@ impl Druid {
             let main_hand = weapon_from_main_hand(sim, unit);
             let paw = bear_weapon(sim, unit);
             effects.push(json!({
-                "kind": "bear_form", "spell_id": 9634, "aura": sim.aura(bear_aura).label,
+                "kind": "bear_form", "spell_id": super::forms::known_bear_form().id, "aura": sim.aura(bear_aura).label,
                 "spell": spell_position(sim, unit, bear_form),
                 "health_bonus": self.bear_form_health_bonus(env, notes),
                 "initial_threat_multiplier":
@@ -801,7 +801,7 @@ impl Druid {
         // multiplier such as Tauren Endurance also scales the bonus.
         let in_form = sim.unit(unit).stats[crate::prepare::stats::Stat::Health];
         let mut without = sim.unit(unit).stats_without_deps;
-        without[crate::prepare::stats::Stat::Health] -= 1240.0;
+        without[crate::prepare::stats::Stat::Health] -= super::forms::known_bear_form().health;
         let bonus = in_form
             - sim
                 .unit(unit)

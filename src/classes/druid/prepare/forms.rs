@@ -24,6 +24,53 @@ use super::{masks, Druid};
 pub(crate) const ANIMAL_SPIRIT_REGEN_SUPPRESSION: f64 = 0.911337;
 /// Go `BaseBearArmorMulti`.
 pub(crate) const BASE_BEAR_ARMOR_MULTI: f64 = 4.6;
+/// Bear Form (Passive) 1178: items' armor counts 180% more in Bear Form, which a druid below
+/// level 40 shifts into.
+const BEAR_FORM_ARMOR_MULTI: f64 = 2.8;
+
+/// The bear form a druid shifts into: Bear Form (5487, level 10) until it learns Dire Bear Form
+/// (9634) at 40, as its spellbook or level says.
+const BEAR_FORM_RANKS: [i32; 2] = [5487, 9634];
+
+/// The bear form the druid being prepared knows, with the form's multiplier of items' armor and
+/// the health it adds. At level 60 it is Dire Bear Form's 360% and Go's flat 1240.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct KnownBearForm {
+    pub id: i32,
+    pub armor_multiplier: f64,
+    pub health: f64,
+}
+
+/// [`KnownBearForm`] for the character being prepared. Below level 60 the health is the passive
+/// row's own (Dire Bear Form (Passive) 9635: 600 and 32 a level from 40, 1240 at 60; Bear Form
+/// (Passive) 1178: 20 and 18 a level from 10), and a level 30 druid shifts into Bear Form with
+/// its 180% armor rather than a level 40 form it has not learned.
+pub(crate) fn known_bear_form() -> KnownBearForm {
+    let form = Ladder::ranked(&BEAR_FORM_RANKS).highest();
+    let level = character_level();
+    if level == crate::prepare::levels::MAX_LEVEL {
+        return KnownBearForm {
+            id: form.id,
+            armor_multiplier: BASE_BEAR_ARMOR_MULTI,
+            health: 1240.0,
+        };
+    }
+    let (passive, armor_multiplier) = if form.id == BEAR_FORM_RANKS[0] {
+        (1178, BEAR_FORM_ARMOR_MULTI)
+    } else {
+        (9635, BASE_BEAR_ARMOR_MULTI)
+    };
+    // The passive row's third effect is the health it adds (A_MOD_INCREASE_HEALTH).
+    let health = crate::prepare::spelldata::must_find(passive)
+        .effect_n(3)
+        .average(level);
+    KnownBearForm {
+        id: form.id,
+        armor_multiplier,
+        health,
+    }
+}
+
 /// Go `BearFormThreatMultiplier`: client 70374 raised Classic's 30% to 50% (8 October beta
 /// notes, community #798).
 pub(crate) const BEAR_FORM_THREAT_MULTIPLIER: f64 = 1.5;
@@ -386,10 +433,13 @@ impl Druid {
     pub(super) fn register_bear_form_aura(&mut self, sim: &mut Sim) {
         let unit = self.unit;
         let st = Rc::clone(&self.st);
-        // Dire Bear Form: 180 attack power at level 60 and 1240 health, both flat.
+        // Dire Bear Form: 180 attack power at level 60 and 1240 health, both flat. Bear Form
+        // gives the same 3 attack power a level and its own health (`known_bear_form`).
+        let form = known_bear_form();
+        let armor_multi = form.armor_multiplier;
         let mut extra = Stats::default();
         extra[Stat::AttackPower] = 3.0 * f64::from(character_level());
-        extra[Stat::Health] = 1240.0;
+        extra[Stat::Health] = form.health;
         let stat_bonus = self.form_shift_stats().add(&extra);
 
         let feral_ap_dep =
@@ -409,7 +459,7 @@ impl Druid {
             unit,
             AuraConfig {
                 label: "Bear Form".to_string(),
-                action_id: Some(ActionId::spell(9634)),
+                action_id: Some(ActionId::spell(form.id)),
                 duration: NEVER_EXPIRES,
                 build_phase: if st.starting_form & BEAR != 0 {
                     BuildPhase::BASE
@@ -428,8 +478,8 @@ impl Druid {
                         ANIMAL_SPIRIT_REGEN_SUPPRESSION;
 
                     sim.add_stats_dynamic(unit, &stat_bonus);
-                    sim.apply_dynamic_equip_scaling(unit, Stat::Armor, BASE_BEAR_ARMOR_MULTI);
-                    sim.apply_dynamic_equip_scaling(unit, Stat::BonusArmor, BASE_BEAR_ARMOR_MULTI);
+                    sim.apply_dynamic_equip_scaling(unit, Stat::Armor, armor_multi);
+                    sim.apply_dynamic_equip_scaling(unit, Stat::BonusArmor, armor_multi);
                     sim.enable_build_phase_stat_dep(unit, feral_ap_dep);
 
                     if let Some(dep) = hotw_dep {
@@ -450,12 +500,8 @@ impl Druid {
                         ANIMAL_SPIRIT_REGEN_SUPPRESSION;
 
                     sim.add_stats_dynamic(unit, &stat_bonus.invert());
-                    sim.apply_dynamic_equip_scaling(unit, Stat::Armor, 1.0 / BASE_BEAR_ARMOR_MULTI);
-                    sim.apply_dynamic_equip_scaling(
-                        unit,
-                        Stat::BonusArmor,
-                        1.0 / BASE_BEAR_ARMOR_MULTI,
-                    );
+                    sim.apply_dynamic_equip_scaling(unit, Stat::Armor, 1.0 / armor_multi);
+                    sim.apply_dynamic_equip_scaling(unit, Stat::BonusArmor, 1.0 / armor_multi);
                     sim.disable_build_phase_stat_dep(unit, feral_ap_dep);
 
                     if let Some(dep) = hotw_dep {
@@ -488,13 +534,13 @@ impl Druid {
 
     /// Go `registerBearFormSpell`.
     pub(super) fn register_bear_form_spell(&mut self, sim: &mut Sim) {
-        let row = Ladder::ranked(&[9634]).highest();
+        let row = Ladder::ranked(&BEAR_FORM_RANKS).highest();
         let mana = row.mana_cost();
         let id = self.register_spell(
             sim,
             ANY,
             SpellConfig {
-                action_id: ActionId::spell(9634),
+                action_id: ActionId::spell(row.id),
                 class_spell_mask: masks::BEAR_FORM,
                 flags: SpellFlag::NO_ON_CAST_COMPLETE | SpellFlag::APL,
                 cost: CostOptions {

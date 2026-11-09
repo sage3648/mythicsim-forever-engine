@@ -42,7 +42,8 @@ pub(super) fn unmasked_spell(id: &ActionId) -> Option<&'static str> {
     }
 }
 
-/// `warlockDamageRows`: the rows by spell ID.
+/// `warlockDamageRows`: the rows by spell ID, every rank of each spell, so the map kept for the
+/// process holds the rank of every character's level.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
     static ROWS: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     ROWS.get_or_init(|| {
@@ -62,10 +63,9 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
             &data.soul_fire,
             &data.incinerate,
         ] {
-            let row = ladder.highest();
-            if !row.is_nil() {
+            ladder.each(|_, row| {
                 rows.insert(row.id, row);
-            }
+            });
         }
         rows
     })
