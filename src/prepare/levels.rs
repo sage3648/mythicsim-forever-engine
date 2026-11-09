@@ -432,6 +432,82 @@ pub(crate) fn base_stats_at_level(stats: &mut Stats) {
     });
 }
 
+/// The client's creature auto attack dps for levels 1 to 60 (`ExpectedStat`, expansion -2,
+/// content set 0, CreatureAutoAttackDps, from wago.tools' wowf tables on 9 November 2026). A
+/// level 60 character's row is the last one.
+const CREATURE_AUTO_ATTACK_DPS: [f64; MAX_LEVEL as usize] = [
+    0.77037197351,
+    1.15746355057,
+    1.62908411026,
+    2.25077462196,
+    3.0063495636,
+    4.00402402878,
+    5.18357181549,
+    6.024061203,
+    6.90567064285,
+    7.61957216263,
+    8.59953212738,
+    9.83585453033,
+    10.71273612976,
+    11.80829143524,
+    12.85480499268,
+    13.58711147308,
+    14.5638589859,
+    15.25296020508,
+    16.18219947815,
+    17.10286331177,
+    17.74541282654,
+    18.59864997864,
+    19.22664260864,
+    20.05244827271,
+    20.82846641541,
+    21.48515129089,
+    22.34799003601,
+    22.99615097046,
+    23.8218421936,
+    24.69375419617,
+    25.3156375885,
+    26.08427619934,
+    26.73922920227,
+    27.51086425781,
+    28.2556438446,
+    28.94437217712,
+    29.85236167908,
+    30.62602043152,
+    31.58934211731,
+    32.58558273315,
+    34.14254760742,
+    36.28594970703,
+    38.70747375488,
+    41.91373825073,
+    43.99250793457,
+    44.89542007446,
+    46.0213508606,
+    46.92918395996,
+    48.02968597412,
+    49.20170593262,
+    50.15997314453,
+    51.38513946533,
+    52.36908340454,
+    53.56260681152,
+    54.68286895752,
+    55.76281738281,
+    56.9397315979,
+    58.03160476685,
+    59.21518325806,
+    60.45291519165,
+];
+
+/// The client's creature auto attack dps at `level`, clamped to 1 to 60.
+pub(crate) fn creature_auto_attack_dps(level: i32) -> f64 {
+    CREATURE_AUTO_ATTACK_DPS[(level.clamp(1, MAX_LEVEL) - 1) as usize]
+}
+
+/// How a creature's auto attack dps at `level` compares with level 60's, exactly 1 at 60.
+pub(crate) fn creature_dps_share(level: i32) -> f64 {
+    creature_auto_attack_dps(level) / creature_auto_attack_dps(MAX_LEVEL)
+}
+
 /// Crit chance per point of agility for the character being prepared: the table's level 60
 /// value, or what [`calibrate`] solved below 60.
 pub(crate) fn crit_per_agility(at_60: f64) -> f64 {
@@ -577,6 +653,17 @@ pub(crate) fn knows_spell(spell_id: i32) -> bool {
             return book.contains(&spell_id);
         }
         i32::from(crate::prepare::spelldata::find(spell_id).spell_level) <= character.level
+    })
+}
+
+/// Whether the character's spellbook lists `spell_id`; false without a spellbook.
+pub(crate) fn spellbook_lists(spell_id: i32) -> bool {
+    CURRENT.with(|current| {
+        current
+            .borrow()
+            .known_spells
+            .as_ref()
+            .is_some_and(|book| book.contains(&spell_id))
     })
 }
 

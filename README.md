@@ -121,6 +121,30 @@ the Go goldens and exporter uses. The departures:
   41 dps of the pet's own against 60.5 (18.1 of attack power and 42.3 of weapon), plus the owner's
   tenth: the Beast Mastery Cat on the board request goes from 149 to 220 DPS and its Hunter from
   895 to 966 (+7.9%). The pet's abilities, focus, hit, crit and expertise are unchanged.
+- A levelling Warlock's demons, from the client's rank rows and creature table and Forever's
+  levelling logs (foreverlogs.gg public reports, 5 to 8 November 2026, levels 12 to 31). The
+  reference's demon is the level 60 one at any level: Firebolt rank 7 and Lash of Pain rank 6,
+  Go literals, and the level 60 Strength, Agility and melee weapon, so a level 12 Imp's Firebolt
+  hit for 44 where the log reads 8.5. Below level 60 a demon casts the rank its Warlock's level
+  teaches, each from its client row (wowf `SpellEffect`, `SpellLevels` and `SpellPower`):
+  Firebolt ranks 1 to 7 (3110 to 11763), the row's base plus its points per level up to the
+  rank's cap, its variance, coefficient (0.164 at rank 1 to 0.571 from rank 4) and cost (10 to
+  115); Lash of Pain ranks 1 to 6 (7814 to 11780), 16 to 50, learned from level 20, costing 65 to
+  160. A Succubus below 20, which its Warlock cannot summon, knows no Lash. A rank the spellbook
+  lists is taken first; the addon reads the Warlock's spellbook, not the demon's, so today the
+  level decides, which counts every rank as trained (4 of 6 logged Imps cast the top rank of
+  their level, 2 one rank behind). The demon's weapon and its own Strength and Agility are the
+  level 60 ones times the client's creature auto attack dps at the level over level 60's
+  (`ExpectedStat`, 0.345 at 25), so its whole own swing follows the creature row as a Hunter
+  pet's does. Its mana, Intellect and Spirit stay: the logged Imps cast Firebolt every 2.44
+  seconds in runs of 13 to 19 at levels 12 to 18, where a pool scaled down would run dry after
+  5. Against the logs, the Imp's mean non-crit Firebolt at levels 12 to 31 reads 3 to 21% over
+  the engine (7.0 against 8.5 at 12, 12.5 against 12.9 at 18, 21.1 against 23.8 at 31), the gap
+  the Warlocks' own spells show, the captures' unknown level 12 or 13 and an Improved Imp the
+  captures cannot show; a level 25 Succubus's Lash of Pain is 17.5 against 17.2, and its swings
+  through the client's level 26 creature armor are 32.4 to 41.1 against a logged 32 to 41 on a
+  level 26 caster. The engine's demon is the reference's at level 60 and under `Rules::GoReference`
+  (`tests/levels_demons_20261109.rs`, `tests/levels_demon_logs_20261109.rs`).
 - A Summon Hawk hawk, a fitted model from Forever's level 30 combat logs (extrapolated to level
   60). A swing is a roll a third either side of 0.0815 of the creature auto attack dps over its
   2.5 seconds (10.7 at level 60, before Unleashed Fury) plus 0.0179 (before Unleashed Fury,
