@@ -4650,8 +4650,18 @@ pub enum Effect {
         extra_attack_tag: i32,
         sword_hands: Vec<String>,
         /// The class spells that never trigger it: Shield Bash and Shield Slam since the 16
-        /// October 2026 beta notes.
+        /// October 2026 beta notes, and under Forever's rules Sweeping Strikes' hits.
         excluded_class_spells: Vec<String>,
+        /// Forever's rules: the party Windfury Totem's extra swing never rolls it (Forever
+        /// combat logs, 0 of 6). A queued Heroic Strike that replaces that swing still does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        skips_windfury_totem_swing: bool,
+        /// Forever's rules: the class spells that roll it once a cast, on their first landed hit,
+        /// however many targets they strike (Whirlwind 7 procs on 100 casts and 283 landed hits).
+        /// Each spell keeps its own roll, so Whirlwind's off hand strike rolls apart from its main
+        /// hand strike.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        once_a_cast_class_spells: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {

@@ -1017,6 +1017,15 @@ the Go goldens and exporter uses. The departures:
   totem gives the same aura and follows the same rules (`trigger_spends_no_charge` and
   `any_outcome_spends` on `windfury_totem` and `windfury_totem_self`, `trigger_without_damage`
   on the latter, `tests/classes/warrior/windfury_totem.rs`).
+- Sword Specialization (Weaponmaster with a sword), from Forever combat logs with a two-hand
+  sword at 5/5: a roll off a Windfury Totem swing brings no extra swing (0 of 6), so the
+  totem's swing does not roll it (a queued Heroic Strike that replaces that swing still does);
+  Sweeping Strikes' hits never roll it (0 of 336 over two logs); and Whirlwind and Cleave roll
+  it once a cast on their first landed hit, not once a target (Whirlwind 7 procs on 100 casts
+  and 283 landed hits). Whirlwind's off hand strike keeps a roll of its own. The reference rolls
+  every one of those hits (`skips_windfury_totem_swing`, `once_a_cast_class_spells` and the
+  Sweeping Strikes hits in `excluded_class_spells` on `weaponmaster_sword`,
+  `tests/classes/warrior/sword_specialization.rs`).
 - Soul Siphon counts the Affliction effects active at each tick. Its client 1.60.1.70755 text:
   Drain Life, Drain Soul and Wrack deal "12% per each of your other Affliction effects active on
   the target, up to a maximum increase of 36%". The talent is a dummy aura, so the server counts,

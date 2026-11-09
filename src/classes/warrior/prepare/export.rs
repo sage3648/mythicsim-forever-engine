@@ -599,12 +599,28 @@ impl Warrior {
             if swords.matches(ProcMask::MELEE_OH) {
                 hands.push("off");
             }
-            effects.push(json!({"kind": "weaponmaster_sword",
+            let mut effect = json!({"kind": "weaponmaster_sword",
                 "trigger_aura": "Weaponmaster (Sword)",
                 "proc_chance": data.weaponmaster.effect_at(3).fraction_at(talent("weaponmaster")),
                 "extra_attack_tag": 1290261, "sword_hands": hands,
                 // 16 October 2026 beta notes: Shield Bash and Shield Slam no longer trigger it.
-                "excluded_class_spells": ["shield_bash", "shield_slam"]}));
+                "excluded_class_spells": ["shield_bash", "shield_slam"]});
+            // Forever combat logs with a two-hand sword at 5/5: Sweeping Strikes' hits never
+            // roll it (0 of 336 over two logs), a Windfury Totem swing's roll brings no swing (0
+            // of 6), and Whirlwind and Cleave roll it once a cast (Whirlwind 7 procs on 100
+            // casts and 283 landed hits).
+            if sim.rules == Rules::Forever {
+                effect["excluded_class_spells"] = json!([
+                    "shield_bash",
+                    "shield_slam",
+                    "sweeping_strikes_hit",
+                    "sweeping_strikes_normalized_hit"
+                ]);
+                effect["skips_windfury_totem_swing"] = json!(true);
+                effect["once_a_cast_class_spells"] =
+                    json!(["whirlwind", "whirlwind_off_hand", "cleave"]);
+            }
+            effects.push(effect);
         }
         // heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the
         // base damage the strike adds to a main hand weapon swing.

@@ -2,6 +2,7 @@
 //! and first-fight log are compared with the rest of the fixture family.
 
 mod prepare;
+mod sword_specialization;
 mod windfury_totem;
 
 use forever_engine::{
