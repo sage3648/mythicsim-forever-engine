@@ -214,6 +214,8 @@ pub(crate) struct Lacerate {
     pub(crate) weapon_share_per_stack: f64,
     pub(crate) max_stacks: i32,
     pub(crate) tick_can_crit: bool,
+    /// Forever rules: the weapon hit's own spell (414647), whose crit multiplier the hit takes.
+    pub(crate) hit_spell: Option<SpellId>,
 }
 
 impl Lacerate {
@@ -225,13 +227,41 @@ impl Lacerate {
         let attack_power = fight.melee_attack_power();
         let base =
             fight.mh_weapon_damage(attack_power) * self.weapon_share_per_stack * f64::from(stacks);
-        let result = fight.calc_physical_damage(
-            spell,
-            target,
-            base,
-            PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
-        );
-        fight.deal_damage(spell, result, false);
+        let result = match self.hit_spell {
+            // The cast rolls miss, dodge and parry; a landed cast's hit, its own spell, rolls
+            // only crit, on its own crit multiplier, and lands on its own row as in game.
+            Some(hit) => {
+                let cast = fight.calc_physical_damage(
+                    spell,
+                    target,
+                    0.0,
+                    PhysicalOutcome::MeleeSpecialHit { count: false },
+                );
+                if cast.landed() {
+                    let result = fight.calc_physical_damage(
+                        hit,
+                        target,
+                        base,
+                        PhysicalOutcome::MeleeSpecialCritOnly { count: true },
+                    );
+                    fight.deal_damage(hit, result, false);
+                    result
+                } else {
+                    fight.deal_damage(spell, cast, false);
+                    cast
+                }
+            }
+            None => {
+                let result = fight.calc_physical_damage(
+                    spell,
+                    target,
+                    base,
+                    PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
+                );
+                fight.deal_damage(spell, result, false);
+                result
+            }
+        };
         if result.landed() {
             if fight.aura(aura).active {
                 fight.refresh_aura(aura);

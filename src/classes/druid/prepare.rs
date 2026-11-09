@@ -354,6 +354,8 @@ pub(crate) struct Druid {
     pub(super) maul: Option<SpellId>,
     pub(super) maul_strike: Option<SpellId>,
     pub(super) lacerate: Option<SpellId>,
+    /// Lacerate's weapon hit (414647), its own spell under Forever's rules.
+    pub(super) lacerate_hit: Option<SpellId>,
     pub(super) primal_bite: Option<SpellId>,
     pub(super) swipe: Option<SpellId>,
     pub(super) enrage: Option<SpellId>,
@@ -501,6 +503,7 @@ pub(crate) fn new_druid(
         maul: None,
         maul_strike: None,
         lacerate: None,
+        lacerate_hit: None,
         primal_bite: None,
         swipe: None,
         enrage: None,
