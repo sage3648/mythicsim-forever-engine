@@ -17,6 +17,7 @@
 {"id":1979,"name":"Wall of the Dead","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"0":11,"2":15,"27":34,"30":1937},"ilvl":50}},"item_effects":[{"buff_id":18828,"buff_name":"Bone Armor (19409)","effect_duration_ms":20000,"scaling_options":{"0":{"stats":{"30":150}}},"proc":{"proc_chance":0.03}}]}
 {"id":2100,"name":"Precisely Calibrated Boomstick","type":"ItemTypeRanged","ranged_weapon_type":"RangedWeaponTypeGun","weapon_speed":2.7,"scaling_options":{"0":{"weapon_damage_min":52,"weapon_damage_max":98,"stats":{"1":7,"21":7},"ilvl":48}}}
 {"id":2133,"name":"Small Shield","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"27":1,"30":55},"ilvl":5}}}
+{"id":2163,"name":"Shadowblade","type":"ItemTypeWeapon","weapon_type":"WeaponTypeDagger","hand_type":"HandTypeOneHand","weapon_speed":1.8,"scaling_options":{"0":{"weapon_damage_min":49,"weapon_damage_max":91,"stats":{"1":5,"20":10},"ilvl":53}},"item_effects":[{"buff_id":18138,"buff_name":"Shadow Bolt (18138)","proc":{}}],"unique":true}
 {"id":2226,"name":"Ogremage Staff","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":3.4,"scaling_options":{"0":{"rand_prop_points":10,"weapon_damage_min":49,"weapon_damage_max":75,"stats":{"0":11,"3":-5},"ilvl":27}}}
 {"id":2246,"name":"Myrmidon's Signet","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"0":11,"1":7,"2":17},"ilvl":58}},"unique":true}
 {"id":2314,"name":"Toughened Leather Armor","type":"ItemTypeChest","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":2,"16":7,"30":84,"31":0},"ilvl":24}}}
@@ -72,6 +73,7 @@
 {"id":6138,"name":"Thug Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"30":2},"ilvl":1}}}
 {"id":6199,"name":"Black Widow Band","type":"ItemTypeFinger","scaling_options":{"0":{"rand_prop_points":5,"stats":{"2":-5,"3":7},"ilvl":26}},"unique":true}
 {"id":6320,"name":"Commander's Crest","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"rand_prop_points":8,"stats":{"0":5,"2":3,"27":12,"30":585,"31":0},"ilvl":26}}}
+{"id":6440,"name":"Brainlash","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"2":-10,"3":10,"4":11,"5":11,"16":5},"ilvl":48}},"unique":true}
 {"id":6751,"name":"Mourning Shawl","type":"ItemTypeBack","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"rand_prop_points":7,"stats":{"2":8,"16":-4,"30":22,"31":0},"ilvl":32}}}
 {"id":6803,"name":"Prophetic Cane","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":5,"3":8,"4":18,"5":6},"ilvl":44}}}
 {"id":7673,"name":"Talvash's Enhancing Necklace","type":"ItemTypeNeck","scaling_options":{"0":{"stats":{"2":10,"3":1,"4":12,"5":12},"ilvl":46}}}
@@ -147,6 +149,7 @@
 {"id":11634,"name":"Silkweb Gloves","type":"ItemTypeHands","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":14,"3":13,"4":11,"5":4,"30":48,"34":3},"ilvl":54}}}
 {"id":11665,"name":"Ogreseer Fists","type":"ItemTypeHands","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":9,"3":10,"4":13,"5":13,"16":10,"30":97},"ilvl":54}}}
 {"id":11669,"name":"Naglering","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"2":10,"25":5,"30":50,"31":60},"ilvl":59}},"item_effects":[{"buff_id":15438,"buff_name":"Thorns (15438)","effect_duration_ms":-1}],"unique":true}
+{"id":11677,"name":"Graverot Cape","type":"ItemTypeBack","scaling_options":{"0":{"stats":{"2":15,"16":5,"30":39,"31":40},"ilvl":55}}}
 {"id":11678,"name":"Carapace of Anub'shiah","type":"ItemTypeChest","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":11,"1":11,"2":22,"30":577,"39":5},"ilvl":55}}}
 {"id":11686,"name":"Girdle of Beastial Fury","type":"ItemTypeWaist","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"0":8,"2":10,"17":30,"18":30,"25":6,"30":89},"ilvl":55}}}
 {"id":11702,"name":"Grizzle's Skinner","type":"ItemTypeWeapon","weapon_type":"WeaponTypeAxe","hand_type":"HandTypeMainHand","weapon_speed":2.4,"scaling_options":{"0":{"weapon_damage_min":61,"weapon_damage_max":114,"stats":{"0":8,"1":6,"2":6},"ilvl":55}},"item_effects":[{"buff_id":1300763,"buff_name":"Skinning (1300763)","on_use":{"cooldown_ms":30000,"category_cooldown_ms":-1}}]}
@@ -216,6 +219,7 @@
 {"id":12545,"name":"Eye of Orgrimmar","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"3":7,"4":18,"5":18,"15":2},"ilvl":60}}}
 {"id":12548,"name":"Magni's Will","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"0":7,"2":8,"21":14},"ilvl":60}}}
 {"id":12550,"name":"Runed Golem Shackles","type":"ItemTypeWrist","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":14,"25":5,"30":244},"ilvl":53}}}
+{"id":12556,"name":"High Priestess Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":10,"16":7,"30":58},"ilvl":59}},"item_effects":[{"buff_id":1300925,"buff_name":"Resist Charm 10 (1300925)"}]}
 {"id":12557,"name":"Ebonsteel Spaulders","type":"ItemTypeShoulder","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":8,"1":9,"2":16,"30":463,"31":90},"ilvl":59}}}
 {"id":12608,"name":"Butcher's Apron","type":"ItemTypeBack","scaling_options":{"0":{"stats":{"2":7,"4":9,"5":3,"16":15,"30":41},"ilvl":58}}}
 {"id":12626,"name":"Funeral Cuffs","type":"ItemTypeWrist","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"3":14,"4":18,"5":6,"30":37,"39":7},"ilvl":59}}}
@@ -248,18 +252,25 @@
 {"id":13259,"name":"Ribsteel Footguards","type":"ItemTypeFeet","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":10,"1":10,"2":19,"30":438},"ilvl":61}}}
 {"id":13261,"name":"Globe of D'sak","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":5,"3":11,"11":14,"39":4},"ilvl":59}}}
 {"id":13283,"name":"Magus Ring","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"2":8,"3":12,"16":7,"20":5},"ilvl":59}},"unique":true}
+{"id":13284,"name":"Swiftdart Battleboots","type":"ItemTypeFeet","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"1":17,"2":11,"3":10,"30":236},"ilvl":58}}}
+{"id":13314,"name":"Alanna's Embrace","type":"ItemTypeChest","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":20,"3":20,"4":23,"5":23,"15":5,"30":96},"ilvl":62}}}
+{"id":13345,"name":"Seal of Rivendare","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"3":17,"4":8,"5":8},"ilvl":63}}}
 {"id":13346,"name":"Robes of the Exalted","type":"ItemTypeChest","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"3":8,"4":40,"5":13,"16":25,"30":89},"ilvl":63}}}
 {"id":13359,"name":"Crown of Tyranny","type":"ItemTypeHead","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":25,"16":-10,"17":40,"18":40,"21":14,"30":301},"ilvl":63}}}
+{"id":13360,"name":"Gift of the Elven Magi","type":"ItemTypeWeapon","weapon_type":"WeaponTypeDagger","hand_type":"HandTypeOneHand","weapon_speed":1.5,"scaling_options":{"0":{"weapon_damage_min":29,"weapon_damage_max":54,"stats":{"2":6,"3":10,"4":135,"5":45,"16":7},"ilvl":63}}}
+{"id":13369,"name":"Fire Striders","type":"ItemTypeFeet","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"7":29,"16":5,"30":61,"36":13},"ilvl":63}}}
 {"id":13374,"name":"Soulstealer Mantle","type":"ItemTypeShoulder","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"3":22,"20":10,"30":64},"ilvl":60}}}
 {"id":13382,"name":"Cannonball Runner","type":"ItemTypeTrinket","scaling_options":{"0":{"stats":{"20":5},"ilvl":61}},"item_effects":[{"buff_id":6251,"buff_name":"Summon Scarlet Cannon (6251)","effect_duration_ms":10000,"on_use":{"cooldown_ms":300000,"category_id":1141,"category_cooldown_ms":10000}},{"buff_id":1300668,"buff_name":"Summon Scarlet Cannon (1300668)"}]}
 {"id":13383,"name":"Woollies of the Prancing Minstrel","type":"ItemTypeLegs","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":12,"3":10,"4":15,"5":5,"30":301,"34":10},"ilvl":58}}}
 {"id":13385,"name":"Tome of Knowledge","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"0":8,"1":8,"2":8,"3":8},"ilvl":61}},"item_effects":[{"buff_id":1293068,"buff_name":"Stealth 05 (1293068)"}]}
 {"id":13395,"name":"Skul's Fingerbone Claws","type":"ItemTypeHands","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":10,"3":5,"17":42,"18":42,"30":106},"ilvl":60}}}
+{"id":13398,"name":"Boots of the Shrieker","type":"ItemTypeFeet","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":10,"3":10,"4":12,"5":12,"15":2,"30":120,"39":10},"ilvl":62}}}
 {"id":13403,"name":"Grimgore Noose","type":"ItemTypeWaist","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":9,"3":18,"4":11,"5":4,"16":10,"30":48},"ilvl":60}}}
 {"id":13524,"name":"Skull of Burning Shadows","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"20":10,"36":10,"39":10},"ilvl":62}}}
 {"id":13528,"name":"Twilight Void Bracers","type":"ItemTypeWrist","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"3":7,"10":11,"30":160,"39":15},"ilvl":62}}}
 {"id":13529,"name":"Husk of Nerub'enkan","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":10,"25":2,"27":38,"30":2089,"38":15},"ilvl":61}}}
 {"id":13531,"name":"Crypt Stalker Leggings","type":"ItemTypeLegs","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":14,"25":6,"30":150,"38":18,"39":18},"ilvl":61}}}
+{"id":13534,"name":"Banshee Finger","type":"ItemTypeRanged","ranged_weapon_type":"RangedWeaponTypeWand","weapon_speed":1.9,"scaling_options":{"0":{"weapon_damage_min":79,"weapon_damage_max":148,"stats":{"15":1,"34":1,"37":10},"ilvl":60}}}
 {"id":13937,"name":"Headmaster's Charge","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":2.9,"scaling_options":{"0":{"weapon_damage_min":100,"weapon_damage_max":151,"stats":{"2":30,"4":90,"5":90,"16":20},"ilvl":62}},"item_effects":[{"buff_id":18264,"buff_name":"Headmaster's Charge (18264)","effect_duration_ms":900000,"on_use":{"cooldown_ms":600000}}]}
 {"id":13954,"name":"Verdant Footpads","type":"ItemTypeFeet","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"4":38,"5":12,"10":24,"30":120,"34":5},"ilvl":62}}}
 {"id":13957,"name":"Gargoyle Slashers","type":"ItemTypeHands","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"0":10,"2":12,"21":14,"30":107},"ilvl":61}}}
@@ -269,7 +280,11 @@
 {"id":13962,"name":"Vosh'gajin's Strand","type":"ItemTypeWaist","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":6,"21":14,"25":6,"28":12,"30":95},"ilvl":60}}}
 {"id":13963,"name":"Voone's Vice Grips","type":"ItemTypeHands","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"1":9,"2":15,"20":15,"30":221},"ilvl":60}}}
 {"id":13966,"name":"Mark of Tyranny","type":"ItemTypeTrinket","scaling_options":{"0":{"stats":{"28":12,"30":180},"ilvl":63}},"item_effects":[{"buff_id":1287842,"buff_name":"Bastion of Tyranny (1287842)","effect_duration_ms":15000,"scaling_options":{"0":{"stats":{"32":620}}},"on_use":{"cooldown_ms":300000,"category_id":2554,"category_cooldown_ms":15000}}]}
+{"id":13967,"name":"Windreaver Greaves","type":"ItemTypeFeet","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"1":20,"3":4,"20":10,"30":247},"ilvl":61}}}
 {"id":13968,"name":"Eye of the Beast","type":"ItemTypeTrinket","scaling_options":{"0":{"stats":{"13":14},"ilvl":63}},"item_effects":[{"buff_id":1287840,"buff_name":"Eye of the Beast (1287840)","effect_duration_ms":20000,"on_use":{"cooldown_ms":300000,"category_id":1141,"category_cooldown_ms":20000}},{"buff_id":1318846,"buff_name":"Eye of the Beast (1318846)"}],"pseudo_stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"class_allowlist":["ClassPriest","ClassDruid","ClassShaman","ClassMage","ClassWarlock"]}
+{"id":13969,"name":"Loomguard Armbraces","type":"ItemTypeWrist","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":6,"3":7,"4":29,"5":10,"30":157,"34":3},"ilvl":61}}}
+{"id":14024,"name":"Frightalon","type":"ItemTypeWeapon","weapon_type":"WeaponTypeDagger","hand_type":"HandTypeOneHand","weapon_speed":1.4,"scaling_options":{"0":{"weapon_damage_min":39,"weapon_damage_max":73,"stats":{"17":20},"ilvl":61}},"item_effects":[{"buff_id":19755,"buff_name":"Frightalon (19755)","effect_duration_ms":60000,"proc":{}}]}
+{"id":14340,"name":"Freezing Lich Robes","type":"ItemTypeChest","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":19,"8":30,"30":88,"37":15},"ilvl":62}}}
 {"id":14382,"name":"Durability Chestpiece","type":"ItemTypeChest","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"30":3},"ilvl":1}}}
 {"id":14383,"name":"Durability Bracers","type":"ItemTypeWrist","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"30":1},"ilvl":1}}}
 {"id":14384,"name":"Durability Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"30":2},"ilvl":1}}}
@@ -281,6 +296,8 @@
 {"id":14390,"name":"Durability Belt","type":"ItemTypeWaist","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"30":2},"ilvl":1}}}
 {"id":14393,"name":"Durability Shield","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"27":1,"30":10},"ilvl":1}}}
 {"id":14528,"name":"Rattlecage Buckler","type":"ItemTypeWeapon","weapon_type":"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":7,"3":12,"4":15,"5":5,"27":39,"30":2121,"39":7},"ilvl":62}}}
+{"id":14537,"name":"Corpselight Greaves","type":"ItemTypeFeet","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"2":20,"17":14,"30":445,"39":10},"ilvl":62}}}
+{"id":14539,"name":"Bone Ring Helm","type":"ItemTypeHead","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"0":6,"1":5,"2":30,"3":6,"25":4,"30":141},"ilvl":62}}}
 {"id":14552,"name":"Stockade Pauldrons","type":"ItemTypeShoulder","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"2":20,"4":12,"5":12,"25":10,"30":472},"ilvl":55}}}
 {"id":14558,"name":"Lady Maye's Pendant","type":"ItemTypeNeck","scaling_options":{"0":{"stats":{"2":10,"3":19,"4":11,"5":11},"ilvl":64}}}
 {"id":14611,"name":"Bloodmail Hauberk","type":"ItemTypeChest","armor_type":"ArmorTypeMail","set_name":"Bloodmail Regalia","set_id":123,"scaling_options":{"0":{"stats":{"0":11,"2":15,"3":15,"28":12,"30":360,"34":4},"ilvl":61}}}
@@ -291,6 +308,11 @@
 {"id":14631,"name":"Necropile Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeCloth","set_name":"Necropile Raiment","set_id":122,"scaling_options":{"0":{"stats":{"2":15,"3":10,"4":13,"5":13,"16":9,"30":60},"ilvl":61}}}
 {"id":14632,"name":"Necropile Leggings","type":"ItemTypeLegs","armor_type":"ArmorTypeCloth","set_name":"Necropile Raiment","set_id":122,"scaling_options":{"0":{"stats":{"2":21,"3":18,"4":8,"5":8,"16":12,"30":76},"ilvl":61}}}
 {"id":14633,"name":"Necropile Mantle","type":"ItemTypeShoulder","armor_type":"ArmorTypeCloth","set_name":"Necropile Raiment","set_id":122,"scaling_options":{"0":{"stats":{"2":17,"3":11,"4":9,"5":9,"16":9,"30":65},"ilvl":61}}}
+{"id":14636,"name":"Cadaverous Belt","type":"ItemTypeWaist","armor_type":"ArmorTypeLeather","set_name":"Cadaverous Garb","set_id":121,"scaling_options":{"0":{"stats":{"2":12,"17":40,"18":40,"28":6,"30":97},"ilvl":61}}}
+{"id":14637,"name":"Cadaverous Armor","type":"ItemTypeChest","armor_type":"ArmorTypeLeather","set_name":"Cadaverous Garb","set_id":121,"scaling_options":{"0":{"stats":{"2":10,"17":60,"18":60,"28":6,"30":172},"ilvl":61}}}
+{"id":14638,"name":"Cadaverous Leggings","type":"ItemTypeLegs","armor_type":"ArmorTypeLeather","set_name":"Cadaverous Garb","set_id":121,"scaling_options":{"0":{"stats":{"2":18,"17":52,"18":52,"28":6,"30":150},"ilvl":61}}}
+{"id":14640,"name":"Cadaverous Gloves","type":"ItemTypeHands","armor_type":"ArmorTypeLeather","set_name":"Cadaverous Garb","set_id":121,"scaling_options":{"0":{"stats":{"2":9,"17":44,"18":44,"30":107,"31":30},"ilvl":61}}}
+{"id":14641,"name":"Cadaverous Walkers","type":"ItemTypeFeet","armor_type":"ArmorTypeLeather","set_name":"Cadaverous Garb","set_id":121,"scaling_options":{"0":{"stats":{"2":20,"17":24,"18":24,"30":118,"31":40},"ilvl":61}}}
 {"id":15105,"name":"Staff of Noh'Orahil","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":2.7,"scaling_options":{"0":{"rand_prop_points":16,"weapon_damage_min":46,"weapon_damage_max":70,"stats":{"2":3,"3":4,"7":39,"21":14},"ilvl":40}},"class_allowlist":["ClassWarlock"]}
 {"id":15106,"name":"Staff of Dar'Orahil","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":2.7,"scaling_options":{"0":{"rand_prop_points":16,"weapon_damage_min":46,"weapon_damage_max":70,"stats":{"2":3,"3":11,"11":39,"20":10},"ilvl":40}},"class_allowlist":["ClassWarlock"]}
 {"id":15109,"name":"Staff of Soran'ruk","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":2.9,"scaling_options":{"0":{"rand_prop_points":14,"weapon_damage_min":36,"weapon_damage_max":55,"stats":{"2":14,"7":34,"11":34},"ilvl":25}},"class_allowlist":["ClassWarlock"]}
@@ -356,6 +378,7 @@
 {"id":17777,"name":"Relentless Chain","type":"ItemTypeChest","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":11,"3":11,"17":20,"30":268,"31":0},"ilvl":49}}}
 {"id":17778,"name":"Sagebrush Girdle","type":"ItemTypeWaist","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"1":11,"3":9,"30":74,"31":0},"ilvl":49}}}
 {"id":17779,"name":"Hulkstone Pauldrons","type":"ItemTypeShoulder","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"2":13,"26":5,"30":354,"31":0},"ilvl":49}}}
+{"id":17780,"name":"Blade of Eternal Darkness","type":"ItemTypeWeapon","weapon_type":"WeaponTypeDagger","hand_type":"HandTypeMainHand","weapon_speed":1.5,"scaling_options":{"0":{"weapon_damage_min":21,"weapon_damage_max":57,"stats":{"4":62,"5":62},"ilvl":54}},"item_effects":[{"buff_id":27860,"buff_name":"Engulfing Shadows (21978)","proc":{"icd_ms":100,"proc_chance":1}}],"unique":true}
 {"id":17943,"name":"Fist of Stone","type":"ItemTypeWeapon","weapon_type":"WeaponTypeMace","hand_type":"HandTypeMainHand","weapon_speed":1.8,"scaling_options":{"0":{"weapon_damage_min":44,"weapon_damage_max":83,"stats":{"30":40,"31":40},"ilvl":53}},"item_effects":[{"buff_id":1294794,"buff_name":"Fist of Stone (1294794)"}]}
 {"id":18022,"name":"Royal Seal of Alexis","type":"ItemTypeFinger","scaling_options":{"0":{"stats":{"2":10,"4":22,"5":7,"16":8},"ilvl":62}}}
 {"id":18043,"name":"Coal Miner Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"0":9,"2":17,"25":5,"30":112,"36":6},"ilvl":57}}}
@@ -429,12 +452,18 @@
 {"id":18611,"name":"Gnarlpine Leggings","type":"ItemTypeLegs","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"rand_prop_points":1,"stats":{"16":1,"30":45,"31":0},"ilvl":9}}}
 {"id":18672,"name":"Elemental Ember","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":11,"7":14},"ilvl":60}}}
 {"id":18686,"name":"Bone Golem Shoulders","type":"ItemTypeShoulder","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"1":19,"2":9,"3":12,"30":274},"ilvl":62}}}
+{"id":18690,"name":"Wraithplate Leggings","type":"ItemTypeLegs","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"2":20,"29":18,"30":566,"31":180},"ilvl":62}}}
 {"id":18694,"name":"Shadowy Mail Greaves","type":"ItemTypeFeet","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":20,"17":14,"30":251,"39":10},"ilvl":62}}}
+{"id":18695,"name":"Spellbound Tome","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":{"2":6,"3":16,"15":2},"ilvl":62}}}
+{"id":18700,"name":"Malefic Bracers","type":"ItemTypeWrist","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"1":6,"2":16,"25":2,"30":72},"ilvl":58}}}
 {"id":18716,"name":"Ash Covered Boots","type":"ItemTypeFeet","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"1":13,"2":13,"25":3,"28":12,"30":118},"ilvl":61}}}
 {"id":18717,"name":"Hammer of the Grand Crusader","type":"ItemTypeWeapon","weapon_type":"WeaponTypeMace","hand_type":"HandTypeTwoHand","weapon_speed":2.7,"scaling_options":{"0":{"weapon_damage_min":86,"weapon_damage_max":130,"stats":{"2":10,"3":26,"4":135,"5":45,"16":17},"ilvl":63}}}
 {"id":18723,"name":"Animated Chain Necklace","type":"ItemTypeNeck","scaling_options":{"0":{"stats":{"2":8,"4":33,"5":11,"16":7},"ilvl":62}}}
+{"id":18726,"name":"Magistrate's Cuffs","type":"ItemTypeWrist","armor_type":"ArmorTypeLeather","scaling_options":{"0":{"stats":{"2":15,"25":7,"30":73},"ilvl":59}}}
 {"id":18727,"name":"Crimson Felt Hat","type":"ItemTypeHead","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":8,"3":10,"4":30,"5":30,"16":10,"30":68},"ilvl":59}}}
+{"id":18728,"name":"Anastari Heirloom","type":"ItemTypeNeck","scaling_options":{"0":{"stats":{"2":15,"11":11,"15":2},"ilvl":60}}}
 {"id":18730,"name":"Shadowy Laced Handwraps","type":"ItemTypeHands","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"3":15,"4":11,"5":11,"30":53,"34":3,"39":12},"ilvl":60}}}
+{"id":18739,"name":"Chitinous Plate Legguards","type":"ItemTypeLegs","armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"2":20,"3":20,"9":7,"30":557,"34":5},"ilvl":61}}}
 {"id":19129,"name":"Everglowing Robe","type":"ItemTypeChest","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"rand_prop_points":21,"stats":{"3":11,"4":13,"5":13,"16":11,"30":64},"ilvl":49}}}
 {"id":19308,"name":"Tome of Arcane Domination","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"rand_prop_points":25,"stats":{"6":31,"34":3},"ilvl":60}},"unique":true}
 {"id":19309,"name":"Tome of Shadow Force","type":"ItemTypeWeapon","weapon_type":"WeaponTypeOffHand","hand_type":"HandTypeOffHand","scaling_options":{"0":{"rand_prop_points":25,"stats":{"2":7,"11":31},"ilvl":60}},"unique":true}
@@ -503,6 +532,8 @@
 {"id":22394,"name":"Staff of Metanoia","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":2.1,"scaling_options":{"0":{"weapon_damage_min":66,"weapon_damage_max":99,"stats":{"2":15,"3":15,"4":135,"5":45,"16":22},"ilvl":62}}}
 {"id":22405,"name":"Mantle of the Scarlet Crusade","type":"ItemTypeShoulder","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":11,"3":12,"4":20,"5":7,"16":12,"30":65},"ilvl":61}}}
 {"id":22408,"name":"Ritssyn's Wand of Bad Mojo","type":"ItemTypeRanged","ranged_weapon_type":"RangedWeaponTypeWand","weapon_speed":1.3,"scaling_options":{"0":{"weapon_damage_min":58,"weapon_damage_max":108,"stats":{"2":5,"4":11,"5":11},"ilvl":63}}}
+{"id":22410,"name":"Gauntlets of Deftness","type":"ItemTypeHands","armor_type":"ArmorTypeMail","scaling_options":{"0":{"stats":{"1":20,"2":10,"3":6,"30":231,"31":60},"ilvl":63}}}
+{"id":22412,"name":"Thuzadin Mantle","type":"ItemTypeShoulder","armor_type":"ArmorTypeCloth","scaling_options":{"0":{"stats":{"2":11,"3":18,"4":15,"5":15,"30":67},"ilvl":63}}}
 {"id":22458,"name":"Moonshadow Stave","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","weapon_speed":3.7,"scaling_options":{"0":{"weapon_damage_min":99,"weapon_damage_max":149,"stats":{"4":60,"5":60,"13":14,"21":14,"34":8},"ilvl":52}},"item_effects":[{"buff_id":1300435,"buff_name":"Moonshadow (1300435)"}],"class_allowlist":["ClassDruid"]}
 {"id":22630,"name":"Atiesh, Greatstaff of the Guardian","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","quality_modifier":-32.70000076293945,"weapon_speed":2.9,"scaling_options":{"0":{"weapon_damage_min":130,"weapon_damage_max":243,"stats":{"2":30,"3":29,"4":150,"5":150,"21":28},"ilvl":90}}}
 {"id":22631,"name":"Atiesh, Greatstaff of the Guardian","type":"ItemTypeWeapon","weapon_type":"WeaponTypeStaff","hand_type":"HandTypeTwoHand","quality_modifier":-32.70000076293945,"weapon_speed":2.9,"scaling_options":{"0":{"weapon_damage_min":130,"weapon_damage_max":243,"stats":{"2":28,"3":28,"4":300,"5":120,"16":27},"ilvl":90}}}

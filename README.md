@@ -1065,7 +1065,7 @@ the Go goldens and exporter uses. The departures:
   (`tests/forever_live_item_stats_20261106.rs`).
   The third batch (Wowhead's Forever tooltips of 8 and 9 November 2026, every weapon and armor
   row of `data/items.jsonl` without a live row: 10,909 asked, 10,307 revealed)
-  adds 390 rows with `tools/rust_live_items.py`, which keeps the reference row and changes only
+  adds 421 rows with `tools/rust_live_items.py`, which keeps the reference row and changes only
   what the tooltip states otherwise (its docstring has the rules). Most change a primary stat or
   spell power the live game retuned: Tarnished Elven Ring 10 Agility and 10 Arcane Resistance
   (was 15 Agility), Hand of Justice 12 Attack Power (was 20), Crimson Felt Hat 10 Intellect and
