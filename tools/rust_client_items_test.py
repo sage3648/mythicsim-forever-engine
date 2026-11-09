@@ -164,6 +164,20 @@ class ParseTests(unittest.TestCase):
             '"ilvl":39}}}',
         )
 
+    def test_where_the_item_drops_is_not_an_item_line(self):
+        # The same tooltip on 9 November 2026, with Wowhead's drop notes after the sell price.
+        notes = (
+            '</div><div class="whtt-extra whtt-droppedby">Dropped by: Zul\'Alai</div>'
+            '<div class="whtt-extra whtt-dropchance">Drop Chance: 66.67%</div></td>'
+        )
+        dropped = {**SHACKLES, "tooltip": SHACKLES["tooltip"].replace("</div></td>", notes, 1)}
+        self.assertIn("Dropped by", dropped["tooltip"])
+        shackles = {**item(4, 3), "InventoryType": "9"}
+        self.assertEqual(
+            tool.row_for(274600, None, shackles, dropped),
+            tool.row_for(274600, None, shackles, SHACKLES),
+        )
+
     def test_the_tooltip_must_name_the_item_rows_slot(self):
         with self.assertRaisesRegex(tool.Unreadable, "slot"):
             tool.row_for(274600, None, {**item(4, 3), "InventoryType": "10"}, SHACKLES)
@@ -261,11 +275,15 @@ class CommittedFileTests(unittest.TestCase):
             mallet = next(json.loads(line) for line in rows if f'"id":{279885},' in line)
         self.assertEqual(mallet["scaling_options"]["0"]["stats"], {"2": 15, "17": 22})
         with open(tool.BONUSES) as rows:
-            bonuses = [json.loads(line) for line in rows]
+            bonuses = {row["id"]: row for row in map(json.loads, rows)}
         self.assertEqual(
-            bonuses,
-            [{"id": 279885, "name": "Ceremonial Mallet", "melee_attack_power_versus": {"MobTypeUndead": 33}}],
+            bonuses[279885],
+            {"id": 279885, "name": "Ceremonial Mallet", "melee_attack_power_versus": {"MobTypeUndead": 33}},
         )
+        # Every bonus belongs to a committed row.
+        with open(tool.OUT) as rows:
+            ids = {json.loads(line)["id"] for line in rows}
+        self.assertLessEqual(set(bonuses), ids)
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:
