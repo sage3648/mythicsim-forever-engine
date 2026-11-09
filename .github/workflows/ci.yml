@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       # No toolchain input: the action installs the version pinned in rust-toolchain.toml.
       - name: Install Rust from rust-toolchain.toml
-        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           components: rustfmt, clippy
           target: wasm32-unknown-unknown, wasm32-wasip1
@@ -63,7 +63,7 @@ jobs:
           persist-credentials: false
       # No toolchain input: the action installs the version pinned in rust-toolchain.toml.
       - name: Install Rust from rust-toolchain.toml
-        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           cache-save-if: ${{ github.ref == 'refs/heads/main' }}
       # The mage golden replay runs in the tests-go-golden-shard jobs.
@@ -83,7 +83,7 @@ jobs:
           persist-credentials: false
       # No toolchain input: the action installs the version pinned in rust-toolchain.toml.
       - name: Install Rust from rust-toolchain.toml
-        uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        uses: actions-rust-lang/setup-rust-toolchain@a188e68d0fd2bd36ad51dccb2b07ba6e75105f30 # v2.0.1
         with:
           cache-save-if: ${{ github.ref == 'refs/heads/main' }}
       # test -x fails unless cargo names exactly one classes executable.
