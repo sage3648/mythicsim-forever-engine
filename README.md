@@ -1057,7 +1057,15 @@ the Go goldens and exporter uses. The departures:
   tooltips Wowhead decoded since, 14 of them with a creature type attack power line written to
   `data/forever-client-item-bonuses.jsonl` as the Ceremonial Mallet's is, such as Nama's
   Cherished Necklace (279893); Wowhead's notes on where an item drops ("Dropped by", "Drop
-  Chance") are not item lines (`tests/forever_client_items_20261109.rs`).
+  Chance") are not item lines (`tests/forever_client_items_20261109.rs`). Since 10 November 2026
+  39 more items are taken whose other lines were unread: a line that changes nothing in a fight
+  (mount, travel and swim speed, a zone, falling, stealth detection, a profession, quest text, a
+  use or proc that only controls or dispels an enemy) is left out of the row, and expertise
+  ("Reduces chance to be Dodged or Parried by 1.0%": 10 ExpertiseRating), "+N Weapon Damage"
+  (PhysicalDamage), a weapon skill (`pseudo_stats`) and "+N to All Resistances" read as the
+  reference rows hold them. "Increases damage done to <creature type> by magical spells and
+  effects by up to N" is spell damage against that type in the bonus file, which the export turns
+  into a `mob_type_bonus` as Mark of the Champion's (`tests/forever_client_items_lines_20261110.rs`).
 - Items whose live row differs from the reference database: Forever's rules read
   `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
   pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the

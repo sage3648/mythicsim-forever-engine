@@ -259,6 +259,80 @@ class ParseTests(unittest.TestCase):
             with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
                 tool.row_for(274600, None, {**item(4, 3), "InventoryType": "9"}, odd)
 
+    def test_lines_with_no_fight_effect_are_left_out_of_the_row(self):
+        shackles = {**item(4, 3), "InventoryType": "9"}
+        # The Shackles without their Defense line, which with_effects replaces.
+        plain = tool.row_for(274600, None, shackles, with_effects(SHACKLES, "<!--itemEffects:0-->"))
+        for line in [
+            "Equip: Increases mount speed by 7% in Desert areas.",
+            "Equip: Increases movement speed while mounted by 5%. This effect does not stack with "
+            "similar effects.",
+            "Equip: Movement speed increased by 2% in Forest and Grassland areas.",
+            "Equip: Restores 4 Mana per 5 sec in Forest and Grassland areas.",
+            "Equip: Underwater Breath lasts 50% longer than normal.",
+            "Equip: Increased Herbalism +4.",
+            "Equip: Reduces the cast time of Disenchant by 25%.",
+            "Equip: Reduces damage from falling.",
+            "Equip: Increases your effective stealth detection level by 2.",
+            "Equip: Reduces the hit chance of Fear effects against you by 2%.",
+            "Chance on hit: Knocks down all nearby enemies for 3 sec.",
+            "Use: Stuns target and yourself for 3 sec. Ogres are Stunned for 5 sec and refund 50% "
+            "of the cooldown. (15 Min Cooldown)",
+        ]:
+            odd = with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
+            self.assertEqual(tool.row_for(274600, None, shackles, odd), plain, line)
+
+    def test_a_line_doubled_in_cities_reads_as_its_base_amount(self):
+        line = (
+            "Equip: Increases healing done by up to 11 and damage done by up to 4 for all magical "
+            "spells and effects. This effect is doubled in Strongholds and Cities."
+        )
+        parsed = tool.parse_tooltip(
+            with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
+        )
+        self.assertEqual(parsed["stats"], {0: 7, 4: 11, 5: 4})
+
+    def test_expertise_and_weapon_damage_read_as_the_reference_rows_hold_them(self):
+        # Servomechanic Sledgehammer (1.0%: 10), Dwarven Tree Chopper (0.6%: 6), Might of
+        # Cenarius (+4 Weapon Damage: 4 PhysicalDamage).
+        for line, stats in [
+            ("Equip: Reduces chance to be Dodged or Parried by 1.0%.", {24: 10}),
+            ("Equip: Reduces chance to be Dodged or Parried by 0.6%.", {24: 6}),
+            ("Equip: +4 Weapon Damage.", {40: 4}),
+        ]:
+            self.assertEqual(tool.equip_stats(line), stats, line)
+
+    def test_a_weapon_skill_is_a_pseudo_stat(self):
+        # Servomechanic Sledgehammer's "Increased Two-Handed Maces +1" is 1 at 35.
+        lines = (
+            '<span class="q2">Equip: Increased Two-Handed Maces +1.</span><br>'
+            '<span class="q2">Equip: Increased Fist Weapons +2.</span><!--itemEffects:2-->'
+        )
+        row = tool.row_for(274600, None, {**item(4, 3), "InventoryType": "9"}, with_effects(SHACKLES, lines))
+        self.assertEqual(len(row["pseudo_stats"]), 42)
+        self.assertEqual(
+            {index: value for index, value in enumerate(row["pseudo_stats"]) if value},
+            {32: 2, 35: 1},
+        )
+        self.assertEqual(list(row)[-1], "pseudo_stats")
+
+    def test_all_resistances_is_each_resistance(self):
+        line = '+7 to All Resistances<br><span class="q2">Equip: Increased Defense +6.</span><!--itemEffects:1-->'
+        parsed = tool.parse_tooltip(with_effects(SHACKLES, line))
+        self.assertEqual(parsed["stats"], {0: 7, 25: 6, 35: 7, 36: 7, 37: 7, 38: 7, 39: 7})
+
+    def test_spell_damage_against_a_creature_type_is_a_bonus_beside_the_row(self):
+        line = (
+            '<span class="q2">Equip: Increases damage done to Humanoids by magical spells and '
+            'effects by up to 10.</span><!--itemEffects:1-->'
+        )
+        parsed = tool.parse_tooltip(with_effects(SHACKLES, line))
+        self.assertEqual(parsed["versus_spell"], {"MobTypeHumanoid": 10})
+        self.assertEqual(
+            tool.dump_row(tool.bonus_row(279833, "Courier's Clasp", parsed)),
+            '{"id":279833,"name":"Courier\'s Clasp","spell_damage_versus":{"MobTypeHumanoid":10}}',
+        )
+
     def test_development_rows_are_not_items(self):
         for name in ["Deprecated Old Belt", "OLDRecruit's Belt", "Test Fire Sword", "Hidden Cloak (DNT)"]:
             self.assertTrue(tool.JUNK_NAME.search(name), name)
