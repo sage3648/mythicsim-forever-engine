@@ -1029,7 +1029,11 @@ the Go goldens and exporter uses. The departures:
   the same line of a Classic item. Items with a use, chance on hit or other equip effect, a set
   bonus or a line the generator does not read are left out and stay refused
   (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
-  `tests/forever_client_items_20261108.rs`).
+  `tests/forever_client_items_20261108.rs`). The rerun of 9 November 2026 added the 71 items whose
+  tooltips Wowhead decoded since, 14 of them with a creature type attack power line written to
+  `data/forever-client-item-bonuses.jsonl` as the Ceremonial Mallet's is, such as Nama's
+  Cherished Necklace (279893); Wowhead's notes on where an item drops ("Dropped by", "Drop
+  Chance") are not item lines (`tests/forever_client_items_20261109.rs`).
 - Items whose live row differs from the reference database: Forever's rules read
   `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
   pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the

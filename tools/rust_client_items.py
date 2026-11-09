@@ -357,6 +357,11 @@ def tooltip_lines(tooltip):
     text = re.sub(r"<span>(?:<!--[^>]*?-->)?([\d.]+)</span>", r"\1", tooltip)
     text = re.sub(r"<!--[^>]*?-->", "", text)
     text = re.sub(r'<div class="whtt-sellprice">.*?</div>', "", text, flags=re.DOTALL)
+    # Wowhead's notes on where the item drops ("Dropped by: Zul'Alai", "Drop Chance: 66.67%",
+    # added to the tooltips during 8 to 9 November 2026) say nothing about the item.
+    text = re.sub(
+        r'<div class="whtt-extra whtt-(?:droppedby|dropchance)">.*?</div>', "", text, flags=re.DOTALL
+    )
     text = re.sub(r"<br\s*/?>|</td>|</tr>|</th>|</span>|</table>|<div[^>]*>|</div>", "\n", text)
     text = re.sub(r"Binds when (?:picked up|equipped)|<(?:table|tr|td|th)[^>]*>", "\n", text)
     text = html.unescape(re.sub(r"<[^>]+>", "", text))
