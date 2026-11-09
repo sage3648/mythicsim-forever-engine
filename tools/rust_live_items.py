@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+"""Add data/forever-live-items.jsonl rows for the reference items whose live Wowhead Forever
+tooltip states other base stats, weapon damage or speed than their data/items.jsonl row.
+
+Under Forever's rules preparation reads a live row before the reference row of the same id
+(src/prepare/items.rs). Each row this tool writes is the reference row with only what the tooltip
+states otherwise changed, so its name, kind, effects and set stay the reference row's.
+
+    https://nether.wowhead.com/forever/tooltip/item/<id>?x=<random>
+
+Wowhead's Forever tooltip decodes the live client's item, the encrypted rows included, and
+answers 404 for an item whose Forever stats Blizzard has not revealed (such an item keeps its
+reference row). The rules, per stat of the row's base stats (scaling_options "0"):
+
+- a stat the tooltip states (a "+N Stat" line, the armor and block lines, an equip line that is a
+  plain stat, read as tools/rust_client_items.py reads it) replaces the row's, unless the row
+  carries that value as an item effect's stat instead;
+- a stat the tooltip does not state is dropped only when it is a primary stat, a resistance,
+  spell penetration, mana per 5 sec, defense or bonus armor, the row's effects do not carry it,
+  and its name appears nowhere on the tooltip;
+- a generic "+N Attack Power" equip line is melee and ranged: a row that holds the same ranged
+  attack power as attack power takes N for both;
+- hit and crit within one rating point of the tooltip's percentage are the same;
+- weapon damage and speed follow the tooltip, and so does the item level of a row that changes.
+
+Existing live rows are kept as they are. An item with a "+N" line this tool cannot read is left
+out and listed.
+
+    python3 tools/rust_live_items.py fetch --cache DIR
+    python3 tools/rust_live_items.py build --cache DIR [--report FILE]
+    python3 tools/rust_live_items.py check
+
+fetch asks for every reference weapon and armor tooltip the cache lacks (the cache format is
+tools/rust_client_items.py's, so one cache serves both); build and check run offline.
+"""
+
+import argparse
+import json
+from pathlib import Path
+import re
+import sys
+import time
+import urllib.error
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import rust_client_items as client  # noqa: E402
+
+DATA = client.DATA
+ITEMS = client.ITEMS
+LIVE = DATA / "forever-live-items.jsonl"
+
+STAT_ARMOR, STAT_BONUS_ARMOR, STAT_BLOCK_VALUE = 30, 31, 27
+ATTACK_POWER, RANGED_ATTACK_POWER = 17, 18
+MELEE_HIT, MELEE_CRIT = 20, 21
+RESISTANCES = {"Arcane": 35, "Fire": 36, "Frost": 37, "Nature": 38, "Shadow": 39}
+# Stats a tooltip shows by name: dropped from a row when the name is nowhere on the tooltip.
+DROPPABLE = {
+    0: "Strength", 1: "Agility", 2: "Stamina", 3: "Intellect", 16: "Spirit",
+    15: "Spell Penetration", 34: "mana per 5", 25: "Defense", STAT_BONUS_ARMOR: "Armor",
+    **{stat: f"{school} Resistance" for school, stat in RESISTANCES.items()},
+}  # fmt: skip
+# "+N Stat" lines the reference rows hold that client items do not carry.
+EXTRA_STAT_LINES = {"Ranged Attack Power": RANGED_ATTACK_POWER}
+ALL_RESISTANCES = re.compile(r"^\+(\d+) (?:to )?All Resistances\.?$")
+SET_BONUS = re.compile(r"^\(\d+\) Set ?:")
+
+
+def reference_rows():
+    with open(ITEMS) as rows:
+        return {row["id"]: row for row in map(json.loads, rows)}
+
+
+def live_rows():
+    with open(LIVE) as rows:
+        return {row["id"]: row for row in map(json.loads, rows)}
+
+
+def is_gear(row):
+    return row.get("type") not in (None, "ItemTypeUnknown")
+
+
+def fetch(cache):
+    """Fetch every reference weapon and armor tooltip the cache lacks."""
+    Path(cache).mkdir(parents=True, exist_ok=True)
+    live = live_rows()
+    wanted = [
+        item_id
+        for item_id, row in sorted(reference_rows().items())
+        if is_gear(row) and item_id not in live and not client.cache_path(cache, item_id).exists()
+    ]
+    print(f"{len(wanted)} tooltips to fetch", file=sys.stderr)
+    delay = client.REQUEST_INTERVAL
+    index = 0
+    while index < len(wanted):
+        item_id = wanted[index]
+        started = time.monotonic()
+        try:
+            text = client.fetch_tooltip(item_id)
+            json.loads(text)
+        except urllib.error.HTTPError as err:
+            if err.code in (403, 429):
+                delay = min(delay * 2, 60)
+                print(f"HTTP {err.code} at {item_id}, waiting {delay:.0f}s", file=sys.stderr)
+                time.sleep(delay * 4)
+                continue
+            if err.code != 404:
+                raise
+            text = json.dumps({"missing": True})
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as err:
+            print(f"{item_id}: {err}, retrying", file=sys.stderr)
+            time.sleep(5)
+            continue
+        client.cache_path(cache, item_id).write_text(text)
+        index += 1
+        delay = max(client.REQUEST_INTERVAL, delay * 0.9)
+        time.sleep(max(0.0, delay - (time.monotonic() - started)))
+        if index % 250 == 0:
+            print(f"{index}/{len(wanted)}", file=sys.stderr)
+
+
+def read_tooltip(response):
+    """What a live tooltip states: item level, base stats by index, weapon damage and speed, and
+    its whole text; None for an item with no live tooltip. Raises client.Unreadable for a "+N"
+    line it cannot read."""
+    if response.get("missing") or response.get("error") or "tooltip" not in response:
+        return None
+    lines, _ = client.tooltip_lines(response["tooltip"])
+    out = {"stats": {}, "text": " ".join(lines)}
+
+    def add(stat, value):
+        out["stats"][stat] = out["stats"].get(stat, 0) + value
+
+    for line in lines:
+        if SET_BONUS.match(line) or client.SET_LINE.match(line):
+            continue
+        if match := re.fullmatch(r"Item Level (\d+)", line):
+            out["ilvl"] = int(match.group(1))
+        elif match := re.fullmatch(r"(\d+) Armor", line):
+            add(STAT_ARMOR, int(match.group(1)))
+        elif match := re.fullmatch(r"(\d+) Block", line):
+            add(STAT_BLOCK_VALUE, int(match.group(1)))
+        elif match := re.fullmatch(r"(\d+)(?: - (\d+))? (?:[A-Z][a-z]+ )?Damage", line):
+            out["damage"] = (int(match.group(1)), int(match.group(2) or match.group(1)))
+        elif match := re.fullmatch(r"Speed (\d+\.\d+)", line):
+            out["speed"] = float(match.group(1))
+        elif match := ALL_RESISTANCES.match(line):
+            for stat in RESISTANCES.values():
+                add(stat, int(match.group(1)))
+        elif re.fullmatch(r"\+\d+ Holy Resistance", line):
+            pass  # the engine has no holy resistance stat
+        elif match := client.STAT_LINE.match(line):
+            stat = EXTRA_STAT_LINES.get(match.group(3), client.STAT_INDEX.get(match.group(3)))
+            if stat is None:
+                raise client.Unreadable(f"unread line {line!r}")
+            add(stat, int(match.group(2)) * (-1 if match.group(1) == "-" else 1))
+        elif match := client.REGEN_LINE.match(line):
+            if match.group(2) == "mana":
+                add(34, int(match.group(1)))
+        elif line.startswith("Equip:"):
+            try:
+                stats = client.equip_stats(line)
+            except client.Unreadable:
+                stats = None
+            for stat, value in (stats or {}).items():
+                add(stat, value)
+    return out
+
+
+def effect_stats(row):
+    """The stats the row's item effects and area stats carry, by index."""
+    out = {}
+    option = row.get("scaling_options", {}).get("0", {})
+    for effect in row.get("item_effects") or []:
+        for stat, value in (effect.get("scaling_options", {}).get("0", {}).get("stats") or {}).items():
+            out[int(stat)] = out.get(int(stat), 0) + value
+    for area in option.get("area_stats") or []:
+        for stat, value in area.get("stats", {}).items():
+            out[int(stat)] = out.get(int(stat), 0) + value
+    return out
+
+
+def changes(row, live):
+    """What the live tooltip states otherwise than the reference row: {stats: {index: value or
+    None}, damage, speed, ilvl}, empty when they agree."""
+    option = row.get("scaling_options", {}).get("0", {})
+    base = {int(k): v for k, v in (option.get("stats") or {}).items() if v}
+    effects = effect_stats(row)
+    stated = dict(live["stats"])
+    if (
+        ATTACK_POWER in stated
+        and RANGED_ATTACK_POWER not in stated
+        and ATTACK_POWER in base
+        and base.get(RANGED_ATTACK_POWER) == base[ATTACK_POWER]
+    ):
+        stated[RANGED_ATTACK_POWER] = stated[ATTACK_POWER]
+    text = live["text"].lower()
+    stats = {}
+    for stat in sorted(set(base) | set(stated)):
+        old, new = base.get(stat), stated.get(stat)
+        if old == new:
+            continue
+        if stat in (MELEE_HIT, MELEE_CRIT) and old and new and abs(old - new) <= 1:
+            continue
+        if new is None:
+            name = DROPPABLE.get(stat)
+            if name and name.lower() not in text and stat not in effects:
+                stats[stat] = None
+            continue
+        if old is None and effects.get(stat) == new:
+            continue
+        stats[stat] = new
+    out = {}
+    if stats:
+        out["stats"] = stats
+    damage = (option.get("weapon_damage_min"), option.get("weapon_damage_max"))
+    if live.get("damage") and tuple(live["damage"]) != damage and any(damage):
+        out["damage"] = list(live["damage"])
+    speed = row.get("weapon_speed")
+    if speed and live.get("speed") and abs(speed - live["speed"]) > 0.001:
+        out["speed"] = live["speed"]
+    if out and live.get("ilvl") and live["ilvl"] != option.get("ilvl"):
+        out["ilvl"] = live["ilvl"]
+    return out
+
+
+def live_row(row, change):
+    """The reference row with the change applied, keys in the reference row's order."""
+    row = json.loads(json.dumps(row))
+    option = row["scaling_options"]["0"]
+    stats = {int(k): v for k, v in (option.get("stats") or {}).items()}
+    for stat, value in change.get("stats", {}).items():
+        if value is None:
+            stats.pop(stat, None)
+        else:
+            stats[stat] = value
+    if stats:
+        option["stats"] = {str(k): stats[k] for k in sorted(stats)}
+    else:
+        option.pop("stats", None)
+    if "damage" in change:
+        option["weapon_damage_min"], option["weapon_damage_max"] = change["damage"]
+    if "speed" in change:
+        row["weapon_speed"] = change["speed"]
+    if "ilvl" in change:
+        option["ilvl"] = change["ilvl"]
+    order = ["rand_prop_points", "weapon_damage_min", "weapon_damage_max", "stats", "ilvl"]
+    row["scaling_options"]["0"] = {
+        **{k: option[k] for k in order if k in option},
+        **{k: v for k, v in option.items() if k not in order},
+    }
+    return row
+
+
+def build(cache, report=None):
+    """Add the changed reference items to LIVE; returns (added, left_out) by id."""
+    reference = reference_rows()
+    live = live_rows()
+    added, left_out = {}, {}
+    for item_id, row in sorted(reference.items()):
+        if item_id in live or not is_gear(row):
+            continue
+        path = client.cache_path(cache, item_id)
+        if not path.exists():
+            continue
+        try:
+            stated = read_tooltip(json.loads(path.read_text()))
+        except client.Unreadable as err:
+            left_out[item_id] = (row["name"], str(err))
+            continue
+        if stated is None:
+            continue
+        change = changes(row, stated)
+        if change:
+            added[item_id] = (row["name"], change)
+            live[item_id] = live_row(row, change)
+    LIVE.write_text("".join(client.dump_row(live[i]) + "\n" for i in sorted(live)))
+    if report:
+        lines = [f"{i}\t{n}\t{json.dumps(c, sort_keys=True)}\n" for i, (n, c) in sorted(added.items())]
+        lines += [f"{i}\t{n}\tleft out: {r}\n" for i, (n, r) in sorted(left_out.items())]
+        Path(report).write_text("".join(lines))
+    return added, left_out
+
+
+def check():
+    """Offline audit of LIVE: sorted unique ids that items.jsonl holds, each row differing from
+    its reference row and keeping its name, and every line as dump_row writes it."""
+    reference = reference_rows()
+    previous = 0
+    count = 0
+    for number, line in enumerate(LIVE.read_text().splitlines(), 1):
+        row = json.loads(line)
+        problems = []
+        if row["id"] <= previous:
+            problems.append("is not in increasing id order")
+        if row["id"] not in reference:
+            problems.append("is not an id items.jsonl holds")
+        elif row == reference[row["id"]]:
+            problems.append("equals its reference row")
+        elif row["name"] != reference[row["id"]]["name"]:
+            problems.append("renames its reference row")
+        if client.dump_row(row) != line:
+            problems.append("is not written as dump_row writes it")
+        if problems:
+            raise ValueError(f"{LIVE.name} line {number} (item {row['id']}): " + ", ".join(problems))
+        previous = row["id"]
+        count += 1
+    return count
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("command", choices=["fetch", "build", "check"])
+    parser.add_argument("--cache")
+    parser.add_argument("--report")
+    args = parser.parse_args()
+    if args.command == "fetch":
+        fetch(args.cache)
+    elif args.command == "build":
+        added, left_out = build(args.cache, args.report)
+        print(f"{len(added)} rows added, {len(left_out)} left out")
+    else:
+        print(f"{check()} rows ok")
+
+
+if __name__ == "__main__":
+    main()

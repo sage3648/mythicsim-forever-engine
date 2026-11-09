@@ -1063,6 +1063,22 @@ the Go goldens and exporter uses. The departures:
   already match: the row states the base and an area stat. Tooltips are missing for the hidden
   stat items (`statsHidden` in the gear catalog) and those rows are left as they were
   (`tests/forever_live_item_stats_20261106.rs`).
+  The third batch (Wowhead's Forever tooltips of 8 and 9 November 2026, every weapon and armor
+  row of `data/items.jsonl` without a live row: 10,909 asked, 10,307 revealed)
+  adds 421 rows with `tools/rust_live_items.py`, which keeps the reference row and changes only
+  what the tooltip states otherwise (its docstring has the rules). Most change a primary stat or
+  spell power the live game retuned: Tarnished Elven Ring 10 Agility and 10 Arcane Resistance
+  (was 15 Agility), Hand of Justice 12 Attack Power (was 20), Crimson Felt Hat 10 Intellect and
+  10 Spirit (was 8 and 8), Barbarous Blade 50 Attack Power (was 60), Skyshroud Leggings 11
+  Stamina, 12 Intellect and 30 spell power (was 8, 8 and 34), Second Wind 15 healing and 5
+  damage (was 22 healing), Blood-etched Blade 66 spell power at 26 - 49 (was 6 at 39 - 74); 55
+  change a weapon's damage and 6 its speed. Rerun `fetch` then `build` to pick up later reveals
+  (`tests/forever_live_item_stats_20261109.rs`). Tests that sim one request under both rules
+  and compare the rolls take the live items off first (`tests/support/live_items.rs`). The same
+  tooltips add seven client items (`tools/rust_client_items.py build`, 576 rows): Forever's own
+  copies of Choker of the Fire Lord, Quick Strike Ring, Heavy Dark Iron Ring, Band of Sulfuras,
+  Cauterizing Band and Ring of Spell Power (288926 to 288931) and of Hammer of Bestial Fury
+  (289292).
 - Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
   Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
   preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two
