@@ -31,6 +31,17 @@ class, subclass and slot from the Item row.
     python3 tools/rust_client_items.py build  --tables DIR --cache DIR [--report FILE]
     python3 tools/rust_client_items.py check
 
+An equip line "+N Attack Power against <creature type>" is a creature type bonus the item row
+cannot state. The item is taken, the row carries its other stats, and the bonus goes to
+data/forever-client-item-bonuses.jsonl ({"id":..,"name":..,"melee_attack_power_versus":
+{"MobTypeUndead":33}}), which Forever's preparation reads (src/prepare/forever_items.rs).
+
+    python3 tools/rust_client_items.py add    --tables DIR --cache DIR ID [ID ...]
+
+add fetches the tooltips of the given candidates only, writes their rows into the file in id
+order and leaves every other row as it is, for an item that a run of build over the whole
+candidate list (hours of tooltips) would add beside the rest.
+
 fetch asks for each missing tooltip about twice a second, backs off on 403 and 429 and keeps every
 response in the cache, so a rerun, and build, need no network. DIR for --tables holds
 ItemSparse.csv and Item.csv. check is an offline audit of the committed file.
@@ -52,6 +63,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 ITEMS = DATA / "items.jsonl"
 OUT = DATA / "forever-client-items.jsonl"
+BONUSES = DATA / "forever-client-item-bonuses.jsonl"
 
 TOOLTIP_URL = "https://nether.wowhead.com/forever/tooltip/item/{id}?x={cache_buster}"
 USER_AGENT = "Mozilla/5.0 (compatible; item-data-generator)"
@@ -302,6 +314,25 @@ EQUIP_STATS = [
 ]
 
 
+# The creature types an equip line names, by the request's MobType enum (proto.MobType).
+CREATURE_TYPES = {
+    "Beasts": "MobTypeBeast",
+    "Demons": "MobTypeDemon",
+    "Dragonkin": "MobTypeDragonkin",
+    "Elementals": "MobTypeElemental",
+    "Giants": "MobTypeGiant",
+    "Humanoids": "MobTypeHumanoid",
+    "Mechanicals": "MobTypeMechanical",
+    "Undead": "MobTypeUndead",
+}
+# "Equip: +33 Attack Power against Undead." An attack power bonus against a creature type: melee
+# attack power only (A_MOD_MELEE_ATTACK_POWER_VERSUS, as Quel'Serrar's Sanctuary and the Tier 1
+# bonuses are), applied while the target is of the type.
+VERSUS_LINE = re.compile(
+    rf"Equip: \+{NUMBER} Attack Power against ({'|'.join(CREATURE_TYPES)})\.?", re.IGNORECASE
+)
+
+
 def equip_stats(line):
     """The stats of an "Equip:" line that is a plain stat, or None."""
     text = re.sub(r"^Equip:\s*", "", line).rstrip(".").strip()
@@ -379,6 +410,14 @@ def parse_tooltip(response):
                 out["stats"][34] = out["stats"].get(34, 0) + int(match.group(1))
         elif SET_LINE.match(line):
             raise Unreadable("a set piece")
+        elif match := VERSUS_LINE.fullmatch(line):
+            equip_lines += 1
+            mob_type = CREATURE_TYPES[match.group(2).capitalize()]
+            value = float(match.group(1))
+            if value != round(value):
+                raise Unreadable(f"fractional attack power in {line!r}")
+            versus = out.setdefault("versus", {})
+            versus[mob_type] = versus.get(mob_type, 0) + round(value)
         elif line.startswith("Equip:") and (stats := equip_stats(line)) is not None:
             equip_lines += 1
             for stat, value in stats.items():
@@ -480,6 +519,14 @@ def row_for(item_id, sparse, item, response):
     return row
 
 
+def bonus_row(item_id, name, parsed):
+    """The data/forever-client-item-bonuses.jsonl row of an item whose tooltip states attack power
+    against creature types, or None."""
+    if not parsed.get("versus"):
+        return None
+    return {"id": item_id, "name": name, "melee_attack_power_versus": dict(sorted(parsed["versus"].items()))}
+
+
 def reason_kind(reason):
     """A left out item's reason without the line or numbers it names, to count them by."""
     return re.sub(r"\d+", "N", reason.split(": '")[0].split(' \'')[0].split(' "')[0])
@@ -503,7 +550,7 @@ def dump_row(row):
 def build(tables, cache, report=None):
     """Write OUT from the cache; returns (rows, left_out) with left_out as {id: (name, reason)}."""
     taken, _ = candidates(tables)
-    rows, left_out = [], {}
+    rows, bonuses, left_out = [], [], {}
     for item_id, sparse, item in taken:
         path = cache_path(cache, item_id)
         listed = sparse["Display_lang"] if sparse is not None else ""
@@ -512,14 +559,52 @@ def build(tables, cache, report=None):
             continue
         response = json.loads(path.read_text())
         try:
-            rows.append(row_for(item_id, sparse, item, response))
+            row = row_for(item_id, sparse, item, response)
         except Unreadable as err:
             left_out[item_id] = (listed or response.get("name", ""), str(err))
+            continue
+        rows.append(row)
+        if bonus := bonus_row(item_id, row["name"], parse_tooltip(response)):
+            bonuses.append(bonus)
     OUT.write_text("".join(dump_row(row) + "\n" for row in rows))
+    BONUSES.write_text("".join(dump_row(row) + "\n" for row in bonuses))
     if report:
         Path(report).write_text(
             "".join(f"{i}\t{n}\t{r}\n" for i, (n, r) in sorted(left_out.items()))
         )
+    return rows, left_out
+
+
+def add(tables, cache, ids):
+    """Fetch the given candidates' tooltips and merge their rows into OUT and BONUSES, in id
+    order, leaving every other row as it is. Returns (added rows, left out by id)."""
+    Path(cache).mkdir(parents=True, exist_ok=True)
+    taken, _ = candidates(tables)
+    wanted = {candidate[0]: candidate for candidate in taken if candidate[0] in ids}
+    missing = sorted(set(ids) - set(wanted))
+    if missing:
+        raise SystemExit(f"not candidates (known, not worn, or not weapon or armor): {missing}")
+    for item_id in sorted(wanted):
+        if not cache_path(cache, item_id).exists():
+            cache_path(cache, item_id).write_text(fetch_tooltip(item_id))
+            time.sleep(1.0)
+    rows, bonuses, left_out = {}, {}, {}
+    for item_id, (_, sparse, item) in sorted(wanted.items()):
+        response = json.loads(cache_path(cache, item_id).read_text())
+        try:
+            row = row_for(item_id, sparse, item, response)
+        except Unreadable as err:
+            left_out[item_id] = str(err)
+            continue
+        rows[item_id] = row
+        if bonus := bonus_row(item_id, row["name"], parse_tooltip(response)):
+            bonuses[item_id] = bonus
+    for path, added in ((OUT, rows), (BONUSES, bonuses)):
+        kept = {}
+        if path.exists():
+            kept = {json.loads(line)["id"]: json.loads(line) for line in path.read_text().splitlines()}
+        kept.update(added)
+        path.write_text("".join(dump_row(kept[key]) + "\n" for key in sorted(kept)))
     return rows, left_out
 
 
@@ -552,18 +637,46 @@ def check():
             raise ValueError(f"{OUT.name} line {number} (item {row['id']}): " + ", ".join(problems))
         previous = row["id"]
         count += 1
+    ids = set()
+    for line in OUT.read_text().splitlines():
+        ids.add(json.loads(line)["id"])
+    previous = 0
+    for number, line in enumerate(BONUSES.read_text().splitlines(), 1):
+        row = json.loads(line)
+        problems = []
+        if row["id"] <= previous:
+            problems.append("is not in increasing id order")
+        if row["id"] not in ids:
+            problems.append(f"is not an item {OUT.name} holds")
+        if set(row) != {"id", "name", "melee_attack_power_versus"}:
+            problems.append("does not have exactly id, name and melee_attack_power_versus")
+        elif not row["melee_attack_power_versus"] or not set(row["melee_attack_power_versus"]) <= set(
+            CREATURE_TYPES.values()
+        ):
+            problems.append("names a creature type the tool does not write")
+        if dump_row(row) != line:
+            problems.append("is not written as dump_row writes it")
+        if problems:
+            raise ValueError(f"{BONUSES.name} line {number} (item {row['id']}): " + ", ".join(problems))
+        previous = row["id"]
     return count
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("command", choices=["fetch", "build", "check"])
+    parser.add_argument("command", choices=["fetch", "build", "check", "add"])
+    parser.add_argument("ids", nargs="*", type=int, help="the item ids add takes")
     parser.add_argument("--tables")
     parser.add_argument("--cache")
     parser.add_argument("--report")
     args = parser.parse_args()
     if args.command == "fetch":
         fetch(args.tables, args.cache)
+    elif args.command == "add":
+        rows, left_out = add(args.tables, args.cache, set(args.ids))
+        print(f"{len(rows)} rows added, {len(left_out)} left out")
+        for item_id, reason in sorted(left_out.items()):
+            print(f"{item_id}\t{reason}")
     elif args.command == "build":
         rows, left_out = build(args.tables, args.cache, args.report)
         print(f"{len(rows)} rows, {len(left_out)} left out")

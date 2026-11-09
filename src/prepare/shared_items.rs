@@ -240,7 +240,8 @@ fn contains_enchant(item: &items::Item, effect_id: i32) -> bool {
 /// the item, in either set of an item swap.
 pub(crate) fn eligible_slots_for_item(sim: &Sim, unit: UnitId, item_id: i32) -> Vec<usize> {
     use items::slot;
-    let Some(item) = items::database_item(item_id) else {
+    // Under Forever's rules also an item of the live client the reference lacks.
+    let Some(item) = items::database_item_under(item_id, sim.rules) else {
         return Vec::new();
     };
     let candidates: Vec<usize> = match item.item_type.as_str() {

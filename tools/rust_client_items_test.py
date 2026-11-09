@@ -57,6 +57,25 @@ SHACKLES = {
         'class="moneycopper">48</span></div></td></tr></table><!--i?274600:1:60:34-->'
     ),
 }
+# Ceremonial Mallet, a Forever item with no readable ItemSparse row and a creature type attack
+# power line (Wowhead, 9 November 2026).
+MALLET = {
+    "name": "Ceremonial Mallet",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Ceremonial Mallet</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->42</span><!--bo--><br>Binds when '
+        'picked up<!--ue--><!--ue--><table width="100%"><tr><td>Two-Hand</td><th><!--scstart2:5-->'
+        '<span class="q1">Mace</span><!--scend--></th></tr></table><!--rf--><table width="100%">'
+        "<tr>\n    <td><span><!--dmg-->107 - 161 Damage</span></td>\n    <th>Speed "
+        "<!--spd-->3.60</th>\n</tr></table><!--dps-->(37.22 damage per second)<br><span>"
+        "<!--stat7-->+15 Stamina</span><!--ebstats--><!--egstats--><!--eistats-->"
+        "<!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Durability 100 / 100</td></tr></table>"
+        '<table><tr><td><!--rr--><span class="q2">Equip: +<!--rtg38-->22 Attack Power.</span><br>'
+        '<span class="q2">Equip: +<!--rtg128-->33 Attack Power against Undead.</span>'
+        "<!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
 # Staff of Jordan's equip lines (Wowhead Forever), the reference row: {"20":15,"4":60,"5":60}.
 JORDAN_EFFECTS = (
     '<span class="q2">Equip: Improves your chance to hit by 1.5%.</span><br><span class="q2">'
@@ -175,6 +194,47 @@ class ParseTests(unittest.TestCase):
         ]:
             self.assertEqual(tool.equip_stats(line), stats, line)
 
+    def test_attack_power_against_a_creature_type_is_a_bonus_beside_the_row(self):
+        mallet_item = {**item(2, 5), "InventoryType": "17"}
+        row = tool.row_for(279885, None, mallet_item, MALLET)
+        # The row holds the plain stats (Stamina 15, Attack Power 22) and the weapon.
+        self.assertEqual(
+            tool.dump_row(row),
+            '{"id":279885,"name":"Ceremonial Mallet","type":"ItemTypeWeapon",'
+            '"weapon_type":"WeaponTypeMace","hand_type":"HandTypeTwoHand","weapon_speed":3.6,'
+            '"scaling_options":{"0":{"weapon_damage_min":107,"weapon_damage_max":161,'
+            '"stats":{"2":15,"17":22},"ilvl":42}}}',
+        )
+        parsed = tool.parse_tooltip(MALLET)
+        self.assertEqual(parsed["versus"], {"MobTypeUndead": 33})
+        self.assertEqual(
+            tool.dump_row(tool.bonus_row(279885, row["name"], parsed)),
+            '{"id":279885,"name":"Ceremonial Mallet","melee_attack_power_versus":{"MobTypeUndead":33}}',
+        )
+
+    def test_an_item_without_a_creature_type_bonus_has_no_bonus_row(self):
+        self.assertIsNone(tool.bonus_row(274600, "Berserker Shackles", tool.parse_tooltip(SHACKLES)))
+
+    def test_each_creature_type_reads_as_the_request_names_it(self):
+        for word, mob_type in [
+            ("Beasts", "MobTypeBeast"),
+            ("Demons", "MobTypeDemon"),
+            ("Dragonkin", "MobTypeDragonkin"),
+            ("Elementals", "MobTypeElemental"),
+            ("Giants", "MobTypeGiant"),
+            ("Humanoids", "MobTypeHumanoid"),
+            ("Mechanicals", "MobTypeMechanical"),
+            ("Undead", "MobTypeUndead"),
+        ]:
+            line = f'<span class="q2">Equip: +12 Attack Power against {word}.</span><!--itemEffects:1-->'
+            parsed = tool.parse_tooltip(with_effects(SHACKLES, line))
+            self.assertEqual(parsed["versus"], {mob_type: 12}, word)
+
+    def test_a_creature_type_the_tool_does_not_know_leaves_the_item_out(self):
+        line = '<span class="q2">Equip: +12 Attack Power against Aberrations.</span><!--itemEffects:1-->'
+        with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+            tool.parse_tooltip(with_effects(SHACKLES, line))
+
     def test_other_effect_lines_leave_the_item_out(self):
         for line in [
             "Equip: Immune to Disarm.",
@@ -195,6 +255,17 @@ class ParseTests(unittest.TestCase):
 class CommittedFileTests(unittest.TestCase):
     def test_file_passes_the_offline_audit(self):
         self.assertGreater(tool.check(), 300)
+
+    def test_the_mallets_bonus_is_committed_with_its_row(self):
+        with open(tool.OUT) as rows:
+            mallet = next(json.loads(line) for line in rows if f'"id":{279885},' in line)
+        self.assertEqual(mallet["scaling_options"]["0"]["stats"], {"2": 15, "17": 22})
+        with open(tool.BONUSES) as rows:
+            bonuses = [json.loads(line) for line in rows]
+        self.assertEqual(
+            bonuses,
+            [{"id": 279885, "name": "Ceremonial Mallet", "melee_attack_power_versus": {"MobTypeUndead": 33}}],
+        )
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:

@@ -186,6 +186,21 @@ fn hears_hits_taken(listener: &ProcTrigger) -> bool {
         && listener.proc_mask_exclude == ProcMask::UNKNOWN
 }
 
+/// Under Forever's rules: whether a listener hears all the damage the wearer takes ("When
+/// damaged", the client mask of every taken bit: its callbacks are the hit taken and the periodic
+/// damage taken) and is otherwise shaped as `hears_hits_taken` asks. The target's swings are the
+/// hits the wearer takes; nothing puts a damage over time on the wearer, so the periodic callback
+/// never fires. Guardian's Dualblade (273046) is the item, and the reference's exporter has no
+/// entry for it.
+fn hears_damage_taken(listener: &ProcTrigger) -> bool {
+    let taken = CallbackMask::ON_SPELL_HIT_TAKEN | CallbackMask::ON_PERIODIC_DAMAGE_TAKEN;
+    listener.callback == taken
+        && hears_hits_taken(&ProcTrigger {
+            callback: CallbackMask::ON_SPELL_HIT_TAKEN,
+            ..listener.clone()
+        })
+}
+
 /// melee_procs.go `hearsTheSappersHit`: the spellbook position of the Goblin Sapper Charge's hit
 /// on its thrower when a listener of hits taken hears it, its mask and flags matching the spell.
 fn hears_the_sappers_hit(env: &Environment, listener: &ProcTrigger) -> Option<usize> {
@@ -687,7 +702,7 @@ struct SpellDataStatProc {
     parsed: bool,
 }
 
-const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
+const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 10] = [
     SpellDataStatProc {
         label: "Draconic Infused Emblem",
         trigger: 1318931,
@@ -738,6 +753,17 @@ const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
         parsed: false,
     },
     SpellDataStatProc {
+        // Under Forever's rules only (`describes_stat_proc`): the reference's exporter has no
+        // entry for it and refuses the aura. Equip: when damaged, a chance to grant 1080 armor
+        // for 12 sec (33%, one minute cooldown).
+        label: "Guardian's Dualblade",
+        trigger: 1293342,
+        buff: 1293345,
+        item: 273046,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
         label: "Enchant Weapon - Grand Sorcerer",
         trigger: 1231163,
         buff: 1231162,
@@ -763,6 +789,14 @@ const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
     },
 ];
 
+/// The stat procs only Forever's rules describe: the reference's exporter has no entry for them.
+const FOREVER_ONLY_STAT_PROCS: [&str; 1] = ["Guardian's Dualblade"];
+
+/// Whether the exporter describes a spell data stat proc under the environment's rules.
+fn describes_stat_proc(env: &Environment, proc: &SpellDataStatProc) -> bool {
+    env.sim.rules == super::sim::Rules::Forever || !FOREVER_ONLY_STAT_PROCS.contains(&proc.label)
+}
+
 /// shared_utils.go applySpellDataProc names the buff it builds after the trigger.
 fn spell_data_stat_proc_aura(label: &str) -> String {
     format!("{label} Proc")
@@ -774,11 +808,14 @@ fn spell_data_stat_proc_aura(label: &str) -> String {
 pub(crate) fn spell_data_stat_proc_auras(env: &Environment) -> Vec<String> {
     SPELL_DATA_STAT_PROCS
         .iter()
+        .filter(|proc| describes_stat_proc(env, proc))
         .filter(|proc| aura_named(env, proc.label).is_some())
         .filter(|proc| {
             let trigger = must_find(proc.trigger);
             let listener = trigger_for(env, trigger, true);
-            listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+            let forever = env.sim.rules == super::sim::Rules::Forever;
+            (listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+                && !(forever && hears_damage_taken(&listener)))
                 || tanks_the_target(env)
                 || hears_the_sappers_hit(env, &listener).is_some()
         })
@@ -802,6 +839,9 @@ pub(crate) fn spell_data_stat_proc_effects(
 ) -> Vec<Value> {
     let mut effects = Vec::new();
     for proc in &SPELL_DATA_STAT_PROCS {
+        if !describes_stat_proc(env, proc) {
+            continue;
+        }
         let Some(trigger_aura) = aura_named(env, proc.label) else {
             continue;
         };
@@ -830,10 +870,15 @@ pub(crate) fn spell_data_stat_proc_effects(
             }
         }
         let listener = trigger_for(env, trigger, true);
-        let names = callback_names(listener.callback);
+        let mut names = callback_names(listener.callback);
         // A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper
-        // Charge's hit on its thrower when its mask and flags match that spell.
-        let struck = hears_hits_taken(&listener);
+        // Charge's hit on its thrower when its mask and flags match that spell. Under Forever's
+        // rules one of all the damage taken hears the same, the periodic callback never firing.
+        let widened = env.sim.rules == super::sim::Rules::Forever && hears_damage_taken(&listener);
+        if widened {
+            names = vec!["on_spell_hit_taken"];
+        }
+        let struck = hears_hits_taken(&listener) || widened;
         let sapper_hit = hears_the_sappers_hit(env, &listener);
         let heard = (!names.is_empty()
             && names.iter().all(|name| {
@@ -1514,6 +1559,59 @@ fn set_melee_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
         }));
     }
     effects
+}
+
+/// Defias Leather's 4 piece, Devious Strike (client set spell 1292028, ItemSetSpell 161), under
+/// Forever's rules: "Grants your melee attacks a 5% chance when striking from behind to hit a
+/// vital point, causing the target to Bleed for 68 to 83 Physical damage over 5 sec" (Wowhead
+/// Forever tooltip, 9 November 2026). The trigger row (ProcFlags 4, ProcChance 5) hears the
+/// wearer's landed white hits and the bleed row (1292029: Mechanic 15, a periodic damage aura of
+/// 15 a second, variance 0.2, for 5 sec) goes on the unit hit with no hit roll of its own. Its
+/// ticks take no armor, as every physical tick here. The set registers the listener only when
+/// the wearer strikes from behind (`defias_leather_4`), so a wearer in front has nothing to
+/// describe.
+fn defias_leather_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    const LABEL: &str = "Defias Leather 4P";
+    if env.sim.rules != super::sim::Rules::Forever {
+        return Vec::new();
+    }
+    let Some(aura) = aura_named(env, LABEL) else {
+        return Vec::new();
+    };
+    let a = env.sim.aura(aura);
+    if !a.events.on_spell_hit_dealt {
+        return Vec::new();
+    }
+    let bleed = must_find(1292029);
+    let listener = proc_trigger(&env.sim, Some(env.player), must_find(1292028), &[]);
+    let names = callback_names(listener.callback);
+    let position = spell_position(env, &ActionId::spell(bleed.id));
+    let shape = position.and_then(|position| proc_damage_shape(env, bleed, position).ok());
+    let (Some(_), Some(shape)) = (position, shape) else {
+        unrepresented.push(format!("{LABEL}'s proc is not a bleed on the unit hit"));
+        return Vec::new();
+    };
+    if a.dpm.is_some()
+        || a.icd.is_some()
+        || listener.dpm.is_some()
+        || names != ["on_spell_hit_dealt"]
+        || listener.proc_mask == ProcMask::UNKNOWN
+        || listener.proc_mask.0 & !ProcMask::MELEE.0 != 0
+        || (listener.outcome != HitOutcome::EMPTY && listener.outcome != HitOutcome::LANDED)
+    {
+        unrepresented.push(format!("{LABEL}'s proc is not a bleed on the unit hit"));
+        return Vec::new();
+    }
+    let mut exported = json!({
+        "kind": "spell_data_damage_proc", "trigger_aura": LABEL,
+        "trigger_spells": proc_trigger_spells(env, &listener),
+        "landed_only": true, "require_damage": listener.require_damage_dealt,
+        "proc_chance": chance_or_certain(&listener),
+    });
+    for (key, value) in shape {
+        exported[key] = value;
+    }
+    vec![exported]
 }
 
 /// buffs/flametongue_totem.go `driveFlametongueTotem` for a character the party's totem reaches
@@ -2540,6 +2638,7 @@ fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> 
 pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = spell_data_damage_proc_effects(env, unrepresented);
     effects.extend(set_melee_damage_proc_effects(env, unrepresented));
+    effects.extend(defias_leather_effects(env, unrepresented));
     effects.extend(spell_data_heal_proc_effects(env, unrepresented));
     effects.extend(weapon_enchant_damage_proc_effects(env, unrepresented));
     effects.extend(proc_damage_item_effects(env, unrepresented));
@@ -2618,6 +2717,36 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                 "kind": "mob_type_bonus", "aura": label, "attack_power": attack_power,
                 "ranged_attack_power": attack_power, "spell_damage": spell_damage,
             }));
+        }
+    }
+    // Under Forever's rules: an item's melee attack power against creature types (Ceremonial
+    // Mallet's 33 against Undead), when every target is of a type its equip line names. A
+    // target of another type, or none, never takes it.
+    if env.sim.rules == super::sim::Rules::Forever {
+        for item in chance_on_hit_items(env) {
+            let Some(bonus) = super::forever_items::versus_attack_power(item) else {
+                continue;
+            };
+            if aura_named(env, &bonus.name).is_none() {
+                continue;
+            }
+            let power: f64 = bonus
+                .bonuses
+                .iter()
+                .filter(|(mob_type, _)| {
+                    env.encounter
+                        .targets
+                        .iter()
+                        .all(|&target| env.sim.unit(target).mob_type == *mob_type)
+                })
+                .map(|(_, power)| power)
+                .sum();
+            if power != 0.0 {
+                effects.push(json!({
+                    "kind": "mob_type_bonus", "aura": bonus.name, "attack_power": 0.0,
+                    "ranged_attack_power": 0.0, "spell_damage": 0.0, "melee_attack_power": power,
+                }));
+            }
         }
     }
     // Under Forever's rules (Go's exporter refuses the swap): with an item swap, the item and

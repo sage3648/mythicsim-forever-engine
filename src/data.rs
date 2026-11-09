@@ -82,6 +82,9 @@ macro_rules! table {
 table!(ITEMS, "items.jsonl");
 // The live client's equippable items that ITEMS lacks, from `tools/rust_client_items.py`.
 table!(CLIENT_ITEMS, "forever-client-items.jsonl");
+// The creature type attack power bonuses of CLIENT_ITEMS' items, which an item row cannot state
+// (`tools/rust_client_items.py`, `src/prepare/forever_items.rs`).
+table!(CLIENT_ITEM_BONUSES, "forever-client-item-bonuses.jsonl");
 // The live client's rows for items whose ITEMS row the live game has since changed, read before
 // ITEMS under Forever's rules (`src/prepare/items.rs`).
 table!(LIVE_ITEMS, "forever-live-items.jsonl");

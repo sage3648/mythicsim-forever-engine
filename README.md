@@ -1111,6 +1111,54 @@ the Go goldens and exporter uses. The departures:
   rounding, so the row's average is its base points (`physical_rolls_are_whole`,
   `src/prepare/physical_damage.rs`). The reference rolls the span without rounding
   (`src/classes/warrior/spells/revenge.rs`).
+- Four item gaps found in real sims refused on 9 November 2026 (`tests/forever_item_gaps_20261109.rs`,
+  fixtures `forever-gaps/*mallet*`, `*defias*`, `*dualblade*` and `*sword-of-zeal*`):
+  - Ceremonial Mallet (279885), an item the client ships with an encrypted ItemSparse row, from
+    Wowhead's Forever tooltip: Two-Hand Mace, item level 42, 107 to 161 damage, speed 3.60, +15
+    Stamina, "Equip: +22 Attack Power" and "Equip: +33 Attack Power against Undead". The row holds
+    the plain stats, as the other Forever client items do; the line against Undead is a creature
+    type bonus no item row can state, so `tools/rust_client_items.py` writes it beside the row to
+    `data/forever-client-item-bonuses.jsonl`. Forever's preparation gives the item a permanent
+    aura (an item swap toggles it, as Mark of the Champion's), and the export describes a
+    `mob_type_bonus` of 33 melee attack power when every target is Undead. A target of another
+    type or of none, as MythicSim's requests carry, never takes it. Melee attack power only, as
+    the client's creature type auras (aura 102) are; whether the game also adds it to ranged
+    attack power is not measured. The reference refuses the item as unknown.
+  - Defias Leather's 4 piece, Devious Strike (client set spell 1292028 of ItemSetSpell 161, bleed
+    1292029), from the Forever tooltip "Grants your melee attacks a 5% chance when striking from
+    behind to hit a vital point, causing the target to Bleed for 68 to 83 Physical damage over
+    5 sec". The set already registered the listener; nothing claimed it, so the gate refused every
+    wearer. The export now describes it: a 5% chance on the wearer's landed white hits for a
+    bleed of 15 a second for 5 seconds on the unit hit (the row's 15 base points and 0.2
+    variance make 67.5 to 82.5 over five ticks, the tooltip's 68 to 83; the engine ticks the
+    average, 75 a proc), with no roll to land. The row states Periodic Can Crit, so ticks roll the
+    physical crit, and like every physical dot they take no armor: a periodic tick that can crit
+    skips armor as a plain one does (`calc_damage_internal`), where it was taking the target's
+    armor through a weapon or set proc's dot. The listener exists only when the wearer is behind
+    the target, which every request is unless it sets `inFrontOfTarget`. The set's other
+    bonuses are as before: two pieces give 5 Arcane Resistance, five give Increased Daggers +1,
+    and three give 15 attack power against humanoids, which a target of no type never takes (a
+    request that names a Humanoid target is still refused for the table's bonus stats). The
+    reference's set has no fourth piece bonus and its rules prepare none.
+  - Guardian's Dualblade (273046), "Equip: When damaged, has a chance to grant you 1080 armor for
+    12 sec (Proc chance: 33%, 1m cooldown)" (trigger 1293342, buff 1293345). Its trigger row
+    names every damage taken bit, so its callbacks are the hit taken and the periodic damage
+    taken, which the exporter's list of hit taken procs did not read. Nothing damages a player
+    who is not tanked, so the aura is inert there and the request runs, with no stat aura added
+    for a proc that cannot come up; a tank takes the target's swings, each landed hit rolls the
+    33% behind the item's minute of cooldown, and the 1080 armor is one of the stat aura
+    combinations the target's swings read. The periodic callback never fires, since nothing puts
+    a damage over time on the wearer. Under the reference's rules the exporter has no entry
+    and refuses the aura as before.
+  - A swap onto Sword of Zeal (6622) or Argent Avenger (13246): the helper that adds a weapon
+    proc for a custom aura (`AddWeaponProcAura`) registers no item swap callback in the reference,
+    so a swap that moves the weapon left the proc's trigger up or down as it was and the swap
+    preparation refused the item's effect. Forever's rules register the trigger with the item
+    (`register_item_proc`), as every other weapon proc's is, so it is up while the weapon is in
+    the hand. A weapon worn without a swap is unchanged. Of the 323 weapons with effects, these
+    two and Guardian's Dualblade were the swap weapons this refused beyond a swap's own
+    limits; Dragon's Call (10847) is refused too, for a different reason: its Emerald Dragon
+    Whelp is a gear pet that must exist at the pull, which a swap weapon does not give it.
 
 ## Repository layout
 
