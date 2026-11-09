@@ -12,7 +12,7 @@ const BLOODRAGE: i64 = 2687;
 /// The production Protection request with no talents, a twelve second fight against a target
 /// that deals no damage, so the rage bar never fills, casting only Battle Stance and Bloodrage
 /// (at `prepull_at` before the pull when it is given).
-fn bloodrage_only(rules: Rules, prepull_at: Option<&str>) -> Value {
+fn bloodrage_only(prepull_at: Option<&str>) -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/mage/prepared-v2/production-protection-warrior.request.json");
     let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
@@ -41,7 +41,7 @@ fn bloodrage_only(rules: Rules, prepull_at: Option<&str>) -> Value {
 /// The rage Bloodrage gained and actually gained, and the threat the rage gain action booked,
 /// over the run.
 fn rage_and_threat(rules: Rules, prepull_at: Option<&str>) -> (f64, f64, f64) {
-    let request = bloodrage_only(rules, prepull_at);
+    let request = bloodrage_only(prepull_at);
     let prepared = prepare_json_with(request.to_string().as_bytes(), "warrior", rules)
         .unwrap_or_else(|err| panic!("{err:?}"));
     let typed: PreparedV2 = serde_json::from_value(prepared).unwrap();

@@ -4322,7 +4322,7 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "is_false")]
         crit_multiplies_swing: bool,
         /// Forever's rules: rage gained before the pull makes no threat (Forever combat logs).
-        /// Without it, as in Go, it counts as any other gain.
+        /// Without it, it counts as any other gain.
         #[serde(default, skip_serializing_if = "is_false")]
         no_threat_before_pull: bool,
     },
