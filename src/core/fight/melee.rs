@@ -1586,9 +1586,9 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(min_time);
     }
 
-    /// Go `DodgeParrySuppression`.
+    /// Go `DodgeParrySuppression`: the caster's live expertise, which an item swap can change.
     fn dodge_parry_suppression(&self, spell: SpellId) -> f64 {
-        (self.unit_config(self.caster(spell)).expertise_percent
+        (self.unit(self.caster(spell)).powers.expertise_percent
             + self.spells[spell].bonus_expertise_percent)
             / 100.0
     }
