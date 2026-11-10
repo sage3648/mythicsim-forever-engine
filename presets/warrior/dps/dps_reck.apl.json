@@ -688,7 +688,7 @@
                   "op": "OpLe",
                   "rhs": {
                     "const": {
-                      "val": "40"
+                      "val": "30"
                     }
                   }
                 }
@@ -762,7 +762,7 @@
                   "op": "OpGe",
                   "rhs": {
                     "const": {
-                      "val": "50"
+                      "val": "40"
                     }
                   }
                 }
@@ -835,6 +835,15 @@
                 }
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "action": {
+        "castSpell": {
+          "spellId": {
+            "spellId": 1329555
           }
         }
       }
@@ -977,15 +986,6 @@
                 }
               }
             ]
-          }
-        }
-      }
-    },
-    {
-      "action": {
-        "castSpell": {
-          "spellId": {
-            "spellId": 1329555
           }
         }
       }

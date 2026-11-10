@@ -6,7 +6,7 @@ spec, and the other playstyles Advanced settings offers. Each file is the
 (`type`, `prepullActions`, `priorityList`).
 
 These files are a generated mirror of the presets in the MythicSim
-application (`api/data/forever_rotations.json` at commit `4bf1541700`), refreshed
+application (`api/data/forever_rotations.json` at commit `76f87650f6`), refreshed
 whenever a preset changes. [`catalog.json`](catalog.json) lists each
 spec's choices, its default and the stats its stat weights run weighs.
 
