@@ -2,7 +2,9 @@
 //! and a Flamestrike ground tick rolls once, on the first enemy it lands on. Forever combat logs:
 //! Clearcasting came from 8.9% of 347 channel starts (45.3% of 5-missile channels gained it,
 //! against 46.9% expected with the start roll and 41.0% without), and from 13 of 82 Flamestrike
-//! ticks.
+//! ticks. Since the hotfixes of 9 November 2026 the talent's chance is split across the cast and
+//! its missiles ("was granting 10% on cast and per bolt"), so the start and each missile roll an
+//! equal share of it.
 
 use forever_engine::{
     contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
@@ -67,16 +69,18 @@ fn clearcasting_proc(line: &str) -> bool {
 /// Each Arcane Missiles channel (rank 7, 10212) rolls as it starts, between its cast and its
 /// channel aura on the target, before any missile flies. Nine seeded ten-minute fights of nothing
 /// but Arcane Missiles, about a thousand channels: Clearcasting comes from the starts at about
-/// the talent's chance (a little under, as a missile's proc just before holds the start roll
-/// under the 1 sec cooldown), and the channel that procs it does not spend it.
+/// a sixth of the talent's chance (the start's share beside the five missiles, hotfixes of 9
+/// November 2026), every channel together gains it at about the whole chance, and the channel
+/// that procs it at its start does not spend it.
 #[test]
 fn arcane_missiles_channel_start_rolls_for_clearcasting() {
     const CAST: &str = "Completed cast {SpellID: 10212}";
     const CHANNEL: &str = "[Target 1] Aura gained: {SpellID: 10212}";
-    let (mut channels, mut procs, mut chance) = (0, 0, 0.0);
+    let (mut channels, mut procs, mut gains, mut chance) = (0, 0, 0, 0.0);
     for seed in 1..=9u64 {
         let (proc_chance, lines) = run(&request(25345, 1, seed));
         chance = proc_chance;
+        gains += lines.iter().filter(|line| clearcasting_proc(line)).count();
         for (i, line) in lines.iter().enumerate() {
             if !line.contains(CAST) {
                 continue;
@@ -108,9 +112,17 @@ fn arcane_missiles_channel_start_rolls_for_clearcasting() {
     }
     assert!(channels > 900, "only {channels} channels");
     let rate = f64::from(procs) / f64::from(channels);
+    let share = chance / 6.0;
     assert!(
-        rate > chance / 2.0 && rate < chance * 1.5,
-        "Clearcasting from {procs} of {channels} channel starts ({rate:.3}), want about {chance}"
+        rate > share / 2.0 && rate < share * 1.7,
+        "Clearcasting from {procs} of {channels} channel starts ({rate:.3}), want about {share:.3}"
+    );
+    // The start and the five missiles together: about the talent's chance a channel, where a
+    // full chance on each of the six rolls gave it to nearly half of them.
+    let all = gains as f64 / f64::from(channels);
+    assert!(
+        all > chance * 0.7 && all < chance * 1.3,
+        "Clearcasting {gains} times in {channels} channels ({all:.3}), want about {chance}"
     );
 }
 
