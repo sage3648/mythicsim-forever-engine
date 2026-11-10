@@ -4,7 +4,8 @@
 //! missiles of Arcane Missiles do not count, and Blizzard rolls on its cast, once for each
 //! enemy it hits, not on its ticks. Under Forever's rules, since the development notes of 2
 //! November 2026, each missile that lands rolls too, and an Arcane Missiles cast that finds
-//! Missile Barrage up keeps the Clearcasting.
+//! Missile Barrage up keeps the Clearcasting. Forever's rules also roll once as an Arcane
+//! Missiles channel starts and once on each Flamestrike ground tick, as the combat logs show.
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
@@ -16,7 +17,8 @@ pub(crate) struct ArcaneConcentration {
     pub(crate) clearcasting: AuraRef,
     pub(crate) trigger: AuraRef,
     proc_chance: f64,
-    /// Forever's rules: the missiles roll, and Missile Barrage shields the Clearcasting.
+    /// Forever's rules: the missiles, the Arcane Missiles channel start and the Flamestrike
+    /// ground ticks roll, and Missile Barrage shields the Clearcasting.
     missiles: bool,
     /// The Missile Barrage aura, when the Mage has the talent and `missiles` is on.
     missile_barrage: Option<AuraRef>,
@@ -105,6 +107,31 @@ impl ArcaneConcentration {
         if state.flags.proc || !damaging || !result.landed() {
             return;
         }
+        self.roll(fight);
+    }
+
+    /// Forever's rules: an Arcane Missiles channel rolls once as it starts, on top of each
+    /// missile's roll. In Forever combat logs Clearcasting came from 8.9% of 347 channel starts,
+    /// and 45.3% of the 5-missile channels gained it, against 46.9% expected with the start roll
+    /// and 41.0% without. The cast's effects run after Clearcasting is spent
+    /// ([`Self::on_apply_effects`]), so a plain channel spends the one it found and a proc from
+    /// its start is a fresh one the same cast does not spend.
+    pub(crate) fn on_channel_start<A: Agent>(&self, fight: &mut Fight<A>) {
+        if self.missiles {
+            self.roll(fight);
+        }
+    }
+
+    /// Forever's rules: a Flamestrike ground tick rolls once, however many enemies it hits, on
+    /// the first it lands on. In Forever combat logs Clearcasting came from 13 of 82 ticks.
+    pub(crate) fn on_flamestrike_tick<A: Agent>(&self, fight: &mut Fight<A>) {
+        if self.missiles {
+            self.roll(fight);
+        }
+    }
+
+    /// The roll under the trigger's internal cooldown, which a proc starts.
+    fn roll<A: Agent>(&self, fight: &mut Fight<A>) {
         let icd = fight.aura(self.trigger).icd;
         if let Some((timer, _)) = icd {
             if fight.timers[timer] > fight.now {

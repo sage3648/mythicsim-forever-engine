@@ -1137,6 +1137,11 @@ pub(crate) struct Windfury {
     /// Go `ProcTrigger.RequireDamageDealt` of the trigger and of the charge spender.
     pub(crate) trigger_require_damage: bool,
     pub(crate) spend_require_damage: bool,
+    /// Forever's rules: the proc grants every charge and the main hand auto that fired it spends
+    /// none.
+    pub(crate) trigger_spends_no_charge: bool,
+    /// Forever's rules: every outcome of a spending auto spends a charge, a miss included.
+    pub(crate) any_outcome_spends: bool,
 }
 
 /// The trigger aura of an effect `Fight::damage_procs` holds: a spell data damage proc, or a
@@ -1633,6 +1638,12 @@ pub(crate) enum Action {
     /// Go `Pet.statInheritanceAction`: the pet takes its owner's pending stat changes at its
     /// heartbeat.
     PetInheritance(Side),
+    /// Forever's rules: an owner's melee or attack speed change reaching a pet that swings at
+    /// it, at the pet's heartbeat.
+    PetMeleeSpeed {
+        pet: Side,
+        amount: f64,
+    },
     /// Go `Pet.timeoutAction`: a summoned pet's time is up.
     PetTimeout(Side),
     /// A class's own pending action, which it may cancel: [`Agent::on_class_action`].
@@ -1920,6 +1931,10 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) thunderfury: Option<thunderfury::Thunderfury>,
     /// The party Windfury Totem.
     pub(crate) windfury: Option<Windfury>,
+    /// Under Forever's rules, the main hand auto that fired a Windfury Totem proc (the party's or
+    /// the shaman's own) and the time it did, while that hit's listeners run: its charge spender
+    /// skips it. Another swing in that instant, as the off hand's, still spends.
+    pub(crate) windfury_free_swing: Option<(SpellId, i64)>,
     /// The generated buffs other players cast on the player on cooldown.
     pub(crate) external_cooldowns: Vec<external_cooldown::ExternalCooldown>,
     /// The auras other than the druid's own that carry Innervate's regeneration.
@@ -2472,6 +2487,7 @@ impl<A: Agent> Fight<A> {
                 threat_per_rage,
                 threat_multiplied,
                 crit_multiplies_swing,
+                no_threat_before_pull,
                 ..
             } => Some(rage::RageBar {
                 max: max_rage.max(100.0),
@@ -2484,6 +2500,7 @@ impl<A: Agent> Fight<A> {
                 threat_per_rage: *threat_per_rage,
                 threat_multiplied: *threat_multiplied,
                 crit_multiplies_swing: *crit_multiplies_swing,
+                no_threat_before_pull: *no_threat_before_pull,
                 gain_threat: Vec::new(),
                 damage_taken_metrics: 0,
                 refund_metrics: 0,
@@ -4222,6 +4239,7 @@ impl<A: Agent> Fight<A> {
             thunderfury: None,
             enemy_slows: Vec::new(),
             windfury: None,
+            windfury_free_swing: None,
             external_cooldowns: Vec::new(),
             innervate_regens: Vec::new(),
             ley_line_innervate: None,
@@ -4995,6 +5013,8 @@ impl<A: Agent> Fight<A> {
                 extra_attack_spell,
                 trigger_require_damage,
                 spend_require_damage,
+                trigger_spends_no_charge,
+                any_outcome_spends,
                 ..
             } = effect
             {
@@ -5034,6 +5054,8 @@ impl<A: Agent> Fight<A> {
                     blocked: false,
                     trigger_require_damage: *trigger_require_damage,
                     spend_require_damage: *spend_require_damage,
+                    trigger_spends_no_charge: *trigger_spends_no_charge,
+                    any_outcome_spends: *any_outcome_spends,
                 });
             }
         }
@@ -5950,6 +5972,7 @@ impl<A: Agent> Fight<A> {
         // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
         if side == Side::Player {
             self.oil_of_immolation_reset();
+            self.windfury_free_swing = None;
             if let Some(windfury) = &self.windfury {
                 let period = windfury.period;
                 self.schedule(period, PRIORITY_AUTO, Action::WindfuryRefresh);
@@ -6331,6 +6354,7 @@ impl<A: Agent> Fight<A> {
                 self.schedule(self.now + period, PRIORITY_AUTO, Action::WindfuryRefresh);
             }
             Action::PetInheritance(side) => self.pet_inheritance(side),
+            Action::PetMeleeSpeed { pet, amount } => self.pet_melee_speed(pet, amount),
             Action::PetTimeout(side) => {
                 let pet = self.active_pet_mut(side);
                 if pet.timeout == Some(handle) {

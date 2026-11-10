@@ -1153,6 +1153,11 @@ pub struct Pet {
     pub active_dismiss_log: Option<String>,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
+    /// Forever's rules: the pet swings at its owner's melee and attack speed. The owner's speed
+    /// at the summon is already in `melee`; each later change reaches the pet at its next stat
+    /// heartbeat and rescales the swing under way.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inherits_melee_speed: bool,
     /// A focus bar, for a pet without a mana bar.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus: Option<PetFocus>,
@@ -2096,6 +2101,10 @@ pub enum Effect {
         /// The spells that never trigger it in Cat or Bear Form: Faerie Fire since the 16 October
         /// 2026 beta notes.
         form_excluded_spells: Vec<usize>,
+        /// Forever rules: the spells that roll at half the chance. Maul procs it on 14 of 342
+        /// hits in bear logs (4.1%), where every other special fits the full chance.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        half_chance_spells: Vec<usize>,
     },
     /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
     NaturesGrace {
@@ -2270,6 +2279,10 @@ pub enum Effect {
         max_stacks: i32,
         tick_can_crit: bool,
         tick_magic: bool,
+        /// Forever rules: the weapon hit's own spell (414647). The cast rolls miss, dodge and
+        /// parry; a landed cast's hit rolls only crit, on this spell's crit multiplier.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        hit_spell: Option<usize>,
     },
     /// Primal Bite: flat damage plus main hand weapon damage; Berserk lifts its cooldown.
     PrimalBite {
@@ -2449,6 +2462,15 @@ pub enum Effect {
         /// such as a landed Mutilate's own roll, does not reach it.
         trigger_require_damage: bool,
         spend_require_damage: bool,
+        /// Forever's rules: the proc grants every charge and the main hand auto that fired it
+        /// spends none, so the next off hand auto keeps the attack power (Forever combat logs,
+        /// 46 of 47). Without it an auto that fires the proc takes one charge off.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules: every outcome of a spending auto spends a charge, a miss included
+        /// (Forever combat logs, 8 of 8 missed swings). Without it only landed autos do.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -4151,6 +4173,18 @@ pub enum Effect {
         contested: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         one_aura: bool,
+        /// Forever's rules: a landed hit rolls the trigger whether or not it deals damage, as
+        /// a Sunder Armor application does. Without it the hit must deal damage.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_without_damage: bool,
+        /// Forever's rules, as on the party's totem: the auto that fires the proc spends no
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules, as on the party's totem: every outcome of a spending auto spends a
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// Mana Spring Totem: the water totem's aura, whose MP5 is a class stat aura.
     ManaSpringTotem {
@@ -4304,6 +4338,10 @@ pub enum Effect {
         /// in Go, a two-hander's crit adds the rage of the swing before that factor.
         #[serde(default, skip_serializing_if = "is_false")]
         crit_multiplies_swing: bool,
+        /// Forever's rules: rage gained before the pull makes no threat (Forever combat logs).
+        /// Without it, it counts as any other gain.
+        #[serde(default, skip_serializing_if = "is_false")]
+        no_threat_before_pull: bool,
     },
     /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
     /// auras that are not up from the reset: the gain multiplies, the expiry divides.
@@ -4469,6 +4507,11 @@ pub enum Effect {
         period_ns: i64,
         health_cost: f64,
         rage_threshold: f64,
+        /// Forever's rules: the instant rage makes its threat unscaled by the stance, 50 for its
+        /// 10 rage in Battle and Defensive Stance alike (Forever combat logs); the ticks take
+        /// the stance. Without it the instant rage takes the stance too.
+        #[serde(default, skip_serializing_if = "is_false")]
+        instant_threat_unscaled: bool,
     },
     /// Berserker Rage: rage from Improved Berserker Rage and an aura.
     BerserkerRage {
@@ -4633,8 +4676,18 @@ pub enum Effect {
         extra_attack_tag: i32,
         sword_hands: Vec<String>,
         /// The class spells that never trigger it: Shield Bash and Shield Slam since the 16
-        /// October 2026 beta notes.
+        /// October 2026 beta notes, and under Forever's rules Sweeping Strikes' hits.
         excluded_class_spells: Vec<String>,
+        /// Forever's rules: the party Windfury Totem's extra swing never rolls it (Forever
+        /// combat logs, 0 of 6). A queued Heroic Strike that replaces that swing still does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        skips_windfury_totem_swing: bool,
+        /// Forever's rules: the class spells that roll it once a cast, on their first landed hit,
+        /// however many targets they strike (Whirlwind 7 procs on 100 casts and 283 landed hits).
+        /// Each spell keeps its own roll, so Whirlwind's off hand strike rolls apart from its main
+        /// hand strike.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        once_a_cast_class_spells: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {

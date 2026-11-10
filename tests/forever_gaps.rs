@@ -696,9 +696,10 @@ fn hammer_of_the_righteous_cleaves() {
     // 980 since push 113554's tree (978 before): the fixture's talents read in it. 961 since the
     // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
     // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
-    // Plate of the Shaman King and Eye of Orgrimmar. 980 since Judgement of Wisdom pays only on
-    // landed hits, which moved the rolls after a miss.
-    assert_eq!(casts, 980.0);
+    // Plate of the Shaman King and Eye of Orgrimmar. 978 since Windfury Totem's Forever rules
+    // (Holy Strike no longer rolls it, the triggering swing keeps its charges). 968 since
+    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss.
+    assert_eq!(casts, 968.0);
     assert!(damage > 0.0);
 }
 
@@ -718,12 +719,12 @@ fn seal_of_wisdom_restores_mana_beside_the_raids_judgement() {
 fn seal_of_justice_judges_justice() {
     let (value, player) = run("retribution-paladin-seal-of-justice");
     assert!(!effects(&value, "seal_of_justice").is_empty());
-    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3280 since
-    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss.
-    assert_eq!(action(&player, 20164, 0).0, 3280.0);
+    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
+    // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
+    assert_eq!(action(&player, 20164, 0).0, 3262.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
-    // Ironforge (754 before).
-    assert_eq!(action(&player, 20184, 0).0, 756.0);
+    // Ironforge (754 before). 759 since Windfury Totem's Forever rules.
+    assert_eq!(action(&player, 20184, 0).0, 759.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -731,7 +732,8 @@ fn seal_of_justice_judges_justice() {
 #[test]
 fn warrior_strikes_and_freezing_trap_run() {
     for (name, spell_id, casts) in [
-        ("protection-warrior-shield-bash", 1672, 531.0),
+        // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before).
+        ("protection-warrior-shield-bash", 1672, 530.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
         ("arms-warrior-mocking-blow", 20560, 78.0),
@@ -740,8 +742,10 @@ fn warrior_strikes_and_freezing_trap_run() {
         ("arms-warrior-revenge", 25288, 0.0),
         // Hotfix push 113554 puts Freezing Trap on Explosive Trap's cooldown (category 411).
         // 212 since the Aimed Shot precast at -1.75 s, which haste finished at -0.01 s, finishes
-        // on the pull (docs/prepull-damage.md); 213 before.
-        ("hunter-freezing-trap", 1499, 212.0),
+        // on the pull (docs/prepull-damage.md); 213 before. 215 since the Cat swings at its
+        // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws. 211
+        // since Judgement of Wisdom pays only on landed hits.
+        ("hunter-freezing-trap", 1499, 211.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");

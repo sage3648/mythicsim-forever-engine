@@ -92,9 +92,10 @@ fn arcane_request(threshold: i64) -> Value {
 }
 
 /// Each Arcane Missiles channel of the log: whether Missile Barrage paid for it and the missiles
-/// it fired before the next cast. A last channel the fight's end cut off before its first missile
-/// is left out.
+/// it fired before the next cast. A channel cast at the fight's last moment fires none and is
+/// left out.
 fn missile_channels(log: &str) -> Vec<(bool, usize)> {
+    let end = log.lines().last().map_or(0.0, time);
     let barrage_line = format!("SpellID: {MISSILE_BARRAGE}");
     let mut barrage = false;
     let mut channels: Vec<(bool, usize)> = Vec::new();
@@ -103,7 +104,7 @@ fn missile_channels(log: &str) -> Vec<(bool, usize)> {
         if about_barrage && (line.contains("Aura gained") || line.contains("Aura refreshed")) {
             barrage = true;
         }
-        if line.contains(MISSILES_CAST_LOG) {
+        if line.contains(MISSILES_CAST_LOG) && time(line) < end {
             channels.push((barrage, 0));
         } else if line.contains(MISSILE_TICK_LOG) {
             if let Some(last) = channels.last_mut() {
@@ -113,9 +114,6 @@ fn missile_channels(log: &str) -> Vec<(bool, usize)> {
         if about_barrage && line.contains("Aura faded") {
             barrage = false;
         }
-    }
-    if channels.last().is_some_and(|(_, missiles)| *missiles == 0) {
-        channels.pop();
     }
     channels
 }

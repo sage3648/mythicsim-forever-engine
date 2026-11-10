@@ -1442,10 +1442,14 @@ impl<A: Agent> Fight<A> {
                     }
                     AuraBehavior::WindfuryProc { .. } if dealt => {
                         let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
-                        // The charges' own trigger: a landed auto spends one, at once.
+                        // The charges' own trigger: a landed auto spends one, at once. Under
+                        // Forever's rules any outcome spends one, but the auto that fired the
+                        // proc spends none.
                         if windfury.spend_spells[spell]
-                            && result.outcome & super::OUTCOME_LANDED != 0
+                            && (windfury.any_outcome_spends
+                                || result.outcome & super::OUTCOME_LANDED != 0)
                             && !(windfury.spend_require_damage && result.damage == 0.0)
+                            && self.windfury_free_swing != Some((spell, self.now))
                         {
                             self.remove_stack(aura);
                         }
@@ -1530,6 +1534,11 @@ impl<A: Agent> Fight<A> {
                     _ => {}
                 }
             }
+        }
+        // A Windfury Totem proc's swing has passed every listener, its charge spender among
+        // them, whichever order they heard it in.
+        if self.windfury_free_swing == Some((spell, self.now)) {
+            self.windfury_free_swing = None;
         }
     }
 
@@ -1635,7 +1644,8 @@ impl<A: Agent> Fight<A> {
 
     /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
     /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
-    /// extra main hand attack at once.
+    /// extra main hand attack at once. Under Forever's rules every charge, and the auto that
+    /// granted them spends none.
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
         if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
@@ -1644,8 +1654,12 @@ impl<A: Agent> Fight<A> {
         if windfury.trigger_require_damage && result.damage == 0.0 {
             return;
         }
-        let (trigger_chance, proc_aura, extra) =
-            (windfury.trigger_chance, windfury.proc_aura, windfury.extra);
+        let (trigger_chance, proc_aura, extra, keeps_charge) = (
+            windfury.trigger_chance,
+            windfury.proc_aura,
+            windfury.extra,
+            windfury.trigger_spends_no_charge,
+        );
         let icd = self.aura(aura).icd;
         if let Some((timer, _)) = icd {
             if self.timers[timer] > self.now {
@@ -1660,7 +1674,12 @@ impl<A: Agent> Fight<A> {
         }
         self.activate_aura(proc_aura);
         let mut charges = self.aura(proc_aura).max_stacks;
-        if self.spells[spell].white_hit {
+        if keeps_charge {
+            // Forever's rules: every charge, and the main hand auto that fired the proc skips
+            // the spender in this instant.
+            let swing = self.spells[spell].white_hit && !self.spells[spell].off_hand_proc;
+            self.windfury_free_swing = swing.then_some((spell, self.now));
+        } else if self.spells[spell].white_hit {
             charges -= 1;
         }
         self.set_stacks(proc_aura, charges);

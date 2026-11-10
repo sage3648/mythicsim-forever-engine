@@ -292,7 +292,7 @@ impl Druid {
         let omen = Ladder::ranked(&[16864]).highest();
         let moonkin = Ladder::ranked(&[24858]).highest();
         let trigger = proc_trigger(sim, Some(unit), omen, &[chance(1.0)]);
-        effects.push(json!({
+        let mut omen_effect = json!({
             "kind": "omen_of_clarity", "trigger_aura": trigger.name, "aura": "Clearcasting",
             "callbacks": callback_names(trigger.callback), "outcome": outcome_names(trigger.outcome),
             "require_damage_dealt": trigger.require_damage_dealt,
@@ -308,7 +308,13 @@ impl Druid {
             // 16 October 2026 beta notes: Faerie Fire no longer triggers it in Cat or Bear Form.
             "form_excluded_spells":
                 spells_matching(sim, unit, masks::FAERIE_FIRE | masks::FAERIE_FIRE_FERAL),
-        }));
+        });
+        if sim.rules == crate::prepare::sim::Rules::Forever {
+            // Bear logs: Maul procs it on 14 of 342 hits (4.1%), half the chance every other
+            // special fits.
+            omen_effect["half_chance_spells"] = json!(spells_matching(sim, unit, masks::MAUL));
+        }
+        effects.push(omen_effect);
         if self.tal.natures_grace {
             // talents_balance.go applyNaturesGrace
             let triggered = Ladder::ranked(&[16886]).highest();
@@ -710,14 +716,18 @@ impl Druid {
                 // lacerate.go: a flat tick a stack and a weapon share a stack.
                 let ladder = Ladder::ranked(&LACERATE_RANKS);
                 let rank = ladder.highest();
-                effects.push(json!({
+                let mut effect = json!({
                     "kind": "lacerate", "spell": spell_position(sim, unit, lacerate),
                     "tick_base": rank.periodic_effect().average(character_level()),
                     "weapon_share_per_stack": ladder.effect_at(2).fraction_at(rank.rank_number()),
                     "max_stacks": super::bear::LACERATE_MAX_STACKS,
                     "tick_can_crit": rank.periodic_can_crit(),
                     "tick_magic": rank.defense_type_core() == DefenseType::Magic,
-                }));
+                });
+                if let Some(hit) = self.lacerate_hit {
+                    effect["hit_spell"] = json!(spell_position(sim, unit, hit));
+                }
+                effects.push(effect);
             }
             if let Some(primal_bite) = self.primal_bite {
                 // primal_bite.go: Berserk lifts its cooldown, a Go literal.
