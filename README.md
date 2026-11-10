@@ -1091,8 +1091,12 @@ the Go goldens and exporter uses. The departures:
   (wago.tools cannot read them), from their Item row and Wowhead Forever tooltip alone, such as
   Berserker Shackles (274600), and equip lines that are a plain stat (Defense, Attack Power,
   spell power, hit, crit, mana per 5 sec, dodge, parry, block) read as `data/items.jsonl` holds
-  the same line of a Classic item. Items with a use, chance on hit or other equip effect, a set
-  bonus or a line the generator does not read are left out and stay refused
+  the same line of a Classic item. Since 10 November 2026 it holds the five pieces of Krol'dok
+  Battlegear, a Forever set the reference does not register: fewer pieces than its first bonus
+  needs are plain items, and an equipment that reaches a bonus is refused by name until the bonus
+  is applied (`CLIENT_SETS_NOT_PREPARED`, `tests/forever_client_items_sets_20261110.rs`). Items
+  with a use, chance on hit or other equip effect, a piece of any other set or a line the
+  generator does not read are left out and stay refused
   (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
   `tests/forever_client_items_20261108.rs`). The rerun of 9 November 2026 added the 71 items whose
   tooltips Wowhead decoded since, 14 of them with a creature type attack power line written to
