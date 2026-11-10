@@ -3758,13 +3758,17 @@ pub enum Effect {
         soul_siphon_live: Option<SoulSiphonLive>,
     },
     /// Wrack: a channel scaled by Soul Siphon, and while it runs a bonus on the ticks of
-    /// `dot_spells`.
+    /// `dot_spells` (the Go reference) or faster ticks for them (Forever's rules).
     Wrack {
         spell_id: i32,
         tick_base: f64,
         tick_can_crit: bool,
         soul_siphon: f64,
         dot_bonus: f64,
+        /// Forever's rules since 11 November 2026: how many times as often `dot_spells` tick
+        /// while the channel runs.
+        #[serde(default = "one", skip_serializing_if = "is_one")]
+        dot_rate: f64,
         dot_spells: Vec<usize>,
         /// Forever's rules: as Drain Life's.
         #[serde(default, skip_serializing_if = "Option::is_none")]

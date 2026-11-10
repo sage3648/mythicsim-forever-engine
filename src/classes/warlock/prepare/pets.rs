@@ -178,11 +178,17 @@ const fn rank(
 /// Each rank is a roll a variance wide around its base plus the points per level from its own
 /// level up to its cap, with its own spell power coefficient (0.164 at rank 1, 0.571 from rank
 /// 4) and mana cost.
+///
+/// Ranks 1 to 4 are the live rows since the class tuning of 11 November 2026, from Wowhead's
+/// Forever tooltips that morning (markers `ppl1:5:6:30`, `ppl8:13:11:40`, `ppl18:23:15:40`,
+/// `ppl28:33:18:40`, and the rolls 6.2 to 8.2, 12 to 14, 15.2353 to 18.7647 and 18 to 22 at each
+/// rank's cap): before it they were 4 + 0.1, 7 + 0.2, 12 + 0.3 and 17 + 0.3 a level. Ranks 5 to
+/// 7 read the same as the rows of 9 November.
 pub(crate) const FIREBOLT_RANKS: [DemonRank; 7] = [
-    rank(3110, (1, 5), (4.0, 0.1, 0.285_714_298_49), 0.164, 10),
-    rank(7799, (8, 13), (7.0, 0.2, 0.153_846_159_58), 0.314, 20),
-    rank(7800, (18, 23), (12.0, 0.3, 0.166_666_671_63), 0.529, 35),
-    rank(7801, (28, 33), (17.0, 0.3, 0.114_285_707_47), 0.571, 50),
+    rank(3110, (1, 5), (6.0, 0.3, 1.0 / 3.0), 0.164, 10),
+    rank(7799, (8, 13), (11.0, 0.4, 2.0 / 11.0), 0.314, 20),
+    rank(7800, (18, 23), (15.0, 0.4, 4.0 / 17.0), 0.529, 35),
+    rank(7801, (28, 33), (18.0, 0.4, 2.0 / 9.0), 0.571, 50),
     rank(7802, (38, 43), (25.0, 0.4, 0.117_647_059_26), 0.571, 70),
     rank(11762, (48, 53), (35.0, 0.5, 0.112_676_046_79), 0.571, 95),
     rank(

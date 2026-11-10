@@ -41,6 +41,20 @@ pub(crate) fn hotfixed(id: i32) -> Option<&'static Spell> {
 /// Ice Lance, every rank: the Frozen bonus and the cooldown below.
 pub(crate) const ICE_LANCE_RANKS: [i32; 6] = [1312002, 400640, 1240044, 1240045, 1240046, 1240047];
 
+/// Wrack's tick since the class tuning of 11 November 2026, as (base points at level 40, points
+/// per level, spell power coefficient): Wowhead's Forever tooltip marker `ppl40:60:25.2:175` and
+/// spell page "SP mod: 0.2002".
+pub(crate) const WRACK_TICK_20261111: (f64, f64, f64) = (25.2, 1.75, 0.2002);
+
+/// How many times as often the warlock's Siphon Life, Corruption and Bane of Agony tick while Wrack is
+/// channelled, since the same tuning: "deal their periodic damage 100% faster" (effect 2, a
+/// dummy of 100 with a server-side script).
+pub(crate) const WRACK_DOT_RATE_20261111: f64 = 2.0;
+
+/// Arcane Shot and Summon Hawk cost this percent of base mana at every rank, since the same
+/// tuning (Wowhead's Forever spell page for Summon Hawk rank 4 and its news post).
+pub(crate) const HUNTER_SHOT_BASE_MANA_PERCENT_20261111: f64 = 11.0;
+
 /// Mage cooldown category 19, Fire Blast's, which Ice Lance joins (push 113531).
 pub(crate) const FIRE_BLAST_CATEGORY: i16 = 19;
 
@@ -484,13 +498,17 @@ fn build() -> HashMap<i32, &'static Spell> {
     for id in SLAM_RANKS {
         patch(id, &|row| row.category_cooldown_ms = 15000);
     }
-    // Warlock (notes of 2 November): Wrack's spell damage coefficient doubles (0.143 to 0.286
-    // a tick, "0.286 per second of cast time") and its base damage a second grows 2.5 a level,
-    // from 36 at its level 40 to 86 at 60 (was 36 at every level).
+    // Warlock: Wrack's tick as the live rows have it since the class tuning of 11 November 2026
+    // (Wowhead's Forever spell page and tooltip that morning): 25.2 a second at its level 40
+    // growing 1.75 a level to 60.2 at 60 (60 once floored, as the tooltip reads), with 0.2002 of
+    // spell power. The notes of 2 November
+    // had made it 36 growing 2.5 a level to 86, with 0.286; the frozen row is 36 at every level
+    // with 0.143.
     patch(1316697, &|row| {
         let tick = effect(row, 1349556);
-        tick.ppl = 2.5;
-        tick.sp_coef *= 2.0;
+        tick.base_points = WRACK_TICK_20261111.0;
+        tick.ppl = WRACK_TICK_20261111.1;
+        tick.sp_coef = WRACK_TICK_20261111.2;
     });
     // Shaman (notes of 2 November): Stormstrike's cooldown 8 sec to 6.
     patch(17364, &|row| row.cooldown_ms = 6000);
@@ -594,9 +612,10 @@ mod tests {
             assert_eq!(effect.base_points, points, "spell {spell}");
         }
         let wrack = row(Rules::Forever, 1316697);
-        assert_eq!(wrack.effects[0].average(60), 86.0);
+        assert_eq!(wrack.effects[0].average(60), 60.0);
+        assert_eq!(wrack.effects[0].average(40), 25.0);
         assert_eq!(must_find(1316697).effects[0].average(60), 36.0);
-        assert!((wrack.effects[0].sp_coef - 0.286).abs() < 1e-6);
+        assert!((wrack.effects[0].sp_coef - 0.2002).abs() < 1e-6);
         let stance = hotfixed(7376).unwrap();
         let threat = stance
             .effects

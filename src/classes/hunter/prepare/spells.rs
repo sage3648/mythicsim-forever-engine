@@ -30,6 +30,20 @@ fn spell_action(id: i32) -> ActionId {
     ActionId::spell(id)
 }
 
+/// Arcane Shot's and Summon Hawk's cost: the row's flat mana in the Go reference, and under
+/// Forever's rules 11% of base mana at every rank, as live since the class tuning of
+/// 11 November 2026.
+fn shot_cost(rules: Rules, row: &Row) -> CostOptions {
+    match rules {
+        Rules::Forever => CostOptions {
+            mana_base_cost_percent:
+                crate::prepare::hotfix_113554::HUNTER_SHOT_BASE_MANA_PERCENT_20261111,
+            ..CostOptions::default()
+        },
+        Rules::GoReference => flat_cost(row),
+    }
+}
+
 /// `ManaCost: core.ManaCostOptions{FlatCost: int32(rank.Cost())}`.
 fn flat_cost(row: &Row) -> CostOptions {
     CostOptions {
@@ -218,7 +232,7 @@ impl Hunter {
                 proc_mask: ProcMask::RANGED_SPECIAL,
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 missile_speed: f64::from(rank.speed),
-                cost: flat_cost(rank),
+                cost: shot_cost(sim.rules, rank),
                 cast: CastConfig {
                     cd: Cooldown {
                         timer: Some(timer),
@@ -363,7 +377,7 @@ impl Hunter {
                 proc_mask: ProcMask::EMPTY,
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 max_range: f64::from(rank.max_range),
-                cost: flat_cost(rank),
+                cost: shot_cost(sim.rules, rank),
                 cast: CastConfig {
                     default_cast: Cast {
                         gcd: rank.gcd(),
