@@ -76,6 +76,45 @@ MALLET = {
         "<!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Serpentbane Crown and Bigger Rock on Bigger Stick, Forever items whose use and chance on hit the
+# engine models by hand (Wowhead, 10 November 2026).
+SERPENTBANE = {
+    "name": "Serpentbane Crown",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Serpentbane Crown</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->42</span><!--bo--><br>Binds when '
+        'picked up<!--ue--><!--ue--><table width="100%"><tr><td>Head</td><th><!--scstart4:3-->'
+        '<span class="q1">Mail</span><!--scend--></th></tr></table><!--rf--><span><!--amr-->213 '
+        "Armor</span><br><span><!--stat7-->+16 Stamina</span><!--ebstats--><!--egstats-->"
+        "<!--eistats--><!--nameDescStats--><!--rs--><br>+8 Nature Resistance<!--e--><!--ps--><br>"
+        "Durability 70 / 70</td></tr></table><table><tr><td>Requires Level <!--rlvl-->37<br>"
+        '<!--rr--><!--useText:0:1--><span id="useText1" class="q2">Use: <!--useEffect:0:1--><a '
+        'href="/forever/spell=1295039/serpentbane" class="q2">Inflict 89 to 112 Fire damage to '
+        "your current target and an additional 225 damage over 10 sec. Inflicts 2 times as much "
+        "damage to Beast and Serpentine targets.</a> (5 Min Cooldown)<!--useEffect:1--></span>"
+        "<!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
+BIGGER_ROCK = {
+    "name": "Bigger Rock on Bigger Stick",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Bigger Rock on Bigger Stick</b><!--nend-->'
+        '<!--ndstart--><!--ndend--><span class="q"><br>Item Level <!--ilvl-->47</span><!--bo-->'
+        '<br>Binds when picked up<!--ue--><!--ue--><table width="100%"><tr><td>Two-Hand</td><th>'
+        '<!--scstart2:5--><span class="q1">Mace</span><!--scend--></th></tr></table><!--rf-->'
+        '<table width="100%"><tr>\n    <td><span><!--dmg-->112 - 168 Damage</span></td>\n    <th>'
+        "Speed <!--spd-->3.40</th>\n</tr></table><!--dps-->(41.18 damage per second)<br><span>"
+        "<!--stat4-->+14 Strength</span><!--ebstats--><!--egstats--><!--eistats-->"
+        "<!--nameDescStats--><!--rs--><!--e--><!--ps--></td></tr></table><table><tr><td><!--rr-->"
+        '<!--useText:0:1--><span id="useText1" class="q2">Chance on hit: <!--useEffect:0:1--><a '
+        'href="/forever/spell=1306816/bigger-rock-to-the-face" class="q2">Bash the target in the '
+        "face, causing 14 Physical damage every 2 sec for 20 sec.</a><!--useEffect:1--></span>"
+        "<!--useText:1--><!--itemEffects:1--><br><span class=\"q\">&quot;That's more like it!&quot;"
+        "</span><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
 # Staff of Jordan's equip lines (Wowhead Forever), the reference row: {"20":15,"4":60,"5":60}.
 JORDAN_EFFECTS = (
     '<span class="q2">Equip: Improves your chance to hit by 1.5%.</span><br><span class="q2">'
@@ -283,6 +322,35 @@ class ParseTests(unittest.TestCase):
             odd = with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
             self.assertEqual(tool.row_for(274600, None, shackles, odd), plain, line)
 
+    def test_a_use_or_chance_on_hit_the_engine_models_is_left_out_of_the_row(self):
+        crown = tool.row_for(274609, None, {**item(4, 3), "InventoryType": "1"}, SERPENTBANE)
+        self.assertEqual(
+            tool.dump_row(crown),
+            '{"id":274609,"name":"Serpentbane Crown","type":"ItemTypeHead","armor_type":'
+            '"ArmorTypeMail","scaling_options":{"0":{"stats":{"2":16,"30":213,"38":8},"ilvl":42}}}',
+        )
+        rock = tool.row_for(279480, None, {**item(2, 5), "InventoryType": "17"}, BIGGER_ROCK)
+        self.assertEqual(
+            tool.dump_row(rock),
+            '{"id":279480,"name":"Bigger Rock on Bigger Stick","type":"ItemTypeWeapon",'
+            '"weapon_type":"WeaponTypeMace","hand_type":"HandTypeTwoHand","weapon_speed":3.4,'
+            '"scaling_options":{"0":{"weapon_damage_min":112,"weapon_damage_max":168,'
+            '"stats":{"0":14},"ilvl":47}}}',
+        )
+        self.assertIsNone(tool.bonus_row(279480, rock["name"], tool.parse_tooltip(BIGGER_ROCK)))
+
+    def test_a_modelled_line_with_other_numbers_leaves_the_item_out(self):
+        # The engine states the use's numbers, so a tooltip that changes them waits for it.
+        for response, old, new in [
+            (SERPENTBANE, "89 to 112", "90 to 113"),
+            (SERPENTBANE, "(5 Min Cooldown)", "(3 Min Cooldown)"),
+            (BIGGER_ROCK, "14 Physical", "15 Physical"),
+        ]:
+            changed = {**response, "tooltip": response["tooltip"].replace(old, new)}
+            self.assertNotEqual(changed["tooltip"], response["tooltip"])
+            with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+                tool.parse_tooltip(changed)
+
     def test_a_line_doubled_in_cities_reads_as_its_base_amount(self):
         line = (
             "Equip: Increases healing done by up to 11 and damage done by up to 4 for all magical "
@@ -387,6 +455,11 @@ class CommittedFileTests(unittest.TestCase):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
         self.assertLessEqual(set(bonuses), ids)
+
+    def test_the_modelled_effect_items_are_committed(self):
+        with open(tool.OUT) as rows:
+            ids = {json.loads(line)["id"] for line in rows}
+        self.assertLessEqual({274609, 279480, 279852}, ids)
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:

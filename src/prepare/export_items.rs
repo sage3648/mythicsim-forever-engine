@@ -402,7 +402,7 @@ pub(crate) fn use_item_effect(
     if let Some(effect) = speed_on_use(env, spell) {
         return Some(vec![effect]);
     }
-    if DAMAGE_ON_USE_ITEMS.contains(&item) {
+    if DAMAGE_ON_USE_ITEMS.contains(&item) || forever_on_use_damage_item(env, item).is_some() {
         let effect = damage_on_use_effect(env, spell, unrepresented);
         return Some(if effect.is_null() {
             Vec::new()
@@ -565,6 +565,18 @@ fn spell_cost_aura_on_use_effect(env: &Environment, spell: SpellId, label: &str)
 /// registers.
 const DAMAGE_ON_USE_ITEMS: [i32; 6] = [8348, 11905, 13171, 21891, 219345, 274759];
 
+/// Under Forever's rules, a live client item's damage on-use (`forever_effect_items`), which the
+/// reference does not list.
+fn forever_on_use_damage_item(
+    env: &Environment,
+    item: i32,
+) -> Option<&'static super::forever_effect_items::OnUseDamageItem> {
+    if env.sim.rules != super::sim::Rules::Forever {
+        return None;
+    }
+    super::forever_effect_items::on_use_damage_item(item)
+}
+
 /// The outcome shared_utils.go `damageOutcome` picks for the defense type, by the runtime's name.
 fn on_use_outcome(defense: DefenseType, cannot_crit: bool) -> &'static str {
     match (defense, cannot_crit) {
@@ -587,7 +599,9 @@ fn damage_on_use_effect(
 ) -> Value {
     let s = env.sim.spell(spell);
     let item = s.action_id.item_id;
-    if !DAMAGE_ON_USE_ITEMS.contains(&item) || s.action_id.spell_id != 0 {
+    let forever_item = forever_on_use_damage_item(env, item);
+    if !(DAMAGE_ON_USE_ITEMS.contains(&item) || forever_item.is_some()) || s.action_id.spell_id != 0
+    {
         return Value::Null;
     }
     let position = env
@@ -596,14 +610,18 @@ fn damage_on_use_effect(
         .spellbook
         .iter()
         .rposition(|registered| *registered == spell);
-    let on_use = only_on_use_effect(item);
-    let (Some(on_use), Some(position)) = (on_use, position) else {
+    // A live client item states its use in `forever_effect_items`, the reference's in its item
+    // database entry.
+    let row = match forever_item {
+        Some(use_) => Some(must_find(use_.spell_id)),
+        None => only_on_use_effect(item).map(|on_use| must_find(on_use.i32("buff_id"))),
+    };
+    let (Some(row), Some(position)) = (row, position) else {
         unrepresented.push(format!(
             "damage on-use item {item} has no single on-use spell"
         ));
         return Value::Null;
     };
-    let row = must_find(on_use.i32("buff_id"));
     let direct = row.damage_effect();
     let periodic = row.periodic_damage_effect();
     let defense = s.defense_type;
@@ -648,11 +666,21 @@ fn damage_on_use_effect(
         ));
         return Value::Null;
     }
+    // A live client item's use that deals more to some creature types (Serpentbane Crown's twice
+    // against Beasts) does so when every target is of one, as a fight's targets are of one type.
+    let versus = forever_item
+        .filter(|use_| {
+            env.encounter.targets.iter().all(|&target| {
+                use_.creature_types
+                    .contains(&env.sim.unit(target).mob_type.as_str())
+            })
+        })
+        .map_or(1.0, |use_| use_.multiplier);
     let mut effect = json!({"kind": "damage_on_use", "item_id": item, "spell": position});
     if !direct.is_nil() {
-        let mut scale = 1.0;
+        let mut scale = versus;
         if direct.hits_an_area() && row.max_targets == 0 && !row.splits_damage {
-            scale = aoe_cap_multiplier(env);
+            scale *= aoe_cap_multiplier(env);
         }
         let mut shape = json!({
             "average": direct.average(level), "variance": direct.variance,
@@ -675,7 +703,7 @@ fn damage_on_use_effect(
     }
     if !periodic.is_nil() {
         let mut ticks = json!({
-            "tick_base": periodic.average(level), "tick_can_crit": row.periodic_can_crit(),
+            "tick_base": periodic.average(level) * versus, "tick_can_crit": row.periodic_can_crit(),
         });
         if direct.is_nil() {
             ticks["application_outcome"] = json!(on_use_outcome(defense, true));
