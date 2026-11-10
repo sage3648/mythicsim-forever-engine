@@ -1420,6 +1420,29 @@ the Go goldens and exporter uses. The departures:
     (`forever_effect_items::FACING_DAMAGE_ITEMS`). With several targets the one flag stands for
     all of them, as it does for Backstab.
   The reference's rules still refuse the item as unknown.
+- Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
+  November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
+  (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
+  ItemDelay 3600 (was 3200) and stats Strength at 6956 and Stamina at 6521 of 10000 (was
+  Intellect at 5217 and Stamina at 6521). At the row's 23 points that is +16 Strength and +15
+  Stamina (was +12 Intellect and +15 Stamina), and at the unchanged item level 40
+  (ItemDamageTwoHand 35.7078 damage per second for a rare, damage variance 0.4) the slower swing
+  deals 102 to 154 (was 91 to 137 at 3.20, which the same sum gives).
+  `data/forever-live-items.jsonl` holds the row, written as `tools/rust_live_items.py` writes one
+  (the reference row with only those fields changed) but from the hotfix row: Wowhead's Forever
+  tooltip still showed the row from before the hotfix on 11 November 2026. The reference's rules
+  keep the pinned row.
+  - Its equip effect is unchanged by the hotfix and was not modelled before: "Equip: Increases
+    the damage dealt by your Stormstrike ability by 10%." Its equip spell Rage of Earth (1309422,
+    ItemEffect 236558) is not in the pinned store; the live row is one percent damage modifier
+    of 10 (SpellEffect 1338404, aura 108, misc 0) on class mask words 0, 16, 5120, 0, and
+    Stormstrike (17364) is the one row of the pinned store with any of those bits. So a Shaman's
+    two Stormstrike hits take 0.10 in the additive damage modifier, where Totem of Rage's
+    percentage of the same aura goes (`classes::shaman::prepare::items::rage_of_the_storm`).
+  - The modifier is a fixed one. A request whose item swap takes the mace off or puts it on
+    prepares without the effect, as every request did before, since the runtime does not follow
+    a swap that changes a spell's damage modifier. A character of another class holds the mace
+    as a plain weapon.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from
