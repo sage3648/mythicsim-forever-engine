@@ -69,6 +69,97 @@
       "action": {
         "castSpell": {
           "spellId": {
+            "spellId": 20572
+          }
+        },
+        "condition": {
+          "or": {
+            "vals": [
+              {
+                "and": {
+                  "vals": [
+                    {
+                      "or": {
+                        "vals": [
+                          {
+                            "dotIsActive": {
+                              "spellId": {
+                                "spellId": 11713
+                              }
+                            }
+                          },
+                          {
+                            "dotIsActive": {
+                              "spellId": {
+                                "spellId": 603
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "dotIsActive": {
+                        "spellId": {
+                          "spellId": 25311
+                        }
+                      }
+                    },
+                    {
+                      "or": {
+                        "vals": [
+                          {
+                            "dotIsActive": {
+                              "spellId": {
+                                "spellId": 25309
+                              }
+                            }
+                          },
+                          {
+                            "cmp": {
+                              "lhs": {
+                                "spellCastTime": {
+                                  "spellId": {
+                                    "spellId": 25309
+                                  }
+                                }
+                              },
+                              "op": "OpGt",
+                              "rhs": {
+                                "const": {
+                                  "val": "1.5s"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "cmp": {
+                  "op": "OpGe",
+                  "lhs": {
+                    "numberTargets": {}
+                  },
+                  "rhs": {
+                    "const": {
+                      "val": "3"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "action": {
+        "castSpell": {
+          "spellId": {
             "otherId": "OtherActionPotion"
           }
         },
@@ -489,7 +580,7 @@
                   "op": "OpGe",
                   "rhs": {
                     "const": {
-                      "val": "9s"
+                      "val": "16s"
                     }
                   }
                 }
