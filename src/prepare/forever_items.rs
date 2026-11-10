@@ -97,6 +97,7 @@ fn apply_chance_on_hit_item(env: &mut Environment, item: i32) -> bool {
             if matches!(kind, ProcKind::Proc | ProcKind::Aura) {
                 chance_on_hit_defense(env, &cfg);
             }
+            super::forever_effect_items::apply_facing_damage(env, item);
             return true;
         }
     }

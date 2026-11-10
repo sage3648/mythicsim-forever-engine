@@ -11,6 +11,10 @@
 //!   (`forever_items_generated::CHANCE_ON_HIT_ITEMS`) at the rate MythicSim assumes
 //!   (`shared_items::CHANCE_ON_HIT_PPM`): a physical damage over time on the unit hit, whose
 //!   ticks take no armor, as every physical tick here.
+//! - Toofbreaker (286430) is a chance on hit weapon with no stated rate as well, registered the
+//!   same way: a Physical hit of 42 on the unit hit, on the melee table. "Deals 2 times as much
+//!   damage if the target is facing you": the hit is doubled for a character in front of the
+//!   target or one the target swings at (`FACING_DAMAGE_ITEMS`).
 //! - Dreadfrost Saber (274603) is a spell data damage proc (`NewSpellDataDamageProc`), as Fiery
 //!   Plate Gauntlets' "Adds 4 fire damage to your weapon attack" is in the reference: its equip
 //!   aura (1294939) hears the wearer's landed main hand melee hits and casts a Frost hit of 1
@@ -92,7 +96,63 @@ pub(crate) const CHANCE_ON_HIT_ITEMS: &[Registration] = &[
             item_name: "Rock on Stick",
         }],
     ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1320269,
+            is_weapon_proc: true,
+            trigger_spell_id: 1320269,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 286430,
+            item_name: "Toofbreaker",
+        }],
+    ),
 ];
+
+/// A chance on hit whose hit deals `multiplier` times its damage to a target that faces the
+/// wearer, as the tooltip states it.
+pub(crate) struct FacingDamageItem {
+    pub(crate) item_id: i32,
+    /// The spell the chance on hit casts.
+    pub(crate) spell_id: i32,
+    pub(crate) multiplier: f64,
+}
+
+/// The chance on hit items that deal more to a target facing the wearer.
+pub(crate) const FACING_DAMAGE_ITEMS: [FacingDamageItem; 1] = [FacingDamageItem {
+    // Toofbreak (1320269): "Deals 2 times as much damage if the target is facing you." The 2 is
+    // the row's second effect (SpellEffect 1354775, a dummy with base points 2), which the server
+    // applies.
+    item_id: 286430,
+    spell_id: 1320269,
+    multiplier: 2.0,
+}];
+
+/// After a chance on hit item registered its spell: a hit that deals more to a target facing the
+/// wearer takes its multiplier as the spell's damage multiplier when the target faces the
+/// character for the whole fight. That is a character in front of the target (the request's
+/// `inFrontOfTarget`, which Backstab, Shred and Ambush read) or one a target swings at, since a
+/// target faces its tank. A character behind the target deals the row's own amount.
+pub(crate) fn apply_facing_damage(env: &mut Environment, item: i32) {
+    let Some(facing) = FACING_DAMAGE_ITEMS
+        .iter()
+        .find(|facing| facing.item_id == item)
+    else {
+        return;
+    };
+    let unit = env.player;
+    if !(env.sim.unit(unit).pseudo_stats.in_front_of_target || env.tanking()) {
+        return;
+    }
+    let spell = env
+        .sim
+        .get_spell(unit, &ActionId::spell(facing.spell_id))
+        .expect("the chance on hit registered its spell");
+    env.sim.spell_mut(spell).damage_multiplier *= facing.multiplier;
+}
 
 /// The equip damage procs, as `forever_items_generated::ITEMS` lists the reference's (Fiery Plate
 /// Gauntlets, Coldflame Saber): the equip aura's row is the trigger and the row it casts the

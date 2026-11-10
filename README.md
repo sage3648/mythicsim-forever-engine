@@ -1387,6 +1387,62 @@ the Go goldens and exporter uses. The departures:
     hit rolls the melee table, and the health the leech returns to the wearer is not modelled, as
     Skullflame Shield's is not.
   The reference's rules still refuse both items as unknown.
+- Gahz'ridian Detector (9978), a quest reward that refused a Feral Druid's Quick Sims on 10
+  November 2026 (`tests/forever_gahzridian_detector_20261111.rs`): item level 1, "Quest Item",
+  Unique, Head, "Equip: Nearby Gahz'ridian appears on the minimap." Its Item row is of the
+  client's quest class (12), not armor, so `tools/rust_client_items.py` names it
+  (`WORN_QUEST_ITEMS`) and writes an armor row with no armor type, and leaves the equip line out
+  of the row (`NO_FIGHT_EFFECT`): its equip spell Detect Gahz'ridian (11992, ItemEffect 98962) is
+  one resource tracking aura (SpellEffect 688737, aura 45; wago.tools `product=wowf`, client
+  1.60.1.70888, 11 November 2026). The row has no armor, no stats and no effect, so wearing it is
+  wearing nothing on the head, roll for roll. The reference's rules still refuse it as unknown.
+- Toofbreaker (286430), a Forever one-hand mace that refused a Combat Rogue's Quick Sims on 10
+  November 2026 (`tests/forever_toofbreaker_20261111.rs`): item level 45, 40 to 75, speed 1.90,
+  +7 Strength, +5 Stamina, "Chance on hit: Bash the target, causing 42 Physical damage. Deals 2
+  times as much damage if the target is facing you." `tools/rust_client_items.py` takes its row
+  with the chance on hit line left out (`ENGINE_EFFECT`), and `src/data/forever_client_spells.rs`
+  restates its spell row, which the pinned store lacks. It is not encrypted, so every field is
+  the client's (wago.tools `product=wowf`, client 1.60.1.70888, 11 November 2026): ItemEffect
+  238089 is a chance on hit (trigger type 2) of Toofbreak (1320269) with no rate and no cooldown,
+  and the spell is a School Damage of 42 on the target, Physical, on the melee table, with no
+  variance and no coefficient (SpellEffect 1354774, SpellMisc 866009, SpellCategories 189061),
+  beside a dummy effect with base points 2, the tooltip's "2 times" (SpellEffect 1354775).
+  - The rate is assumed. The client states none, so the bash rolls the rate the Rock on Stick
+    weapons and the reference's chance on hit items without one roll here (1.8% per second of
+    weapon speed, 3.42% a swing at 1.90, `docs/forever-chance-on-hit.md`), on the weapon's own
+    landed hits, in either hand.
+  - The hit rolls the melee table, may crit, and takes the target's armor, as a direct Physical
+    hit does (the Rock on Stick weapons' ticks take none).
+  - "Deals 2 times as much damage if the target is facing you": the bash's damage multiplier is
+    2 for a character the target faces for the fight, which is one in front of the target (the
+    request's `inFrontOfTarget`, the flag Backstab, Shred and Ambush read) or one a target swings
+    at, since a target faces its tank. A character behind the target deals the row's 42
+    (`forever_effect_items::FACING_DAMAGE_ITEMS`). With several targets the one flag stands for
+    all of them, as it does for Backstab.
+  The reference's rules still refuse the item as unknown.
+- Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
+  November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
+  (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
+  ItemDelay 3600 (was 3200) and stats Strength at 6956 and Stamina at 6521 of 10000 (was
+  Intellect at 5217 and Stamina at 6521). At the row's 23 points that is +16 Strength and +15
+  Stamina (was +12 Intellect and +15 Stamina), and at the unchanged item level 40
+  (ItemDamageTwoHand 35.7078 damage per second for a rare, damage variance 0.4) the slower swing
+  deals 102 to 154 (was 91 to 137 at 3.20, which the same sum gives).
+  `data/forever-live-items.jsonl` holds the row, written as `tools/rust_live_items.py` writes one
+  (the reference row with only those fields changed) but from the hotfix row: Wowhead's Forever
+  tooltip still showed the row from before the hotfix on 11 November 2026. The reference's rules
+  keep the pinned row.
+  - Its equip effect is unchanged by the hotfix and was not modelled before: "Equip: Increases
+    the damage dealt by your Stormstrike ability by 10%." Its equip spell Rage of Earth (1309422,
+    ItemEffect 236558) is not in the pinned store; the live row is one percent damage modifier
+    of 10 (SpellEffect 1338404, aura 108, misc 0) on class mask words 0, 16, 5120, 0, and
+    Stormstrike (17364) is the one row of the pinned store with any of those bits. So a Shaman's
+    two Stormstrike hits take 0.10 in the additive damage modifier, where Totem of Rage's
+    percentage of the same aura goes (`classes::shaman::prepare::items::rage_of_the_storm`).
+  - The modifier is a fixed one. A request whose item swap takes the mace off or puts it on
+    prepares without the effect, as every request did before, since the runtime does not follow
+    a swap that changes a spell's damage modifier. A character of another class holds the mace
+    as a plain weapon.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from

@@ -80,10 +80,14 @@ pub(crate) fn agentless_item_effect(
         || shaman::prepare::items::apply_agentless_totem_effect(sim, unit, item)
 }
 
-/// Whether a class package registers an effect for an item under Forever's rules alone, one the
-/// Go reference has no effect for: the druid's flat shapeshift cost items and the shaman's Totem
-/// of Rage.
-pub(crate) fn forever_item_effect(item: i32) -> bool {
+/// Whether a class package registers an effect for an item on this character under Forever's
+/// rules alone, one the Go reference has no effect for: the druid's flat shapeshift cost items,
+/// the shaman's Totem of Rage and, on a Shaman, Rage of the Storm.
+pub(crate) fn forever_item_effect(
+    sim: &crate::prepare::sim::Sim,
+    unit: crate::prepare::sim::UnitId,
+    item: i32,
+) -> bool {
     druid::prepare::items::shapeshift_cost_spell(item).is_some()
-        || shaman::prepare::items::forever_totem(item)
+        || shaman::prepare::items::forever_item(sim, unit, item)
 }

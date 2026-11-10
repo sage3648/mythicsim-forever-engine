@@ -115,6 +115,46 @@ BIGGER_ROCK = {
         "</span><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Gahz'ridian Detector, a head piece of the client's quest class with no armor and no stats
+# (Wowhead, 11 November 2026).
+DETECTOR = {
+    "name": "Gahz'ridian Detector",
+    "quality": 1,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q1">Gahz\'ridian Detector</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->1</span><!--bo--><br>Quest Item<br>'
+        'Unique<!--ue--><!--ue--><table width="100%"><tr><td>Head</td></tr></table><!--rf-->'
+        "<!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps-->"
+        '</td></tr></table><table><tr><td><!--rr--><!--useText:0:1--><span id="useText1" '
+        'class="q2">Equip: <!--useEffect:0:1--><a href="/forever/spell=11992/detect-gahzridian" '
+        'class="q2">Nearby Gahz\'ridian appears on the minimap.</a><!--useEffect:1--></span>'
+        "<!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
+# Toofbreaker, a Forever mace whose chance on hit the engine models by hand (Wowhead, 11 November
+# 2026).
+TOOFBREAKER = {
+    "name": "Toofbreaker",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Toofbreaker</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->45</span><!--bo--><br>Binds '
+        'when picked up<!--ue--><!--ue--><table width="100%"><tr><td>One-Hand</td><th><!--scstart2:4-->'
+        '<span class="q1">Mace</span><!--scend--></th></tr></table><!--rf--><table width="100%">'
+        '<tr>\n    <td><span><!--dmg-->40 - 75 Damage</span></td>\n    <th>Speed <!--spd-->'
+        '1.90</th>\n</tr></table><!--dps-->(30.26 damage per second)<br><span><!--stat4-->'
+        '+7 Strength</span><br><span><!--stat7-->+5 Stamina</span><!--ebstats--><!--egstats-->'
+        '<!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Durability 90 / '
+        '90</td></tr></table><table><tr><td>Requires Level <!--rlvl-->40<br><!--rr--><!--useText:0:1-->'
+        '<span id="useText1" class="q2">Chance on hit: <!--useEffect:0:1--><a href="/forever/spell=1320269/toofbreak" '
+        'class="q2">Bash the target, causing 42 Physical damage. Deals 2 times as much damage '
+        'if the target is facing you.</a><!--useEffect:1--></span><!--useText:1--><!--itemEffects:1-->'
+        '<br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice">Sell Price: <span '
+        'class="moneygold">2</span> <span class="moneysilver">3</span> <span class="moneycopper">'
+        '18</span></div><div class="whtt-extra whtt-droppedby">Dropped by: Bossman Toof</div>'
+        '<div class="whtt-extra whtt-dropchance">Drop Chance: 20.00%</div></td></tr></table>'
+    ),
+}
 # Dreadfrost Saber, a Forever sword whose equip line the engine models by hand (Wowhead, 10 November
 # 2026).
 DREADFROST = {
@@ -386,6 +426,19 @@ class ParseTests(unittest.TestCase):
             odd = with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
             self.assertEqual(tool.row_for(274600, None, shackles, odd), plain, line)
 
+    def test_a_worn_quest_item_is_an_armor_row_of_no_armor_type(self):
+        # Item row 9978: class 12 (quest), subclass 0, InventoryType 1.
+        quest = {**item(tool.QUEST_CLASS, 0), "InventoryType": "1"}
+        sparse = {"Display_lang": "Gahz'ridian Detector", "ItemLevel": "1", "InventoryType": "1"}
+        self.assertEqual(
+            tool.dump_row(tool.row_for(9978, sparse, quest, DETECTOR)),
+            '{"id":9978,"name":"Gahz\'ridian Detector","type":"ItemTypeHead",'
+            '"scaling_options":{"0":{"ilvl":1}},"unique":true}',
+        )
+        # A quest item that is not listed as worn is no row.
+        with self.assertRaisesRegex(tool.Unreadable, "not listed as worn"):
+            tool.row_for(9979, sparse, quest, DETECTOR)
+
     def test_a_use_or_chance_on_hit_the_engine_models_is_left_out_of_the_row(self):
         crown = tool.row_for(274609, None, {**item(4, 3), "InventoryType": "1"}, SERPENTBANE)
         self.assertEqual(
@@ -402,6 +455,20 @@ class ParseTests(unittest.TestCase):
             '"stats":{"0":14},"ilvl":47}}}',
         )
         self.assertIsNone(tool.bonus_row(279480, rock["name"], tool.parse_tooltip(BIGGER_ROCK)))
+
+    def test_a_direct_chance_on_hit_the_engine_models_is_left_out_of_the_row(self):
+        mace = tool.row_for(286430, None, {**item(2, 4), "InventoryType": "13"}, TOOFBREAKER)
+        self.assertEqual(
+            tool.dump_row(mace),
+            '{"id":286430,"name":"Toofbreaker","type":"ItemTypeWeapon","weapon_type":'
+            '"WeaponTypeMace","hand_type":"HandTypeOneHand","weapon_speed":1.9,'
+            '"scaling_options":{"0":{"weapon_damage_min":40,"weapon_damage_max":75,'
+            '"stats":{"0":7,"2":5},"ilvl":45}}}',
+        )
+        # Other numbers are another effect: the item stays out until the engine follows.
+        odd = json.loads(json.dumps(TOOFBREAKER).replace("causing 42 Physical", "causing 50 Physical"))
+        with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+            tool.row_for(286430, None, {**item(2, 4), "InventoryType": "13"}, odd)
 
     def test_an_equip_line_the_engine_models_is_left_out_of_the_row(self):
         saber = tool.row_for(274603, None, {**item(2, 7), "InventoryType": "21"}, DREADFROST)
@@ -565,7 +632,14 @@ class CommittedFileTests(unittest.TestCase):
     def test_the_modelled_effect_items_are_committed(self):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
-        self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852}, ids)
+        self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852, 286430}, ids)
+
+    def test_the_worn_quest_item_is_committed(self):
+        with open(tool.OUT) as rows:
+            detector = next(json.loads(line) for line in rows if '"id":9978,' in line)
+        self.assertEqual(detector["type"], "ItemTypeHead")
+        self.assertNotIn("armor_type", detector)
+        self.assertEqual(detector["scaling_options"], {"0": {"ilvl": 1}})
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:
