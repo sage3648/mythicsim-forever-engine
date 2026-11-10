@@ -21,7 +21,9 @@ EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/
 the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
 profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
 row. So is a use, chance on hit or equip line the engine models by hand (ENGINE_EFFECT:
-Serpentbane Crown's use, the two Rock on Stick weapons' bash, Dreadfrost Saber's Frost damage). An
+Serpentbane Crown's use, the two Rock on Stick weapons' bash, Dreadfrost Saber's Frost damage,
+Totem of Rage's shock damage, Maw of Min'loth's leech when struck). A relic (a libram, idol or
+totem) is written in the ranged slot, as the reference rows hold one (RELIC_TYPE). An
 item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or any line
 this tool does not read, is left out and listed.
 
@@ -144,6 +146,14 @@ RANGED_TYPE = {
     18: "RangedWeaponTypeCrossbow",
     19: "RangedWeaponTypeWand",
 }
+# Armor subclass to the ranged weapon type of a relic (InventoryType 28), which the reference
+# rows keep in the ranged slot (Totem of the Storm 23199: ItemTypeRanged, RangedWeaponTypeTotem).
+RELIC_TYPE = {
+    7: "RangedWeaponTypeLibram",
+    8: "RangedWeaponTypeIdol",
+    9: "RangedWeaponTypeTotem",
+}
+RELIC_SLOT = 28
 HAND_TYPE = {
     13: "HandTypeOneHand",
     17: "HandTypeTwoHand",
@@ -267,11 +277,12 @@ class Unreadable(Exception):
 SLOT_WORDS = {
     "Head", "Neck", "Shoulder", "Back", "Chest", "Waist", "Legs", "Feet", "Wrist", "Hands",
     "Finger", "Trinket", "One-Hand", "Two-Hand", "Main Hand", "Off Hand", "Held In Off-hand",
-    "Ranged", "Thrown",
+    "Ranged", "Thrown", "Relic",
 }  # fmt: skip
 TYPE_WORDS = {
     "Cloth", "Leather", "Mail", "Plate", "Shield", "Axe", "Mace", "Sword", "Dagger", "Staff",
     "Polearm", "Fist Weapon", "Bow", "Crossbow", "Gun", "Wand", "Thrown", "Miscellaneous",
+    "Libram", "Idol", "Totem",
 }  # fmt: skip
 EFFECT_LINE = re.compile(r"^(Equip|Use|Chance on hit|Set):", re.IGNORECASE)
 STAT_LINE = re.compile(r"^([+-])(\d+) ([A-Za-z ]+)$")
@@ -418,6 +429,11 @@ ENGINE_EFFECT = [
         "20 sec.",
         # Dreadfrost Saber 274603.
         "Equip: Adds 1 Frost damage to your melee attacks.",
+        # Totem of Rage 22395.
+        "Equip: Increases the damage of your Shock spells by 2%.",
+        # Maw of Min'loth 274608.
+        "Equip: When struck in melee combat, has a 10% chance of stealing 40 life from the target "
+        "enemy. (Proc chance: 10%, 3s cooldown)",
     ]
 ]
 # A clause that doubles an equip line in a city or stronghold, where no fight is (Black Horn
@@ -608,7 +624,7 @@ SLOT_WORD = {
     1: "Head", 2: "Neck", 3: "Shoulder", 5: "Chest", 6: "Waist", 7: "Legs", 8: "Feet",
     9: "Wrist", 10: "Hands", 11: "Finger", 12: "Trinket", 13: "One-Hand", 14: "Off Hand",
     15: "Ranged", 16: "Back", 17: "Two-Hand", 20: "Chest", 21: "Main Hand", 22: "Off Hand",
-    23: "Held In Off-hand", 25: "Thrown", 26: "Ranged",
+    23: "Held In Off-hand", 25: "Thrown", 26: "Ranged", 28: "Relic",
 }  # fmt: skip
 
 
@@ -640,6 +656,10 @@ def row_for(item_id, sparse, item, response):
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeShield", hand_type="HandTypeOffHand")
     elif int(item["ClassID"]) == ARMOR_CLASS and inventory == 23:
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeOffHand", hand_type="HandTypeOffHand")
+    elif int(item["ClassID"]) == ARMOR_CLASS and inventory == RELIC_SLOT:
+        if subclass not in RELIC_TYPE:
+            raise Unreadable(f"relic subclass {subclass}")
+        row.update(type="ItemTypeRanged", ranged_weapon_type=RELIC_TYPE[subclass])
     elif int(item["ClassID"]) == ARMOR_CLASS:
         if inventory not in ITEM_TYPE:
             raise Unreadable(f"armor in slot {inventory}")

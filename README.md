@@ -1361,6 +1361,32 @@ the Go goldens and exporter uses. The departures:
   damage casts the hit on the unit hit, with no roll, and the hit rolls the magic hit table as
   the gauntlets' Fire Strike does. An off hand weapon's hits never cast it. The reference's rules
   still refuse the item as unknown.
+- Totem of Rage (22395) and Maw of Min'loth (274608), which refused players' sims on 10 November
+  2026 (`tests/forever_totem_of_rage_maw_of_minloth_20261111.rs`). `tools/rust_client_items.py`
+  takes both rows with the equip line left out (`ENGINE_EFFECT`), and now writes a relic
+  (InventoryType 28: a libram, idol or totem) as the reference rows hold one, in the ranged slot.
+  Every field below is the client's (wago.tools `product=wowf`, 11 November 2026); none is
+  encrypted.
+  - Totem of Rage, item level 57: "Equip: Increases the damage of your Shock spells by 2%." Its
+    equip spell 27859 (ItemEffect 102980) is not in the pinned store. The live row has two
+    effects: a percent damage modifier of 2 (SpellEffect 704622, aura 108, misc 0) on class mask
+    0x90100000, the bits of Earth Shock, Flame Shock and Frost Shock, and the same of 2 on damage
+    over time (SpellEffect 1328150, misc 22) on Flame Shock's bit. So each shock's hit and Flame
+    Shock's ticks take 0.02 in the additive damage modifier, where the talents' percentages of
+    the same aura go (Concussion); beside Concussion and Call of Flame it is a little under 2% of
+    the spell's damage. Classic's flat 30 is not used.
+  - Maw of Min'loth, a shield, item level 42, 1287 Armor, 22 Block, +8 Stamina: "Equip: When
+    struck in melee combat, has a 10% chance of stealing 40 life from the target enemy. (Proc
+    chance: 10%, 3s cooldown)". `src/data/forever_client_spells.rs` restates its two rows: the
+    equip aura 1295064 (ItemEffect 234017; SpellAuraOptions 247408: chance 10, proc mask 40,
+    melee swings and abilities taken, and a 3000 ms proc recovery) casts 1295065, a Health Leech
+    of 40 from the attacker, Physical, on the melee table, with no variance and no coefficient
+    (SpellEffect 1316866, SpellCategories 184098). It is a spell data damage proc, as Skullflame
+    Shield's Drain Life (18815 casting 18817) is in the reference
+    (`src/prepare/forever_effect_items.rs`): only a character who tanks the target is struck, the
+    hit rolls the melee table, and the health the leech returns to the wearer is not modelled, as
+    Skullflame Shield's is not.
+  The reference's rules still refuse both items as unknown.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from
