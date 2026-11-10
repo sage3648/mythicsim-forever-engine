@@ -115,6 +115,22 @@ BIGGER_ROCK = {
         "</span><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Gahz'ridian Detector, a head piece of the client's quest class with no armor and no stats
+# (Wowhead, 11 November 2026).
+DETECTOR = {
+    "name": "Gahz'ridian Detector",
+    "quality": 1,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q1">Gahz\'ridian Detector</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->1</span><!--bo--><br>Quest Item<br>'
+        'Unique<!--ue--><!--ue--><table width="100%"><tr><td>Head</td></tr></table><!--rf-->'
+        "<!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps-->"
+        '</td></tr></table><table><tr><td><!--rr--><!--useText:0:1--><span id="useText1" '
+        'class="q2">Equip: <!--useEffect:0:1--><a href="/forever/spell=11992/detect-gahzridian" '
+        'class="q2">Nearby Gahz\'ridian appears on the minimap.</a><!--useEffect:1--></span>'
+        "<!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
 # Dreadfrost Saber, a Forever sword whose equip line the engine models by hand (Wowhead, 10 November
 # 2026).
 DREADFROST = {
@@ -386,6 +402,19 @@ class ParseTests(unittest.TestCase):
             odd = with_effects(SHACKLES, f'<span class="q2">{line}</span><!--itemEffects:1-->')
             self.assertEqual(tool.row_for(274600, None, shackles, odd), plain, line)
 
+    def test_a_worn_quest_item_is_an_armor_row_of_no_armor_type(self):
+        # Item row 9978: class 12 (quest), subclass 0, InventoryType 1.
+        quest = {**item(tool.QUEST_CLASS, 0), "InventoryType": "1"}
+        sparse = {"Display_lang": "Gahz'ridian Detector", "ItemLevel": "1", "InventoryType": "1"}
+        self.assertEqual(
+            tool.dump_row(tool.row_for(9978, sparse, quest, DETECTOR)),
+            '{"id":9978,"name":"Gahz\'ridian Detector","type":"ItemTypeHead",'
+            '"scaling_options":{"0":{"ilvl":1}},"unique":true}',
+        )
+        # A quest item that is not listed as worn is no row.
+        with self.assertRaisesRegex(tool.Unreadable, "not listed as worn"):
+            tool.row_for(9979, sparse, quest, DETECTOR)
+
     def test_a_use_or_chance_on_hit_the_engine_models_is_left_out_of_the_row(self):
         crown = tool.row_for(274609, None, {**item(4, 3), "InventoryType": "1"}, SERPENTBANE)
         self.assertEqual(
@@ -566,6 +595,13 @@ class CommittedFileTests(unittest.TestCase):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
         self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852}, ids)
+
+    def test_the_worn_quest_item_is_committed(self):
+        with open(tool.OUT) as rows:
+            detector = next(json.loads(line) for line in rows if '"id":9978,' in line)
+        self.assertEqual(detector["type"], "ItemTypeHead")
+        self.assertNotIn("armor_type", detector)
+        self.assertEqual(detector["scaling_options"], {"0": {"ilvl": 1}})
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:

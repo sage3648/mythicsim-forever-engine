@@ -1387,6 +1387,15 @@ the Go goldens and exporter uses. The departures:
     hit rolls the melee table, and the health the leech returns to the wearer is not modelled, as
     Skullflame Shield's is not.
   The reference's rules still refuse both items as unknown.
+- Gahz'ridian Detector (9978), a quest reward that refused a Feral Druid's Quick Sims on 10
+  November 2026 (`tests/forever_gahzridian_detector_20261111.rs`): item level 1, "Quest Item",
+  Unique, Head, "Equip: Nearby Gahz'ridian appears on the minimap." Its Item row is of the
+  client's quest class (12), not armor, so `tools/rust_client_items.py` names it
+  (`WORN_QUEST_ITEMS`) and writes an armor row with no armor type, and leaves the equip line out
+  of the row (`NO_FIGHT_EFFECT`): its equip spell Detect Gahz'ridian (11992, ItemEffect 98962) is
+  one resource tracking aura (SpellEffect 688737, aura 45; wago.tools `product=wowf`, client
+  1.60.1.70888, 11 November 2026). The row has no armor, no stats and no effect, so wearing it is
+  wearing nothing on the head, roll for roll. The reference's rules still refuse it as unknown.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from

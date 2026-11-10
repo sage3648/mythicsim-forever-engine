@@ -15,7 +15,8 @@ Sources, at the data's client build (data/manifest.json):
 
 An item is taken when it is a weapon or armor row, not in items.jsonl, with an equipment slot,
 a real name (no deprecated, test, old or placeholder rows) and a tooltip whose every line this
-tool reads. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
+tool reads. A quest item a character wears (WORN_QUEST_ITEMS: Gahz'ridian Detector, a head piece
+of the client's quest class) is taken as an armor row with no armor type. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
 and healing, hit, crit, mana per 5 sec, dodge, parry, block, expertise, weapon damage;
 EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/items.jsonl holds
 the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
@@ -96,6 +97,12 @@ JUNK_NAME = re.compile(
 # Items a player holds whose name reads as development data to JUNK_NAME. Old Leather Jacket
 # 280505 is a drop real characters wear (four refused Best Gear runs on 9 November 2026).
 REAL_ITEMS = {280505}
+
+# Items of the client's quest class (Item.ClassID 12) with an equipment slot that characters wear
+# into a fight. Gahz'ridian Detector 9978 is a head piece with no armor and no stats (two refused
+# Quick Sims on 10 November 2026); its row is an armor row with no armor type.
+QUEST_CLASS = 12
+WORN_QUEST_ITEMS = {9978}
 
 # The sets of the Forever client that this tool takes pieces of, by the name the tooltip gives,
 # with the ItemSet ID of the tooltip's item-set link. The reference database registers none of
@@ -206,7 +213,7 @@ def candidates(tables):
             continue
         if inventory_type(row, item) in NOT_WORN:
             continue
-        if int(item["ClassID"]) not in (WEAPON_CLASS, ARMOR_CLASS):
+        if int(item["ClassID"]) not in (WEAPON_CLASS, ARMOR_CLASS) and item_id not in WORN_QUEST_ITEMS:
             continue
         if row is not None and item_id not in REAL_ITEMS and JUNK_NAME.search(row["Display_lang"]):
             junk[item_id] = row["Display_lang"]
@@ -389,6 +396,8 @@ NO_FIGHT_EFFECT = [
         r"Equip: Restores \d+ Mana per 5 sec in [A-Za-z ]+ areas\.",
         # Gill's Gills 286646, Deep Flora Bindings 286998.
         r"Equip: Underwater Breath lasts \d+% longer than normal\.",
+        # Gahz'ridian Detector 9978.
+        r"Equip: Nearby Gahz'ridian appears on the minimap\.",
         # Grimm's Packing Gloves 276395, Enchantresses' Spire 287025.
         r"Equip: Increased (?:Herbalism|Mining|Skinning|Fishing) \+\d+\.",
         r"Equip: Reduces the cast time of Disenchant by \d+%\.",
@@ -646,21 +655,27 @@ def row_for(item_id, sparse, item, response):
         if parsed.get("slot") != SLOT_WORD.get(inventory):
             raise Unreadable(f"slot {parsed.get('slot')!r} differs from InventoryType {inventory}")
     row = {"id": item_id, "name": name}
+    item_class = int(item["ClassID"])
+    if item_class == QUEST_CLASS:
+        # A worn quest item is an armor row of no armor type (subclass 0).
+        if item_id not in WORN_QUEST_ITEMS or subclass != 0:
+            raise Unreadable("a quest item that is not listed as worn")
+        item_class = ARMOR_CLASS
     damage_expected = False
     set_fields = {}
     if parsed.get("set"):
         set_fields = {"set_name": parsed["set"], "set_id": CLIENT_SETS[parsed["set"]]}
-    if int(item["ClassID"]) == ARMOR_CLASS and subclass == 6:
+    if item_class == ARMOR_CLASS and subclass == 6:
         if inventory != 14:
             raise Unreadable(f"shield in slot {inventory}")
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeShield", hand_type="HandTypeOffHand")
-    elif int(item["ClassID"]) == ARMOR_CLASS and inventory == 23:
+    elif item_class == ARMOR_CLASS and inventory == 23:
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeOffHand", hand_type="HandTypeOffHand")
-    elif int(item["ClassID"]) == ARMOR_CLASS and inventory == RELIC_SLOT:
+    elif item_class == ARMOR_CLASS and inventory == RELIC_SLOT:
         if subclass not in RELIC_TYPE:
             raise Unreadable(f"relic subclass {subclass}")
         row.update(type="ItemTypeRanged", ranged_weapon_type=RELIC_TYPE[subclass])
-    elif int(item["ClassID"]) == ARMOR_CLASS:
+    elif item_class == ARMOR_CLASS:
         if inventory not in ITEM_TYPE:
             raise Unreadable(f"armor in slot {inventory}")
         row["type"] = ITEM_TYPE[inventory]
