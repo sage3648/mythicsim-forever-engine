@@ -307,6 +307,10 @@ pub struct PreparedReport {
     /// result unless [`PreparedReport::add_rotation_stats`] adds them.
     #[serde(skip)]
     extra_attack_strikes: Vec<serde_json::Value>,
+    /// The logged fight's cooldowns as casts started them, kept out of the result unless
+    /// [`PreparedReport::add_rotation_stats`] adds them.
+    #[serde(skip)]
+    cast_cooldowns: Vec<serde_json::Value>,
 }
 
 impl PreparedReport {
@@ -327,6 +331,13 @@ impl PreparedReport {
         player.insert(
             "extraAttackStrikes".into(),
             serde_json::Value::Array(self.extra_attack_strikes.clone()),
+        );
+        // Each cooldown a cast started in the logged fight, so the replay can sweep a button
+        // for its real cooldown and leave a spell without one alone (MythicSim Discord
+        // #paladin, 10 November 2026: seals read as having cooldowns).
+        player.insert(
+            "castCooldowns".into(),
+            serde_json::Value::Array(self.cast_cooldowns.clone()),
         );
         true
     }
@@ -366,6 +377,7 @@ fn run(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     let elapsed_ns = report.elapsed_ns;
     let presentation = report.presentation.clone();
     let extra_attack_strikes = report.extra_attack_strikes.clone();
+    let cast_cooldowns = report.cast_cooldowns.clone();
     Ok(PreparedReport {
         engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
         schema_version: SCHEMA_VERSION,
@@ -378,5 +390,6 @@ fn run(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
             .map_err(|err| PreparedError::Invalid(err.to_string()))?,
         presentation,
         extra_attack_strikes,
+        cast_cooldowns,
     })
 }

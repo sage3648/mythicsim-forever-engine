@@ -504,6 +504,10 @@ pub(crate) struct FightReport {
     /// adds to the player's metrics.
     #[serde(skip)]
     pub(crate) extra_attack_strikes: Vec<serde_json::Value>,
+    /// The logged fight's cooldowns as casts started them, which `sim --rotation-stats` adds
+    /// to the player's metrics.
+    #[serde(skip)]
+    pub(crate) cast_cooldowns: Vec<serde_json::Value>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -988,6 +992,7 @@ impl<A: Agent> Fight<A> {
             elapsed_ns,
             presentation: self.presentation.clone(),
             extra_attack_strikes: self.extra_attack_strikes.clone(),
+            cast_cooldowns: self.cast_cooldowns.clone(),
         }
     }
 }
