@@ -723,8 +723,9 @@ fn seal_of_justice_judges_justice() {
     // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
     assert_eq!(action(&player, 20164, 0).0, 3262.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
-    // Ironforge (754 before). 759 since Windfury Totem's Forever rules.
-    assert_eq!(action(&player, 20184, 0).0, 759.0);
+    // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
+    // Wisdom pays only on landed hits.
+    assert_eq!(action(&player, 20184, 0).0, 751.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
