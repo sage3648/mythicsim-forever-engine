@@ -20,8 +20,10 @@ and healing, hit, crit, mana per 5 sec, dodge, parry, block, expertise, weapon d
 EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/items.jsonl holds
 the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
 profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
-row. An item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or
-any line this tool does not read, is left out and listed.
+row. So is a use or chance on hit line the engine models by hand (ENGINE_EFFECT: Serpentbane
+Crown's use, the two Rock on Stick weapons' bash). An item whose tooltip is missing, or has any
+other use, chance on hit, set or equip line, or any line this tool does not read, is left out and
+listed.
 
 A piece of a set in CLIENT_SETS is taken with its set_name and set_id, as a reference row carries
 them; its tooltip's set block (the piece names and bonus lines) is not part of the row, and
@@ -397,6 +399,23 @@ NO_FIGHT_EFFECT = [
         r"Chance on hit: Knocks down all nearby enemies for \d+ sec\.",
     ]
 ]
+# Use and chance on hit lines the engine models by hand (src/prepare/forever_effect_items.rs), so
+# the item is taken with the line left out of the row. Each is the exact line of the item it names,
+# numbers included: a tooltip that changes them leaves the item out until the engine follows.
+ENGINE_EFFECT = [
+    re.compile(re.escape(line))
+    for line in [
+        # Serpentbane Crown 274609.
+        "Use: Inflict 89 to 112 Fire damage to your current target and an additional 225 damage "
+        "over 10 sec. Inflicts 2 times as much damage to Beast and Serpentine targets. "
+        "(5 Min Cooldown)",
+        # Bigger Rock on Bigger Stick 279480, Rock on Stick 279852.
+        "Chance on hit: Bash the target in the face, causing 14 Physical damage every 2 sec for "
+        "20 sec.",
+        "Chance on hit: Bash the target in the face, causing 7 Physical damage every 2 sec for "
+        "20 sec.",
+    ]
+]
 # A clause that doubles an equip line in a city or stronghold, where no fight is (Black Horn
 # Necklace 279863): the line reads as its base amount.
 CITY_CLAUSE = re.compile(r" This effect is doubled in Strongholds and Cities\.$")
@@ -540,7 +559,7 @@ def parse_tooltip(response):
                 out["stats"][34] = out["stats"].get(34, 0) + int(match.group(1))
         elif SET_LINE.match(line):
             raise Unreadable("a set piece")
-        elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT):
+        elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT + ENGINE_EFFECT):
             equip_lines += 1
         elif match := SKILL_LINE.fullmatch(line):
             equip_lines += 1
