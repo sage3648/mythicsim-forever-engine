@@ -131,6 +131,30 @@ DETECTOR = {
         "<!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Toofbreaker, a Forever mace whose chance on hit the engine models by hand (Wowhead, 11 November
+# 2026).
+TOOFBREAKER = {
+    "name": "Toofbreaker",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Toofbreaker</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->45</span><!--bo--><br>Binds '
+        'when picked up<!--ue--><!--ue--><table width="100%"><tr><td>One-Hand</td><th><!--scstart2:4-->'
+        '<span class="q1">Mace</span><!--scend--></th></tr></table><!--rf--><table width="100%">'
+        '<tr>\n    <td><span><!--dmg-->40 - 75 Damage</span></td>\n    <th>Speed <!--spd-->'
+        '1.90</th>\n</tr></table><!--dps-->(30.26 damage per second)<br><span><!--stat4-->'
+        '+7 Strength</span><br><span><!--stat7-->+5 Stamina</span><!--ebstats--><!--egstats-->'
+        '<!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Durability 90 / '
+        '90</td></tr></table><table><tr><td>Requires Level <!--rlvl-->40<br><!--rr--><!--useText:0:1-->'
+        '<span id="useText1" class="q2">Chance on hit: <!--useEffect:0:1--><a href="/forever/spell=1320269/toofbreak" '
+        'class="q2">Bash the target, causing 42 Physical damage. Deals 2 times as much damage '
+        'if the target is facing you.</a><!--useEffect:1--></span><!--useText:1--><!--itemEffects:1-->'
+        '<br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice">Sell Price: <span '
+        'class="moneygold">2</span> <span class="moneysilver">3</span> <span class="moneycopper">'
+        '18</span></div><div class="whtt-extra whtt-droppedby">Dropped by: Bossman Toof</div>'
+        '<div class="whtt-extra whtt-dropchance">Drop Chance: 20.00%</div></td></tr></table>'
+    ),
+}
 # Dreadfrost Saber, a Forever sword whose equip line the engine models by hand (Wowhead, 10 November
 # 2026).
 DREADFROST = {
@@ -432,6 +456,20 @@ class ParseTests(unittest.TestCase):
         )
         self.assertIsNone(tool.bonus_row(279480, rock["name"], tool.parse_tooltip(BIGGER_ROCK)))
 
+    def test_a_direct_chance_on_hit_the_engine_models_is_left_out_of_the_row(self):
+        mace = tool.row_for(286430, None, {**item(2, 4), "InventoryType": "13"}, TOOFBREAKER)
+        self.assertEqual(
+            tool.dump_row(mace),
+            '{"id":286430,"name":"Toofbreaker","type":"ItemTypeWeapon","weapon_type":'
+            '"WeaponTypeMace","hand_type":"HandTypeOneHand","weapon_speed":1.9,'
+            '"scaling_options":{"0":{"weapon_damage_min":40,"weapon_damage_max":75,'
+            '"stats":{"0":7,"2":5},"ilvl":45}}}',
+        )
+        # Other numbers are another effect: the item stays out until the engine follows.
+        odd = json.loads(json.dumps(TOOFBREAKER).replace("causing 42 Physical", "causing 50 Physical"))
+        with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+            tool.row_for(286430, None, {**item(2, 4), "InventoryType": "13"}, odd)
+
     def test_an_equip_line_the_engine_models_is_left_out_of_the_row(self):
         saber = tool.row_for(274603, None, {**item(2, 7), "InventoryType": "21"}, DREADFROST)
         self.assertEqual(
@@ -594,7 +632,7 @@ class CommittedFileTests(unittest.TestCase):
     def test_the_modelled_effect_items_are_committed(self):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
-        self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852}, ids)
+        self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852, 286430}, ids)
 
     def test_the_worn_quest_item_is_committed(self):
         with open(tool.OUT) as rows:

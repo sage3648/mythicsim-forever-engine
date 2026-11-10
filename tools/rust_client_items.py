@@ -22,8 +22,8 @@ EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/
 the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
 profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
 row. So is a use, chance on hit or equip line the engine models by hand (ENGINE_EFFECT:
-Serpentbane Crown's use, the two Rock on Stick weapons' bash, Dreadfrost Saber's Frost damage,
-Totem of Rage's shock damage, Maw of Min'loth's leech when struck). A relic (a libram, idol or
+Serpentbane Crown's use, the two Rock on Stick weapons' bash, Toofbreaker's bash, Dreadfrost
+Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when struck). A relic (a libram, idol or
 totem) is written in the ranged slot, as the reference rows hold one (RELIC_TYPE). An
 item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or any line
 this tool does not read, is left out and listed.
@@ -436,6 +436,9 @@ ENGINE_EFFECT = [
         "20 sec.",
         "Chance on hit: Bash the target in the face, causing 7 Physical damage every 2 sec for "
         "20 sec.",
+        # Toofbreaker 286430.
+        "Chance on hit: Bash the target, causing 42 Physical damage. Deals 2 times as much damage "
+        "if the target is facing you.",
         # Dreadfrost Saber 274603.
         "Equip: Adds 1 Frost damage to your melee attacks.",
         # Totem of Rage 22395.

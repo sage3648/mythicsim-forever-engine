@@ -1396,6 +1396,30 @@ the Go goldens and exporter uses. The departures:
   one resource tracking aura (SpellEffect 688737, aura 45; wago.tools `product=wowf`, client
   1.60.1.70888, 11 November 2026). The row has no armor, no stats and no effect, so wearing it is
   wearing nothing on the head, roll for roll. The reference's rules still refuse it as unknown.
+- Toofbreaker (286430), a Forever one-hand mace that refused a Combat Rogue's Quick Sims on 10
+  November 2026 (`tests/forever_toofbreaker_20261111.rs`): item level 45, 40 to 75, speed 1.90,
+  +7 Strength, +5 Stamina, "Chance on hit: Bash the target, causing 42 Physical damage. Deals 2
+  times as much damage if the target is facing you." `tools/rust_client_items.py` takes its row
+  with the chance on hit line left out (`ENGINE_EFFECT`), and `src/data/forever_client_spells.rs`
+  restates its spell row, which the pinned store lacks. It is not encrypted, so every field is
+  the client's (wago.tools `product=wowf`, client 1.60.1.70888, 11 November 2026): ItemEffect
+  238089 is a chance on hit (trigger type 2) of Toofbreak (1320269) with no rate and no cooldown,
+  and the spell is a School Damage of 42 on the target, Physical, on the melee table, with no
+  variance and no coefficient (SpellEffect 1354774, SpellMisc 866009, SpellCategories 189061),
+  beside a dummy effect with base points 2, the tooltip's "2 times" (SpellEffect 1354775).
+  - The rate is assumed. The client states none, so the bash rolls the rate the Rock on Stick
+    weapons and the reference's chance on hit items without one roll here (1.8% per second of
+    weapon speed, 3.42% a swing at 1.90, `docs/forever-chance-on-hit.md`), on the weapon's own
+    landed hits, in either hand.
+  - The hit rolls the melee table, may crit, and takes the target's armor, as a direct Physical
+    hit does (the Rock on Stick weapons' ticks take none).
+  - "Deals 2 times as much damage if the target is facing you": the bash's damage multiplier is
+    2 for a character the target faces for the fight, which is one in front of the target (the
+    request's `inFrontOfTarget`, the flag Backstab, Shred and Ambush read) or one a target swings
+    at, since a target faces its tank. A character behind the target deals the row's 42
+    (`forever_effect_items::FACING_DAMAGE_ITEMS`). With several targets the one flag stands for
+    all of them, as it does for Backstab.
+  The reference's rules still refuse the item as unknown.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from

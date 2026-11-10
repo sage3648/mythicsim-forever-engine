@@ -18,6 +18,9 @@
 //! Maw of Min'loth's two rows (1295064 and 1295065) are not encrypted either: every field of
 //! theirs is the client's, read from wago.tools `product=wowf` on 11 November 2026.
 //!
+//! Nor is Toofbreaker's row (1320269): every field of it is the client's, read from wago.tools
+//! `product=wowf` on 11 November 2026 (the tables of build 1.60.1.70888).
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -97,7 +100,61 @@ pub(crate) fn rows() -> Vec<Spell> {
         dreadfrost_saber_damage(),
         maw_of_minloth_trigger(),
         maw_of_minloth_leech(),
+        toofbreak(),
     ]
+}
+
+/// Toofbreaker's chance on hit (ItemEffect 238089, trigger type 2, no rate and no cooldown
+/// stated): "Bash the target, causing 42 Physical damage. Deals 2 times as much damage if the
+/// target is facing you." The row is its own trigger, as a reference chance on hit weapon's is.
+fn toofbreak() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 866009: Attributes_0 262144 and Attributes_15 8192.
+    attr[0] = 262_144;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_320_269,
+        name: "Toofbreak".to_string(),
+        // SpellMisc 866009: SchoolMask 1, Physical.
+        school: 1,
+        attr,
+        // SpellMisc 866009: RangeIndex 6, SpellRange's 100 yards.
+        max_range: 100.0,
+        // SpellCooldowns 101719: RecoveryTime 100. A proc's spell has no cooldown of its own
+        // here (`resolve_spell::proc`), so nothing reads it.
+        cooldown_ms: 100,
+        // SpellCategories 189061: melee.
+        defense_type: 2,
+        effects: vec![
+            // SpellEffect 1354774: School Damage (2) of 42 to the target (6), with no variance
+            // and no spell power or attack power coefficient.
+            Effect {
+                id: 1_354_774,
+                spell_id: 1_320_269,
+                index: 0,
+                effect_type: 2,
+                base_points: 42.0,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                target: [6, 0],
+                ..Effect::default()
+            },
+            // SpellEffect 1354775: a Dummy (3) with base points 2 and no target: the "2 times
+            // as much damage" to a target facing the wearer, which the server applies and
+            // preparation restates (`forever_effect_items::FACING_DAMAGE_ITEMS`).
+            Effect {
+                id: 1_354_775,
+                spell_id: 1_320_269,
+                index: 1,
+                effect_type: 3,
+                base_points: 2.0,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                ..Effect::default()
+            },
+        ],
+        ..Spell::default()
+    }
 }
 
 /// `ATTR_EX_15` bit 13, which both of Dreadfrost Saber's rows carry (SpellMisc `Attributes_15`
