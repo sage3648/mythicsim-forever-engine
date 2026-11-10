@@ -11,6 +11,10 @@
 //!   SpellMisc (school, duration, attributes) and the Rock on Stick weapons' SpellEffect rows,
 //!   whose wago rows are unreadable (853501, 856584: a trigger spell of 8192 and a variance of 18).
 //!
+//! Dreadfrost Saber's two rows (1294939 and 1294940) are not encrypted: every field of theirs is
+//! the client's, read from wago.tools `product=wowf` on 10 November 2026 (the tables of build
+//! 1.60.1.70707, which it serves).
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -86,7 +90,89 @@ pub(crate) fn rows() -> Vec<Spell> {
         },
         rock_to_the_face(1_306_816, "Bigger Rock to the Face", 853_501, 14.0),
         rock_to_the_face(1_309_967, "Rock to the Face", 856_584, 7.0),
+        dreadfrost_saber_trigger(),
+        dreadfrost_saber_damage(),
     ]
+}
+
+/// `ATTR_EX_15` bit 13, which both of Dreadfrost Saber's rows carry (SpellMisc `Attributes_15`
+/// 8192), as Fiery Plate Gauntlets' two rows do.
+const ATTR_15_BIT_13: u32 = 0x2000;
+
+/// Dreadfrost Saber's equip spell (ItemEffect 234011, trigger type 1, on equip): "Adds 1 Frost
+/// damage to your melee attacks." The same shape as Fiery Plate Gauntlets' pinned row 7721: an
+/// aura on the wearer that casts another spell on a hit.
+fn dreadfrost_saber_trigger() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842335: Attributes_0 448 (a passive aura) and Attributes_15 8192, both row
+    // 7721's own.
+    attr[0] = 448;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_939,
+        name: "Dreadfrost Saber".to_string(),
+        // SpellMisc 842335: SchoolMask 1, the aura's own. The damage is the other row's.
+        school: 1,
+        attr,
+        // SpellAuraOptions 248286: ProcChance 100, ProcTypeMask 20 (melee swings and melee
+        // abilities dealt, as row 7721) and, in the second word, 32: the main hand's hits only,
+        // as Iceblade Hacker's and Warblade of Caer Darrow's "Melee attacks with this weapon"
+        // (pinned rows 1298413 and 1298500) and Bloodthrill's "Main Hand melee attacks".
+        proc_chance: 100,
+        proc_flags: [20, 32],
+        // A chance of 100 beside a tooltip that states none: the aura fires whenever its
+        // condition is met (`proc_chance_source::ALWAYS`, as the importer wrote for row 7721).
+        proc_chance_source: 2,
+        // SpellEffect 1316647: Apply Aura (6) of Proc Trigger Spell (42) on the caster, base
+        // points 1 (the tooltip's "$s1"), triggering 1294940.
+        effects: vec![Effect {
+            id: 1_316_647,
+            spell_id: 1_294_939,
+            index: 0,
+            effect_type: 6,
+            aura: 42,
+            base_points: 1.0,
+            pvp_mult: 1.0,
+            trigger_id: 1_294_940,
+            chain_amp: 1.0,
+            target: [1, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// The spell Dreadfrost Saber's aura casts: "Deals 1 Frost Damage." The same shape as Fiery
+/// Plate Gauntlets' Fire Strike (pinned row 7714).
+fn dreadfrost_saber_damage() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842336: Attributes_15 8192 and nothing else.
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_940,
+        name: "Dreadfrost Saber".to_string(),
+        // SpellMisc 842336: SchoolMask 16, Frost.
+        school: 16,
+        attr,
+        // SpellMisc 842336: RangeIndex 11, SpellRange's 15 yards.
+        max_range: 15.0,
+        // SpellCategories 188896: magic.
+        defense_type: 1,
+        // SpellEffect 1316648: School Damage (2) of 1 to the target (6), with no variance and no
+        // spell power or attack power coefficient.
+        effects: vec![Effect {
+            id: 1_316_648,
+            spell_id: 1_294_940,
+            index: 0,
+            effect_type: 2,
+            base_points: 1.0,
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
 }
 
 /// Bigger Rock on Bigger Stick's (ItemEffect 236115) and Rock on Stick's (236700) chance on hit:
