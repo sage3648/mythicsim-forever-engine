@@ -894,6 +894,20 @@ the Go goldens and exporter uses. The departures:
   Clearcasting it found, so a start proc is a fresh one for the next cast, and each ground tick
   rolls once after the first enemy it lands on. Both share the talent's 1 sec cooldown
   (`tests/classes/mage/arcane_concentration.rs`). The reference rolls on neither.
+- The WoW: Forever hotfixes of 9 November 2026 (posted 10 November), read line by line. One
+  changes a number here: "Arcane Concentration's activation chance now correctly splits across
+  the cast and every bolt (was granting 10% on cast and per bolt)", which is the full chance at
+  the channel start and on each missile that the combat logs above showed. Under Forever's rules
+  the start of an Arcane Missiles channel and each of its missiles now roll an equal share of the
+  talent's chance, one over the start and the channel's missiles together (a sixth each on a
+  five missile channel), so a channel gains Clearcasting at about the talent's chance where
+  nearly half of them did. The notes give no shares; equal ones are assumed until logs after the
+  hotfix say otherwise. Every other spell's roll and the Flamestrike ground tick's keep the full
+  chance. The other class lines need nothing: Natural Instinct already reaches every Druid
+  ability, Lacerate and Pounce included; Incinerate is registered only with its Destruction
+  talent; Lightning Overload's Lightning Bolt copies already deal half their rank's damage, as
+  the talent says; a Flamestrike ground tick never spent Clearcasting here; and Gloves of Holy
+  Might's proc is modelled as its tooltip states.
 - A Hunter's pet swings at its owner's melee and attack speed, from Forever combat logs: the pet
   swung every 1.965 s under its owner's 2% Wind Blessed, 1.40 s under Rapid Fire's 40% and 1.08 s
   with its own Frenzy as well, so the two multiply, and the owner's ranged haste (ranged Quick

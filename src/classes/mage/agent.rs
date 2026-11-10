@@ -781,7 +781,7 @@ impl Agent for MageAgent {
                 // Called directly, not as a landed outcome, so no other hit listener (Missile
                 // Barrage, Judgement of Wisdom) hears the channel's cast.
                 if let Some(state) = fight.agent.arcane_concentration.clone() {
-                    state.on_channel_start(fight);
+                    state.on_channel_start(fight, spell);
                 }
                 arcane_missiles::apply_channel(fight, spell);
             }

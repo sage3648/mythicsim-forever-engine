@@ -6,6 +6,10 @@
 //! November 2026, each missile that lands rolls too, and an Arcane Missiles cast that finds
 //! Missile Barrage up keeps the Clearcasting. Forever's rules also roll once as an Arcane
 //! Missiles channel starts and once on each Flamestrike ground tick, as the combat logs show.
+//! Since the hotfixes of 9 November 2026 the talent's chance is split across an Arcane Missiles
+//! cast and its missiles: the start and each missile roll an equal share of it.
+
+use std::cell::Cell;
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
@@ -22,6 +26,9 @@ pub(crate) struct ArcaneConcentration {
     missiles: bool,
     /// The Missile Barrage aura, when the Mage has the talent and `missiles` is on.
     missile_barrage: Option<AuraRef>,
+    /// The share of the talent's chance that the start of the last Arcane Missiles channel and
+    /// each of its missiles roll: one over the start and the channel's missiles together.
+    missile_share: Cell<f64>,
 }
 
 pub(crate) fn bind<A: Agent>(
@@ -41,6 +48,7 @@ pub(crate) fn bind<A: Agent>(
         } else {
             None
         },
+        missile_share: Cell::new(1.0),
     })
 }
 
@@ -107,7 +115,12 @@ impl ArcaneConcentration {
         if state.flags.proc || !damaging || !result.landed() {
             return;
         }
-        self.roll(fight);
+        let share = if state.class_spell.as_deref() == Some("arcane_missiles_tick") {
+            self.missile_share.get()
+        } else {
+            1.0
+        };
+        self.roll(fight, share);
     }
 
     /// Forever's rules: an Arcane Missiles channel rolls once as it starts, on top of each
@@ -116,9 +129,18 @@ impl ArcaneConcentration {
     /// and 41.0% without. The cast's effects run after Clearcasting is spent
     /// ([`Self::on_apply_effects`]), so a plain channel spends the one it found and a proc from
     /// its start is a fresh one the same cast does not spend.
-    pub(crate) fn on_channel_start<A: Agent>(&self, fight: &mut Fight<A>) {
+    ///
+    /// The hotfixes of 9 November 2026: "Arcane Concentration's activation chance now correctly
+    /// splits across the cast and every bolt (was granting 10% on cast and per bolt)". The notes
+    /// give no shares, so the start and each of the channel's missiles roll an equal one: a
+    /// five missile channel rolls a sixth of the talent's chance six times.
+    pub(crate) fn on_channel_start<A: Agent>(&self, fight: &mut Fight<A>, channel: SpellId) {
         if self.missiles {
-            self.roll(fight);
+            let missiles = fight.spells[channel]
+                .dot
+                .map_or(0, |dot| fight.dots[dot].base_tick_count);
+            self.missile_share.set(1.0 / f64::from(1 + missiles.max(0)));
+            self.roll(fight, self.missile_share.get());
         }
     }
 
@@ -126,19 +148,21 @@ impl ArcaneConcentration {
     /// the first it lands on. In Forever combat logs Clearcasting came from 13 of 82 ticks.
     pub(crate) fn on_flamestrike_tick<A: Agent>(&self, fight: &mut Fight<A>) {
         if self.missiles {
-            self.roll(fight);
+            self.roll(fight, 1.0);
         }
     }
 
-    /// The roll under the trigger's internal cooldown, which a proc starts.
-    fn roll<A: Agent>(&self, fight: &mut Fight<A>) {
+    /// The roll of `share` of the talent's chance under the trigger's internal cooldown, which a
+    /// proc starts.
+    fn roll<A: Agent>(&self, fight: &mut Fight<A>, share: f64) {
         let icd = fight.aura(self.trigger).icd;
         if let Some((timer, _)) = icd {
             if fight.timers[timer] > fight.now {
                 return;
             }
         }
-        if self.proc_chance != 1.0 && fight.random_for_aura(self.trigger) > self.proc_chance {
+        let chance = self.proc_chance * share;
+        if chance != 1.0 && fight.random_for_aura(self.trigger) > chance {
             return;
         }
         if let Some((timer, duration)) = icd {
