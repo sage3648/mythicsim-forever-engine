@@ -342,47 +342,6 @@
       "action": {
         "castSpell": {
           "spellId": {
-            "spellId": 603
-          }
-        },
-        "condition": {
-          "and": {
-            "vals": [
-              {
-                "cmp": {
-                  "lhs": {
-                    "remainingTime": {}
-                  },
-                  "op": "OpGe",
-                  "rhs": {
-                    "const": {
-                      "val": "60s"
-                    }
-                  }
-                }
-              },
-              {
-                "cmp": {
-                  "lhs": {
-                    "numberTargets": {}
-                  },
-                  "op": "OpLt",
-                  "rhs": {
-                    "const": {
-                      "val": "3"
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "action": {
-        "castSpell": {
-          "spellId": {
             "spellId": 1311680
           }
         },
@@ -500,59 +459,20 @@
       "action": {
         "castSpell": {
           "spellId": {
-            "spellId": 603
+            "spellId": 18288
           }
         },
         "condition": {
           "cmp": {
             "lhs": {
-              "remainingTime": {}
+              "currentTime": {}
             },
             "op": "OpGe",
             "rhs": {
               "const": {
-                "val": "60s"
+                "val": "2s"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "action": {
-        "castSpell": {
-          "spellId": {
-            "spellId": 18288
-          }
-        },
-        "condition": {
-          "and": {
-            "vals": [
-              {
-                "not": {
-                  "val": {
-                    "dotIsActive": {
-                      "spellId": {
-                        "spellId": 603
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "cmp": {
-                  "lhs": {
-                    "currentTime": {}
-                  },
-                  "op": "OpGe",
-                  "rhs": {
-                    "const": {
-                      "val": "2s"
-                    }
-                  }
-                }
-              }
-            ]
           }
         }
       }
@@ -568,23 +488,18 @@
           "and": {
             "vals": [
               {
-                "not": {
-                  "val": {
-                    "dotIsActive": {
-                      "spellId": {
-                        "spellId": 603
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "not": {
-                  "val": {
-                    "dotIsActive": {
+                "cmp": {
+                  "op": "OpLe",
+                  "lhs": {
+                    "dotRemainingTime": {
                       "spellId": {
                         "spellId": 11713
                       }
+                    }
+                  },
+                  "rhs": {
+                    "const": {
+                      "val": "3s"
                     }
                   }
                 }
@@ -628,10 +543,8 @@
                   },
                   "op": "OpLe",
                   "rhs": {
-                    "spellCastTime": {
-                      "spellId": {
-                        "spellId": 25311
-                      }
+                    "const": {
+                      "val": "3s"
                     }
                   }
                 }
@@ -739,10 +652,8 @@
                   },
                   "op": "OpLe",
                   "rhs": {
-                    "spellCastTime": {
-                      "spellId": {
-                        "spellId": 18881
-                      }
+                    "const": {
+                      "val": "3s"
                     }
                   }
                 }
