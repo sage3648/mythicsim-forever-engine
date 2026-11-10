@@ -182,7 +182,16 @@ pub(crate) struct DamageShield<'a> {
 /// Go `NewDamageShield`: the damage a damage shield deals back to whoever lands a melee hit,
 /// which also scales with the wearer's spell power by the bonus coefficient. The category is the
 /// aura's own, which decides whether a second copy of the shield can sit next to it.
+///
+/// Under Forever's rules the shield's hit takes none of the target's flat school damage bonus
+/// ([`SpellFlag::IGNORE_TARGET_SCHOOL_BONUS`]): levels 1 to 19 logs (client 1.60.1.70790) show
+/// 9 rank 1 Retribution Aura hits under the paladin's own rank 2 Judgement of the Crusader, all
+/// 5 or 6, the flat 5 at a Dwarf's 5% against beasts, with nothing from the judgement.
 pub(crate) fn new_damage_shield(sim: &mut Sim, unit: UnitId, shield: DamageShield) -> AuraId {
+    let mut flags = SpellFlag::BINARY | SpellFlag::PASSIVE_SPELL;
+    if sim.rules == super::super::sim::Rules::Forever {
+        flags |= SpellFlag::IGNORE_TARGET_SCHOOL_BONUS;
+    }
     sim.register_spell(
         unit,
         SpellConfig {
@@ -193,7 +202,7 @@ pub(crate) fn new_damage_shield(sim: &mut Sim, unit: UnitId, shield: DamageShiel
             spell_school: shield.school,
             defense_type: DefenseType::default(),
             proc_mask: ProcMask::EMPTY,
-            flags: SpellFlag::BINARY | SpellFlag::PASSIVE_SPELL,
+            flags,
             damage_multiplier: 1.0,
             threat_multiplier: 1.0,
             bonus_coefficient: shield.bonus_coefficient,

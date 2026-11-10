@@ -19,14 +19,26 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId) {
 }
 
 /// Go `OnTick`: `CalcAndDealPeriodicAoeDamage` with `OutcomeTickMagicHitAndCrit`, each target
-/// calculated and dealt in turn.
-pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId, tick_base: f64) {
+/// calculated and dealt in turn. In game each ground tick is a hit of the tick spell, which a
+/// talent listening for hits hears once a tick, however many enemies it hits: `on_first_landed`
+/// runs once, after the first target the tick lands on.
+pub(crate) fn tick<A: Agent>(
+    fight: &mut Fight<A>,
+    dot: DotId,
+    tick_base: f64,
+    mut on_first_landed: impl FnMut(&mut Fight<A>),
+) {
+    let mut landed = false;
     for position in 0..fight.targets.len() {
-        fight.periodic_damage_tick_with(
+        let result = fight.periodic_damage_tick_with(
             dot,
             Side::target(position),
             tick_base,
             Outcome::TickMagicHitAndCrit,
         );
+        if !landed && result.landed() {
+            landed = true;
+            on_first_landed(fight);
+        }
     }
 }

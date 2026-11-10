@@ -195,7 +195,7 @@ fn only_forever_marks_the_avoid_rage_unscaled() {
 }
 
 /// Cleave rank 1 adds 30 threat beyond its damage on one target (about 15 on each of two). The
-/// per level figure of the other ranks would give 30.6 at its level 20, and rank 5 keeps it.
+/// per level figure of the other ranks would give 30.6 at its level 20.
 #[test]
 fn cleave_rank_1_adds_thirty_threat() {
     let request = levelling_warrior();
@@ -208,10 +208,12 @@ fn cleave_rank_1_adds_thirty_threat() {
     let flat = number(&spell(&reference, CLEAVE_RANK_1)["flat_threat_bonus"]);
     assert!((flat - 1.53 * 20.0).abs() < 1e-9, "{flat}");
 
-    for rules in [Rules::Forever, Rules::GoReference] {
+    // Rank 5 carries the reference's 1.53 a spell level there, and under Forever's rules the 1.5
+    // ranks 1 and 2 measure, as a whole number (tests/classes/warrior/flat_threat.rs).
+    for (rules, want) in [(Rules::Forever, 90.0), (Rules::GoReference, 1.53 * 60.0)] {
         let at_60 = production_for("warrior", rules);
         let flat = number(&spell(&prepared(&at_60, rules), CLEAVE_RANK_5)["flat_threat_bonus"]);
-        assert!((flat - 1.53 * 60.0).abs() < 1e-9, "{flat}");
+        assert!((flat - want).abs() < 1e-9, "{flat}");
     }
 }
 

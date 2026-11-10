@@ -886,6 +886,23 @@ the Go goldens and exporter uses. The departures:
   runtime sets on a Goblin Sapper Charge's hit on its thrower. Its 36 melee Attack Power against
   Dragonkin (aura 102, creature mask 2) is a `mob_type_bonus` with `melee_attack_power` while the
   buff is up and every target is Dragonkin; ranged attacks do not read it.
+- Arcane Concentration at the Arcane Missiles channel start and on Flamestrike's ground ticks,
+  from Forever combat logs: Clearcasting came from 8.9% of 347 channel starts, and 45.3% of
+  5-missile channels gained it, against 46.9% expected with a roll at the start and 41.0%
+  without; and from 13 of 82 Flamestrike ticks, once a tick however many enemies stood in it.
+  Under Forever's rules the channel rolls once as it starts, after the cast has spent any
+  Clearcasting it found, so a start proc is a fresh one for the next cast, and each ground tick
+  rolls once after the first enemy it lands on. Both share the talent's 1 sec cooldown
+  (`tests/classes/mage/arcane_concentration.rs`). The reference rolls on neither.
+- A Hunter's pet swings at its owner's melee and attack speed, from Forever combat logs: the pet
+  swung every 1.965 s under its owner's 2% Wind Blessed, 1.40 s under Rapid Fire's 40% and 1.08 s
+  with its own Frenzy as well, so the two multiply, and the owner's ranged haste (ranged Quick
+  Shots) left it at 1.965 s. Each change reached the pet at its next 5.25 s stat heartbeat and
+  rescaled the swing under way. Under Forever's rules the owner's speed at the summon (Wind
+  Blessed, Battle Squawk's stacks) is in the pet's swing from the pull, and each later change of
+  the owner's melee or attack speed (Rapid Fire, Battle Squawk's expiry, Aspect of the Beast's
+  Quick Strikes, attack speed procs and trinkets) reaches the pet at its next heartbeat
+  (`tests/classes/hunter/pet_melee_speed.rs`). The reference's pet keeps its own speed.
 - Stat aura combinations up to 16 bits, where the reference refuses past 14: an Orc
   Enhancement Shaman with Jom Gabbar takes 15 (the totems, the swap, the imbues and the potion
   10, Blood Fury 1, Jom Gabbar's stacks 4). Each bit doubles the reset simulations: 15 bits
@@ -1002,6 +1019,30 @@ the Go goldens and exporter uses. The departures:
   totem is cast (air slot, mana, global cooldown) and its trigger stays off while the party's
   totem stands or the imbue is up; an item swap that takes the imbue off lets it back on at
   once. The reference refuses the request, as before (`one_aura` on `windfury_totem_self`).
+- Windfury Totem's triggers and charges, from Forever combat logs. An ability rolls the totem
+  only when its client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off on the
+  next swing (`Attributes[0]` 0x4); main hand autos and extra swings always roll it. Unflagged
+  abilities never proc it: Bloodthirst 0 of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of
+  97, Holy Strike 0 of 78. Flagged ones proc it at the swing rate (Mortal Strike 29 of 150), and
+  Maul, which goes off on the next swing, on 27.2% of its landed hits. No off hand special rolls
+  it, a shield strike included. A landed hit rolls it without dealing damage (Sunder Armor
+  applications at 15%); a miss still does not. The proc grants every charge and the auto that
+  fired it spends none, so the next off hand auto keeps the attack power (46 of 47), and every
+  outcome of a later auto spends one (8 of 8 missed swings). The reference rolls it off every
+  main hand melee spell (and off hand specials without an off hand weapon), wants damage, takes
+  a charge off for the triggering auto and spends charges on landed autos only. The shaman's own
+  totem gives the same aura and follows the same rules (`trigger_spends_no_charge` and
+  `any_outcome_spends` on `windfury_totem` and `windfury_totem_self`, `trigger_without_damage`
+  on the latter, `tests/classes/warrior/windfury_totem.rs`).
+- Sword Specialization (Weaponmaster with a sword), from Forever combat logs with a two-hand
+  sword at 5/5: a roll off a Windfury Totem swing brings no extra swing (0 of 6), so the
+  totem's swing does not roll it (a queued Heroic Strike that replaces that swing still does);
+  Sweeping Strikes' hits never roll it (0 of 336 over two logs); and Whirlwind and Cleave roll
+  it once a cast on their first landed hit, not once a target (Whirlwind 7 procs on 100 casts
+  and 283 landed hits). Whirlwind's off hand strike keeps a roll of its own. The reference rolls
+  every one of those hits (`skips_windfury_totem_swing`, `once_a_cast_class_spells` and the
+  Sweeping Strikes hits in `excluded_class_spells` on `weaponmaster_sword`,
+  `tests/classes/warrior/sword_specialization.rs`).
 - Soul Siphon counts the Affliction effects active at each tick. Its client 1.60.1.70755 text:
   Drain Life, Drain Soul and Wrack deal "12% per each of your other Affliction effects active on
   the target, up to a maximum increase of 36%". The talent is a dummy aura, so the server counts,
@@ -1050,8 +1091,12 @@ the Go goldens and exporter uses. The departures:
   (wago.tools cannot read them), from their Item row and Wowhead Forever tooltip alone, such as
   Berserker Shackles (274600), and equip lines that are a plain stat (Defense, Attack Power,
   spell power, hit, crit, mana per 5 sec, dodge, parry, block) read as `data/items.jsonl` holds
-  the same line of a Classic item. Items with a use, chance on hit or other equip effect, a set
-  bonus or a line the generator does not read are left out and stay refused
+  the same line of a Classic item. Since 10 November 2026 it holds the five pieces of Krol'dok
+  Battlegear, a Forever set the reference does not register: fewer pieces than its first bonus
+  needs are plain items, and an equipment that reaches a bonus is refused by name until the bonus
+  is applied (`CLIENT_SETS_NOT_PREPARED`, `tests/forever_client_items_sets_20261110.rs`). Items
+  with a use, chance on hit or other equip effect, a piece of any other set or a line the
+  generator does not read are left out and stay refused
   (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
   `tests/forever_client_items_20261108.rs`). The rerun of 9 November 2026 added the 71 items whose
   tooltips Wowhead decoded since, 14 of them with a creature type attack power line written to
@@ -1141,6 +1186,19 @@ the Go goldens and exporter uses. The departures:
   for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
   adds 135 to every rank of Hamstring and gives Shield Bash its damage
   (`tests/forever_warrior_threat_20261107.rs`).
+- Heroic Strike, Cleave and Slam add whole numbers of flat threat, from Forever combat logs on
+  client 1.60.1.70862 (8 November 2026). Heroic Strike ranks 1 to 4 add 17, 28, 40 and 60 (Rank
+  4 measured at 60.08 over 104 clean readings, Rank 3 at 39.99) and ranks 5 and up 2.5 a spell
+  level (80 to 150); Cleave rank 2 adds 46 and ranks 3 to 5 the 1.5 a spell level ranks 1 and 2
+  measure (60, 75 and 90); Slam adds 1.5 a spell level on every rank, rounded (Rank 1 at spell
+  level 20 adds 30, rank 2 45). The reference adds 2.54 a spell level for Heroic Strike, 1.53 for
+  Cleave and a flat 140 for every rank of Slam (`tests/classes/warrior/flat_threat.rs`).
+- Bloodrage's threat, from Forever combat logs: its instant 10 rage makes 50 threat in Battle
+  and Defensive Stance alike while its ticks take the stance, and rage gained before the pull
+  (a prepull Bloodrage's, which the protection presets cast 10 seconds out) makes none. The
+  reference scales all of it by the stance and books the prepull rage too
+  (`instant_threat_unscaled` on `bloodrage`, `no_threat_before_pull` on `rage_bar`,
+  `tests/classes/warrior/bloodrage.rs`).
 - A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
   so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
   value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
@@ -1274,6 +1332,45 @@ the Go goldens and exporter uses. The departures:
     as the spell's SpellEffect row is encrypted. The ticks take no armor, as every physical
     damage over time here.
   The reference's rules still refuse the three items as unknown.
+- Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
+  2026 (Forever preparation; the reference keeps its own):
+  - Each Skyborne race has its own attribute offset from a Human of the same class, read from
+    level 1 naked character sheets of 6 November 2026 (Strength, Agility, Stamina, Intellect,
+    Spirit): High Order -3, +4, -1, +4, -3 and Windshaper -4, +3, 0, -1, +3, where the reference
+    table gives both -1, +1, -1, +1, 0. A High Order Mage has 4 more Intellect and 3 less Spirit
+    than a Human one. A levelling character's attributes are still its sheet's own
+    (`src/prepare/character.rs`, `base_stats_tests`).
+  - Attack power on gear raises ranged attack power by as much. The equip spells that read "+N
+    Attack Power" state auras 99 and 124 at the same value (Attack Power 22, 9332, the equip
+    spell of Counterattack Lodestone 18537), where about 555 item rows carry attack power alone,
+    so a Hunter lost up to 156 ranged attack power on its reference gear (Devilsaur Gauntlets
+    15063 and Leggings 15062, Cape of the Black Baron 13340, Arcanite Reaper 12784, Don Julio's
+    Band 19325). An item row with attack power and no ranged attack power now takes the same
+    ranged attack power; a row that states its own (the Lodestone's 22) keeps it, and the "of
+    Power" suffixes and enchants, which carry their own, are unchanged. Death's Embrace (2585)
+    stays melee: its spell 24153 is aura 99 alone. `tools/rust_client_items.py` writes both for
+    the line (`tests/forever_gear_attack_power_20261110.rs`).
+  - The Undermine Engineering trinkets take the cooldowns of their Wowhead Forever tooltips and
+    client rows: Adaptive Combat Assistant (272437) 5 minutes, Weakness Analyzer (272438) and
+    Serenity Field (272439) 6 minutes, where the reference rows give 90 seconds; the category
+    cooldown they share stays 15 or 20 seconds. `tools/rust_live_items.py` reads the "(N Min
+    Cooldown)" of a "Use:" line into the live row, which also gives the Assistant the tooltip's
+    1.1% expertise (11 rating, the reference row has 20), and the on use helpers read the live
+    row of an item as the equipped item does
+    (`tests/forever_engineering_trinket_cooldowns_20261110.rs`).
+  - Judgement of Wisdom pays only on landed hits. A level 41 log counted its mana on 164 of 336
+    landed melee swings, 59 of 116 direct spells and 44 of 102 ranged shots, the 50% chance,
+    against 1 of 52 misses, 3 of 401 dot ticks and none of 33 damage shield hits. The reference
+    rolls on every direct hit and lets a melee or ranged miss, dodge or parry pay; now a hit that
+    does not land rolls nothing (`landed_only` on the effect,
+    `tests/forever_judgement_of_wisdom_landed_20261110.rs`).
+  - A damage shield takes none of the target's flat school damage bonus. Levels 1 to 19 logs
+    (client 1.60.1.70790) show 9 rank 1 Retribution Aura hits on beasts under the paladin's own
+    rank 2 Judgement of the Crusader, all 5 or 6, the flat 5 at a Dwarf's 5% against beasts,
+    where the reference adds the judgement's Holy bonus times the shield's 0.06 coefficient.
+    The shields of `new_damage_shield` (Retribution Aura and Thorns) carry
+    `SpellFlagIgnoreTargetSchoolBonus`, which skips the target's school bonus and keeps the
+    wearer's spell power share (`tests/forever_damage_shield_school_bonus_20261110.rs`).
 
 ## Repository layout
 

@@ -119,7 +119,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `missile_barrage` | sim/mage/talents_arcane.go | Arcane Blast's chance at the talent's rank, a missile's quarter and Arcane Wrath's and the bolts' half of it from the trigger row, the buff's cost and tick changes from its row; the trigger rolls when a landed hit arrives |
 | `fingers_of_frost` | sim/mage/talents_frost.go | Proc chance, charges, Shatter crit, duration; Frostbolt and Frostfire Bolt roll it when their cast ends, the chill spells on landing (community #776) |
 | `winters_chill` | sim/mage/talents_frost.go | Proc chance, stacks, Cone of Cold's damage a stack (client 70425), duration |
-| `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay |
+| `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay; under Forever's rules `landed_only` (only a landed hit rolls) |
 | `judgement_of_light` | sim/core/buffs/paladin.go | The raid's Judgement of Light: a landed melee hit on the target that is no proc runs the handler a batch window later, which rolls the chance under `rng_label` and heals the attacker for the top rank's `heal` under health metrics of the target (`metrics_action_id`). The gate refuses it beside a pet that strikes in melee and against copies of the target |
 | `potion_mana` | sim/core/consumes.go | Gain range, label, alchemist stone multiplier |
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
@@ -210,7 +210,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `moonfire` | sim/druid/moonfire.go | The dot base and tick crit; the hit applies the tagged dot spell's dot when it lands, without casting it |
 | `insect_swarm` | sim/druid/insect_swarm.go | The dot base, tick crit and the target debuff the dot holds |
 | `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to; the cast needs no active aura with the Innervate tag, the druid's own or an external one, as Go's cast condition reads it |
-| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers, Clearcasting's cost modifier and the Faerie Fire spells that set off nothing in Cat or Bear Form |
+| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers, Clearcasting's cost modifier and the Faerie Fire spells that set off nothing in Cat or Bear Form; `half_chance_spells` (Forever rules only) are Maul's, which roll at half the chance (bear logs: 14 of 342 Maul hits) |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal. Under Forever's rules `bank_on_landed_hit`: a Wrath banks them when it lands, on the trigger aura's spell hit, in place of on its completed cast |
 | `cat_form` | sim/druid/forms.go, druid.go | The aura's threat, spirit regeneration and movement speed changes with the unit's values before any aura, the threat with every permanent aura the reset activates, such as the Threat or Subtlety enchant, the paw and the equipped weapon, Faerie Fire's free and faster cast in the form, Furor's carry over cap, and the potions, conjured items and explosives that drop the form |
@@ -227,7 +227,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `enrage` | sim/druid/enrage.go | Instant Rage and Rage a second from client data, Intensity's and Wolfshead's bonus, the tick count; the aura's armor cut is a stat aura |
 | `demoralizing_roar` | sim/druid/demoralizing_roar.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up; the roar rolls a magic hit on every target in unit index order and debuffs each one it lands on, and an `exclusive_category` holds the Demoralizing category the debuff shares with the raid's Roar and Shout debuffs, so a permanent debuff holds the player's roar off and `auraShouldRefresh` reads it |
 | `maul` | sim/druid/maul.go | The strike and its flat damage, the queue spell and aura and the realism delay, a Go literal |
-| `lacerate` | sim/druid/lacerate.go | The tick a stack, the weapon share a stack from client data, the stack cap and tick crit |
+| `lacerate` | sim/druid/lacerate.go | The tick a stack, the weapon share a stack from client data, the stack cap and tick crit; `hit_spell` (Forever rules only) is the weapon hit's own spell 414647: the cast rolls miss, dodge and parry, a landed cast's hit rolls only crit on its own crit multiplier, outside Natural Instinct, and is never blocked |
 | `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal. Against several targets, up to three strikes from the cast target onward, and only the first refunds on a miss |
 | `swipe` | sim/druid/swipe.go | The flat hit and the attack power share, Go literals; it hits the first three targets in unit order, whichever target it is cast on |
 | `hurricane` | sim/druid/hurricane.go | The channel, its triggered tick spell and the tick's fixed amount, which each tick deals to every target on the magic hit and crit table |
@@ -569,8 +569,11 @@ only logs that no pet is summoned; a disabled pet's focus stops and its auras no
 expire, as Go removes its tracker. Several pets may be simulated at once, as a hunter pet or
 a demon beside Dragon's Call's whelp: `pets` lists them in unit index order, each its own
 unit, and each enabled pet's aura tracker joins Go's tracker list as it is enabled and
-leaves it by swap removal as it is disabled. Other guardians, inherited speed or
-regeneration, a delayed first
+leaves it by swap removal as it is disabled. A pet marked `inherits_melee_speed` (a Hunter's
+pet under Forever's rules) swings at its owner's melee and attack speed: the owner's speed at
+the summon is already in its `melee`, and each later change of the owner's melee or attack
+speed reaches it at its next heartbeat and rescales the swing under way. Other guardians,
+inherited cast speed or regeneration, a delayed first
 attack, enable callbacks, energy bars and pet cooldowns are unrepresented, and a change of
 an inherited owner stat outside spell damage, attack power, ranged attack power and crit is
 refused. A rotation's

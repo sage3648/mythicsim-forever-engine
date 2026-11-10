@@ -241,16 +241,21 @@ impl<A: Agent> Fight<A> {
         potion + marks
     }
 
-    /// Go `Spell.BonusDamage` for a magic spell against a target.
+    /// Go `Spell.BonusDamage` for a magic spell against a target. A spell flagged to ignore the
+    /// target's school bonus (Forever's damage shields) takes none of the target's flat school
+    /// damage, such as Judgement of the Crusader's Holy.
     pub(crate) fn bonus_damage(&self, spell: SpellId, target: Side) -> f64 {
         let state = &self.spells[spell];
         let mut bonus = state.bonus_base_damage;
-        bonus += self.spell_power(spell)
-            + self.mob_type_spell_damage(spell)
-            + self.school_value(
+        let target_school = if state.flags.ignore_target_school_bonus {
+            0.0
+        } else {
+            self.school_value(
                 spell,
                 &self.target_unit(target).state.school_bonus_spell_damage,
-            );
+            )
+        };
+        bonus += self.spell_power(spell) + self.mob_type_spell_damage(spell) + target_school;
         bonus
     }
 

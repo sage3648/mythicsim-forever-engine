@@ -799,6 +799,7 @@ impl Paladin {
         let data = spell_data();
         let mut ranks = Vec::new();
         let mut judgements = Vec::new();
+        let forever = sim.rules == crate::prepare::sim::Rules::Forever;
         data.seal_of_wisdom.each(|_, rank| {
             let judgement_id = rank.effect_n(2).base_value() as i32;
             let judgement_mana = data
@@ -818,14 +819,19 @@ impl Paladin {
                 "mana": proc_rank.energize_effect().average(character_level()),
                 "judgement_spell_id": judgement_id, "judgement_aura": judgement_aura,
             }));
-            // buffs/paladin.go AttachJudgementOfWisdomMana.
-            judgements.push(json!({
+            // buffs/paladin.go AttachJudgementOfWisdomMana. Under Forever's rules only a landed
+            // hit rolls (crate::prepare::buffs::paladin::attach_judgement_of_wisdom_mana).
+            let mut judgement = json!({
                 "kind": "judgement_of_wisdom", "aura": judgement_aura,
                 "proc_chance": crate::prepare::buffs::paladin::JUDGEMENT_PROC_CHANCE,
                 "proc_mask": ProcMask::DIRECT.names(), "mana": judgement_mana,
                 "metrics_action_id": action_id(Some(&ActionId::spell(judgement_id))),
                 "delay_ns": crate::prepare::common_effects::SPELL_BATCH_WINDOW,
-            }));
+            });
+            if forever {
+                judgement["landed_only"] = json!(true);
+            }
+            judgements.push(judgement);
         });
         effects.push(json!({"kind": "seal_of_wisdom", "ranks": ranks}));
         effects.extend(judgements);

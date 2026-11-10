@@ -126,8 +126,11 @@ pub(crate) fn rage_bar_effect(
     });
     // Forever's combat logs of 9 October 2026: a two-hander's critical white hit gives exactly
     // twice the swing's rage, two-hander factor included (src/core/fight/rage.rs).
+    // Forever combat logs: rage gained before the pull, as a prepull Bloodrage's, makes no
+    // threat.
     if sim.rules == super::sim::Rules::Forever {
         effect["crit_multiplies_swing"] = serde_json::json!(true);
+        effect["no_threat_before_pull"] = serde_json::json!(true);
     }
     effect
 }

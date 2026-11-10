@@ -560,6 +560,7 @@ impl DruidAgent {
                     cost_spells,
                     cost_percent_add,
                     form_excluded_spells,
+                    half_chance_spells,
                     ..
                 } => {
                     let moonkin = prepared.effects.iter().find_map(|effect| match effect {
@@ -583,6 +584,7 @@ impl DruidAgent {
                             trigger: trigger_aura,
                             trigger_spells,
                             form_excluded_spells,
+                            half_chance_spells,
                             spell_masked,
                             cost_spells,
                             icd: *icd_ns,
@@ -906,6 +908,7 @@ impl DruidAgent {
                     weapon_share_per_stack,
                     max_stacks,
                     tick_can_crit,
+                    hit_spell,
                     ..
                 } => {
                     fight.agent.lacerate = Some(Lacerate {
@@ -913,6 +916,7 @@ impl DruidAgent {
                         weapon_share_per_stack: *weapon_share_per_stack,
                         max_stacks: *max_stacks,
                         tick_can_crit: *tick_can_crit,
+                        hit_spell: *hit_spell,
                     });
                 }
                 Effect::Swipe {

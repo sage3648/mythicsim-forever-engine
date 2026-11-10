@@ -10,8 +10,8 @@ use super::sim::{
 };
 use super::stats::SchoolIndex;
 
-/// Go `SpellFlag` bits, by exported name in bit order.
-pub(crate) const SPELL_FLAG_NAMES: [&str; 40] = [
+/// Go `SpellFlag` bits, by exported name in bit order. The last is Forever's own, past Go's.
+pub(crate) const SPELL_FLAG_NAMES: [&str; 41] = [
     "SpellFlagIgnoreResists",
     "SpellFlagIgnoreTargetModifiers",
     "SpellFlagIgnoreAttackerModifiers",
@@ -52,6 +52,7 @@ pub(crate) const SPELL_FLAG_NAMES: [&str; 40] = [
     "SpellFlagAgentReserved3",
     "SpellFlagAgentReserved4",
     "",
+    "SpellFlagIgnoreTargetSchoolBonus",
 ];
 
 /// Go `SpellFlag`: bit `i` is `1 << (i + 1)`, as Go's iota starts the list at its second line.
@@ -100,6 +101,10 @@ impl SpellFlag {
     pub const AGENT_RESERVED2: SpellFlag = SpellFlag(1 << 37);
     pub const AGENT_RESERVED3: SpellFlag = SpellFlag(1 << 38);
     pub const AGENT_RESERVED4: SpellFlag = SpellFlag(1 << 39);
+    /// Forever's rules: the spell takes none of the target's flat school damage bonus (Judgement
+    /// of the Crusader's Holy bonus) and keeps its spell power coefficient. Damage shields carry
+    /// it ([`super::buffs::support::new_damage_shield`]).
+    pub const IGNORE_TARGET_SCHOOL_BONUS: SpellFlag = SpellFlag(1 << 41);
     pub const IGNORE_MODIFIERS: SpellFlag =
         SpellFlag(Self::IGNORE_ATTACKER_MODIFIERS.0 | Self::IGNORE_TARGET_MODIFIERS.0);
 

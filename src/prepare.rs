@@ -270,8 +270,10 @@ fn calibrate_level(
     let engine = stats_of(&player["stats"]);
     let class = player["class"].as_str().unwrap_or_default();
     let race = player["race"].as_str().unwrap_or_default();
-    let used = levels::with_character(character.clone(), || character::base_stats(class, race))
-        .unwrap_or_default();
+    let used = levels::with_character(character.clone(), || {
+        character::base_stats(class, race, rules)
+    })
+    .unwrap_or_default();
     let tables = crate::data::tables::tables();
     let k_agi = tables
         .crit_per_agi_max_level

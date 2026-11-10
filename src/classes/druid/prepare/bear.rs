@@ -25,6 +25,8 @@ use super::{masks, Druid};
 
 const DEMORALIZING_ROAR_RANKS: [i32; 5] = [99, 1735, 9490, 9747, 9898];
 const LACERATE_RANKS: [i32; 3] = [414644, 1235826, 1235827];
+/// The weapon hit every Lacerate rank triggers.
+const LACERATE_HIT: i32 = 414647;
 const PRIMAL_BITE_RANKS: [i32; 4] = [407995, 1238069, 1238070, 1238073];
 const MAUL_RANKS: [i32; 7] = [6807, 6808, 6809, 8972, 9745, 9880, 9881];
 const SWIPE_RANKS: [i32; 5] = [779, 780, 769, 9754, 9908];
@@ -334,6 +336,34 @@ impl Druid {
             },
         );
         self.lacerate = Some(spell);
+        if sim.rules == Rules::Forever {
+            self.register_lacerate_hit_spell(sim, rank);
+        }
+    }
+
+    /// The weapon hit every Lacerate rank casts by script (414647). Its class flags lie outside
+    /// Natural Instinct's mask, so its crits deal x2.0 while the bleed's take the talent's bonus
+    /// (147 crits in a level 37 to 41 bear's log on client 70862). Its row's No Active Defense
+    /// keeps block off it: 0 of 790 hits were blocked. The cast is what misses, is dodged or
+    /// parried: every miss in the log names the rank.
+    fn register_lacerate_hit_spell(&mut self, sim: &mut Sim, rank: &'static Spell) {
+        let spell = self.register_spell(
+            sim,
+            BEAR,
+            SpellConfig {
+                action_id: ActionId::spell(LACERATE_HIT),
+                spell_school: rank.spell_school(),
+                defense_type: rank.defense_type_core(),
+                proc_mask: ProcMask::MELEE_MH_SPECIAL,
+                flags: SpellFlag::MELEE_METRICS,
+                rank: rank.rank_number(),
+                damage_multiplier: 1.0,
+                threat_multiplier: 3.33,
+                max_range: MAX_MELEE_RANGE,
+                ..SpellConfig::default()
+            },
+        );
+        self.lacerate_hit = Some(spell);
     }
 
     /// Go `registerPrimalBiteSpell`.
