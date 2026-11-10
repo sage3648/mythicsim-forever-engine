@@ -1140,7 +1140,7 @@ pub(crate) fn melee_item_listeners(env: &Environment) -> Vec<Value> {
         return Vec::new();
     }
     let mut effects = Vec::new();
-    for (label, trigger, _) in SPELL_DATA_DAMAGE_PROCS {
+    for (label, trigger, _) in spell_data_damage_procs(env) {
         if aura_named(env, label).is_none() {
             continue;
         }
@@ -1395,6 +1395,20 @@ const SPELL_DATA_DAMAGE_PROCS: [(&str, i32, i32); 27] = [
     ("Satchel of Dark Iron Bombs", 1318123, 1318121),
 ];
 
+/// `SPELL_DATA_DAMAGE_PROCS` and, under Forever's rules, the live client items' equip damage procs
+/// (`forever_effect_items::EQUIP_DAMAGE_PROC_ITEMS`: Dreadfrost Saber), which the reference does
+/// not list.
+fn spell_data_damage_procs(env: &Environment) -> Vec<(&'static str, i32, i32)> {
+    let mut procs = SPELL_DATA_DAMAGE_PROCS.to_vec();
+    if env.sim.rules == super::sim::Rules::Forever {
+        procs.extend(
+            super::forever_effect_items::equip_damage_procs()
+                .map(|cfg| (cfg.name, cfg.trigger_spell_id, cfg.buff_spell_id)),
+        );
+    }
+    procs
+}
+
 /// Spell data damage procs that only spells with a damaging component trigger (Forever rules).
 /// Searing Dagger's Sear (1291568) reads "Harmful spell casts sear the target", and its mask is
 /// the harmful spell cast bit alone, which a curse or a debuff without damage also sets. The
@@ -1443,7 +1457,7 @@ fn spell_data_damage_proc_effects(
             .proc_mask
             .matches(ProcMask::MELEE_SPECIAL)
     });
-    for (label, trigger_id, damage_id) in SPELL_DATA_DAMAGE_PROCS {
+    for (label, trigger_id, damage_id) in spell_data_damage_procs(env) {
         if aura_named(env, label).is_none() {
             continue;
         }
