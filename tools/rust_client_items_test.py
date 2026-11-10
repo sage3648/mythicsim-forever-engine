@@ -135,6 +135,50 @@ DREADFROST = {
         "<!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Totem of Rage, a relic whose equip line the engine models by hand (Wowhead Forever, 11 November
+# 2026).
+TOTEM_OF_RAGE = {
+    "name": "Totem of Rage",
+    "quality": 3,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q3\">Totem of Rage</b><!--nend--><!--ndstart-->"
+        "<!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->57</span><!--bo--><br>Binds wh"
+        "en picked up<!--ue--><!--ue--><table width=\"100%\"><tr><td>Relic</td><th><!--scstart4"
+        ":9--><span class=\"q1\">Totem</span><!--scend--></th></tr></table><!--rf--><!--ebstats"
+        "--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--></td></"
+        "tr></table><table><tr><td>Requires Level <!--rlvl-->52<br><!--rr--><!--useText:0:1--"
+        "><span id=\"useText1\" class=\"q2\">Equip: <!--useEffect:0:1--><a href=\"/forever/spell=2"
+        "7859/increased-shock-damage\" class=\"q2\">Increases the damage of your Shock spells by"
+        " 2%.</a><!--useEffect:1--></span><!--useText:1--><!--itemEffects:1--><br><!--pvpEqui"
+        "p--><!--pvpEquip--><div class=\"whtt-sellprice\">Sell Price: <span class=\"moneygold\">1"
+        "</span> <span class=\"moneysilver\">27</span> <span class=\"moneycopper\">69</span></div"
+        "><div class=\"whtt-extra whtt-droppedby\">Dropped by: Magmus</div><div class=\"whtt-ext"
+        "ra whtt-dropchance\">Drop Chance: 7.95%</div></td></tr></table>"
+    ),
+}
+# Maw of Min'loth, a Forever shield whose equip line the engine models by hand (Wowhead Forever, 11
+# November 2026).
+MAW_OF_MINLOTH = {
+    "name": "Maw of Min'loth",
+    "quality": 3,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q3\">Maw of Min'loth</b><!--nend--><!--ndstart-"
+        "-><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->42</span><!--bo--><br>Binds "
+        "when picked up<!--ue--><!--ue--><table width=\"100%\"><tr><td>Off Hand</td><th><!--scs"
+        "tart4:6--><span class=\"q1\">Shield</span><!--scend--></th></tr></table><!--rf--><span"
+        "><!--amr-->1287 Armor</span><br>22 Block<br><span><!--stat7-->+8 Stamina</span><!--e"
+        "bstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><"
+        "br>Durability 100 / 100</td></tr></table><table><tr><td>Requires Level <!--rlvl-->37"
+        "<br><!--rr--><!--useText:0:1--><span id=\"useText1\" class=\"q2\">Equip: <!--useEffect:0"
+        ":1--><a href=\"/forever/spell=1295064/maw-of-minloth\" class=\"q2\">When struck in melee"
+        " combat, has a 10% chance of stealing 40 life from the target enemy. (Proc chance: 1"
+        "0%, 3s cooldown)</a><!--useEffect:1--></span><!--useText:1--><!--itemEffects:1--><br"
+        "><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-sellprice\">Sell Price: <span class=\""
+        "moneysilver\">99</span> <span class=\"moneycopper\">7</span></div><div class=\"whtt-extr"
+        "a whtt-droppedby\">Dropped by: Min'loth the Serpent</div><div class=\"whtt-extra whtt-"
+        "dropchance\">Drop Chance: 35.00%</div></td></tr></table>"
+    ),
+}
 # Staff of Jordan's equip lines (Wowhead Forever), the reference row: {"20":15,"4":60,"5":60}.
 JORDAN_EFFECTS = (
     '<span class="q2">Equip: Improves your chance to hit by 1.5%.</span><br><span class="q2">'
@@ -370,6 +414,33 @@ class ParseTests(unittest.TestCase):
         )
         self.assertIsNone(tool.bonus_row(274603, saber["name"], tool.parse_tooltip(DREADFROST)))
 
+    def test_a_relic_is_a_ranged_slot_row_of_its_kind(self):
+        # As the reference rows hold a relic (Totem of the Storm 23199). Totem of Rage has an
+        # ItemSparse row, so the tooltip's "Relic" is only read past.
+        totem = tool.row_for(
+            22395, {"ItemLevel": "57", "Display_lang": "Totem of Rage", "InventoryType": "28"},
+            item(4, 9), TOTEM_OF_RAGE,
+        )  # fmt: skip
+        self.assertEqual(
+            tool.dump_row(totem),
+            '{"id":22395,"name":"Totem of Rage","type":"ItemTypeRanged","ranged_weapon_type":'
+            '"RangedWeaponTypeTotem","scaling_options":{"0":{"ilvl":57}}}',
+        )
+        with self.assertRaisesRegex(tool.Unreadable, "relic subclass 0"):
+            tool.row_for(
+                22395, {"ItemLevel": "57", "Display_lang": "Totem of Rage", "InventoryType": "28"},
+                item(4, 0), TOTEM_OF_RAGE,
+            )  # fmt: skip
+
+    def test_a_struck_proc_the_engine_models_is_left_out_of_the_row(self):
+        maw = tool.row_for(274608, None, {**item(4, 6), "InventoryType": "14"}, MAW_OF_MINLOTH)
+        self.assertEqual(
+            tool.dump_row(maw),
+            '{"id":274608,"name":"Maw of Min\'loth","type":"ItemTypeWeapon","weapon_type":'
+            '"WeaponTypeShield","hand_type":"HandTypeOffHand","scaling_options":{"0":{"stats":'
+            '{"2":8,"27":22,"30":1287},"ilvl":42}}}',
+        )
+
     def test_a_modelled_line_with_other_numbers_leaves_the_item_out(self):
         # The engine states the use's numbers, so a tooltip that changes them waits for it.
         for response, old, new in [
@@ -377,6 +448,9 @@ class ParseTests(unittest.TestCase):
             (SERPENTBANE, "(5 Min Cooldown)", "(3 Min Cooldown)"),
             (BIGGER_ROCK, "14 Physical", "15 Physical"),
             (DREADFROST, "Adds 1 Frost", "Adds 2 Frost"),
+            (TOTEM_OF_RAGE, "by 2%", "by 3%"),
+            (MAW_OF_MINLOTH, "stealing 40 life", "stealing 50 life"),
+            (MAW_OF_MINLOTH, "3s cooldown", "5s cooldown"),
         ]:
             changed = {**response, "tooltip": response["tooltip"].replace(old, new)}
             self.assertNotEqual(changed["tooltip"], response["tooltip"])
@@ -491,7 +565,7 @@ class CommittedFileTests(unittest.TestCase):
     def test_the_modelled_effect_items_are_committed(self):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
-        self.assertLessEqual({274603, 274609, 279480, 279852}, ids)
+        self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852}, ids)
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:

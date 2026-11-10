@@ -15,6 +15,10 @@
 //!   Plate Gauntlets' "Adds 4 fire damage to your weapon attack" is in the reference: its equip
 //!   aura (1294939) hears the wearer's landed main hand melee hits and casts a Frost hit of 1
 //!   (1294940) on the unit hit, every time.
+//! - Maw of Min'loth (274608) is one too, as Skullflame Shield's Drain Life (18815 casting 18817)
+//!   is in the reference: its equip aura (1295064) hears the melee hits the wearer takes and, 10%
+//!   of the time and at most once in 3 sec, casts a Physical leech of 40 (1295065) on the
+//!   attacker. Only a character who tanks the target is struck.
 
 use crate::contracts::prepared_v2::ActionId;
 
@@ -93,18 +97,32 @@ pub(crate) const CHANCE_ON_HIT_ITEMS: &[Registration] = &[
 /// The equip damage procs, as `forever_items_generated::ITEMS` lists the reference's (Fiery Plate
 /// Gauntlets, Coldflame Saber): the equip aura's row is the trigger and the row it casts the
 /// damage.
-pub(crate) const EQUIP_DAMAGE_PROC_ITEMS: &[Registration] = &[Registration::Proc(
-    ProcKind::Damage,
-    SpellDataProc {
-        trigger_spell_id: 1294939,
-        buff_spell_id: 1294940,
-        ..SpellDataProc::EMPTY
-    },
-    &[ItemVariant {
-        item_id: 274603,
-        item_name: "Dreadfrost Saber",
-    }],
-)];
+pub(crate) const EQUIP_DAMAGE_PROC_ITEMS: &[Registration] = &[
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            trigger_spell_id: 1294939,
+            buff_spell_id: 1294940,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 274603,
+            item_name: "Dreadfrost Saber",
+        }],
+    ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            trigger_spell_id: 1295064,
+            buff_spell_id: 1295065,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 274608,
+            item_name: "Maw of Min'loth",
+        }],
+    ),
+];
 
 /// The item's equip damage proc, expanded to its variant, if it is one of these.
 pub(crate) fn equip_damage_proc(item: i32) -> Option<SpellDataProc> {

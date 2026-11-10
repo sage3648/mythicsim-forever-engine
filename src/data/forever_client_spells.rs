@@ -15,6 +15,9 @@
 //! the client's, read from wago.tools `product=wowf` on 10 November 2026 (the tables of build
 //! 1.60.1.70707, which it serves).
 //!
+//! Maw of Min'loth's two rows (1295064 and 1295065) are not encrypted either: every field of
+//! theirs is the client's, read from wago.tools `product=wowf` on 11 November 2026.
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -92,6 +95,8 @@ pub(crate) fn rows() -> Vec<Spell> {
         rock_to_the_face(1_309_967, "Rock to the Face", 856_584, 7.0),
         dreadfrost_saber_trigger(),
         dreadfrost_saber_damage(),
+        maw_of_minloth_trigger(),
+        maw_of_minloth_leech(),
     ]
 }
 
@@ -202,6 +207,83 @@ fn rock_to_the_face(id: i32, name: &str, effect_id: i32, tick: f64) -> Spell {
             base_points: tick,
             period_ms: 2000,
             pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// Maw of Min'loth's equip spell (ItemEffect 234017, trigger type 1, on equip): "When struck in
+/// melee combat, has a 10% chance of stealing 40 life from the target enemy." The same shape as
+/// Skullflame Shield's Drain Life (pinned row 18815): an aura on the wearer that casts a leech on
+/// the attacker when a melee hit lands on the wearer.
+fn maw_of_minloth_trigger() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842470: Attributes_0 64 (a passive), row 18815's own, and nothing else.
+    attr[0] = 64;
+    Spell {
+        id: 1_295_064,
+        name: "Maw of Min'loth".to_string(),
+        // SpellMisc 842470: SchoolMask 1, the aura's own. The leech is the other row's.
+        school: 1,
+        attr,
+        // SpellAuraOptions 247408: ProcChance 10 (the tooltip's 10%), ProcCategoryRecovery 3000
+        // (the tooltip's 3s cooldown) and ProcTypeMask 40: melee swings and melee abilities
+        // taken, row 18815's own mask.
+        proc_chance: 10,
+        proc_flags: [40, 0],
+        icd_ms: 3000,
+        // The chance column is the roll (`proc_chance_source::COLUMN`, the default).
+        // SpellEffect 1316865: Apply Aura (6) of Proc Trigger Spell (42) on the caster, base
+        // points 0, triggering 1295065.
+        ref_ids: vec![1_295_065],
+        effects: vec![Effect {
+            id: 1_316_865,
+            spell_id: 1_295_064,
+            index: 0,
+            effect_type: 6,
+            aura: 42,
+            pvp_mult: 1.0,
+            trigger_id: 1_295_065,
+            chain_amp: 1.0,
+            target: [1, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// The spell Maw of Min'loth's aura casts: a Health Leech of 40. The same shape as Skullflame
+/// Shield's pinned row 18817, in the Physical school on the melee table where that one is Shadow
+/// on the magic table.
+fn maw_of_minloth_leech() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842471: Attributes_0 262160 and Attributes_15 8192.
+    attr[0] = 262_160;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_295_065,
+        name: "Maw of Min'loth".to_string(),
+        // SpellMisc 842471: SchoolMask 1, Physical.
+        school: 1,
+        attr,
+        // SpellMisc 842471: RangeIndex 11, SpellRange's 15 yards.
+        max_range: 15.0,
+        // SpellCategories 184098: melee.
+        defense_type: 2,
+        // SpellEffect 1316866: Health Leech (9) of 40 from the target (6), with no variance and
+        // no spell power or attack power coefficient; EffectAmplitude 1, the share of the damage
+        // that heals the wearer.
+        effects: vec![Effect {
+            id: 1_316_866,
+            spell_id: 1_295_065,
+            index: 0,
+            effect_type: 9,
+            base_points: 40.0,
+            pvp_mult: 1.0,
+            amplitude: 1.0,
             chain_amp: 1.0,
             target: [6, 0],
             ..Effect::default()

@@ -9,7 +9,7 @@ use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::env::Environment;
 use crate::prepare::item_sets::ItemSet;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, SECOND};
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Rules, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::must_find;
@@ -242,8 +242,47 @@ pub(crate) fn apply_agentless_totem_effect(sim: &mut Sim, unit: UnitId, item: i3
             totem_of_thunder(sim, unit);
             true
         }
+        TOTEM_OF_RAGE if sim.rules == Rules::Forever => {
+            totem_of_rage(sim, unit);
+            true
+        }
         _ => false,
     }
+}
+
+/// Totem of Rage (22395), which the Go reference has neither a row nor an effect for, so only
+/// Forever's rules register it.
+pub(crate) const TOTEM_OF_RAGE: i32 = 22395;
+
+/// Whether the shaman package registers an effect for the item under Forever's rules alone.
+pub(crate) fn forever_totem(item: i32) -> bool {
+    item == TOTEM_OF_RAGE
+}
+
+/// Totem of Rage under Forever's rules: "Equip: Increases the damage of your Shock spells by 2%."
+/// (Wowhead's Forever tooltip, 11 November 2026). Its equip spell, Increased Shock Damage (27859,
+/// ItemEffect 102980), is not in the pinned store; the live client's two effects are readable
+/// (wago.tools `product=wowf`, 11 November 2026):
+///
+/// - SpellEffect 704622: `A_ADD_PCT_MODIFIER` (108) of 2 on `SPELLMOD_DAMAGE` (misc 0), class mask
+///   word 0 0x90100000: Earth Shock (0x00100000), Flame Shock (0x10000000) and Frost Shock
+///   (0x80000000), each rank's own bit in the pinned store.
+/// - SpellEffect 1328150: the same aura of 2 on `SPELLMOD_DOT` (misc 22), class mask 0x10000000:
+///   Flame Shock's damage over time.
+///
+/// So every shock's hit and Flame Shock's ticks take 2%, as a percent damage modifier the way the
+/// talents' are here (Concussion's 16035 is `DamageDoneFlat` on its mask). Classic's row was a
+/// flat 30 to the shocks' damage; the live one is the percentage.
+fn totem_of_rage(sim: &mut Sim, unit: UnitId) {
+    sim.add_static_mod(
+        unit,
+        SpellModConfig {
+            kind: SpellModType::DamageDoneFlat,
+            class_mask: masks::SHOCK,
+            float_value: 0.02,
+            ..SpellModConfig::default()
+        },
+    );
 }
 
 /// The shaman package's `core.NewItemEffect` calls.
