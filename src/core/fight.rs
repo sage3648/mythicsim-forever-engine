@@ -1913,6 +1913,9 @@ pub(crate) struct Fight<A: Agent> {
     /// The logged fight's queued strikes that went out on an extra attack, for the
     /// application's timeline: when, the strike and the extra attack it replaced.
     pub(crate) extra_attack_strikes: Vec<serde_json::Value>,
+    /// The logged fight's cooldowns as casts started them, for the application's replay: when,
+    /// the unit, the spell and the cooldown's length. A spell with no cooldown lists nothing.
+    pub(crate) cast_cooldowns: Vec<serde_json::Value>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -4275,6 +4278,7 @@ impl<A: Agent> Fight<A> {
             checks: std::cell::RefCell::new(None),
             presentation: None,
             extra_attack_strikes: Vec::new(),
+            cast_cooldowns: Vec::new(),
             heartbeat_offset: 0,
             totals: metrics::Totals {
                 target_dtps: vec![

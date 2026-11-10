@@ -490,16 +490,37 @@ impl<A: Agent> Fight<A> {
     fn trigger_cooldowns(&mut self, spell: SpellId) {
         let state = &self.spells[spell];
         let multiplier = state.cd_multiplier;
+        let mut longest = 0;
         if let Some((timer, duration)) = state.cd {
             let cd = (duration as f64 * multiplier) as i64;
             if cd > 0 {
                 self.timers[timer] = self.now + cd;
+                longest = cd;
             }
         }
         if let Some((timer, duration)) = state.shared_cd {
-            self.timers[timer] = self.now + (duration as f64 * multiplier) as i64;
+            let cd = (duration as f64 * multiplier) as i64;
+            self.timers[timer] = self.now + cd;
+            longest = longest.max(cd);
         }
         self.changed(super::reads::TIMERS);
+        self.note_cast_cooldown(spell, longest);
+    }
+
+    /// Note, in the logged fight, the cooldown a cast started: the longer of the spell's own
+    /// and its shared one. The log's lines name no cooldown, so the application's replay
+    /// could only guess one from the gap to the next press.
+    fn note_cast_cooldown(&mut self, spell: SpellId, cooldown: i64) {
+        if self.log.is_none() || cooldown <= 0 || self.spells[spell].flags.no_logs {
+            return;
+        }
+        let entry = serde_json::json!({
+            "time": crate::core::time::seconds(self.now),
+            "unit": self.label_of(self.caster(spell)),
+            "spell": action_string(&self.spells[spell].id),
+            "seconds": crate::core::time::seconds(cooldown),
+        });
+        self.cast_cooldowns.push(entry);
     }
 
     /// Go `Spell.SetMetricsSplit`: the spell's metrics, and the tag of its action ID in logs,
