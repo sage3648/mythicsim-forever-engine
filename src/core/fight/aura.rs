@@ -69,6 +69,10 @@ pub(crate) enum AuraBehavior<K> {
         /// The player's metrics, shared by every Judgement of Wisdom.
         metrics: usize,
         delay: i64,
+        /// Forever's rules: only a landed hit rolls ([`Effect::JudgementOfWisdom`]).
+        ///
+        /// [`Effect::JudgementOfWisdom`]: crate::contracts::prepared_v2::Effect::JudgementOfWisdom
+        landed_only: bool,
     },
     /// Go racials.go `applyTouchOfTheGrave`: a proc trigger that casts the drain.
     TouchOfTheGrave {
@@ -1414,9 +1418,19 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::RageBar if side == Side::Player => {
                         self.rage_bar_hit_taken(result)
                     }
-                    AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
-                        self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
-                    }
+                    AuraBehavior::JudgementOfWisdom {
+                        chance,
+                        delay,
+                        landed_only,
+                        ..
+                    } => self.judgement_of_wisdom_callback(
+                        aura,
+                        spell,
+                        result,
+                        chance,
+                        delay,
+                        landed_only,
+                    ),
                     AuraBehavior::JudgementOfLight(index) if !dealt => {
                         self.judgement_of_light_callback(aura, index, spell, result)
                     }
@@ -1529,7 +1543,9 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `AttachProcTriggerCallback` with `ProcMaskDirect` and no outcome filter, delayed by
-    /// the spell batch window.
+    /// the spell batch window. Under Forever's rules (`landed_only`) a hit that does not land
+    /// rolls nothing: a level 41 log paid on 164 of 336 landed melee swings, 59 of 116 direct
+    /// spells and 44 of 102 ranged shots, and on 1 of 52 misses.
     fn judgement_of_wisdom_callback(
         &mut self,
         aura: AuraRef,
@@ -1537,9 +1553,13 @@ impl<A: Agent> Fight<A> {
         result: &SpellResult,
         chance: f64,
         delay: i64,
+        landed_only: bool,
     ) {
         let spell_state = &self.spells[spell];
         if spell_state.flags.proc || !spell_state.direct_proc {
+            return;
+        }
+        if landed_only && result.outcome & super::OUTCOME_LANDED == 0 {
             return;
         }
         if chance != 1.0 && self.random_for_aura(aura) > chance {
@@ -1869,7 +1889,8 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::JudgementOfWisdom {
                 mana, metrics, id, ..
             } => {
-                // Go: melee and ranged hits always pay; spells must land.
+                // Go: melee and ranged hits always pay; spells must land. Under Forever's rules
+                // (`landed_only`) a miss of any kind never got here.
                 if !self.spells[spell].melee_or_ranged_proc
                     && result.outcome & super::OUTCOME_LANDED == 0
                 {

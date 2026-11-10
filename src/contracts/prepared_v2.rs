@@ -3570,6 +3570,10 @@ pub enum Effect {
         mana: f64,
         metrics_action_id: ActionId,
         delay_ns: i64,
+        /// Forever's rules: only a landed hit rolls the chance, a miss, dodge or parry of any
+        /// kind none (a level 41 log: 164 of 336 landed melee swings paid, 1 of 52 misses).
+        #[serde(default, skip_serializing_if = "is_false")]
+        landed_only: bool,
     },
     /// Go buffs/paladin.go `AttachJudgementOfLightHeal`: a landed melee hit on the judged target
     /// that is no proc runs the handler a spell batch window later, which rolls `proc_chance`

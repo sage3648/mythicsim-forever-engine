@@ -392,6 +392,9 @@ fn production_mind_flay(rules: forever_engine::Rules) -> (Value, Value) {
     // under both.
     let mut request: Value = serde_json::from_slice(&request).unwrap();
     request["raid"]["parties"][0]["players"][0]["race"] = json!("RaceNightElf");
+    // Judgement of Wisdom rolls on a missed spell under the reference's rules and not under
+    // Forever's, which would part the rolls as well: the raid leaves it off.
+    request["raid"]["debuffs"]["judgementOfWisdom"] = json!(false);
     // Items with a live row (Skyshroud Leggings since 9 November) carry other stats under each
     // rule set, which would part the rolls too: the priest takes them off.
     let live: Vec<i64> = fs::read_to_string(

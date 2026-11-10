@@ -192,7 +192,7 @@ class ParseTests(unittest.TestCase):
         staff = tool.parse_tooltip(with_effects(SHACKLES, JORDAN_EFFECTS))
         self.assertEqual(staff["stats"], {0: 7, 4: 60, 5: 60, 20: 15})
         for line, stats in [
-            ("Equip: +20 Attack Power.", {17: 20}),
+            ("Equip: +20 Attack Power.", {17: 20, 18: 20}),
             ("Equip: Improves your chance to get a critical strike by 1%.", {21: 14}),
             ("Equip: Improves your chance to hit with spells by 1%.", {12: 10}),
             ("Equip: Improves your chance to get a critical strike with spells by 2%.", {13: 28}),
@@ -211,13 +211,14 @@ class ParseTests(unittest.TestCase):
     def test_attack_power_against_a_creature_type_is_a_bonus_beside_the_row(self):
         mallet_item = {**item(2, 5), "InventoryType": "17"}
         row = tool.row_for(279885, None, mallet_item, MALLET)
-        # The row holds the plain stats (Stamina 15, Attack Power 22) and the weapon.
+        # The row holds the plain stats (Stamina 15, Attack Power 22 melee and ranged) and the
+        # weapon.
         self.assertEqual(
             tool.dump_row(row),
             '{"id":279885,"name":"Ceremonial Mallet","type":"ItemTypeWeapon",'
             '"weapon_type":"WeaponTypeMace","hand_type":"HandTypeTwoHand","weapon_speed":3.6,'
             '"scaling_options":{"0":{"weapon_damage_min":107,"weapon_damage_max":161,'
-            '"stats":{"2":15,"17":22},"ilvl":42}}}',
+            '"stats":{"2":15,"17":22,"18":22},"ilvl":42}}}',
         )
         parsed = tool.parse_tooltip(MALLET)
         self.assertEqual(parsed["versus"], {"MobTypeUndead": 33})
@@ -347,7 +348,7 @@ class CommittedFileTests(unittest.TestCase):
     def test_the_mallets_bonus_is_committed_with_its_row(self):
         with open(tool.OUT) as rows:
             mallet = next(json.loads(line) for line in rows if f'"id":{279885},' in line)
-        self.assertEqual(mallet["scaling_options"]["0"]["stats"], {"2": 15, "17": 22})
+        self.assertEqual(mallet["scaling_options"]["0"]["stats"], {"2": 15, "17": 22, "18": 22})
         with open(tool.BONUSES) as rows:
             bonuses = {row["id"]: row for row in map(json.loads, rows)}
         self.assertEqual(

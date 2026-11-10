@@ -1299,6 +1299,45 @@ the Go goldens and exporter uses. The departures:
     and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
     a target of another type: the bonus was described only when it applied, so the swap's toggling
     of the item's aura was refused. With an item swap the effect is now described at zero.
+- Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
+  2026 (Forever preparation; the reference keeps its own):
+  - Each Skyborne race has its own attribute offset from a Human of the same class, read from
+    level 1 naked character sheets of 6 November 2026 (Strength, Agility, Stamina, Intellect,
+    Spirit): High Order -3, +4, -1, +4, -3 and Windshaper -4, +3, 0, -1, +3, where the reference
+    table gives both -1, +1, -1, +1, 0. A High Order Mage has 4 more Intellect and 3 less Spirit
+    than a Human one. A levelling character's attributes are still its sheet's own
+    (`src/prepare/character.rs`, `base_stats_tests`).
+  - Attack power on gear raises ranged attack power by as much. The equip spells that read "+N
+    Attack Power" state auras 99 and 124 at the same value (Attack Power 22, 9332, the equip
+    spell of Counterattack Lodestone 18537), where about 555 item rows carry attack power alone,
+    so a Hunter lost up to 156 ranged attack power on its reference gear (Devilsaur Gauntlets
+    15063 and Leggings 15062, Cape of the Black Baron 13340, Arcanite Reaper 12784, Don Julio's
+    Band 19325). An item row with attack power and no ranged attack power now takes the same
+    ranged attack power; a row that states its own (the Lodestone's 22) keeps it, and the "of
+    Power" suffixes and enchants, which carry their own, are unchanged. Death's Embrace (2585)
+    stays melee: its spell 24153 is aura 99 alone. `tools/rust_client_items.py` writes both for
+    the line (`tests/forever_gear_attack_power_20261110.rs`).
+  - The Undermine Engineering trinkets take the cooldowns of their Wowhead Forever tooltips and
+    client rows: Adaptive Combat Assistant (272437) 5 minutes, Weakness Analyzer (272438) and
+    Serenity Field (272439) 6 minutes, where the reference rows give 90 seconds; the category
+    cooldown they share stays 15 or 20 seconds. `tools/rust_live_items.py` reads the "(N Min
+    Cooldown)" of a "Use:" line into the live row, which also gives the Assistant the tooltip's
+    1.1% expertise (11 rating, the reference row has 20), and the on use helpers read the live
+    row of an item as the equipped item does
+    (`tests/forever_engineering_trinket_cooldowns_20261110.rs`).
+  - Judgement of Wisdom pays only on landed hits. A level 41 log counted its mana on 164 of 336
+    landed melee swings, 59 of 116 direct spells and 44 of 102 ranged shots, the 50% chance,
+    against 1 of 52 misses, 3 of 401 dot ticks and none of 33 damage shield hits. The reference
+    rolls on every direct hit and lets a melee or ranged miss, dodge or parry pay; now a hit that
+    does not land rolls nothing (`landed_only` on the effect,
+    `tests/forever_judgement_of_wisdom_landed_20261110.rs`).
+  - A damage shield takes none of the target's flat school damage bonus. Levels 1 to 19 logs
+    (client 1.60.1.70790) show 9 rank 1 Retribution Aura hits on beasts under the paladin's own
+    rank 2 Judgement of the Crusader, all 5 or 6, the flat 5 at a Dwarf's 5% against beasts,
+    where the reference adds the judgement's Holy bonus times the shield's 0.06 coefficient.
+    The shields of `new_damage_shield` (Retribution Aura and Thorns) carry
+    `SpellFlagIgnoreTargetSchoolBonus`, which skips the target's school bonus and keeps the
+    wearer's spell power share (`tests/forever_damage_shield_school_bonus_20261110.rs`).
 
 ## Repository layout
 

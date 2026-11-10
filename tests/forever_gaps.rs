@@ -697,8 +697,9 @@ fn hammer_of_the_righteous_cleaves() {
     // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
     // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
     // Plate of the Shaman King and Eye of Orgrimmar. 978 since Windfury Totem's Forever rules
-    // (Holy Strike no longer rolls it, the triggering swing keeps its charges).
-    assert_eq!(casts, 978.0);
+    // (Holy Strike no longer rolls it, the triggering swing keeps its charges). 968 since
+    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss.
+    assert_eq!(casts, 968.0);
     assert!(damage > 0.0);
 }
 
@@ -719,11 +720,12 @@ fn seal_of_justice_judges_justice() {
     let (value, player) = run("retribution-paladin-seal-of-justice");
     assert!(!effects(&value, "seal_of_justice").is_empty());
     // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
-    // Windfury Totem's Forever rules.
-    assert_eq!(action(&player, 20164, 0).0, 3295.0);
+    // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
+    assert_eq!(action(&player, 20164, 0).0, 3262.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
-    // Ironforge (754 before). 759 since Windfury Totem's Forever rules.
-    assert_eq!(action(&player, 20184, 0).0, 759.0);
+    // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
+    // Wisdom pays only on landed hits.
+    assert_eq!(action(&player, 20184, 0).0, 751.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -742,8 +744,9 @@ fn warrior_strikes_and_freezing_trap_run() {
         // Hotfix push 113554 puts Freezing Trap on Explosive Trap's cooldown (category 411).
         // 212 since the Aimed Shot precast at -1.75 s, which haste finished at -0.01 s, finishes
         // on the pull (docs/prepull-damage.md); 213 before. 215 since the Cat swings at its
-        // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws.
-        ("hunter-freezing-trap", 1499, 215.0),
+        // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws. 211
+        // since Judgement of Wisdom pays only on landed hits.
+        ("hunter-freezing-trap", 1499, 211.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");
@@ -775,8 +778,9 @@ fn a_druids_own_thorns_strikes_back() {
     // 1634 since a missed Wrath banks no Eclipse charges (1631 before, with the rotation's
     // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that). 1680
     // since the 9 November live rows of Crimson Felt Hat, Star of Mystaria, Waterspout Boots and
-    // Songstone of Ironforge.
-    assert_eq!(action(&player, 9910, 0).0, 1680.0);
+    // Songstone of Ironforge. 1659 since Judgement of Wisdom pays only on landed hits, which
+    // moved the rolls after a missed spell.
+    assert_eq!(action(&player, 9910, 0).0, 1659.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
