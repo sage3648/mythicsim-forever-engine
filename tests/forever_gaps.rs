@@ -696,8 +696,9 @@ fn hammer_of_the_righteous_cleaves() {
     // 980 since push 113554's tree (978 before): the fixture's talents read in it. 961 since the
     // raid's Battle Shout VII, Strength of Earth V and Grace of Air III are the ranks below the
     // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
-    // Plate of the Shaman King and Eye of Orgrimmar.
-    assert_eq!(casts, 971.0);
+    // Plate of the Shaman King and Eye of Orgrimmar. 978 since Windfury Totem's Forever rules
+    // (Holy Strike no longer rolls it, the triggering swing keeps its charges).
+    assert_eq!(casts, 978.0);
     assert!(damage > 0.0);
 }
 
@@ -717,11 +718,12 @@ fn seal_of_wisdom_restores_mana_beside_the_raids_judgement() {
 fn seal_of_justice_judges_justice() {
     let (value, player) = run("retribution-paladin-seal-of-justice");
     assert!(!effects(&value, "seal_of_justice").is_empty());
-    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it.
-    assert_eq!(action(&player, 20164, 0).0, 3298.0);
+    // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
+    // Windfury Totem's Forever rules.
+    assert_eq!(action(&player, 20164, 0).0, 3295.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
-    // Ironforge (754 before).
-    assert_eq!(action(&player, 20184, 0).0, 756.0);
+    // Ironforge (754 before). 759 since Windfury Totem's Forever rules.
+    assert_eq!(action(&player, 20184, 0).0, 759.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -729,7 +731,8 @@ fn seal_of_justice_judges_justice() {
 #[test]
 fn warrior_strikes_and_freezing_trap_run() {
     for (name, spell_id, casts) in [
-        ("protection-warrior-shield-bash", 1672, 531.0),
+        // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before).
+        ("protection-warrior-shield-bash", 1672, 530.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
         ("arms-warrior-mocking-blow", 20560, 78.0),

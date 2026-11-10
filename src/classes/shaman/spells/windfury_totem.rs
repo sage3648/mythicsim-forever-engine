@@ -34,6 +34,9 @@ pub(crate) struct WindfuryTotem {
     gain_log: String,
     expire_log: String,
     one_aura: bool,
+    trigger_without_damage: bool,
+    trigger_spends_no_charge: bool,
+    any_outcome_spends: bool,
 }
 
 /// Spellbook positions as a mask.
@@ -64,6 +67,9 @@ pub(crate) fn bind<A: Agent>(fight: &Fight<A>, effect: &Effect) -> Result<Windfu
         proc_gain_log,
         proc_expire_log,
         one_aura,
+        trigger_without_damage,
+        trigger_spends_no_charge,
+        any_outcome_spends,
         ..
     } = effect
     else {
@@ -96,6 +102,9 @@ pub(crate) fn bind<A: Agent>(fight: &Fight<A>, effect: &Effect) -> Result<Windfu
         gain_log: proc_gain_log.clone(),
         expire_log: proc_expire_log.clone(),
         one_aura: *one_aura,
+        trigger_without_damage: *trigger_without_damage,
+        trigger_spends_no_charge: *trigger_spends_no_charge,
+        any_outcome_spends: *any_outcome_spends,
     })
 }
 
@@ -150,35 +159,49 @@ impl WindfuryTotem {
         fight.deactivate_aura(self.trigger);
     }
 
-    /// The trigger: landed hits it hears, its cooldown and chance, then the charges and the
-    /// extra attack, which a main hand swing replacement may replace.
+    /// The trigger: landed hits it hears, its cooldown and chance, then the charges; a proc's
+    /// extra attack is [`WindfuryTotem::cast_extra`]. Under Forever's rules a
+    /// hit without damage rolls it too, and the proc grants every charge: the main hand auto
+    /// that fired it spends none (`Fight::windfury_free_swing`). Whether it procced.
     pub(crate) fn on_trigger_hit<A: Agent>(
         &self,
         fight: &mut Fight<A>,
         spell: SpellId,
         result: &SpellResult,
-    ) {
-        if !self.triggers[spell] || !result.landed() || result.damage == 0.0 {
-            return;
+    ) -> bool {
+        if !self.triggers[spell]
+            || !result.landed()
+            || (!self.trigger_without_damage && result.damage == 0.0)
+        {
+            return false;
         }
         let icd = fight.aura(self.trigger).icd;
         if let Some((timer, _)) = icd {
             if fight.timers[timer] > fight.now {
-                return;
+                return false;
             }
         }
         if self.chance != 1.0 && fight.random_for_aura(self.trigger) > self.chance {
-            return;
+            return false;
         }
         if let Some((timer, duration)) = icd {
             fight.timers[timer] = fight.now + duration;
         }
         fight.activate_aura(self.proc_aura);
         let mut charges = fight.aura(self.proc_aura).max_stacks;
-        if self.white[spell] {
+        if self.trigger_spends_no_charge {
+            let swing = fight.spells[spell].white_hit && !fight.spells[spell].off_hand_proc;
+            fight.windfury_free_swing = swing.then_some((spell, fight.now));
+        } else if self.white[spell] {
             charges -= 1;
         }
         fight.set_stacks(self.proc_aura, charges);
+        true
+    }
+
+    /// A proc's extra attack, which a main hand swing replacement may replace. The caller casts
+    /// it after a proc.
+    pub(crate) fn cast_extra<A: Agent>(&self, fight: &mut Fight<A>, result: &SpellResult) {
         let mut extra = self.extra;
         if fight.config.melee.replace_main_hand_swing {
             extra = A::replace_mh_swing(fight, extra);
@@ -186,16 +209,21 @@ impl WindfuryTotem {
         fight.cast(extra, result.target);
     }
 
-    /// The charges' spender on the proc aura, at once.
+    /// The charges' spender on the proc aura, at once: landed autos that dealt damage, or under
+    /// Forever's rules every auto but the one that fired the proc.
     pub(crate) fn on_spend_hit<A: Agent>(
         &self,
         fight: &mut Fight<A>,
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if self.spend[spell] && result.landed() && result.damage != 0.0 {
-            fight.remove_stack(self.proc_aura);
+        if !self.spend[spell] || fight.windfury_free_swing == Some((spell, fight.now)) {
+            return;
         }
+        if !self.any_outcome_spends && (!result.landed() || result.damage == 0.0) {
+            return;
+        }
+        fight.remove_stack(self.proc_aura);
     }
 
     /// The proc aura's gain: the stats aura's line, then its stats.
