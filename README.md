@@ -1332,6 +1332,21 @@ the Go goldens and exporter uses. The departures:
     as the spell's SpellEffect row is encrypted. The ticks take no armor, as every physical
     damage over time here.
   The reference's rules still refuse the three items as unknown.
+- Dreadfrost Saber (274603), a Forever main hand sword that refused players' sims
+  (`tests/forever_dreadfrost_saber_20261110.rs`): item level 40, 46 to 86, speed 2.40, +8 Stamina,
+  "Equip: Adds 1 Frost damage to your melee attacks." `tools/rust_client_items.py` takes its row
+  with the equip line left out (`ENGINE_EFFECT`), and `src/data/forever_client_spells.rs` restates
+  its two spell rows, which the pinned store lacks. Neither is encrypted, so every field is the
+  client's (wago.tools `product=wowf`, 10 November 2026): the equip aura 1294939 (ItemEffect
+  234011) is a proc trigger aura with a chance of 100 on melee swings and melee abilities dealt
+  (SpellAuraOptions proc mask 20, Fiery Plate Gauntlets' own) by the main hand alone (the second
+  mask word's 32, as Iceblade Hacker's "Melee attacks with this weapon"), and it casts 1294940, a
+  Frost hit of 1 on the magic table with no variance and no coefficient (SpellEffect 1316648,
+  SpellCategories 188896). So it is a spell data damage proc, as Fiery Plate Gauntlets' is in the
+  reference (`src/prepare/forever_effect_items.rs`): every landed main hand melee hit that deals
+  damage casts the hit on the unit hit, with no roll, and the hit rolls the magic hit table as
+  the gauntlets' Fire Strike does. An off hand weapon's hits never cast it. The reference's rules
+  still refuse the item as unknown.
 - Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
   2026 (Forever preparation; the reference keeps its own):
   - Each Skyborne race has its own attribute offset from a Human of the same class, read from

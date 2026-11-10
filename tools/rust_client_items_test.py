@@ -115,6 +115,26 @@ BIGGER_ROCK = {
         "</span><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
     ),
 }
+# Dreadfrost Saber, a Forever sword whose equip line the engine models by hand (Wowhead, 10 November
+# 2026).
+DREADFROST = {
+    "name": "Dreadfrost Saber",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Dreadfrost Saber</b><!--nend--><!--ndstart-->'
+        '<!--ndend--><span class="q"><br>Item Level <!--ilvl-->40</span><!--bo--><br>Binds when '
+        'picked up<!--ue--><!--ue--><table width="100%"><tr><td>Main Hand</td><th>'
+        '<!--scstart2:7--><span class="q1">Sword</span><!--scend--></th></tr></table><!--rf-->'
+        '<table width="100%"><tr>\n    <td><span><!--dmg-->46 - 86 Damage</span></td>\n    <th>'
+        "Speed <!--spd-->2.40</th>\n</tr></table><!--dps-->(27.50 damage per second)<br><span>"
+        "<!--stat7-->+8 Stamina</span><!--ebstats--><!--egstats--><!--eistats-->"
+        "<!--nameDescStats--><!--rs--><!--e--><!--ps--></td></tr></table><table><tr><td>Requires "
+        'Level <!--rlvl-->35<br><!--rr--><!--useText:0:1--><span id="useText1" class="q2">Equip: '
+        '<!--useEffect:0:1--><a href="/forever/spell=1294939/dreadfrost-saber" class="q2">Adds 1 '
+        "Frost damage to your melee attacks.</a><!--useEffect:1--></span><!--useText:1-->"
+        "<!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
 # Staff of Jordan's equip lines (Wowhead Forever), the reference row: {"20":15,"4":60,"5":60}.
 JORDAN_EFFECTS = (
     '<span class="q2">Equip: Improves your chance to hit by 1.5%.</span><br><span class="q2">'
@@ -339,12 +359,24 @@ class ParseTests(unittest.TestCase):
         )
         self.assertIsNone(tool.bonus_row(279480, rock["name"], tool.parse_tooltip(BIGGER_ROCK)))
 
+    def test_an_equip_line_the_engine_models_is_left_out_of_the_row(self):
+        saber = tool.row_for(274603, None, {**item(2, 7), "InventoryType": "21"}, DREADFROST)
+        self.assertEqual(
+            tool.dump_row(saber),
+            '{"id":274603,"name":"Dreadfrost Saber","type":"ItemTypeWeapon","weapon_type":'
+            '"WeaponTypeSword","hand_type":"HandTypeMainHand","weapon_speed":2.4,'
+            '"scaling_options":{"0":{"weapon_damage_min":46,"weapon_damage_max":86,'
+            '"stats":{"2":8},"ilvl":40}}}',
+        )
+        self.assertIsNone(tool.bonus_row(274603, saber["name"], tool.parse_tooltip(DREADFROST)))
+
     def test_a_modelled_line_with_other_numbers_leaves_the_item_out(self):
         # The engine states the use's numbers, so a tooltip that changes them waits for it.
         for response, old, new in [
             (SERPENTBANE, "89 to 112", "90 to 113"),
             (SERPENTBANE, "(5 Min Cooldown)", "(3 Min Cooldown)"),
             (BIGGER_ROCK, "14 Physical", "15 Physical"),
+            (DREADFROST, "Adds 1 Frost", "Adds 2 Frost"),
         ]:
             changed = {**response, "tooltip": response["tooltip"].replace(old, new)}
             self.assertNotEqual(changed["tooltip"], response["tooltip"])
@@ -459,7 +491,7 @@ class CommittedFileTests(unittest.TestCase):
     def test_the_modelled_effect_items_are_committed(self):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
-        self.assertLessEqual({274609, 279480, 279852}, ids)
+        self.assertLessEqual({274603, 274609, 279480, 279852}, ids)
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:
