@@ -1057,16 +1057,34 @@ the Go goldens and exporter uses. The departures:
   every one of those hits (`skips_windfury_totem_swing`, `once_a_cast_class_spells` and the
   Sweeping Strikes hits in `excluded_class_spells` on `weaponmaster_sword`,
   `tests/classes/warrior/sword_specialization.rs`).
-- Soul Siphon counts the Affliction effects active at each tick. Its client 1.60.1.70755 text:
-  Drain Life, Drain Soul and Wrack deal "12% per each of your other Affliction effects active on
-  the target, up to a maximum increase of 36%". The talent is a dummy aura, so the server counts,
-  and Forever's damage over time reads the caster's modifiers at each tick, so each Drain Life and
-  Wrack tick counts what is up then: the warlock's Bane of Agony or Bane of Doom, Corruption,
-  Siphon Life and its own Curse of the Elements or Curse of Recklessness (skill line 355), at most
-  three. The raid's curse is another caster's and does not count. The reference counts every
-  registered Affliction aura on the target, active or not (Go `AfflictionCount`), which is the
-  full 36% on every tick (`soul_siphon_live` on `drain_life` and `wrack`,
-  `tests/forever_soul_siphon_20261104.rs`).
+- Soul Siphon counts the named effects active at each tick. Its text since the class tuning of
+  11 November 2026: Drain Life, Drain Soul and Wrack deal "12% per each of your Corruption,
+  Siphon Life, and Bane of Agony effects active on the target, up to a maximum increase of 36%"
+  (before it "your other Affliction effects", which also counted Bane of Doom and the warlock's
+  own curse). The talent is a dummy aura, so the server counts, and Forever's damage over time
+  reads the caster's modifiers at each tick, so each Drain Life and Wrack tick counts which of
+  the three are up then. The reference counts every registered Affliction aura on the target,
+  active or not (Go `AfflictionCount`), which is the full 36% on every tick (`soul_siphon_live`
+  on `drain_life` and `wrack`, `tests/forever_soul_siphon_20261104.rs`).
+- The Warlock and Hunter class tuning live since 11 November 2026 (Forever preparation; Blizzard
+  announced it on 6 November without numbers, so the numbers are the live rows as Wowhead's
+  Forever pages had them that morning; `tests/forever_class_tuning_20261111.rs`). Wrack deals 60
+  a second at level 60 (25.2 at its level 40 growing 1.75 a level, 0.2002 of spell power a tick;
+  was 86 with 0.286) and no longer raises the damage of the warlock's other Shadow dots by 10%.
+  Instead, "While channeling, your Siphon Life, Corruption, and Bane of Agony effects on the
+  target deal their periodic damage 100% faster", a dummy effect of 100 with a server-side
+  script. **Provisional reading:** a dot under the channel ticks twice as often and lasts as
+  long, so it deals twice the ticks while the channel is on it (`dot_rate` on `wrack`,
+  `Fight::set_dot_tick_rate`); Bane of Agony's ramp ends with its own twelve ticks. The other
+  reading, a dot that runs out in half the time with the ticks it had (as Creeping Death and
+  Exsanguinate do in the modern client), costs Affliction about 14% on its best rotation, where
+  Blizzard's post says the change comes "without affecting Affliction Warlocks' total damage
+  output"; this one stays within a few percent. Combat logs of a dot under the channel settle it.
+  Summon Hawk
+  and Arcane Shot cost 11% of base mana at every rank (Summon Hawk rank 4's spell page; Arcane
+  Shot's pages still showed the old flat cost that morning, so its cost follows Wowhead's news
+  post). The Imp's Firebolt ranks 1 to 4 deal more (6 + 0.3, 11 + 0.4, 15 + 0.4 and 18 + 0.4 a
+  level; ranks 5 to 7 are unchanged). The reference keeps the frozen rows and its 10%.
 - Feral druid attack power shares, measured in game: a Tauren druid's combat log at levels 22 to 25
   on client 1.60.1.70862 (7 November 2026), against client rows that state none of them. Rake's
   hit takes 6.5% of attack power (0.0648 fitted) and each tick the same share (0.0652 fitted): at

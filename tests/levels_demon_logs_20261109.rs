@@ -62,33 +62,36 @@ fn spell_mean(pet: &Value, base: f64) -> (i64, f64) {
 
 /// The Imp's Firebolt is the rank row at the level plus the row's coefficient on a tenth of its
 /// Warlock's spell damage. The measured column is the mean non-crit hit against creatures (the
-/// sample size in the comment). Every log reads at or above the engine: the Warlock spells of the
-/// same reports read 3% high too (docs/levels-logs-2026-11-09.md), and the captures cannot show a
-/// Demonology Warlock's Improved Imp.
+/// sample size in the comment), logged before the class tuning of 11 November 2026 raised ranks
+/// 1 to 4. Against the rows of that time (the third column) every log read 3 to 21% above the
+/// engine; the Warlock spells of the same reports read 3% high too
+/// (docs/levels-logs-2026-11-09.md). The live rows now read above those logs, most at the low
+/// ranks, as the tuning says ("higher increase at lower levels"), and within 3% at rank 4.
 #[test]
 fn the_imps_firebolt_matches_the_logs() {
-    // fixture, rank, engine mean, measured mean, how far above the engine the log may read
+    // fixture, rank, engine mean on the rows the logs were made on, measured mean, engine mean
+    // on the live rows
     let cases = [
-        // Rank 2 at 12 (7 and 0.2 a level from 8, floored), 188 hits. The capture's 3 talent
-        // points and the Warlock's ranks allow level 13 too, where the rank rolls 8.
-        ("affliction-warlock-L12-imp", 7799, 7.03, 8.45, 0.21),
+        // Rank 2 at 12, 188 hits: 7 and 0.2 a level from 8 then, 11 and 0.4 now.
+        ("affliction-warlock-L12-imp", 7799, 7.03, 8.45, 12.03),
         // Rank 2 at its cap of 13 and 30 spell damage, 386 hits; 7 to 8 Demonology points.
-        ("affliction-warlock-L16", 7799, 8.94, 9.58, 0.08),
-        // Rank 3 at 18, 83 hits, and at 20, 95 hits.
-        ("affliction-warlock-L18-imp", 7800, 12.48, 12.90, 0.06),
-        ("affliction-warlock-L20-imp", 7800, 12.74, 13.46, 0.06),
-        // Rank 4 at 31 and 72 spell damage, 270 hits; 7 Demonology points.
-        ("affliction-warlock-L31-imp", 7801, 21.11, 23.76, 0.13),
+        ("affliction-warlock-L16", 7799, 8.94, 9.58, 13.94),
+        // Rank 3 at 18, 83 hits, and at 20, 95 hits: 12 and 0.3 a level then, 15 and 0.4 now.
+        ("affliction-warlock-L18-imp", 7800, 12.48, 12.90, 15.48),
+        ("affliction-warlock-L20-imp", 7800, 12.74, 13.46, 15.74),
+        // Rank 4 at 31 and 72 spell damage, 270 hits: 17 and 0.3 a level then, 18 and 0.4 now.
+        ("affliction-warlock-L31-imp", 7801, 21.11, 23.76, 23.11),
     ];
-    for (name, rank, engine, measured, room) in cases {
+    for (name, rank, before, measured, engine) in cases {
         let prepared = prepared(name, "Imp");
         let base = effect(&prepared, "firebolt")["average"].as_f64().unwrap();
         let (id, mean) = spell_mean(pet(&prepared, "Imp"), base);
         assert_eq!(id, rank, "{name}");
         assert!((mean - engine).abs() < 0.01, "{name}: {mean}");
-        let above = measured / mean - 1.0;
+        // The logs sit between the rows they were made on and the raised ones, or just over.
+        assert!(measured > before, "{name}");
         assert!(
-            (0.0..=room).contains(&above),
+            measured < mean * 1.03,
             "{name}: log {measured} against {mean}"
         );
         // Rank 7 at the level, 44 and up, read four times the log or more at 12 to 20 and

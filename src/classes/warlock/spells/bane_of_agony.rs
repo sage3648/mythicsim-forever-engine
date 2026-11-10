@@ -85,7 +85,10 @@ pub(crate) fn tick(fight: &mut Fight<WarlockAgent>, dot: DotId) {
     let spell = fight.dots[dot].spell;
     fight.scale_damage(spell, &mut result, amp);
     fight.deal_damage(spell, result, true);
-    if fight.dots[dot].tick_count() % agony.ramp_every_ticks == 0 {
+    // The ramp ends with the curse's own ticks: the extra ticks a Wrack channel adds (Forever's
+    // rules since 11 November 2026) deal the amount reached and raise it no further.
+    let ticks = fight.dots[dot].tick_count();
+    if ticks % agony.ramp_every_ticks == 0 && ticks < fight.dots[dot].base_tick_count {
         fight.dots[dot].snapshot_base += agony.ramp_step;
     }
 }

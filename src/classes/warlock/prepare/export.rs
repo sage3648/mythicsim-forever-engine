@@ -207,11 +207,10 @@ impl Warlock {
         }
         drain.insert("soul_siphon".into(), json!(soul_siphon));
         // Forever's rules: the effects active at each tick count (talents/soul_siphon.rs), the
-        // warlock's Affliction dots and its own curse, rather than every registered aura.
+        // warlock's Corruption, Siphon Life and Bane of Agony, rather than every registered aura.
         let soul_siphon_live = (sim.rules == Rules::Forever && soul_siphon_points > 0).then(|| {
             let mut dot_spells = vec![
                 data.bane_of_agony.highest().id,
-                data.bane_of_doom.highest().id,
                 data.corruption.highest_for(env.rules).id,
             ];
             if talents.bool("siphon_life") {
@@ -239,14 +238,28 @@ impl Warlock {
             if let Some(live) = &soul_siphon_live {
                 wrack.insert("soul_siphon_live".into(), live.clone());
             }
-            wrack.insert("dot_bonus".into(), json!(1.0 + row.effect_n(2).percent()));
+            // The Go reference: 10% more from two dots' ticks. Forever's rules since 11 November
+            // 2026: three dots tick twice as often instead.
+            let (dot_bonus, dot_mask) = match sim.rules {
+                Rules::Forever => {
+                    wrack.insert(
+                        "dot_rate".into(),
+                        json!(crate::prepare::hotfix_113554::WRACK_DOT_RATE_20261111),
+                    );
+                    (
+                        1.0,
+                        masks::CORRUPTION | masks::CURSE_OF_AGONY | masks::SIPHON_LIFE,
+                    )
+                }
+                Rules::GoReference => (
+                    1.0 + row.effect_n(2).percent(),
+                    masks::CORRUPTION | masks::CURSE_OF_AGONY,
+                ),
+            };
+            wrack.insert("dot_bonus".into(), json!(dot_bonus));
             wrack.insert(
                 "dot_spells".into(),
-                json!(spells_matching(
-                    sim,
-                    unit,
-                    masks::CORRUPTION | masks::CURSE_OF_AGONY
-                )),
+                json!(spells_matching(sim, unit, dot_mask)),
             );
             effects.push(with_kind("wrack", wrack));
         }

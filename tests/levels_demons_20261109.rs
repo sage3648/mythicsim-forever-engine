@@ -77,16 +77,17 @@ fn creature_dps(level: i32) -> f64 {
 }
 
 /// The Imp casts the Firebolt rank its warlock's level teaches, at that rank's cost and
-/// coefficient, and the roll is the rank's row at the level: rank 2 at 10 (7 and 0.2 a level from
-/// 8, 7.4), rank 3 at 18 (12), rank 4 at 30 (17 and 0.3 a level from 28, 17.6), rank 6 at
-/// 50 (35 and 0.5 a level, 36) and rank 7 at 59 (44.6) and 60 (45.2).
+/// coefficient, and the roll is the rank's row at the level. Ranks 1 to 4 are the rows live since
+/// the class tuning of 11 November 2026: rank 2 at 10 (11 and 0.4 a level from 8, 11.8), rank 3
+/// at 18 (15), rank 4 at 30 (18 and 0.4 a level from 28, 18.8). Rank 6 at 50 (35 and 0.5 a
+/// level, 36) and rank 7 at 59 (44.6) and 60 (45.2) are as before.
 #[test]
 fn the_imp_casts_the_firebolt_rank_its_level_teaches() {
     // level, rank, cost, coefficient, average, variance
     let cases = [
-        (10, 7799, 20, 0.314, 7.0, 0.153_846_159_58),
-        (18, 7800, 35, 0.529, 12.0, 0.166_666_671_63),
-        (30, 7801, 50, 0.571, 17.0, 0.114_285_707_47),
+        (10, 7799, 20, 0.314, 11.0, 2.0 / 11.0),
+        (18, 7800, 35, 0.529, 15.0, 4.0 / 17.0),
+        (30, 7801, 50, 0.571, 18.0, 2.0 / 9.0),
         (50, 11762, 95, 0.571, 36.0, 0.112_676_046_79),
         (59, 11763, 115, 0.571, 44.0, 0.113_636_367_02),
         (60, 11763, 115, 0.571, 45.0, 0.113_636_367_02),
@@ -223,13 +224,13 @@ fn pet_dps(prepared: &Value, name: &str) -> f64 {
 }
 
 /// Each demon's damage rises with its warlock's level and reaches the level 60 demon's only at
-/// 60. Before, a level 20 Succubus dealt what a level 59 one did. The Imp's stops short of 60's:
-/// from about level 30 its 576 mana runs dry in a long fight at any rank, and rank 6 at 55 costs
-/// less than rank 7.
+/// 60. Before, a level 20 Succubus dealt what a level 59 one did. The Imp's rises to level 25
+/// and then holds near 12 dps: from there its mana runs dry in a long fight at any rank, sooner
+/// since the tuning of 11 November 2026 raised the low ranks' damage and not their cost.
 #[test]
 fn each_demons_damage_rises_with_the_level() {
     for (name, levels) in [
-        ("Imp", &[12, 25, 40, 55][..]),
+        ("Imp", &[12, 18, 25][..]),
         ("Voidwalker", &[12, 25, 40, 55, 60][..]),
         ("Succubus", &[20, 30, 45, 59, 60][..]),
         ("Felhunter", &[30, 45, 59, 60][..]),
