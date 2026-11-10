@@ -114,6 +114,45 @@ fn set_bonuses(
     Ok(active)
 }
 
+/// Sets of the Forever client whose pieces `data/forever-client-items.jsonl` holds
+/// (`tools/rust_client_items.py`, `CLIENT_SETS`) and whose bonuses nothing here applies yet, as
+/// (set ID, name, the piece counts that give a bonus). The reference registers none of them, so
+/// [`set_bonuses`] passes their pieces by.
+///
+/// Krol'dok Battlegear, from the Wowhead Forever tooltip of Krol'dok Warplate Chest 275005 on
+/// 10 November 2026: (2) +100 Armor, (3) Increased Defense +5, (4) chance on block to heal for
+/// 14 to 23, (5) taking damage has a high chance to increase Stamina by 1 for 30 sec, stacking
+/// up to 20 times.
+const CLIENT_SETS_NOT_PREPARED: &[(i32, &str, &[i32])] =
+    &[(2135, "Krol'dok Battlegear", &[2, 3, 4, 5])];
+
+/// Refuses an equipment that reaches a bonus of a [`CLIENT_SETS_NOT_PREPARED`] set. Fewer pieces
+/// than the first bonus needs are plain items.
+fn client_sets_not_prepared(
+    go_sets: &[ItemSetRow],
+    items: &[(i32, &str, i32)],
+) -> Result<(), Refusal> {
+    for &(set_id, name, bonus_pieces) in CLIENT_SETS_NOT_PREPARED {
+        if find_set(go_sets, set_id, name).is_some() {
+            continue;
+        }
+        let mut pieces = 0;
+        for &(item_set, item_set_name, item_id) in items {
+            if item_set != set_id && item_set_name != name {
+                continue;
+            }
+            pieces += 1;
+            if bonus_pieces.contains(&pieces) {
+                return Err(Refusal::new(
+                    "item_set",
+                    format!("set bonus {name} {pieces}P is not prepared yet (item {item_id})"),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Go `applyItemSetBonusEffects`. Item swapping is refused before this runs, so only the
 /// equipped bonuses exist.
 pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), Refusal> {
@@ -129,6 +168,7 @@ pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), 
         .iter()
         .map(|(id, name, item)| (*id, name.as_str(), *item))
         .collect();
+    client_sets_not_prepared(&tables().item_sets, &items)?;
     for bonus in set_bonuses(&tables().item_sets, &implemented_sets(), &items)? {
         if !bonus.set.required_profession.is_empty()
             && !env.sim.has_profession(unit, bonus.set.required_profession)

@@ -341,6 +341,34 @@ class ParseTests(unittest.TestCase):
 
 
 class CommittedFileTests(unittest.TestCase):
+    def test_a_listed_set_piece_carries_its_set_and_an_unlisted_one_is_left_out(self):
+        lines = [
+            "Krol'dok Warplate Chest", "Item Level 46", "Chest", "Plate", "490 Armor",
+            "Krol'dok Battlegear (0/5)", "Helmet", "Pauldrons", "Chest", "Legplates", "Gauntlets",
+            "(2) Set : +100 Armor.", "(3) Set : Increased Defense +5.",
+        ]  # fmt: skip
+        self.assertEqual(tool.without_client_set(lines), (lines[:5], "Krol'dok Battlegear"))
+        other = [line.replace("Krol'dok Battlegear", "Defias Enforcer's Garb") for line in lines]
+        self.assertEqual(tool.without_client_set(other), (other, None))
+        # A block that does not close the tooltip with its bonus lines is not read.
+        self.assertEqual(tool.without_client_set(lines + ["Use: Something."])[1], None)
+        self.assertEqual(tool.without_client_set(lines[:8])[1], None)
+        rows = {row["id"]: row for row in map(json.loads, tool.OUT.read_text().splitlines())}
+        for item_id in (275005, 275006, 287012, 287013, 287014):
+            self.assertEqual(rows[item_id]["set_name"], "Krol'dok Battlegear")
+            self.assertEqual(rows[item_id]["set_id"], tool.CLIENT_SETS["Krol'dok Battlegear"])
+        self.assertEqual(sum("set_name" in row for row in rows.values()), 5)
+
+    def test_a_real_item_with_a_development_name_is_taken(self):
+        self.assertTrue(tool.JUNK_NAME.search("Old Leather Jacket"))
+        self.assertIn(280505, tool.REAL_ITEMS)
+        rows = {row["id"]: row for row in map(json.loads, tool.OUT.read_text().splitlines())}
+        self.assertEqual(rows[280505]["name"], "Old Leather Jacket")
+        self.assertEqual(
+            rows[280505]["scaling_options"]["0"],
+            {"stats": {"0": 15, "1": 2, "2": 2, "30": 109}, "ilvl": 39},
+        )
+
     def test_file_passes_the_offline_audit(self):
         self.assertGreater(tool.check(), 300)
 

@@ -23,6 +23,11 @@ profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is l
 row. An item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or
 any line this tool does not read, is left out and listed.
 
+A piece of a set in CLIENT_SETS is taken with its set_name and set_id, as a reference row carries
+them; its tooltip's set block (the piece names and bonus lines) is not part of the row, and
+preparation refuses an equipment that reaches one of those bonuses. An id in REAL_ITEMS is taken
+although its name reads as development data.
+
 Most of the items the Forever client adds (ids from about 270000) have an Item row but no
 readable ItemSparse row: the client ships them encrypted and wago.tools cannot read them, while
 Wowhead's Forever tooltips decode them. Such an item is taken from its tooltip alone: its name,
@@ -83,6 +88,17 @@ JUNK_NAME = re.compile(
     r"|ggggfg|delete me|\(dnt\)|\bph\b|\btwain\b|trash weapon|warlock orb|aura proc",
     re.IGNORECASE,
 )
+
+# Items a player holds whose name reads as development data to JUNK_NAME. Old Leather Jacket
+# 280505 is a drop real characters wear (four refused Best Gear runs on 9 November 2026).
+REAL_ITEMS = {280505}
+
+# The sets of the Forever client that this tool takes pieces of, by the name the tooltip gives,
+# with the ItemSet ID of the tooltip's item-set link. The reference database registers none of
+# them. A piece's row carries set_name and set_id as a reference row does, and preparation
+# refuses an equipment that reaches one of the set's bonuses (src/prepare/item_sets.rs,
+# CLIENT_SETS_NOT_PREPARED), so a set here needs its row there.
+CLIENT_SETS = {"Krol'dok Battlegear": 2135}
 
 ITEM_TYPE = {
     1: "ItemTypeHead",
@@ -180,7 +196,7 @@ def candidates(tables):
             continue
         if int(item["ClassID"]) not in (WEAPON_CLASS, ARMOR_CLASS):
             continue
-        if row is not None and JUNK_NAME.search(row["Display_lang"]):
+        if row is not None and item_id not in REAL_ITEMS and JUNK_NAME.search(row["Display_lang"]):
             junk[item_id] = row["Display_lang"]
             continue
         taken.append((item_id, row, item))
@@ -449,6 +465,28 @@ def tooltip_lines(tooltip):
     return lines, int(effects.group(1)) if effects else 0
 
 
+SET_BONUS_LINE = re.compile(r"^\((\d+)\) Set : .+$")
+
+
+def without_client_set(lines):
+    """The lines without the set block of a CLIENT_SETS set, and that set's name (None for a
+    tooltip with no such block). The block is the set's "<name> (0/N)" line, its N piece names
+    and its "(N) Set : ..." bonus lines, which close the tooltip. A block of any other shape, or
+    of a set that is not listed, stays for parse_tooltip to refuse as a set piece."""
+    for index, line in enumerate(lines):
+        match = re.fullmatch(r"(.+) \(0/(\d+)\)", line)
+        if not match or match.group(1) not in CLIENT_SETS:
+            continue
+        pieces = int(match.group(2))
+        bonuses = lines[index + 1 + pieces :]
+        if len(lines) < index + 1 + pieces or not bonuses:
+            return lines, None
+        if not all(SET_BONUS_LINE.fullmatch(bonus) for bonus in bonuses):
+            return lines, None
+        return lines[:index], match.group(1)
+    return lines, None
+
+
 def parse_tooltip(response):
     """What a tooltip response says about an item, or Unreadable."""
     if response.get("missing") or "tooltip" not in response:
@@ -456,6 +494,9 @@ def parse_tooltip(response):
     name = response["name"]
     out = {"name": name, "quality": response.get("quality"), "stats": {}}
     lines, effects = tooltip_lines(response["tooltip"])
+    lines, set_name = without_client_set(lines)
+    if set_name:
+        out["set"] = set_name
     equip_lines = 0
     for line in lines:
         line = CITY_CLAUSE.sub("", line)
@@ -561,12 +602,15 @@ def row_for(item_id, sparse, item, response):
         # No ItemSparse row to check the tooltip against: its name passes the same filter, and
         # its slot is the Item row's.
         name = parsed["name"]
-        if JUNK_NAME.search(name):
+        if item_id not in REAL_ITEMS and JUNK_NAME.search(name):
             raise Unreadable("development name")
         if parsed.get("slot") != SLOT_WORD.get(inventory):
             raise Unreadable(f"slot {parsed.get('slot')!r} differs from InventoryType {inventory}")
     row = {"id": item_id, "name": name}
     damage_expected = False
+    set_fields = {}
+    if parsed.get("set"):
+        set_fields = {"set_name": parsed["set"], "set_id": CLIENT_SETS[parsed["set"]]}
     if int(item["ClassID"]) == ARMOR_CLASS and subclass == 6:
         if inventory != 14:
             raise Unreadable(f"shield in slot {inventory}")
@@ -595,6 +639,7 @@ def row_for(item_id, sparse, item, response):
             hand_type=HAND_TYPE[inventory],
         )
         damage_expected = True
+    row.update(set_fields)
     option = {}
     if damage_expected:
         if "damage" not in parsed or "speed" not in parsed:
@@ -721,7 +766,7 @@ def add(tables, cache, ids):
 
 ROW_KEYS = {
     "id", "name", "type", "armor_type", "weapon_type", "hand_type", "ranged_weapon_type",
-    "weapon_speed", "scaling_options", "unique", "pseudo_stats", "class_allowlist",
+    "weapon_speed", "set_name", "set_id", "scaling_options", "unique", "pseudo_stats", "class_allowlist",
 }  # fmt: skip
 
 
