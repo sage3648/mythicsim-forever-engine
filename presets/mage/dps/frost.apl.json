@@ -161,41 +161,112 @@
     },
     {
       "action": {
+        "castSpell": {
+          "spellId": {
+            "spellId": 10161
+          }
+        },
+        "condition": {
+          "cmp": {
+            "lhs": {
+              "auraNumStacks": {
+                "auraId": {
+                  "spellId": 12579
+                }
+              }
+            },
+            "op": "OpGe",
+            "rhs": {
+              "const": {
+                "val": "5"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "action": {
+        "castSpell": {
+          "spellId": {
+            "spellId": 10161
+          }
+        },
         "condition": {
           "and": {
             "vals": [
               {
+                "auraIsActive": {
+                  "auraId": {
+                    "spellId": 400669
+                  }
+                }
+              },
+              {
+                "or": {
+                  "vals": [
+                    {
+                      "cmp": {
+                        "lhs": {
+                          "auraNumStacks": {
+                            "auraId": {
+                              "spellId": 400669
+                            }
+                          }
+                        },
+                        "op": "OpGe",
+                        "rhs": {
+                          "const": {
+                            "val": "2"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "spellInFlight": {
+                        "spellId": {
+                          "spellId": 25304
+                        }
+                      }
+                    },
+                    {
+                      "cmp": {
+                        "lhs": {
+                          "spellTravelTime": {
+                            "spellId": {
+                              "spellId": 25304
+                            }
+                          }
+                        },
+                        "op": "OpLe",
+                        "rhs": {
+                          "const": {
+                            "val": "0s"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              {
                 "cmp": {
-                  "op": "OpGe",
                   "lhs": {
-                    "numberTargets": {}
+                    "auraNumStacks": {
+                      "auraId": {
+                        "spellId": 12579
+                      }
+                    }
                   },
+                  "op": "OpGe",
                   "rhs": {
                     "const": {
                       "val": "3"
                     }
                   }
                 }
-              },
-              {
-                "cmp": {
-                  "op": "OpLe",
-                  "lhs": {
-                    "unitDistance": {}
-                  },
-                  "rhs": {
-                    "const": {
-                      "val": "10"
-                    }
-                  }
-                }
               }
             ]
-          }
-        },
-        "castSpell": {
-          "spellId": {
-            "spellId": 10161
           }
         }
       }
