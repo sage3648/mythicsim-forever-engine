@@ -14,7 +14,7 @@
 use crate::contracts::prepared_v2::{
     Effect, PreparedV2, SwapAuraState, SwapCallback, SwapChange, Weapon, WeaponSkillTable,
 };
-use crate::core::time::{go_string, NS_PER_MILLISECOND};
+use crate::core::time::{go_string, NEVER_EXPIRES, NS_PER_MILLISECOND};
 
 use super::{reads, spell_mod::ModKind, Agent, AuraRef, BuildError, Fight, SpellId};
 
@@ -53,6 +53,8 @@ pub(crate) struct ItemSwapState {
     pub(crate) swapped: bool,
     /// Go `ItemSwap.initialized`: false while a reset swaps.
     initialized: bool,
+    /// When the rotation last swapped sets, so it swaps once a timestep.
+    acted_at: i64,
     /// The set auras, Main then Swap1.
     auras: [AuraRef; 2],
     /// The stat aura bit that carries the swap's equipment stats.
@@ -283,6 +285,7 @@ impl<A: Agent> Fight<A> {
         self.item_swap = Some(ItemSwapState {
             swapped: false,
             initialized: true,
+            acted_at: NEVER_EXPIRES,
             auras: [
                 self.player_aura(main_aura)?,
                 self.player_aura(swapped_aura)?,
@@ -521,11 +524,14 @@ impl<A: Agent> Fight<A> {
         self.item_swap.as_ref().is_some_and(|swap| swap.swapped)
     }
 
-    /// Go `APLActionItemSwap.IsReady`.
+    /// Go `APLActionItemSwap.IsReady`: the other set is worn. The engine adds once a timestep,
+    /// as a target change has it: a swap takes no time of its own, so a rotation whose lines to
+    /// Main and to Swap1 both hold at one moment swapped back and forth without end. The second
+    /// swap waits for the rotation's next look, after the first one's GCD.
     pub(crate) fn item_swap_ready(&self, to_swapped: bool) -> bool {
         self.item_swap
             .as_ref()
-            .is_some_and(|swap| swap.swapped != to_swapped)
+            .is_some_and(|swap| swap.swapped != to_swapped && swap.acted_at != self.now)
     }
 
     /// Go `APLActionItemSwap.Execute`.
@@ -539,6 +545,11 @@ impl<A: Agent> Fight<A> {
             };
             self.player_log(&line);
         }
+        if let Some(swap) = self.item_swap.as_mut() {
+            if swap.swapped != to_swapped {
+                swap.acted_at = self.now;
+            }
+        }
         self.swap_items(to_swapped, false);
     }
 
@@ -549,6 +560,7 @@ impl<A: Agent> Fight<A> {
             return;
         };
         swap.initialized = false;
+        swap.acted_at = NEVER_EXPIRES;
         self.swap_items(false, true);
         if let Some(swap) = self.item_swap.as_mut() {
             swap.initialized = true;
