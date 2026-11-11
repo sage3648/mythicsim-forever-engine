@@ -256,3 +256,57 @@ mod exports {
         );
     }
 }
+
+#[test]
+fn the_ceremonial_mallets_bonus_is_melee_attack_power_against_undead() {
+    // "Equip: +33 Attack Power against Undead." (Wowhead Forever tooltip, 9 November 2026).
+    let bonus = versus_attack_power(279885).unwrap();
+    assert_eq!(bonus.name, "Ceremonial Mallet");
+    assert_eq!(bonus.bonuses, vec![("MobTypeUndead".to_string(), 33.0)]);
+    assert!(bonus.spell_bonuses.is_empty());
+    assert!(versus_attack_power(274600).is_none());
+}
+
+#[test]
+fn couriers_clasps_bonus_is_spell_damage_against_humanoids() {
+    // "Equip: Increases damage done to Humanoids by magical spells and effects by up to 10."
+    // (Wowhead Forever tooltip, 9 November 2026).
+    let bonus = versus_attack_power(279833).unwrap();
+    assert_eq!(bonus.name, "Courier's Clasp");
+    assert!(bonus.bonuses.is_empty());
+    assert_eq!(
+        bonus.spell_bonuses,
+        vec![("MobTypeHumanoid".to_string(), 10.0)]
+    );
+}
+
+#[test]
+fn every_creature_type_bonus_belongs_to_a_client_item_and_names_a_creature_type() {
+    let creature_types = [
+        "MobTypeBeast",
+        "MobTypeDemon",
+        "MobTypeDragonkin",
+        "MobTypeElemental",
+        "MobTypeGiant",
+        "MobTypeHumanoid",
+        "MobTypeMechanical",
+        "MobTypeUndead",
+    ];
+    for id in crate::data::CLIENT_ITEM_BONUSES.keys() {
+        let id = i32::try_from(id).unwrap();
+        assert!(
+            crate::data::proto_row(&crate::data::CLIENT_ITEMS, "proto.SimItem", i64::from(id))
+                .is_some(),
+            "item {id} has no client item row"
+        );
+        let bonus = versus_attack_power(id).unwrap();
+        assert!(
+            !bonus.bonuses.is_empty() || !bonus.spell_bonuses.is_empty(),
+            "item {id}"
+        );
+        for (mob_type, power) in bonus.bonuses.into_iter().chain(bonus.spell_bonuses) {
+            assert!(creature_types.contains(&mob_type.as_str()), "{mob_type}");
+            assert!(power > 0.0, "{mob_type}");
+        }
+    }
+}

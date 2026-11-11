@@ -8,11 +8,10 @@ use std::sync::OnceLock;
 use serde_json::{json, Map, Value};
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::data::spells::Effect;
 use crate::prepare::aura_helpers::ProcTrigger;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraId, Duration, Rules, Sim, SpellId, UnitId, MILLISECOND, NEVER_EXPIRES,
 };
@@ -42,7 +41,8 @@ pub(super) fn unmasked_spell(id: &ActionId) -> Option<&'static str> {
     }
 }
 
-/// `warlockDamageRows`: the rows by spell ID.
+/// `warlockDamageRows`: the rows by spell ID, every rank of each spell, so the map kept for the
+/// process holds the rank of every character's level.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
     static ROWS: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     ROWS.get_or_init(|| {
@@ -62,10 +62,9 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
             &data.soul_fire,
             &data.incinerate,
         ] {
-            let row = ladder.highest();
-            if !row.is_nil() {
+            ladder.each(|_, row| {
                 rows.insert(row.id, row);
-            }
+            });
         }
         rows
     })
@@ -82,7 +81,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
     if effect.is_nil() {
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// The spellbook positions of spells whose class mask is in a set.
@@ -117,7 +116,7 @@ fn periodic_rank(row: &Row) -> Map<String, Value> {
     map.insert("spell_id".into(), json!(row.id));
     map.insert(
         "tick_base".into(),
-        json!(row.periodic_effect().average(CHARACTER_LEVEL)),
+        json!(row.periodic_effect().average(character_level())),
     );
     map.insert(
         "tick_can_crit".into(),
@@ -137,18 +136,6 @@ fn warlock_tick(row: &Row, unrepresented: &mut Vec<String>) -> Map<String, Value
 fn with_kind(kind: &str, mut fields: Map<String, Value>) -> Value {
     fields.insert("kind".into(), json!(kind));
     Value::Object(fields)
-}
-
-/// The Imp's Firebolt rank 7 damage effect (`impFireboltEffect`), client 1.60.1.70094 11763.
-fn imp_firebolt_effect() -> Effect {
-    Effect {
-        base_points: 44.0,
-        ppl: 0.6000000238418579,
-        variance: 0.11363636702,
-        spell_level: 58,
-        max_level: 63,
-        ..Effect::default()
-    }
 }
 
 /// The names `resistanceStatNames` gives the stats a curse lowers.
@@ -220,11 +207,10 @@ impl Warlock {
         }
         drain.insert("soul_siphon".into(), json!(soul_siphon));
         // Forever's rules: the effects active at each tick count (talents/soul_siphon.rs), the
-        // warlock's Affliction dots and its own curse, rather than every registered aura.
+        // warlock's Corruption, Siphon Life and Bane of Agony, rather than every registered aura.
         let soul_siphon_live = (sim.rules == Rules::Forever && soul_siphon_points > 0).then(|| {
             let mut dot_spells = vec![
                 data.bane_of_agony.highest().id,
-                data.bane_of_doom.highest().id,
                 data.corruption.highest_for(env.rules).id,
             ];
             if talents.bool("siphon_life") {
@@ -252,14 +238,28 @@ impl Warlock {
             if let Some(live) = &soul_siphon_live {
                 wrack.insert("soul_siphon_live".into(), live.clone());
             }
-            wrack.insert("dot_bonus".into(), json!(1.0 + row.effect_n(2).percent()));
+            // The Go reference: 10% more from two dots' ticks. Forever's rules since 11 November
+            // 2026: three dots tick twice as often instead.
+            let (dot_bonus, dot_mask) = match sim.rules {
+                Rules::Forever => {
+                    wrack.insert(
+                        "dot_rate".into(),
+                        json!(crate::prepare::hotfix_113554::WRACK_DOT_RATE_20261111),
+                    );
+                    (
+                        1.0,
+                        masks::CORRUPTION | masks::CURSE_OF_AGONY | masks::SIPHON_LIFE,
+                    )
+                }
+                Rules::GoReference => (
+                    1.0 + row.effect_n(2).percent(),
+                    masks::CORRUPTION | masks::CURSE_OF_AGONY,
+                ),
+            };
+            wrack.insert("dot_bonus".into(), json!(dot_bonus));
             wrack.insert(
                 "dot_spells".into(),
-                json!(spells_matching(
-                    sim,
-                    unit,
-                    masks::CORRUPTION | masks::CURSE_OF_AGONY
-                )),
+                json!(spells_matching(sim, unit, dot_mask)),
             );
             effects.push(with_kind("wrack", wrack));
         }
@@ -268,7 +268,7 @@ impl Warlock {
         let hellfire = data.hellfire.highest();
         effects.push(json!({
             "kind": "hellfire", "spell_id": hellfire.id,
-            "tick_base": hellfire.effect(dbcenums::A_PERIODIC_DAMAGE, 0).average(CHARACTER_LEVEL),
+            "tick_base": hellfire.effect(dbcenums::A_PERIODIC_DAMAGE, 0).average(character_level()),
             "tick_can_crit": !hellfire
                 .effect(dbcenums::A_PERIODIC_TRIGGER_SPELL, 0)
                 .trigger()
@@ -280,7 +280,7 @@ impl Warlock {
         let rain_tick = data.rain_of_fire_triggered.rank(rain.rank_number());
         effects.push(json!({
             "kind": "rain_of_fire", "spell_id": rain.id, "tick_spell_id": rain_tick.id,
-            "tick_base": rain_tick.damage_effect().average(CHARACTER_LEVEL),
+            "tick_base": rain_tick.damage_effect().average(character_level()),
         }));
         if talents.bool("bane_of_havoc") {
             // talents_destruction.go applyBaneOfHavoc
@@ -298,7 +298,7 @@ impl Warlock {
         let pseudo = &sim.unit(unit).pseudo_stats;
         effects.push(json!({
             "kind": "death_coil",
-            "base_damage": data.death_coil.highest().effect_n(1).average(CHARACTER_LEVEL),
+            "base_damage": data.death_coil.highest().effect_n(1).average(character_level()),
             "healing_dealt_multiplier": pseudo.healing_dealt_multiplier,
             "healing_taken_multiplier": pseudo.healing_taken_multiplier,
             "table_healing_dealt_multiplier": env.attack_table(unit, unit).healing_dealt_multiplier,
@@ -343,8 +343,15 @@ impl Warlock {
         }
         // curse_of_elements.go: core's debuff on the target, whose stat and damage taken changes
         // the exporter reads off the client row and checks against Go activating it.
+        // A levelling warlock below the curse's level has not learned it (prepare::levels).
         let target_index = sim.unit(target).unit_index as usize;
-        if let Some(Some(aura)) = self.curse_of_elements_auras.get(target_index) {
+        let elements_known =
+            !crate::prepare::levels::is_unlearned(spell_data().curse_of_the_elements.highest().id);
+        if let Some(Some(aura)) = self
+            .curse_of_elements_auras
+            .get(target_index)
+            .filter(|_| elements_known)
+        {
             effects.push(curse_of_elements_effect(env, target, *aura, unrepresented));
         }
         if let Some(Some(aura)) = self.curse_of_recklessness_auras.get(target_index) {
@@ -359,7 +366,7 @@ impl Warlock {
         let life_tap = data.life_tap.highest();
         let mut tap = json!({
             "kind": "life_tap", "spell_id": life_tap.id,
-            "base_amount": life_tap.effect_n(1).average(CHARACTER_LEVEL),
+            "base_amount": life_tap.effect_n(1).average(character_level()),
             "mana_multiplier": 1.0 + data.improved_life_tap.fraction_at(talents.i32("improved_life_tap")),
             // The client flags every rank No Threat: the mana adds no threat, the demon's share
             // neither.
@@ -426,10 +433,12 @@ impl Warlock {
                 "wait_ns": nanos(100 * MILLISECOND),
             }));
         }
-        if self.pets.imp.is_some() {
-            // pets.go registerFireboltSpell: impFireboltEffect, unexported, mirrored here
-            let effect = imp_firebolt_effect();
-            let average = effect.average(CHARACTER_LEVEL);
+        let firebolt = super::pets::demon_rank(&super::pets::FIREBOLT_RANKS, sim.rules);
+        if let (Some(_), Some(rank)) = (self.pets.imp, firebolt) {
+            // pets.go registerFireboltSpell: impFireboltEffect, unexported, mirrored here at the
+            // rank the level teaches (rank 7, 11763, at 60)
+            let effect = rank.effect();
+            let average = effect.average(character_level());
             effects.push(json!({
                 "kind": "firebolt",
                 "min_damage": average * (1.0 - effect.variance / 2.0),
@@ -437,9 +446,10 @@ impl Warlock {
                 "average": average, "variance": effect.variance,
             }));
         }
-        if self.pets.succubus.is_some() {
-            // pets.go registerLashOfPainSpell: a Go literal base
-            effects.push(json!({"kind": "lash_of_pain", "base_damage": 50.0}));
+        let lash = super::pets::demon_rank(&super::pets::LASH_OF_PAIN_RANKS, sim.rules);
+        if let (Some(_), Some(rank)) = (self.pets.succubus, lash) {
+            // pets.go registerLashOfPainSpell: the rank's base, the Go literal 50 at rank 6
+            effects.push(json!({"kind": "lash_of_pain", "base_damage": rank.base_points}));
         }
         // talents_demonology.go applyFelEnergy: the Voidwalker's sacrifice restores a share of
         // maximum mana every period, from a periodic action its permanent aura starts.
@@ -507,7 +517,7 @@ impl Warlock {
                     brand["brand_spell"] = json!(position);
                 }
                 // The hit's roll and spell power share are Go literals.
-                let level_bonus = f64::from(CHARACTER_LEVEL - 26) * 1.5;
+                let level_bonus = f64::from(character_level() - 26) * 1.5;
                 brand["pet"] = json!(sim.unit(pet).label);
                 brand["marker_aura"] = json!("Demonic Brand");
                 brand["consumer_aura"] = json!("Demonic Brand consumer");

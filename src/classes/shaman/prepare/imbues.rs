@@ -2,15 +2,16 @@
 //! on the swap set's weapon (`imbueMhSwap`), the callbacks that switch each imbue with the weapon in
 //! the hand, and Rockbiter and Flametongue following one weapon alone (mythicsim patch 133).
 
+use crate::Rules;
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::flametongue::disable_flametongue_totem;
 use crate::prepare::buffs::generated::WINDFURY_TOTEM;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::item_swap::{ManagerChance, ManagerMask, SwapCallback, WEAPON_SLOTS};
 use crate::prepare::items::slot;
+use crate::prepare::levels::character_level;
 use crate::prepare::shared_items::current_proc_mask_for;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId, MILLISECOND, NEVER_EXPIRES};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
@@ -159,10 +160,12 @@ impl Shaman {
         );
 
         // Go `WindfuryImbueReplacesTotemAfterSwap` (MythicSim patch 156): Windfury Weapon on only the
-        // swap's main hand also replaces the party's totem once that weapon is in the hand.
+        // swap's main hand also replaces the party's totem once that weapon is in the hand. Not
+        // under Forever's rules since the hotfixes of 10 November 2026: "Weapon imbues and Weapon
+        // totems can now be used at the same time", so the imbue and the totem both roll.
         let swap_main_hand = sim.item_swap(unit).is_some_and(|swap| swap.is_enabled())
             && Self::swap_main_hand_carries(sim, unit, WINDFURY_ENCHANT_ID);
-        if mask.matches(ProcMask::MELEE_MH) || swap_main_hand {
+        if sim.rules != Rules::Forever && (mask.matches(ProcMask::MELEE_MH) || swap_main_hand) {
             // Needs to be higher than Windfury Totem priority.
             sim.new_exclusive_effect(
                 aura,
@@ -193,7 +196,7 @@ impl Shaman {
     /// totem's base damage, so a shaman's carries the imbue's class mask and the shaman spell
     /// flag.
     fn new_flametongue_imbue_spell(&self, sim: &mut Sim, unit: UnitId) {
-        let imbue = spell_data().flametongue_weapon_triggered.by_id(16344);
+        let imbue = super::spell_data::flametongue_weapon_proc();
         sim.register_spell(
             unit,
             SpellConfig {
@@ -277,8 +280,10 @@ impl Shaman {
                 SwapCallback::Flametongue { aura, slot },
             );
             // "When applied to main hand, disables any benefit you personally receive from
-            // Flametongue Totem" (patch 70). An off-hand Flametongue Weapon leaves the totem on.
-            if slot == crate::prepare::items::slot::MAIN_HAND {
+            // Flametongue Totem" (patch 70). An off-hand Flametongue Weapon leaves the totem on,
+            // and under Forever's rules since the hotfixes of 10 November 2026 a main-hand one
+            // does too ("Weapon imbues and Weapon totems can now be used at the same time").
+            if slot == crate::prepare::items::slot::MAIN_HAND && sim.rules != Rules::Forever {
                 disable_flametongue_totem(sim, aura);
             }
         }
@@ -406,7 +411,7 @@ impl Shaman {
         let imbue = data.rockbiter_weapon_triggered.highest();
         let attack_power = imbue
             .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             * (1.0
                 + data
                     .elemental_weapons

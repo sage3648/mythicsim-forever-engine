@@ -392,6 +392,30 @@ fn production_mind_flay(rules: forever_engine::Rules) -> (Value, Value) {
     // under both.
     let mut request: Value = serde_json::from_slice(&request).unwrap();
     request["raid"]["parties"][0]["players"][0]["race"] = json!("RaceNightElf");
+    // Judgement of Wisdom rolls on a missed spell under the reference's rules and not under
+    // Forever's, which would part the rolls as well: the raid leaves it off.
+    request["raid"]["debuffs"]["judgementOfWisdom"] = json!(false);
+    // Items with a live row (Skyshroud Leggings since 9 November) carry other stats under each
+    // rule set, which would part the rolls too: the priest takes them off.
+    let live: Vec<i64> = fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("data/forever-live-items.jsonl"),
+    )
+    .unwrap()
+    .lines()
+    .map(|line| {
+        serde_json::from_str::<Value>(line).unwrap()["id"]
+            .as_i64()
+            .unwrap()
+    })
+    .collect();
+    for item in request["raid"]["parties"][0]["players"][0]["equipment"]["items"]
+        .as_array_mut()
+        .unwrap()
+    {
+        if item["id"].as_i64().is_some_and(|id| live.contains(&id)) {
+            *item = json!({});
+        }
+    }
     let request = serde_json::to_vec(&request).unwrap();
     let mut prepared = forever_engine::prepare_json_with(&request, "x", rules).unwrap();
     prepared["sim"]["iterations"] = json!(20);

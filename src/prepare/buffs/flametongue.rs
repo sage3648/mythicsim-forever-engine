@@ -14,13 +14,32 @@ use crate::contracts::prepared_v2::ActionId;
 use super::super::resolve_proc::proc_trigger;
 use super::super::sim::{AuraConfig, AuraId, EffectId, Sim, SpellId, UnitId, NEVER_EXPIRES};
 use super::super::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
-use super::super::spelldata::must_find;
+use super::super::spelldata::{must_find, Spell};
 use super::generated::FLAMETONGUE_TOTEM;
 
 /// The party's Flametongue Totem row: the aura that states the trigger.
 const FLAMETONGUE_TOTEM_PARTY: i32 = 15036;
-/// "Flametongue Totem Proc".
-const FLAMETONGUE_TOTEM_PROC: i32 = 16389;
+/// Flametongue Totem's ranks and each one's "Flametongue Totem Proc", in rank order: rank 4
+/// (16387, spell level 58) triggers 16389.
+const FLAMETONGUE_TOTEM_RANKS: [(i32, i32); 4] =
+    [(8227, 8253), (8249, 8248), (10526, 10523), (16387, 16389)];
+
+/// The "Flametongue Totem Proc" of the totem rank the character knows: 16389 at level 60, and
+/// below it the proc of the rank its spellbook or level gives it (rank 1's 548 at level 28, not
+/// rank 4's 1363). A character that knows no rank keeps rank 1's, whose totem it never drops.
+pub(crate) fn flametongue_totem_proc() -> &'static Spell {
+    let totems: Vec<&'static Spell> = FLAMETONGUE_TOTEM_RANKS
+        .iter()
+        .map(|(totem, _)| must_find(*totem))
+        .collect();
+    let known = super::super::levels::known_rank(&totems)
+        .map_or(FLAMETONGUE_TOTEM_RANKS[0].0, |rank| rank.id);
+    let proc = FLAMETONGUE_TOTEM_RANKS
+        .iter()
+        .find(|(totem, _)| *totem == known)
+        .map_or(FLAMETONGUE_TOTEM_RANKS[0].1, |(_, proc)| *proc);
+    must_find(proc)
+}
 
 /// Go `FlametongueAttackTraits`: what a class's own Flametongue Attack carries that its talents
 /// and threat modifiers key on. The shaman sets its own (its spell flag, so Natural Grace's
@@ -37,15 +56,15 @@ pub(crate) struct FlametongueAttackTraits {
 pub(crate) const FLAMETONGUE_TOTEM_TRIGGER_LABEL: &str = "Flametongue Totem Trigger";
 
 /// Go `WindfuryWeaponMainHandStrikeID`: Windfury Weapon's main-hand strike, which procs
-/// Flametongue Totem (MythicSim patch 141).
+/// Flametongue Totem in the Go reference (MythicSim patch 141) and never under Forever's rules.
 pub(crate) const WINDFURY_WEAPON_MAIN_HAND_STRIKE: i32 = 439440;
 
 /// Go `flametongueTotemValue`: the proc's dummy value at the character's level, 1363, flat, since
 /// the row has no per-level gain.
 fn flametongue_totem_value() -> f64 {
-    must_find(FLAMETONGUE_TOTEM_PROC)
+    flametongue_totem_proc()
         .effect_n(1)
-        .average(super::super::character::constants::CHARACTER_LEVEL)
+        .average(super::super::levels::character_level())
 }
 
 /// Go `FlametongueTotemBaseDamage`: what a hit adds under a main-hand weapon of this swing
@@ -94,8 +113,8 @@ pub(crate) fn windfury_totem_disables_flametongue_totem(sim: &mut Sim, aura: Aur
 
 /// Go `FlametongueTotemAttack`: the damage a main-hand auto attack adds under the totem, the
 /// imbue's spell with the totem's base damage: Magic fire, so it rolls the spell hit and crit
-/// tables, with no spell power coefficient. It keeps the totem's own id (16389) so a report lists
-/// it apart from the imbue.
+/// tables, with no spell power coefficient. It keeps the totem proc's own id (16389 at level 60) so a
+/// report lists it apart from the imbue.
 pub(crate) fn flametongue_totem_attack(
     sim: &mut Sim,
     unit: UnitId,
@@ -104,7 +123,7 @@ pub(crate) fn flametongue_totem_attack(
     sim.get_or_register_spell(
         unit,
         SpellConfig {
-            action_id: ActionId::spell(FLAMETONGUE_TOTEM_PROC),
+            action_id: ActionId::spell(flametongue_totem_proc().id),
             spell_school: school::FIRE,
             defense_type: DefenseType::Magic,
             proc_mask: ProcMask::SPELL_DAMAGE_PROC,
@@ -198,4 +217,43 @@ pub(crate) fn drive_flametongue_totem(
     );
     join_flametongue_totem(sim, unit, aura, traits);
     sim.make_permanent(aura);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prepare::levels::{with_character, Character};
+
+    fn at<T>(level: i32, f: impl FnOnce() -> T) -> T {
+        let character = Character {
+            level,
+            ..Character::default()
+        };
+        with_character(character, f)
+    }
+
+    /// The totem's proc is the known rank's: rank 1 (8253, 548) from 28, rank 2 (8248, 781) from
+    /// 38, rank 3 (10523, 1061) from 48 and rank 4 (16389, 1363) from 58 and at 60.
+    #[test]
+    fn the_totem_procs_at_the_rank_the_character_knows() {
+        assert_eq!(flametongue_totem_proc().id, 16389);
+        for (level, proc, value) in [
+            (28, 8253, 548.0),
+            (37, 8253, 548.0),
+            (40, 8248, 781.0),
+            (50, 10523, 1061.0),
+            (58, 16389, 1363.0),
+        ] {
+            assert_eq!(
+                at(level, || flametongue_totem_proc().id),
+                proc,
+                "level {level}"
+            );
+            assert_eq!(
+                at(level, || flametongue_totem_base_damage(2.0)),
+                2.0 * value / 100.0,
+                "level {level}"
+            );
+        }
+    }
 }

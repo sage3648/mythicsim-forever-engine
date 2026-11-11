@@ -2,8 +2,8 @@
 //! intimidating_shout.go.
 
 use crate::prepare::buffs::generated;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraId, BuildPhase, Cooldown, Sim, UnitId};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::stats::Stat;
@@ -117,7 +117,7 @@ impl Warrior {
                 threat_multiplier: 1.0,
                 flat_threat_bonus: rank
                     .find_effect(dbcenums::E_THREAT, 0, 0)
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 has_extra_cast_condition: true,
                 related_aura_arrays: related,
                 ..SpellConfig::default()

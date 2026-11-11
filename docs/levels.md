@@ -1,0 +1,123 @@
+# Levelling characters
+
+Status: every class sims from level 10 to 59, 8 Nov 2026. Part of MythicSim's Forever Droptimizer with levelling dungeons (app `docs/forever-droptimizer.md`).
+
+## What a request carries
+
+A request for a character below level 60 sets three Forever-only player fields (`contracts/request/schema.rs`, numbered from 1000 like the other Rust-only fields, so the Go reference refuses them):
+
+- `level`: the character's level. 0 reads as 60.
+- `characterSheet`: what MythicSim addon 0.4.0 reads off the character sheet (`proto.CharacterSheet`): base attributes without gear or buffs, the sheet's totals, health, mana, melee and per-school spell crit, and the helpful auras up when it was read.
+- `knownSpells`: the spell ids the spellbook says the character has trained.
+
+A level 60 request without these fields prepares exactly as before.
+
+## How preparation uses them
+
+`prepare/levels.rs` holds the character being prepared for the whole of preparation (`with_character`, the pattern `rotation::with_current_target` uses). Two readers follow it:
+
+- `character_level()` replaced the `CHARACTER_LEVEL` constant: the caster level spell amounts scale to (`Effect::average`), the player unit's level, pets' level and the default target's.
+- `Ladder::highest()` and `highest_for()` resolve to the highest rank the character knows: the highest rank the spellbook lists, or, for a ladder the spellbook lists none of (a talent, an item's spell or a triggered effect) and for a request without a spellbook, the highest rank whose spell level is at or below the character's level. At 60 that is every rank, so nothing changes there.
+
+Base stats (`character::base_stats`) move to the level (`levels::base_stats_at_level`):
+
+- Attributes are the sheet's base attributes.
+- Base attack power follows the class's per-level rule: the table's level 60 value is the class's attack power per level times 60, less 20 (Warrior and Paladin 3 per level, Hunter, Rogue and Shaman 2), or a constant for the casters and Druid.
+- Base health, base mana and crit per agility and per intellect are solved from the sheet (`levels::calibrate`). Preparation runs once with no buffs, debuffs or consumables, reads the player's stats, and solves the numbers that make the engine's sheet the exported one: crit per agility `k = (C_s - C_e + k_used A_e) / A_s`, base health `H_used + (H_s - H_e) - 10 (Sta_s - Sta_e)`, base mana the same with 15 per intellect. Attribute differences from buffs up at export carry through those terms. A share of maximum health or mana (Arcane Mind, a Tauren's 5% health) scales the base as well, so the difference between the sheet and the engine is divided by how much of a point of base reaches the maximum (`levels::Slopes`, measured in the first pass); without it the solve fell short by the share of the base, and a level 10 mage's went negative, leaving the level 60 base. The second pass prepares the real request with the solved numbers.
+
+The sheet describes the character in its own gear, which a Best Gear or Droptimizer set swaps out. The worker sends that gear as `characterSheet.equipment`, and the calibration pass wears it, so a candidate is simmed with the character's own calibration: solved against the swapped gear, the solve would absorb most of a candidate's own crit (Robe of the Archmage's 1% read as 0.47%, `tests/levels_20261108.rs`).
+
+The calibration pass also drops the request's item swap (`itemSwap`, `enableItemSwap`). The sheet was read with nothing swapped, and a swap set built for the simmed gear can be one the engine refuses over the sheet's own weapons: a Droptimizer's two-hander candidate swapped over a sheet read in a one-hander and shield was refused as an off hand swap (a level 27 Retribution Paladin, 9 Nov, `tests/levels_20261108.rs`).
+
+The client carries no per-level crit tables and wago.tools was down on 7 Nov, so the calibration is the source today. It makes the character's total crit, health and mana match its sheet; the marginal crit of a point of agility is then exact only to the extent that the constant part of crit (base and gear) is what the engine has.
+
+## Spells the character has not trained
+
+A ladder the character knows no rank of resolves to its first rank, noted as unlearned (`levels::unlearned_rank`), so class code that registers it still reads a school, a label and effects. A ranked spell above the level or missing from the spellbook is unlearned too, which covers classes that register every rank as its own spell (Arcane Missiles, Wrath). An unlearned spell:
+
+- exports with `SpellFlagUnlearned` and without its APL and MCD flags, so the rotation, the major cooldowns and the coverage gate's reach skip it;
+- never makes its aura permanent (`Sim::make_permanent`), so an armor or aspect it would put up never goes up.
+
+A trait-tree talent is never unlearned (`Ladder::talent`, `ladder::is_talent_row`): a class registers it only when the character has points in it, and most talent rows of client 1.60.1 state spell level 60. Read by level, Pursuit of Justice (26022) was unlearned for a level 27 Paladin, so its permanent aura had no duration, preparation panicked activating it and the gate refused the tank as if the talent changed the target's swings (9 Nov).
+
+The calibration pass collects every unlearned spell, and the real pass starts with that set, so every export of a spell (the item swap's included) flags it alike.
+
+## Ranks a rotation names
+
+The presets name top ranks in casts, aura and dot checks. Before the real pass prepares, each rotation in the request names the rank the character knows instead (`levels::rewrite_rotations`), as `book_ranks::rewrite_request` does for Ahn'Qiraj 20 books: the rank a ladder resolved to in the calibration pass, or, for a spell registered rank by rank, the highest known rank of the same name the calibration pass registered as the same class spell (a cast for a cast, never its tick). Go's `RankAliases` covers only the ranks a spell lists.
+
+Class code that builds a debuff or pet ability from a fixed top rank now builds it from the known one: Curse of the Elements, Curse of Recklessness, Faerie Fire, and the hunter pet's Bite, Claw, Lightning Breath and Scorpid Poison (rank 8's and rank 6's Go literals stay at level 60, lower ranks roll their rows).
+
+The same holds for spells a class registered at one fixed rank, and for the hit, pulse or orb a rank triggers, which is the known rank's own row (9 November, `tests/levels_20261109.rs`):
+
+- Overpower, Pummel and Charge (Warrior), Slice and Dice (Rogue), and the cat's Rake, Rip and Ferocious Bite (`feral::cat_rank`) were registered at their top rank, so a levelling character never pressed them: Rip (rank 6, level 60) was unlearned at every level below 60.
+- Flametongue Weapon's proc, Magma Totem's pulse and Lightning Shield's orb pair with the rank the shaman knows (`spell_data::paired_rank`); the party's Flametongue Totem procs with the totem rank it knows (`buffs::flametongue::flametongue_totem_proc`). Read off rank 6, a level 22 Enhancement Shaman's Flametongue Weapon hit for 2498 instead of 326 and made a third of its damage.
+- A druid below 40 shifts into Bear Form (5487): 180% armor from items and Bear Form (Passive)'s health (1178), where it took Dire Bear Form's 360% and 1240 (`forms::known_bear_form`). From 40 Dire Bear Form's health follows its row (600 and 32 a level).
+- A Rogue's poisons are the ranks its level teaches (Instant Poison from 20, Deadly Poison from 30, Wound Poison from 32); below the first rank its weapons carry none (`poisons::imbue_poison_rank`).
+
+Class tables kept for the process (the mage's, warlock's and shaman's damage rows) hold every rank, not the ranks the first character prepared knew: a level 22 shaman prepared after a level 60 one in the same process found no row for its Earth Shock and its fight panicked (`tests/levels_shared_rows_20261109.rs`).
+
+A class's own raid and party buffs (`add_raid_buffs`, `add_party_buffs`: Arcane Brilliance, the Prayers, Battle Shout, Blood Pact, Trueshot Aura and the rest of core's buff rows) resolve in `Meta::aura` to the highest rank of the same name and class the character knows, or to the single-target spell for a group buff it has not learned (`levels::known_buff_rank`: Arcane Intellect for Arcane Brilliance, Power Word: Fortitude, Divine Spirit, Shadow Protection, Mark of the Wild). One it knows no rank of is noted unlearned and never goes up. Only the class's own rows count: a creature's Faerie Fire (13752, "Rank 2", level 45) outranked the druid's rank 3 from 45, and a level 46 bear's rotation, checking for its own rank, pressed Faerie Fire all fight. A buff whose MP5 is checked against its row reads the same rank (`Meta::known_value`): a level 42 shaman's Mana Tide Totem is rank 2's, where the check read rank 4's and refused the sim.
+
+## A Warlock's demons
+
+Until 9 Nov a demon was the level 60 one at every level: Firebolt rank 7 and Lash of Pain rank 6 (Go literals the engine data has no rows for), and the level 60 Strength, Agility and melee weapon, so a level 10 Succubus did what a level 47 one did. Under Forever's rules a levelling demon now (`classes/warlock/prepare/pets.rs`, docs/mechanics.md):
+
+- casts the rank of Firebolt (ranks 1 to 7, 3110 to 11763) and Lash of Pain (ranks 1 to 6, 7814 to 11780, from level 20) its Warlock's level teaches, each from the client's row (base, points per level to the rank's cap, variance, coefficient, cost; `FIREBOLT_RANKS`, `LASH_OF_PAIN_RANKS`), with the rank's cost as the mana it keeps before casting. A rank the spellbook lists wins, but the addon exports the Warlock's spellbook, not the demon's, so today every rank counts as trained. A Succubus below 20 knows no Lash;
+- swings its level 60 weapon and has its level 60 Strength and Agility times the client's creature auto attack dps at the level over level 60's (`ExpectedStat`, `levels::creature_dps_share`), so its whole own swing follows the creature row;
+- keeps its level 60 mana, Intellect, Spirit and base crit. Public logs show levelling Imps casting Firebolt every 2.44 sec in runs of 13 to 19 (levels 12 to 18); the engine's demon regenerates no mana while casting, so a pool scaled with the level would run dry after 5.
+
+Checked against foreverlogs.gg public reports (5 to 8 Nov, 7 Warlocks with captures, levels 12 to 31; `tests/levels_demon_logs_20261109.rs`, fixtures `fixtures/levels/logs/*-imp`, `*-succubus`):
+
+| Level, demon | Spell, rank | Samples | Engine | Logged mean | Level 60 demon |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 12 (or 13), Imp | Firebolt 2 (7799) | 188 | 7.0 | 8.5 | 44 |
+| 16 to 17, Imp | Firebolt 2 (7799) | 386 | 8.9 | 9.6 | 46 |
+| 18, Imp | Firebolt 3 (7800) | 83 | 12.5 | 12.9 | 45 |
+| 20, Imp | Firebolt 3 (7800) | 95 | 12.7 | 13.5 | 45 |
+| 31, Imp | Firebolt 4 (7801) | 270 | 21.1 | 23.8 | 48 |
+| 25, Succubus | Lash of Pain 1 (7814) | 233 | 17.5 | 17.2 | 52 |
+| 25, Succubus | white swing through level 26 armor | 46 | 32.4 to 41.1 | 32 to 41 | 93 to 118 |
+
+The logs read 3 to 21% over the Imp's Firebolt: the Warlocks' own spells in the same reports read 3% over too, the level 12 capture may be a level 13 Warlock (8.0), and two of the five have 7 or 8 Demonology points, where an Improved Imp the capture cannot show would add 10% a rank. Two more Imps cast a rank behind their level (rank 2 at 18 and 24) and read 4% and 20% over rank 2; the level 24 one wears 81 fire and shadow spell damage the demon does not inherit. The swing check takes the target's armor from the client's level 26 creature row, as the client has no armor for the creature itself.
+
+Not settled:
+
+- Imps of a Demonology Warlock are fed by its Life Tap (31818, 19 times in one report): a level 31 Imp cast 25 Firebolts in 58 sec, which 576 mana cannot pay for. The engine has no Life Tap feed, at any level.
+- A level 25 Succubus crit 3 of about 1,000 swings; the engine gives it its Agility's crit plus its Warlock's spell crit, about 5% there, as at level 60.
+- Four Voidwalkers whose level only their Warlock's ranks bound (about 10, 16 to 17, 30 to 33 and 46 or more; 109 swings on open world and dungeon creatures) swing 25 to 45% under the engine's level 60 Voidwalker scaled to their level, through the client's creature armor, in every band; the Succubi at 24 to 28 read within 5 to 17%. The scaling holds across the levels, so the gap looks like the level 60 Voidwalker's (31 to 46 and 258 attack power, the reference's), which only level 60 logs can settle.
+
+## Gate
+
+`levels::level_refusal` refuses, before preparation and again in the coverage gate:
+
+- a level outside 10 to 59 (other than 60);
+- a class not in `LEVELLED_CLASSES` (all nine since 8 Nov, see below);
+- a levelling character without a sheet.
+
+The target may be from the player's level to 3 above (`levels::target_levels`); at 60 it stays 60 to 63.
+
+## Checking a class
+
+The app's worker writes every reference build at levels 10 to 50, talents trimmed to the level's points (smallest tree first, deepest talent first):
+
+```sh
+cd worker && FOREVER_LEVEL_DUMP_DIR=/tmp/levels go test ./forever -run TestDumpLevelledRequests
+```
+
+Give each request a sheet consistent with its gear (the engine's own level 60 stats for it, over a smaller base), then run each through `forever-engine sim --request <file> --gate`. A class is ready when no request faults or is refused, nothing casts a ranked spell above the level, and DPS rises with level.
+
+Ten real addon 0.4.1 exports from prod (levels 21 to 37, eight classes, 8 Nov) prepare, pass the gate and sim at 27 to 113 DPS with no cast above level. They found the class self-buffs above: a level 21 mage had Arcane Brilliance's +31 Intellect, a level 28 warrior the top Battle Shout. A Druid exported out of form (Travel Form) cannot calibrate crit per agility against its Cat Form sim, whose form talents add crit the sheet lacks; the solve comes out negative and the level 60 value stays.
+
+On 8 Nov all 34 reference builds at levels 10, 20, 30, 40 and 50 (170 requests) prepare, pass the gate and sim, solo, with no cast above the level. `tests/levels_20261108.rs` keeps three of them.
+
+On 9 Nov every reference build and the five healer references at eight levels each from 10 to 59 (312 requests), with and without a spellbook, and a levelling Droptimizer of every reference weapon, off hand and ranged weapon at levels 15, 27, 42 and 58 (1,980 sets), prepare, pass the gate and sim with no ranked spell cast or dealing damage above the level. `tests/levels_20261109.rs` keeps a build of every class, tanks and healers among them, and runs each at levels 10 to 58 the same way. Besides casts, check the damage of procs and pets: a proc row never shows a cast. The worker side of a levelling sim (solo, a caster filler at the end of the rotation, a dungeon boss two levels up) is the app's `worker/forever/levels.go`.
+
+## Open
+
+- Spell coefficients below level 20: checked against public logs on 9 Nov (`docs/levels-logs-2026-11-09.md`). The client rows carry the low rank coefficients and the game takes them with no further penalty, which is what the engine does (`tests/levels_logs_20261109.rs`).
+- Dungeon boss armor: the worker scales the level 63 boss's 3731 armor by level. The client does not carry creature armor.
+- Spirit regen, weapon skill caps and pet stats below 60 follow the existing level formulas. A Hunter's pet still uses the level 60 creature row; a Warlock's demon follows the level (below).
+- A cat druid below 20, who has not learned Cat Form, sims in it all the same (with autos only until Claw at 20).
+- Other class buffs and debuffs built from core's fixed rows (Shaman totems' triggered buffs resolve by level already; Sunder and Expose Armor, Hunter's Mark and the external raid rows have not been checked below 60). The worker sims a levelling character solo, so the external rows do not reach it.
+- No real levelling export has been simmed yet. The first ones (addon 0.4.0) check the sheet readers (`UnitStat` base without gear, `C_SpellBook` item types) and the calibration.

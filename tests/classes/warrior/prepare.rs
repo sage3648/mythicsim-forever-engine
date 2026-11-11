@@ -200,8 +200,8 @@ fn frost_oil_registers_a_proc_for_its_hand() {
     );
 }
 
-/// Patches 182 to 185 (wowsims/forever's in-game threat captures): Revenge is 2.25 times its
-/// damage with no flat bonus, Heroic Strike adds 2.54 and Cleave 1.53 a spell level, Sunder Armor
+/// Patches 182 to 185 (in-game threat captures): Revenge is 2.25 times its
+/// damage with no flat bonus, Heroic Strike and Cleave add flat threat a spell level, Sunder Armor
 /// adds 0.05 of the attack power to the client's 206 at each cast, a Cleave on several targets
 /// splits its flat threat, and rage gained counts the threat multiplier.
 #[test]
@@ -228,9 +228,11 @@ fn threat_follows_the_in_game_captures() {
     };
     near(&spell("revenge")["threat_multiplier"], 2.25);
     near(&spell("revenge")["flat_threat_bonus"], 0.0);
-    // Heroic Strike VIII (spell level 56): rank IX is an Ahn'Qiraj 20 book (book_ranks).
-    near(&spell("heroic_strike")["flat_threat_bonus"], 2.54 * 56.0);
-    near(&spell("cleave")["flat_threat_bonus"], 1.53 * 60.0);
+    // Heroic Strike VIII (spell level 56): rank IX is an Ahn'Qiraj 20 book (book_ranks). Forever's
+    // rules round the flat threat to whole numbers, 2.5 and 1.5 a spell level at these ranks
+    // (tests/classes/warrior/flat_threat.rs).
+    near(&spell("heroic_strike")["flat_threat_bonus"], 140.0);
+    near(&spell("cleave")["flat_threat_bonus"], 90.0);
     near(&spell("sunder_armor")["flat_threat_bonus"], 206.0);
 
     let effect = |kind: &str| {

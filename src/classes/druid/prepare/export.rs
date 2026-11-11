@@ -8,8 +8,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::exclusive_refresh;
-use crate::prepare::buffs::generated::{DEMORALIZING_ROAR, FAERIE_FIRE};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::buffs::generated::DEMORALIZING_ROAR;
 use crate::prepare::common_effects::exclusive_category_effect;
 use crate::prepare::dbcenums::{
     A_ADD_PCT_MODIFIER, A_MOD_CASTING_SPEED_NOT_STACK, A_MOD_DECREASE_SPEED, A_NONE,
@@ -18,6 +17,7 @@ use crate::prepare::dbcenums::{
 };
 use crate::prepare::env::Environment;
 use crate::prepare::export::action_id;
+use crate::prepare::levels::character_level;
 use crate::prepare::rage::rage_bar_effect;
 use crate::prepare::resolve_proc::{chance, proc_trigger};
 use crate::prepare::sim::{Sim, SpellId, UnitId, SECOND};
@@ -128,7 +128,7 @@ fn proc_trigger_spells(sim: &Sim, unit: UnitId, trigger: &ProcTrigger) -> Vec<us
 fn periodic_rank(row: &Row) -> Value {
     json!({
         "spell_id": row.id,
-        "tick_base": row.periodic_effect().average(CHARACTER_LEVEL),
+        "tick_base": row.periodic_effect().average(character_level()),
         "tick_can_crit": row.periodic_can_crit() && row.defense_type_core() == DefenseType::Magic,
     })
 }
@@ -188,7 +188,7 @@ impl Druid {
         if effect.is_nil() {
             return None;
         }
-        Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+        Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
     }
 
     /// Go `druidEffects`.
@@ -271,7 +271,7 @@ impl Druid {
                 "kind": "hurricane",
                 "spell_id": Ladder::ranked(&HURRICANE_RANKS).highest().id,
                 "tick_spell_id": tick.id,
-                "tick_base": tick.damage_effect().average(CHARACTER_LEVEL),
+                "tick_base": tick.damage_effect().average(character_level()),
             }));
         }
         // innervate.go and buffs/drivers.go AttachInnervateRegen: Go literals.
@@ -292,7 +292,10 @@ impl Druid {
         let omen = Ladder::ranked(&[16864]).highest();
         let moonkin = Ladder::ranked(&[24858]).highest();
         let trigger = proc_trigger(sim, Some(unit), omen, &[chance(1.0)]);
-        effects.push(json!({
+        // Maul rolls it at the full rate, as every other special does: on client 1.60.1.70862
+        // bear logs show 46.5 procs over 431 rolls (10.8%), the two a minute the 2.5 s paw gives.
+        // An earlier sample of 14 in 342 had read as half the chance.
+        let omen_effect = json!({
             "kind": "omen_of_clarity", "trigger_aura": trigger.name, "aura": "Clearcasting",
             "callbacks": callback_names(trigger.callback), "outcome": outcome_names(trigger.outcome),
             "require_damage_dealt": trigger.require_damage_dealt,
@@ -308,7 +311,8 @@ impl Druid {
             // 16 October 2026 beta notes: Faerie Fire no longer triggers it in Cat or Bear Form.
             "form_excluded_spells":
                 spells_matching(sim, unit, masks::FAERIE_FIRE | masks::FAERIE_FIRE_FERAL),
-        }));
+        });
+        effects.push(omen_effect);
         if self.tal.natures_grace {
             // talents_balance.go applyNaturesGrace
             let triggered = Ladder::ranked(&[16886]).highest();
@@ -443,7 +447,7 @@ impl Druid {
                 builders.push(json!({
                     "kind": kind, "spell": spell_position(sim, unit, spell),
                     "flat_damage":
-                        Ladder::ranked(ranks).highest().damage_effect().average(CHARACTER_LEVEL),
+                        Ladder::ranked(ranks).highest().damage_effect().average(character_level()),
                 }));
             }
             effects.push(json!({
@@ -454,7 +458,6 @@ impl Druid {
             // rip.go: the tick base and points per combo point; the attack power share is a Go
             // literal.
             let rank = super::feral::cat_rank(sim.rules, &RIP_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             // spell_result.go TargetDamageMultiplier: a bleed tick also takes the target's
             // periodic physical multiplier.
             if sim
@@ -468,10 +471,11 @@ impl Druid {
             let tick = rank.periodic_effect();
             effects.push(json!({
                 "kind": "rip", "spell": spell_position(sim, unit, rip),
-                "tick_base": tick.average(CHARACTER_LEVEL),
+                "tick_base": tick.average(character_level()),
                 "tick_per_combo_point": f64::from(tick.points_per_resource),
-                // The notes' 25% on the share under Forever's rules (no row states it).
-                "attack_power_share_per_combo_point": 0.01 * share_scale,
+                // Measured in game under Forever's rules (no row states it), every rank on rank 1's.
+                "attack_power_share_per_combo_point":
+                    super::feral::rip_attack_power_share_per_combo_point(sim.rules),
                 "attack_power_share_max_points": 4.0,
                 "tick_can_crit": rank.periodic_can_crit(),
                 "tick_magic": rank.defense_type_core() == DefenseType::Magic,
@@ -482,14 +486,13 @@ impl Druid {
         if let Some(rake) = self.rake {
             // rake.go: a flat hit and a flat bleed tick, neither scaling with attack power.
             let rank = super::feral::cat_rank(sim.rules, &RAKE_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             effects.push(json!({
                 "kind": "rake", "spell": spell_position(sim, unit, rake),
-                "flat_damage": rank.damage_effect().average(CHARACTER_LEVEL),
-                "tick_base": rank.periodic_effect().average(CHARACTER_LEVEL),
-                // rake.go: 5% of attack power on the hit and on every tick, a Go literal fitted
-                // to beta logs (community #769).
-                "attack_power_share": 0.05 * share_scale,
+                "flat_damage": rank.damage_effect().average(character_level()),
+                "tick_base": rank.periodic_effect().average(character_level()),
+                // rake.go: a share of attack power on the hit and on every tick, a Go literal of
+                // 5% fitted to beta logs (community #769); measured in game under Forever's rules.
+                "attack_power_share": super::feral::rake_attack_power_share(sim.rules),
                 "tick_can_crit": rank.periodic_can_crit(),
                 "tick_magic": rank.defense_type_core() == DefenseType::Magic,
                 "short_name": "Rake",
@@ -499,12 +502,12 @@ impl Druid {
             // ferocious_bite.go: client values (the live row under Forever's rules), and 3% attack
             // power a point, a Go literal that keeps the notes' 25% under Forever's rules.
             let rank = super::feral::cat_rank(sim.rules, &BITE_RANKS);
-            let share_scale = super::feral::attack_power_share_scale(sim.rules);
             let mut effect = json!({
                 "kind": "ferocious_bite", "spell": spell_position(sim, unit, bite),
                 "damage_per_energy": rank.effect_n(2).percent(),
                 "damage_per_combo_point": f64::from(rank.damage_effect().points_per_resource),
-                "attack_power_per_combo_point": 0.03 * share_scale,
+                "attack_power_per_combo_point":
+                    super::feral::ferocious_bite_attack_power_share(sim.rules),
             });
             // Predatory Discipline (1328613, hotfix push 113531): "Ferocious Bite no longer
             // converts extra Energy into damage, but still deals extra damage based on excess
@@ -531,17 +534,25 @@ impl Druid {
             // shifting_power.go
             effects.push(json!({
                 "kind": "shifting_power", "spell": spell_position(sim, unit, shifting_power),
-                "energy": Ladder::ranked(&[1322605]).highest().energize_effect().average(CHARACTER_LEVEL)
+                "energy": Ladder::ranked(&[1322605]).highest().energize_effect().average(character_level())
                     + sim_wolfshead_energy(sim, self),
             }));
         }
-        if let (Some(faerie_fire), false) = (self.faerie_fire, self.faerie_fire_auras.is_empty()) {
+        let faerie_fire_rank = self
+            .faerie_fire
+            .map_or(0, |spell| sim.spell(spell).action_id.spell_id);
+        if let (Some(faerie_fire), false, false) = (
+            self.faerie_fire,
+            self.faerie_fire_auras.is_empty(),
+            crate::prepare::levels::is_unlearned(faerie_fire_rank),
+        ) {
             // faerie_fire.go and buffs FaerieFireAura
             let aura = self.faerie_fire_auras[sim.unit(target).unit_index as usize]
                 .expect("Faerie Fire has an aura on the target");
             effects.push(json!({
                 "kind": "faerie_fire", "spell": spell_position(sim, unit, faerie_fire),
-                "aura": sim.aura(aura).label, "armor_reduction": FAERIE_FIRE.value(0),
+                "aura": sim.aura(aura).label,
+                "armor_reduction": super::baseline::known_faerie_fire(faerie_fire_rank).value(0),
                 "refresh": exclusive_refresh(sim, aura),
             }));
         }
@@ -629,7 +640,7 @@ impl Druid {
             let main_hand = weapon_from_main_hand(sim, unit);
             let paw = bear_weapon(sim, unit);
             effects.push(json!({
-                "kind": "bear_form", "spell_id": 9634, "aura": sim.aura(bear_aura).label,
+                "kind": "bear_form", "spell_id": super::forms::known_bear_form().id, "aura": sim.aura(bear_aura).label,
                 "spell": spell_position(sim, unit, bear_form),
                 "health_bonus": self.bear_form_health_bonus(env, notes),
                 "initial_threat_multiplier":
@@ -694,7 +705,7 @@ impl Druid {
                         "queue_spell": spell_position(sim, unit, maul),
                         "queue_aura": sim.aura(queue_aura).label,
                         "realism_ns": nanos(super::bear::MAUL_REALISM),
-                        "flat_damage": rank.damage_effect().average(CHARACTER_LEVEL),
+                        "flat_damage": rank.damage_effect().average(character_level()),
                     })),
                     _ => notes.push("Maul is incomplete".to_string()),
                 }
@@ -703,21 +714,25 @@ impl Druid {
                 // lacerate.go: a flat tick a stack and a weapon share a stack.
                 let ladder = Ladder::ranked(&LACERATE_RANKS);
                 let rank = ladder.highest();
-                effects.push(json!({
+                let mut effect = json!({
                     "kind": "lacerate", "spell": spell_position(sim, unit, lacerate),
-                    "tick_base": rank.periodic_effect().average(CHARACTER_LEVEL),
+                    "tick_base": rank.periodic_effect().average(character_level()),
                     "weapon_share_per_stack": ladder.effect_at(2).fraction_at(rank.rank_number()),
                     "max_stacks": super::bear::LACERATE_MAX_STACKS,
                     "tick_can_crit": rank.periodic_can_crit(),
                     "tick_magic": rank.defense_type_core() == DefenseType::Magic,
-                }));
+                });
+                if let Some(hit) = self.lacerate_hit {
+                    effect["hit_spell"] = json!(spell_position(sim, unit, hit));
+                }
+                effects.push(effect);
             }
             if let Some(primal_bite) = self.primal_bite {
                 // primal_bite.go: Berserk lifts its cooldown, a Go literal.
                 effects.push(json!({
                     "kind": "primal_bite", "spell": spell_position(sim, unit, primal_bite),
                     "flat_damage": super::bear::primal_bite_rank(sim.rules)
-                        .damage_effect().average(CHARACTER_LEVEL),
+                        .damage_effect().average(character_level()),
                 }));
             }
             if let Some(swipe) = self.swipe {
@@ -725,10 +740,11 @@ impl Druid {
                 effects.push(json!({
                     "kind": "swipe", "spell": spell_position(sim, unit, swipe),
                     "flat_damage": Ladder::ranked(&SWIPE_RANKS).highest()
-                        .damage_effect().average(CHARACTER_LEVEL),
-                    // swipeAttackPowerCoeff, a Go literal the client rows do not carry, fitted
-                    // to beta logs (community #787).
-                    "attack_power_coefficient": 0.05,
+                        .damage_effect().average(character_level()),
+                    // swipeAttackPowerCoeff, a Go literal of 5% the client rows do not carry,
+                    // fitted to beta logs (community #787); measured in game under Forever's
+                    // rules (`swipe_attack_power_share`).
+                    "attack_power_coefficient": super::bear::swipe_attack_power_share(sim.rules),
                 }));
             }
             if self.barkskin.is_some() {
@@ -793,7 +809,7 @@ impl Druid {
         // multiplier such as Tauren Endurance also scales the bonus.
         let in_form = sim.unit(unit).stats[crate::prepare::stats::Stat::Health];
         let mut without = sim.unit(unit).stats_without_deps;
-        without[crate::prepare::stats::Stat::Health] -= 1240.0;
+        without[crate::prepare::stats::Stat::Health] -= super::forms::known_bear_form().health;
         let bonus = in_form
             - sim
                 .unit(unit)

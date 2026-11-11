@@ -447,7 +447,7 @@ def report(simulated, skipped):
         "Under Forever's rules these items' chance on hit rolls 1.8% per second of the hitting weapon's",
         "speed, 1.08 procs a minute: the rate Classic servers give a `ProcChance` of 101, which the",
         "client states for every one of them with no procs per minute. Blizzard states none for",
-        "Forever; it is MythicSim's assumption (README, Rust-only mechanics). The reference leaves them",
+        "Forever; it is MythicSim's assumption (docs/mechanics.md). The reference leaves them",
         "all unregistered, so before this a sim wearing one ran as if it had no effect.",
         "",
         f"{len(simulated)} items simulated, {len(skipped)} left out.",

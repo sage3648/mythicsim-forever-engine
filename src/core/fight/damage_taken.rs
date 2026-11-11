@@ -193,15 +193,17 @@ impl<A: Agent> Fight<A> {
         // which rage from damage taken reads.
         self.player_hit_resistance = (after_resistances, resistance_multiplier);
         let state = &self.spells[spell];
+        let mut taken_multiplier = 1.0;
         if !state.flags.ignore_target_modifiers {
             if state.school & 1 != 0 {
                 result.damage += defender.bonus_physical_damage_taken;
             } else if state.school_index > 1 {
                 result.damage += defender.bonus_spell_damage_taken;
             }
-            result.damage *= self.player.damage_taken_multiplier
+            taken_multiplier = self.player.damage_taken_multiplier
                 * self.school_value(spell, &self.player.school_damage_taken_multiplier)
                 * defender.table.damage_taken_multiplier;
+            result.damage *= taken_multiplier;
         }
         let after_target = result.damage;
         let partial = result.outcome & OUTCOME_PARTIAL;
@@ -210,6 +212,17 @@ impl<A: Agent> Fight<A> {
             result.outcome |= partial;
         }
         let after_outcome = result.damage;
+        // What rage from damage taken reads under Forever's rules: the hit before resistances,
+        // with the damage taken multipliers and the outcome's.
+        let outcome_multiplier = if after_target > 0.0 {
+            after_outcome / after_target
+        } else {
+            1.0
+        };
+        self.player_hit_pre_armor = (
+            after_attacker * taken_multiplier * outcome_multiplier,
+            false,
+        );
         // Go ApplyPostOutcomeDamageModifiers: the player's dynamic damage taken modifiers, as
         // an absorb shield, then the floor.
         // Go registers the item shields before the class's modifiers.

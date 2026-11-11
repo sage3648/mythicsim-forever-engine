@@ -199,6 +199,11 @@ fn a_demons_melee_hit_is_eight_seventeenths_of_its_masters_spell_hit() {
             .join("fixtures/mage/prepared-v2/production-demonology-warlock.request.json"),
     )
     .unwrap();
+    // Both rule sets wear the same stats: items with a live row (Ban'thok Sash, 1% hit live,
+    // none in the reference row) come off.
+    let mut request: Value = serde_json::from_slice(&request).unwrap();
+    crate::live_items::take_off_live_items(&mut request["raid"]["parties"][0]["players"][0]);
+    let request = serde_json::to_vec(&request).unwrap();
     let forever = forever_engine::prepare_json(&request, "x").unwrap();
     let go = forever_engine::prepare_json_with(&request, "x", forever_engine::Rules::GoReference)
         .unwrap();

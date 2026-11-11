@@ -1,5 +1,5 @@
-//! The healer spells MythicSim's healer sims cast past each class's heals (README, Rust-only
-//! mechanics): Penance's heal for a Discipline priest, Tranquility and Nature's Swiftness for a
+//! The healer spells MythicSim's healer sims cast past each class's heals (docs/mechanics.md):
+//! Penance's heal for a Discipline priest, Tranquility and Nature's Swiftness for a
 //! Restoration druid, and Nature's Swiftness and Water Shield for a Restoration shaman. Each test
 //! puts one of `fixtures/healers`' requests on a rotation that casts the spell, then checks the
 //! export, that the request passes the gate, and what the spell did in the fights.

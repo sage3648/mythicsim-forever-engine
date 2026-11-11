@@ -7,10 +7,10 @@ use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::generated;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, NEVER_EXPIRES, SECOND};
+use crate::prepare::levels::character_level;
+use crate::prepare::sim::{AuraConfig, Cooldown, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{
     school, Cast, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
 };
@@ -21,10 +21,115 @@ use super::masks;
 use super::spell_data::spell_data;
 use super::Warrior;
 
+/// The reference adds a flat 135 to the threat of every rank of Hamstring. Under Forever's rules
+/// its threat is 1.25 times its damage and nothing flat: its crits for 8 make 10 threat, where a
+/// flat +1 would make 9 (warrior threat measurements at levels 20 to 24, 7 November 2026).
+const HAMSTRING_REFERENCE_FLAT_THREAT: f64 = 135.0;
+/// Shield Bash's threat under Forever's rules is 1.5 times its damage, times the stance: its
+/// crits for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7 threat, where 1.5 predicts
+/// 12, 12, 13.5, 15 and 16.5 and a flat +2 would predict 10, 10, 11, 12 and 13 (same
+/// measurements). The reference gives it the plain damage.
+const SHIELD_BASH_THREAT_MULTIPLIER: f64 = 1.5;
 /// Go `heroicStrikeThreatPerLevel`: patch 184, upstream's in-game captures.
 const HEROIC_STRIKE_THREAT_PER_LEVEL: f64 = 2.54;
 /// Go `cleaveThreatPerLevel`.
 const CLEAVE_THREAT_PER_LEVEL: f64 = 1.53;
+/// Cleave rank 1 (845) and the threat it adds beyond its damage under Forever's rules: 30 on one
+/// target and about 15 on each of two, times the stance (warrior threat measurements at levels
+/// 20 to 24, 7 November 2026). The per level figure above would give 30.6 at the rank's level 20.
+const CLEAVE_RANK_1_ID: i32 = 845;
+const CLEAVE_RANK_1_THREAT: f64 = 30.0;
+/// Cleave rank 2 (7369, spell level 30) adds 46 under Forever's rules; ranks 3 to 5 carry the
+/// 1.5 a spell level ranks 1 and 2 measure, as whole numbers (60, 75 and 90).
+const CLEAVE_RANK_2_ID: i32 = 7369;
+const CLEAVE_RANK_2_THREAT: f64 = 46.0;
+const FOREVER_CLEAVE_THREAT_PER_LEVEL: f64 = 1.5;
+/// Heroic Strike ranks 1 to 4 (78, 284, 285, 1608) under Forever's rules: whole numbers, Rank 4
+/// measured at 60.08 over 104 clean threat readings on client 1.60.1.70862 (8 November 2026),
+/// Rank 3 at 39.99. Ranks 5 and up carry Rank 4's 2.5 a spell level (80 to 150).
+const HEROIC_STRIKE_LOW_RANK_THREAT: [(i32, f64); 4] =
+    [(78, 17.0), (284, 28.0), (285, 40.0), (1608, 60.0)];
+const FOREVER_HEROIC_STRIKE_THREAT_PER_LEVEL: f64 = 2.5;
+/// Slam under Forever's rules: 1.5 a spell level on every rank, rounded to a whole number. Rank 1
+/// at spell level 20 adds 30 (client 1.60.1.70862, 8 November 2026), rank 2 45. The reference
+/// adds a flat 140 to every rank.
+const FOREVER_SLAM_THREAT_PER_LEVEL: f64 = 1.5;
+const SLAM_REFERENCE_FLAT_THREAT: f64 = 140.0;
+
+/// A rank's flat threat at so much a spell level, as the whole number Forever adds.
+fn whole_threat_per_level(per_level: f64, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    (per_level * f64::from(rank.spell_level)).round()
+}
+
+/// Heroic Strike's flat threat for a rank: the reference's 2.54 a spell level, or Forever's
+/// whole numbers.
+fn heroic_strike_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return HEROIC_STRIKE_THREAT_PER_LEVEL * f64::from(rank.spell_level);
+    }
+    HEROIC_STRIKE_LOW_RANK_THREAT
+        .iter()
+        .find(|(id, _)| *id == rank.id)
+        .map_or_else(
+            || whole_threat_per_level(FOREVER_HEROIC_STRIKE_THREAT_PER_LEVEL, rank),
+            |(_, threat)| *threat,
+        )
+}
+
+/// Cleave's flat threat for a rank, split between the targets it lands on at run time.
+fn cleave_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level);
+    }
+    match rank.id {
+        CLEAVE_RANK_1_ID => CLEAVE_RANK_1_THREAT,
+        CLEAVE_RANK_2_ID => CLEAVE_RANK_2_THREAT,
+        _ => whole_threat_per_level(FOREVER_CLEAVE_THREAT_PER_LEVEL, rank),
+    }
+}
+
+/// Slam's flat threat for a rank.
+fn slam_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return SLAM_REFERENCE_FLAT_THREAT;
+    }
+    whole_threat_per_level(FOREVER_SLAM_THREAT_PER_LEVEL, rank)
+}
+/// Shield Slam's flat threat. The Go reference adds 508 on every rank. Under Forever's rules
+/// rank 1 (23922, spell level 40) adds 178: a protection warrior's combat and threat logs at
+/// levels 40 to 42 (client 1.60.1.70862, 8 November 2026) held 177.7 over damage from 223 to
+/// 400, once on a crit too. Ranks 2 to 4 are not measured: they carry rank 1's 4.45 a spell
+/// level as whole numbers, 214, 240 and 267.
+const SHIELD_SLAM_REFERENCE_FLAT_THREAT: f64 = 508.0;
+const SHIELD_SLAM_RANK_1_ID: i32 = 23922;
+const SHIELD_SLAM_RANK_1_THREAT: f64 = 178.0;
+const FOREVER_SHIELD_SLAM_THREAT_PER_LEVEL: f64 = 4.45;
+
+pub(super) fn shield_slam_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return SHIELD_SLAM_REFERENCE_FLAT_THREAT;
+    }
+    match rank.id {
+        SHIELD_SLAM_RANK_1_ID => SHIELD_SLAM_RANK_1_THREAT,
+        _ => whole_threat_per_level(FOREVER_SHIELD_SLAM_THREAT_PER_LEVEL, rank),
+    }
+}
+
+/// The hand Shield Slam and Shield Bash strike with. Their rows require the shield and name no
+/// hand, and the Go reference gives them the off hand's special mask. Under Forever's rules
+/// they are main hand specials: the main hand weapon's chance on hit and enchant hear them and
+/// the main hand weapon skill sets their miss and parry. In a protection warrior's combat log
+/// of client 1.60.1.70862 the main hand weapon's proc fired on 54 of 80 isolated Shield Slams
+/// and 7 of 8 Shield Bashes, against none on 74 Shield Block and 9 Battle Shout casts. Windfury
+/// Totem still never rolls on them: their rows carry neither the main hand nor the next swing
+/// bit.
+pub(super) fn shield_strike_proc_mask(rules: Rules) -> ProcMask {
+    match rules {
+        Rules::Forever => ProcMask::MELEE_MH_SPECIAL,
+        Rules::GoReference => ProcMask::MELEE_OH_SPECIAL,
+    }
+}
+
 /// Go `revengeThreatMultiplier`: patch 183.
 const REVENGE_THREAT_MULTIPLIER: f64 = 2.25;
 /// Go `sunderThreatPerAttackPower`: patch 185, a share of the spell's melee attack power that
@@ -38,7 +143,7 @@ impl Warrior {
         let action = spell_action(rank.id);
         let crit = rank
             .effect(dbcenums::A_MOD_CRIT_PCT, 0)
-            .average(CHARACTER_LEVEL);
+            .average(character_level());
         let aura = sim.register_aura(
             unit,
             AuraConfig {
@@ -224,7 +329,7 @@ impl Warrior {
 
     /// Go `registerCharge`.
     pub(super) fn register_charge(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().charge.by_id(11578);
+        let rank = spell_data().charge.highest();
         let action = spell_action(rank.id);
         let charge_cd = cooldown_of(rank);
         register_dash_aura(sim, unit, "Charge", &action, charge_cd);
@@ -279,7 +384,7 @@ impl Warrior {
 
     /// Go `registerPummel`.
     pub(super) fn register_pummel(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().pummel.by_id(6554);
+        let rank = spell_data().pummel.highest();
         let cd = new_cooldown(sim, unit, cooldown_of(rank));
         sim.register_spell(
             unit,
@@ -318,7 +423,11 @@ impl Warrior {
                 cast: cast_config(rank.gcd(), true, Cooldown::default()),
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.25,
-                flat_threat_bonus: 135.0,
+                flat_threat_bonus: if sim.rules == Rules::Forever {
+                    0.0
+                } else {
+                    HAMSTRING_REFERENCE_FLAT_THREAT
+                },
                 has_extra_cast_condition: true,
                 ..SpellConfig::default()
             },
@@ -445,7 +554,7 @@ impl Warrior {
                 threat_multiplier: 1.0,
                 flat_threat_bonus: rank
                     .find_effect(dbcenums::E_THREAT, 0, 0)
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 related_aura_arrays: related,
                 ..SpellConfig::default()
             },
@@ -476,8 +585,8 @@ impl Warrior {
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
                 // Not in the client table (no E_THREAT effect). Patch 184: 2.54 a spell level
-                // (152.4 at Rank 9).
-                flat_threat_bonus: HEROIC_STRIKE_THREAT_PER_LEVEL * f64::from(rank.spell_level),
+                // (152.4 at Rank 9); whole numbers under Forever's rules.
+                flat_threat_bonus: heroic_strike_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );
@@ -508,8 +617,9 @@ impl Warrior {
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
                 // Not in the client table (no E_THREAT effect). Patch 184: 1.53 a spell level
-                // (91.8 at Rank 5), split between the targets the cleave lands on at run time.
-                flat_threat_bonus: CLEAVE_THREAT_PER_LEVEL * f64::from(rank.spell_level),
+                // (91.8 at Rank 5), split between the targets the cleave lands on at run time;
+                // whole numbers under Forever's rules.
+                flat_threat_bonus: cleave_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );
@@ -561,7 +671,7 @@ impl Warrior {
 
     /// Go `registerOverpower`.
     pub(super) fn register_overpower(&self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().overpower.by_id(11585);
+        let rank = spell_data().overpower.highest();
         let window = spell_data().offensive_state_triggered.highest();
         let cd = new_cooldown(sim, unit, cooldown_of(rank));
 
@@ -631,7 +741,7 @@ impl Warrior {
                 },
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                flat_threat_bonus: 140.0,
+                flat_threat_bonus: slam_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );
@@ -841,13 +951,17 @@ impl Warrior {
                 class_spell_mask: masks::SHIELD_BASH,
                 spell_school: school::PHYSICAL,
                 defense_type: DefenseType::Melee,
-                proc_mask: ProcMask::MELEE_OH_SPECIAL,
+                proc_mask: shield_strike_proc_mask(sim.rules),
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 max_range: MELEE_RANGE,
                 cost: rage_cost_with_refund(rank),
                 cast: cast_config(rank.gcd(), true, cd),
                 damage_multiplier: 1.0,
-                threat_multiplier: 1.0,
+                threat_multiplier: if sim.rules == Rules::Forever {
+                    SHIELD_BASH_THREAT_MULTIPLIER
+                } else {
+                    1.0
+                },
                 flat_threat_bonus: 0.0,
                 has_extra_cast_condition: true,
                 ..SpellConfig::default()

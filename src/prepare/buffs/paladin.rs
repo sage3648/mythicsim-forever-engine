@@ -328,8 +328,11 @@ pub(crate) fn judgement_of_wisdom_rank_aura(
     attach_judgement_of_wisdom_mana(sim, aura, rank)
 }
 
-/// Go `AttachJudgementOfWisdomMana`: whoever lands an attack or spell on the judged target has a
-/// chance to regain the rank's mana. Melee claim it returns mana on a miss as well.
+/// Go `AttachJudgementOfWisdomMana`: whoever strikes the judged target with a direct attack or
+/// spell has a chance to regain the rank's mana. The reference lets a melee or ranged miss pay as
+/// well. Under Forever's rules only a landed hit rolls (the fight's `landed_only`): a level 41 log
+/// paid on 164 of 336 landed melee swings, 59 of 116 direct spells and 44 of 102 ranged shots,
+/// against 1 of 52 misses, 3 of 401 dot ticks and none of 33 damage shield hits.
 pub(crate) fn attach_judgement_of_wisdom_mana(
     sim: &mut Sim,
     aura: AuraId,

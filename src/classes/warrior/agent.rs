@@ -217,6 +217,10 @@ pub(crate) struct WarriorAgent {
     /// With an item swap, Weaponmaster's sword mask for each set, Main then Swap1: the hands
     /// holding a sword, which its proc's condition reads.
     sword_masks: Option<[Vec<bool>; 2]>,
+    /// Under Forever's rules, the spells that roll Weaponmaster once a cast, and the time each
+    /// last took that roll.
+    sword_once_a_cast: Vec<bool>,
+    sword_rolled_at: Vec<Option<i64>>,
     /// With an item swap of the off hand, whether each set holds a shield, Main then Swap1:
     /// Shield Slam, Shield Block, Shield Wall and the rage on a block read it.
     shields: Option<[bool; 2]>,
@@ -235,7 +239,7 @@ pub(crate) struct WarriorAgent {
     bloodthrill: Option<Bloodthrill>,
     weaponmaster: Option<WeaponmasterSword>,
     revenge: Option<Revenge>,
-    shield_slam: Option<DamageRoll>,
+    shield_slam: Option<(DamageRoll, bool)>,
     can_block: bool,
     thunder_clap: Option<ThunderClap>,
     /// Demoralizing Shout's debuff on the first target.
@@ -625,9 +629,12 @@ impl WarriorAgent {
                     })
                 }
                 Effect::ShieldSlam {
-                    damage, can_block, ..
+                    damage,
+                    can_block,
+                    twice_block_value,
+                    ..
                 } => {
-                    fight.agent.shield_slam = Some(*damage);
+                    fight.agent.shield_slam = Some((*damage, *twice_block_value));
                     fight.agent.can_block = *can_block;
                 }
                 Effect::ImprovedHamstring {
@@ -655,6 +662,7 @@ impl WarriorAgent {
                     max_targets,
                     aura,
                     bid,
+                    no_sweeping_strikes,
                     ..
                 } => {
                     let index = fight.trackers[Side::Target.index()]
@@ -669,6 +677,7 @@ impl WarriorAgent {
                         base_damage: *base_damage,
                         attack_power_share: *attack_power_share,
                         max_targets: *max_targets as usize,
+                        sweeping_strikes: !*no_sweeping_strikes,
                     });
                     fight.register_enemy_slow(aura, thunder_clap::slow(*bid));
                 }
@@ -776,6 +785,7 @@ impl WarriorAgent {
                 } => {
                     for trigger in triggers {
                         let metrics = rage_metrics(&mut fight, trigger.spell_id);
+                        fight.resources[metrics].unscaled_threat = trigger.unscaled_threat;
                         fight.agent.avoid_rage.push(AvoidRage {
                             aura: fight.player_aura(&trigger.aura)?,
                             outcomes: rage_on_avoid::outcome_bits(&trigger.outcomes),
@@ -840,6 +850,8 @@ impl WarriorAgent {
                     extra_attack_tag,
                     sword_hands,
                     excluded_class_spells,
+                    skips_windfury_totem_swing,
+                    once_a_cast_class_spells,
                 } => {
                     let extra_attack = fight
                         .spells
@@ -889,10 +901,23 @@ impl WarriorAgent {
                         fight.agent.sword_masks =
                             Some([fight.agent.sword_mask.clone(), mask_of(&worn)]);
                     }
+                    fight.agent.sword_once_a_cast = prepared
+                        .player
+                        .spells
+                        .iter()
+                        .map(|spell| {
+                            spell
+                                .class_spell
+                                .as_ref()
+                                .is_some_and(|class| once_a_cast_class_spells.contains(class))
+                        })
+                        .collect();
+                    fight.agent.sword_rolled_at = vec![None; prepared.player.spells.len()];
                     fight.agent.weaponmaster = Some(WeaponmasterSword {
                         trigger: fight.player_aura(trigger_aura)?,
                         proc_chance: *proc_chance,
                         extra_attack,
+                        skips_windfury_totem_swing: *skips_windfury_totem_swing,
                     });
                 }
                 Effect::Bloodthirst {
@@ -925,11 +950,13 @@ impl WarriorAgent {
                 Effect::Execute {
                     base_damage,
                     damage_per_rage,
+                    extra_rage_on_landed,
                     ..
                 } => {
                     fight.agent.execute = Some(Execute {
                         base_damage: *base_damage,
                         damage_per_rage: *damage_per_rage,
+                        extra_rage_on_landed: *extra_rage_on_landed,
                     })
                 }
                 Effect::Hamstring { base_damage, .. } => fight.agent.hamstring = *base_damage,
@@ -980,9 +1007,11 @@ impl WarriorAgent {
                     period_ns,
                     health_cost,
                     rage_threshold,
+                    instant_threat_unscaled,
                 } => {
                     let metrics = rage_metrics(&mut fight, *spell_id);
                     fight.agent.bloodrage = Some(Bloodrage {
+                        instant_threat_unscaled: *instant_threat_unscaled,
                         instant_rage: *instant_rage,
                         rage_per_tick: *rage_per_tick,
                         ticks: *ticks,
@@ -1478,8 +1507,9 @@ impl Agent for WarriorAgent {
                 revenge::apply(fight, spell, target, params);
             }
             WarriorSpell::ShieldSlam => {
-                let damage = fight.agent.shield_slam.expect("Shield Slam is bound");
-                shield_slam::apply(fight, spell, target, damage);
+                let (damage, twice_block_value) =
+                    fight.agent.shield_slam.expect("Shield Slam is bound");
+                shield_slam::apply(fight, spell, target, damage, twice_block_value);
             }
             WarriorSpell::ThunderClap => {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
@@ -1854,6 +1884,7 @@ impl Agent for WarriorAgent {
         if let Some(params) = fight.agent.anger_management {
             anger_management::reset(fight, params);
         }
+        fight.agent.sword_rolled_at.fill(None);
         let queue = &mut fight.agent.queue;
         queue.current = None;
         queue.queued.iter_mut().for_each(|queued| *queued = false);
@@ -2022,7 +2053,14 @@ impl Agent for WarriorAgent {
             WarriorAura::WeaponmasterSword => {
                 let params = fight.agent.weaponmaster.expect("Weaponmaster is bound");
                 let sword = fight.agent.sword_mask[spell];
-                weaponmaster::on_hit(fight, params, spell, sword, result);
+                // Under Forever's rules Whirlwind and Cleave roll once a cast: their first
+                // landed hit in the instant takes the roll, whatever it rolls.
+                let once = fight.agent.sword_once_a_cast.get(spell) == Some(&true);
+                let first = !once || fight.agent.sword_rolled_at[spell] != Some(fight.now);
+                let rolled = weaponmaster::on_hit(fight, params, spell, sword && first, result);
+                if once && rolled {
+                    fight.agent.sword_rolled_at[spell] = Some(fight.now);
+                }
             }
             WarriorAura::SweepingStrikes => {
                 let params = fight.agent.sweeping_strikes.expect("bound");

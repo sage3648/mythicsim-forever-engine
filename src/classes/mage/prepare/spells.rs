@@ -6,10 +6,10 @@
 use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, Duration, EventCallbacks, Rules, Sim, UnitId, MILLISECOND, NEVER_EXPIRES,
     SECOND,
@@ -397,7 +397,7 @@ impl Mage {
         let rank = spell_data().evocation.highest();
         let regen_multiplier = rank
             .effect(dbcenums::A_MOD_POWER_REGEN_PERCENT, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0;
         let action = spell_action(rank.id);
 
@@ -616,18 +616,24 @@ impl Mage {
     /// rules is also the Demonic Rune's and the healthstones' (category 1153).
     fn register_mana_gems(&self, sim: &mut Sim, unit: UnitId) {
         let data = spell_data();
-        let gems: [(i32, &Row); 4] = [
-            (5514, data.conjure_mana_agate_triggered.highest()),
-            (5513, data.conjure_mana_jade_triggered.highest()),
-            (8007, data.conjure_mana_citrine_triggered.highest()),
-            (8008, data.conjure_mana_ruby_triggered.highest()),
-        ];
+        // A levelling mage carries only the gems it can conjure (prepare::levels): Conjure Mana
+        // Agate (759) at 28, Jade (3552) at 38, Citrine (10053) at 48, Ruby (10054) at 58.
+        let gems: Vec<(i32, &Row)> = [
+            (5514, 759, data.conjure_mana_agate_triggered.highest()),
+            (5513, 3552, data.conjure_mana_jade_triggered.highest()),
+            (8007, 10053, data.conjure_mana_citrine_triggered.highest()),
+            (8008, 10054, data.conjure_mana_ruby_triggered.highest()),
+        ]
+        .into_iter()
+        .filter(|(_, conjure, _)| crate::prepare::levels::knows_spell(*conjure))
+        .map(|(item, _, row)| (item, row))
+        .collect();
 
         // Go clears the used flags on reset; preparation reads none of them.
         sim.register_reset_effect(unit, Rc::new(|_: &mut Sim| {}));
 
         for (item, row) in gems {
-            let mana_gain = row.energize_effect().average(CHARACTER_LEVEL);
+            let mana_gain = row.energize_effect().average(character_level());
             let conjured = sim.get_conjured_cd(unit);
             let spell = sim.register_spell(
                 unit,
@@ -685,7 +691,7 @@ impl Mage {
             return;
         }
         let vulnerability = spell_data().improved_scorch_triggered.highest();
-        let damage_per_stack = vulnerability.effect_n(1).average(CHARACTER_LEVEL) / 100.0;
+        let damage_per_stack = vulnerability.effect_n(1).average(character_level()) / 100.0;
 
         let damage_mod = sim.add_dynamic_mod(
             unit,
@@ -775,7 +781,7 @@ impl Mage {
                         dbcenums::A_ADD_PCT_MODIFIER,
                         dbcenums::SPELLMOD_CASTING_TIME,
                     )
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::CastTimePct,
                 ..SpellModConfig::default()
@@ -843,7 +849,7 @@ impl Mage {
         let action = spell_action(rank.id);
         let damage = rank
             .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0;
 
         let aura = sim.register_aura(
@@ -881,7 +887,7 @@ impl Mage {
                 class_mask: masks::ALL,
                 float_value: rank
                     .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::PowerCostPctAdd,
                 ..SpellModConfig::default()
@@ -989,7 +995,7 @@ impl Mage {
                 dbcenums::A_ADD_FLAT_MODIFIER,
                 dbcenums::SPELLMOD_CRITICAL_CHANCE,
             )
-            .average(CHARACTER_LEVEL);
+            .average(character_level());
 
         let action = spell_action(rank.id);
         // Category 1151 in the client: Combustion and Presence of Mind share one 3 min cooldown.
@@ -1124,12 +1130,12 @@ impl Mage {
                         (
                             Stat::Armor,
                             rank.effect(dbcenums::A_MOD_RESISTANCE, 1)
-                                .average(CHARACTER_LEVEL),
+                                .average(character_level()),
                         ),
                         (
                             Stat::FrostResistance,
                             rank.effect(dbcenums::A_MOD_RESISTANCE, 16)
-                                .average(CHARACTER_LEVEL),
+                                .average(character_level()),
                         ),
                     ]),
                     casting_regen: 0.0,
@@ -1139,7 +1145,7 @@ impl Mage {
                 let rank = spell_data().mage_armor.highest();
                 let resist = rank
                     .effect(dbcenums::A_MOD_RESISTANCE, 126)
-                    .average(CHARACTER_LEVEL);
+                    .average(character_level());
                 Some(ArmorBuff {
                     label: "Mage Armor",
                     action: rank.id,
@@ -1152,7 +1158,7 @@ impl Mage {
                     ]),
                     casting_regen: rank
                         .effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0)
-                        .average(CHARACTER_LEVEL)
+                        .average(character_level())
                         / 100.0,
                 })
             }

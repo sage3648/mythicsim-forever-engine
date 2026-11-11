@@ -7,10 +7,11 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE, MIN_RANGED_RANGE};
+use crate::prepare::character::constants::{MAX_MELEE_RANGE, MIN_RANGED_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::SpellId;
 use crate::prepare::sim::{
     AuraConfig, AuraId, Cooldown, Duration, EventCallbacks, Rules, Sim, MILLISECOND, NEVER_EXPIRES,
@@ -27,6 +28,20 @@ use super::{masks, Hunter, HUNTER_BASE_MAX_RANGE};
 
 fn spell_action(id: i32) -> ActionId {
     ActionId::spell(id)
+}
+
+/// Arcane Shot's and Summon Hawk's cost: the row's flat mana in the Go reference, and under
+/// Forever's rules 11% of base mana at every rank, as live since the class tuning of
+/// 11 November 2026.
+fn shot_cost(rules: Rules, row: &Row) -> CostOptions {
+    match rules {
+        Rules::Forever => CostOptions {
+            mana_base_cost_percent:
+                crate::prepare::hotfix_113554::HUNTER_SHOT_BASE_MANA_PERCENT_20261111,
+            ..CostOptions::default()
+        },
+        Rules::GoReference => flat_cost(row),
+    }
 }
 
 /// `ManaCost: core.ManaCostOptions{FlatCost: int32(rank.Cost())}`.
@@ -114,6 +129,31 @@ pub(super) fn serpent_sting_rap_per_tick(rules: Rules) -> f64 {
 pub(super) const SUMMON_HAWK_RAP_SHARE: f64 = 0.05;
 /// Summon Hawk's swing damage as a share of the rank's dive bomb base (`swingDamage`).
 pub(super) const SUMMON_HAWK_SWING_SHARE: f64 = 0.35;
+/// A hawk's fixed swing under Forever's rules, as a share of the creature auto attack dps over
+/// the swing's 2.5 seconds: 0.0815 of the level 30 row's 24.69 is the 3.35 to 6.71 that four
+/// level 30 logs read (2,862 swings at 407 to 1,023 owner ranged attack power). Taking it as a
+/// share of the creature dps at level 60 is an extrapolation, as the hawk's own scaling row is
+/// not in the client files.
+pub(super) const HAWK_SWING_SHARE_OF_CREATURE_DPS: f64 = 0.0815;
+/// Blizzard's hotfixes of 10 November 2026: "Melee damage dealt by the Hawk pet increased by
+/// about 80%". The swing above and its slope below are read from logs taken before it, so both
+/// take this factor. No client row or Wowhead Forever spell states the hawk's damage (the
+/// summon, 1293248, carries none), so it is the post's 80%.
+pub(super) const HAWK_MELEE_HOTFIX_20261110: f64 = 1.8;
+/// A hawk's swing time in seconds, before the owner's ranged haste.
+pub(super) const HAWK_SWING_SECONDS: f64 = 2.5;
+/// A hawk's swing spans a third either side of its average.
+pub(super) const HAWK_SWING_SPREAD: f64 = 1.0 / 3.0;
+/// Damage a hawk's swing gains for each point of its owner's ranged attack power, the slope the
+/// same four logs read in every one of them.
+pub(super) const HAWK_DAMAGE_PER_RANGED_ATTACK_POWER: f64 = 0.0179;
+/// The share of its owner's crit a hawk has: Ferocity 5/5 read 10 plus half the owner's crit over
+/// 4,340 swings against targets 2 levels below to 3 above, and two logs without Ferocity read
+/// half the tamed pet's.
+pub(super) const HAWK_CRIT_SHARE: f64 = 0.5;
+/// The Unleashed Fury rank every one of those logs had. It reaches the hawks as it does the pet,
+/// so the swing above is stated before it.
+pub(super) const HAWK_LOGGED_UNLEASHED_FURY_RANK: i32 = 5;
 /// Go `volleyTickDamage`.
 pub(super) const VOLLEY_TICK_DAMAGE: [f64; 4] = [0.0, 70.0, 91.0, 112.0];
 /// Go `trapAttackPowerShare` (patch 147).
@@ -197,7 +237,7 @@ impl Hunter {
                 proc_mask: ProcMask::RANGED_SPECIAL,
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 missile_speed: f64::from(rank.speed),
-                cost: flat_cost(rank),
+                cost: shot_cost(sim.rules, rank),
                 cast: CastConfig {
                     cd: Cooldown {
                         timer: Some(timer),
@@ -214,7 +254,7 @@ impl Hunter {
     /// Go `registerMultiShotSpell`: the beta client has one rank of Multi-Shot, with a 6 sec
     /// cooldown shared with Aimed Shot. Its row has no cast time, so the reference casts it at
     /// once; under Forever's rules it takes [`FOREVER_MULTI_SHOT_CAST_TIME`], which the ranged
-    /// haste multiplier divides as it does Aimed Shot's (README, Rust-only mechanics).
+    /// haste multiplier divides as it does Aimed Shot's (docs/mechanics.md).
     fn register_multi_shot_spell(&mut self, sim: &mut Sim, timer: crate::prepare::sim::TimerId) {
         let rank = spell_data().multi_shot.highest();
         let cast_time = match sim.rules {
@@ -257,32 +297,35 @@ impl Hunter {
         let unit = self.unit;
         let rank = spell_data().sniper_shot.highest();
         let timer = sim.new_timer(unit);
-        self.sniper_shot = Some(sim.register_spell(
-            unit,
-            ranged_config(SpellConfig {
-                action_id: spell_action(rank.id),
-                spell_school: rank.spell_school(),
-                defense_type: rank.defense_type_core(),
-                class_spell_mask: masks::SNIPER_SHOT,
-                proc_mask: ProcMask::RANGED_SPECIAL,
-                flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
-                missile_speed: f64::from(rank.speed),
-                cost: flat_cost(rank),
-                cast: CastConfig {
-                    default_cast: Cast {
-                        cast_time: rank.cast_time(),
-                        ..Cast::default()
-                    },
-                    cd: Cooldown {
-                        timer: Some(timer),
-                        duration: longest_cooldown(rank),
-                    },
-                    ..CastConfig::default()
+        let mut config = ranged_config(SpellConfig {
+            action_id: spell_action(rank.id),
+            spell_school: rank.spell_school(),
+            defense_type: rank.defense_type_core(),
+            class_spell_mask: masks::SNIPER_SHOT,
+            proc_mask: ProcMask::RANGED_SPECIAL,
+            flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
+            missile_speed: f64::from(rank.speed),
+            cost: flat_cost(rank),
+            cast: CastConfig {
+                default_cast: Cast {
+                    cast_time: rank.cast_time(),
+                    ..Cast::default()
                 },
-                bonus_coefficient: 1.0,
-                ..SpellConfig::default()
-            }),
-        ));
+                cd: Cooldown {
+                    timer: Some(timer),
+                    duration: longest_cooldown(rank),
+                },
+                ..CastConfig::default()
+            },
+            bonus_coefficient: 1.0,
+            ..SpellConfig::default()
+        });
+        // Wowhead's Forever tooltip of 6 November 2026 reads "8 - 45 yd range", a long-range shot;
+        // Go's `RegisterRangedSpell` caps every shot at the base 35.
+        if sim.rules == Rules::Forever {
+            config.max_range = f64::from(rank.max_range);
+        }
+        self.sniper_shot = Some(sim.register_spell(unit, config));
     }
 
     /// Go `registerSummonHawkSpell`: Summon Hawk shares its cooldown with Arcane Shot. Each
@@ -339,7 +382,7 @@ impl Hunter {
                 proc_mask: ProcMask::EMPTY,
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 max_range: f64::from(rank.max_range),
-                cost: flat_cost(rank),
+                cost: shot_cost(sim.rules, rank),
                 cast: CastConfig {
                     default_cast: Cast {
                         gcd: rank.gcd(),
@@ -839,7 +882,7 @@ impl Hunter {
         let haste_multiplier = 1.0
             + rank
                 .effect(dbcenums::A_MOD_RANGED_HASTE, 0)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0;
 
         // Forever: ranged and melee attack speed, where Classic's was ranged only.

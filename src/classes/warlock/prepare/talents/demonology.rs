@@ -3,8 +3,8 @@
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::periodic_action::PeriodicActionOptions;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId, NEVER_EXPIRES};
 use crate::prepare::spell::DefenseType;
@@ -429,7 +429,8 @@ impl Warlock {
         if points == 0 || self.sacrifice_summon() {
             return;
         }
-        let bonus = spell_data().demonic_knowledge.fraction_at(points) * f64::from(CHARACTER_LEVEL);
+        let bonus =
+            spell_data().demonic_knowledge.fraction_at(points) * f64::from(character_level());
 
         let config = || AuraConfig {
             label: "Demonic Knowledge".to_string(),

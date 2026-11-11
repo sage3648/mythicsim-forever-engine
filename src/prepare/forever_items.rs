@@ -70,6 +70,22 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
         }
     }
     if env.sim.rules == super::sim::Rules::Forever {
+        if let Some(use_) = super::forever_effect_items::on_use_damage_item(item) {
+            super::forever_effect_items::apply_on_use_damage(env, use_);
+            return Ok(true);
+        }
+        if super::forever_effect_items::on_use_stat_item(item) {
+            shared_on_use::apply(env, OnUseKind::SimpleStatActive, item);
+            return Ok(true);
+        }
+        if let Some(cfg) = super::forever_effect_items::equip_damage_proc(item) {
+            shared_items::apply(env, ProcKind::Damage, &cfg);
+            return Ok(true);
+        }
+        if let Some(bonus) = versus_attack_power(item) {
+            versus_attack_power_item(env, item, &bonus);
+            return Ok(true);
+        }
         return Ok(apply_chance_on_hit_item(env, item));
     }
     Ok(false)
@@ -85,6 +101,7 @@ fn apply_chance_on_hit_item(env: &mut Environment, item: i32) -> bool {
             if matches!(kind, ProcKind::Proc | ProcKind::Aura) {
                 chance_on_hit_defense(env, &cfg);
             }
+            super::forever_effect_items::apply_facing_damage(env, item);
             return true;
         }
     }
@@ -125,10 +142,12 @@ fn chance_on_hit_defense(env: &mut Environment, cfg: &SpellDataProc) {
     }
 }
 
-/// The Forever chance on hit registrations of an item, expanded to its variant.
+/// The Forever chance on hit registrations of an item, expanded to its variant: the reference's,
+/// then the live client items' (`forever_effect_items`).
 pub(crate) fn chance_on_hit_registrations(item: i32) -> Vec<(ProcKind, SpellDataProc)> {
     let mut found = Vec::new();
-    for registration in CHANCE_ON_HIT_ITEMS {
+    let client = super::forever_effect_items::CHANCE_ON_HIT_ITEMS;
+    for registration in CHANCE_ON_HIT_ITEMS.iter().chain(client) {
         if let Registration::Proc(kind, cfg, variants) = registration {
             for expanded in expand_variants(*cfg, variants) {
                 if expanded.item_id == item {
@@ -138,6 +157,62 @@ pub(crate) fn chance_on_hit_registrations(item: i32) -> Vec<(ProcKind, SpellData
         }
     }
     found
+}
+
+/// An item's melee attack power and spell damage against creature types, as its equip lines state
+/// them ("Equip: +33 Attack Power against Undead.", "Equip: Increases damage done to Humanoids by
+/// magical spells and effects by up to 10."), which the item row cannot hold.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct VersusAttackPower {
+    /// The item's name, which its permanent aura is labelled with.
+    pub(crate) name: String,
+    /// The melee attack power by the request's creature type (`MobTypeUndead`).
+    pub(crate) bonuses: Vec<(String, f64)>,
+    /// The spell damage by the request's creature type, as Mark of the Champion's.
+    pub(crate) spell_bonuses: Vec<(String, f64)>,
+}
+
+/// The creature type bonuses of an item of the live client (`data/forever-client-item-bonuses.jsonl`,
+/// written by `tools/rust_client_items.py`), read under Forever's rules only.
+pub(crate) fn versus_attack_power(item: i32) -> Option<VersusAttackPower> {
+    let text = crate::data::CLIENT_ITEM_BONUSES.row(i64::from(item))?;
+    let row: serde_json::Value = serde_json::from_str(text)
+        .unwrap_or_else(|err| panic!("data/forever-client-item-bonuses.jsonl row {item}: {err}"));
+    let by_type = |field: &str| -> Vec<(String, f64)> {
+        row[field]
+            .as_object()
+            .into_iter()
+            .flatten()
+            .filter_map(|(mob_type, value)| Some((mob_type.clone(), value.as_f64()?)))
+            .collect()
+    };
+    Some(VersusAttackPower {
+        name: row["name"].as_str()?.to_string(),
+        bonuses: by_type("melee_attack_power_versus"),
+        spell_bonuses: by_type("spell_damage_versus"),
+    })
+}
+
+/// An item with a creature type attack power bonus: a permanent aura, which an item swap toggles
+/// as it does Mark of the Champion's, that the export turns into a `mob_type_bonus` effect when
+/// every target is of a type the bonus names. A target of another type never takes it, as Go reads
+/// the target's own type, so nothing else needs describing.
+fn versus_attack_power_item(env: &mut Environment, item: i32, bonus: &VersusAttackPower) {
+    let unit = env.player;
+    let aura = env.sim.register_aura(
+        unit,
+        AuraConfig {
+            label: bonus.name.clone(),
+            action_id: Some(ActionId::item(item)),
+            ..AuraConfig::default()
+        },
+    );
+    let aura = env.sim.make_permanent(aura);
+    env.sim
+        .apply_on_gain(aura, Rc::new(|_: &mut super::sim::Sim, _| {}));
+    env.sim
+        .apply_on_expire(aura, Rc::new(|_: &mut super::sim::Sim, _| {}));
+    env.sim.register_item_proc(unit, item, aura);
 }
 
 /// Whether Forever's rules register a chance on hit for an item the reference has no effect for.

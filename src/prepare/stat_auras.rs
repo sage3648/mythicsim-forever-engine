@@ -30,8 +30,9 @@ const DYNAMIC_READ_STATS: [Stat; 6] = [
 /// them: maximum mana, healing power and health, Spirit, Intellect, whose change makes Go refresh
 /// the cached mana regeneration rates, the school spell damage stats, the resistances a spell
 /// that hits the player rolls against, the physical damage a physical spell adds, the armor
-/// penetration taken off the target's armor and the spell piercing taken off its resistance.
-const OPTIONAL_READ_STATS: [Stat; 21] = [
+/// penetration taken off the target's armor, the spell piercing taken off its resistance and
+/// the expertise taken off its dodge and parry, which a swapped weapon can change.
+const OPTIONAL_READ_STATS: [Stat; 22] = [
     Stat::Mana,
     Stat::HealingPower,
     Stat::Health,
@@ -53,6 +54,7 @@ const OPTIONAL_READ_STATS: [Stat; 21] = [
     Stat::SpellPiercing,
     Stat::PhysicalHitPercent,
     Stat::SpellHitPercent,
+    Stat::ExpertisePercent,
 ];
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
@@ -435,7 +437,7 @@ fn raw_mp5_bonuses(
         {
             continue;
         }
-        let value = MANA_TIDE_TOTEMS.value(0);
+        let value = MANA_TIDE_TOTEMS.known_value(0);
         if (label == EXTERNAL_MANA_TIDE_LABEL || label == SELF_MANA_TIDE_LABEL)
             && raw[0] + value == first
         {

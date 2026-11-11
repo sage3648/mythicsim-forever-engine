@@ -47,10 +47,17 @@ impl Warlock {
         let rank = spell_data().curse_of_the_elements.highest();
 
         // The player copy (untagged 1311680, one label per target): the APLs ask for aura
-        // 1311680 on the target, and every warlock of a raid shares it.
-        let auras = new_enemy_aura_array(sim, |sim, target| {
-            CURSE_OF_ELEMENTS.aura(sim, target, true, 0, 0.0)
-        });
+        // 1311680 on the target, and every warlock of a raid shares it. A levelling warlock's
+        // copy is the rank it knows, which its rotation names instead (prepare::levels).
+        let known = crate::prepare::buffs::Meta {
+            spell: if rank.id == 0 {
+                CURSE_OF_ELEMENTS.spell
+            } else {
+                rank.id
+            },
+            ..CURSE_OF_ELEMENTS
+        };
+        let auras = new_enemy_aura_array(sim, |sim, target| known.aura(sim, target, true, 0, 0.0));
         self.curse_of_elements_auras = auras.clone();
 
         let related_aura_arrays = aura_array_to_map(sim, &auras);
@@ -140,9 +147,15 @@ impl Warlock {
     pub(super) fn register_curse_of_recklessness(&mut self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().curse_of_recklessness.highest();
 
-        let auras = new_enemy_aura_array(sim, |sim, target| {
-            CURSE_OF_RECKLESSNESS.aura(sim, target, true, 0, 0.0)
-        });
+        let known = crate::prepare::buffs::Meta {
+            spell: if rank.id == 0 {
+                CURSE_OF_RECKLESSNESS.spell
+            } else {
+                rank.id
+            },
+            ..CURSE_OF_RECKLESSNESS
+        };
+        let auras = new_enemy_aura_array(sim, |sim, target| known.aura(sim, target, true, 0, 0.0));
         self.curse_of_recklessness_auras = auras.clone();
 
         let related_aura_arrays = aura_array_to_map(sim, &auras);

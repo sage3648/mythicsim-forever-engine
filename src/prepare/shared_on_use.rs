@@ -23,7 +23,9 @@ use super::shared_items::{
     dpm_for_mask, spell_data_absorb_spell, spell_data_proc_damage_spell,
     spell_data_proc_heal_spell, EffectSource,
 };
-use super::sim::{AuraConfig, AuraId, Cooldown, Duration, Sim, UnitId, MILLISECOND, NEVER_EXPIRES};
+use super::sim::{
+    AuraConfig, AuraId, Cooldown, Duration, Rules, Sim, UnitId, MILLISECOND, NEVER_EXPIRES,
+};
 use super::spell::{CastConfig, ProcMask, SpellConfig, SpellFlag};
 use super::spelldata::{find, must_find};
 use super::stats::Stats;
@@ -47,10 +49,12 @@ pub(crate) enum OnUseKind {
     Energize,
 }
 
-/// Go `itemEffectsFor`: the effects an on-use helper works from.
-pub(crate) fn item_effects_for(item_id: i32) -> Vec<Message> {
-    let item =
-        items::database_item(item_id).unwrap_or_else(|| panic!("No item with ID: {item_id}"));
+/// Go `itemEffectsFor`: the effects an on-use helper works from. Under Forever's rules they are
+/// the live row's where the item has one (`data/forever-live-items.jsonl`), as the equipped item
+/// is, so a live on-use cooldown (Serenity Field's 6 minutes) reaches the use spell.
+pub(crate) fn item_effects_for(item_id: i32, rules: Rules) -> Vec<Message> {
+    let item = items::database_item_under(item_id, rules)
+        .unwrap_or_else(|| panic!("No item with ID: {item_id}"));
     if item.item_effects.is_empty() {
         panic!("No effects data for item with ID: {item_id}");
     }
@@ -58,8 +62,8 @@ pub(crate) fn item_effects_for(item_id: i32) -> Vec<Message> {
 }
 
 /// Go `onUseEffectsFor`.
-pub(crate) fn on_use_effects_for(item_id: i32) -> Vec<Message> {
-    let effects: Vec<Message> = item_effects_for(item_id)
+pub(crate) fn on_use_effects_for(item_id: i32, rules: Rules) -> Vec<Message> {
+    let effects: Vec<Message> = item_effects_for(item_id, rules)
         .into_iter()
         .filter(|effect| effect.has("on_use"))
         .collect();
@@ -157,7 +161,7 @@ pub(crate) fn apply(env: &mut Environment, kind: OnUseKind, item_id: i32) {
 /// Go `NewSimpleStatActive`: an on-use item whose buff carries the effect's scaling stats.
 fn apply_simple_stat_active(env: &mut Environment, item_id: i32) {
     let unit = env.player;
-    for effect in on_use_effects_for(item_id) {
+    for effect in on_use_effects_for(item_id, env.sim.rules) {
         let cast = on_use_cast(&mut env.sim, unit, &effect);
         let config = SpellConfig {
             action_id: ActionId::item(item_id),
@@ -184,7 +188,7 @@ fn register_spell_data_on_use(
     on_use: impl Fn(&mut Environment, &'static Spell) -> Option<(SpellConfig, u32)>,
 ) {
     let unit = env.player;
-    for effect in on_use_effects_for(item_id) {
+    for effect in on_use_effects_for(item_id, env.sim.rules) {
         let row = must_find(effect.i32("buff_id"));
         let Some((mut config, cd_type)) = on_use(env, row) else {
             continue;
@@ -332,7 +336,7 @@ fn stacking_aura_id(effect: &Message, item_id: i32) -> ActionId {
 /// Go `NewStackingStatBonusCD`: a stacking on-use trinket.
 pub(crate) fn apply_stacking_stat_bonus_cd(env: &mut Environment, config: &StackingStatBonusCd) {
     let unit = env.player;
-    for effect in item_effects_for(config.id) {
+    for effect in item_effects_for(config.id, env.sim.rules) {
         let stacks = resolve_stacking_stats(
             &effect,
             stacking_aura_id(&effect, config.id),

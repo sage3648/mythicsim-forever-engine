@@ -4,6 +4,7 @@
 //! key first. A table is indexed on first use by reading only each line's key, and a row is
 //! parsed only when asked for, so preparing a request touches the few rows it needs.
 
+mod forever_client_spells;
 pub(crate) mod spells;
 pub(crate) mod tables;
 
@@ -82,6 +83,9 @@ macro_rules! table {
 table!(ITEMS, "items.jsonl");
 // The live client's equippable items that ITEMS lacks, from `tools/rust_client_items.py`.
 table!(CLIENT_ITEMS, "forever-client-items.jsonl");
+// The creature type attack power bonuses of CLIENT_ITEMS' items, which an item row cannot state
+// (`tools/rust_client_items.py`, `src/prepare/forever_items.rs`).
+table!(CLIENT_ITEM_BONUSES, "forever-client-item-bonuses.jsonl");
 // The live client's rows for items whose ITEMS row the live game has since changed, read before
 // ITEMS under Forever's rules (`src/prepare/items.rs`).
 table!(LIVE_ITEMS, "forever-live-items.jsonl");

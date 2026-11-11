@@ -114,6 +114,59 @@ fn set_bonuses(
     Ok(active)
 }
 
+/// A set of the Forever client whose pieces `data/forever-client-items.jsonl` holds
+/// (`tools/rust_client_items.py`, `CLIENT_SETS`). The reference registers none of them, so
+/// [`set_bonuses`] passes their pieces by; the sets and what their rows state are in
+/// `forever_client_sets`.
+pub(crate) struct ClientItemSet {
+    /// The set and the bonuses that are applied.
+    pub set: ItemSet,
+    /// The piece counts whose bonus nothing here applies yet. An equipment that reaches one is
+    /// refused.
+    pub not_prepared: &'static [i32],
+}
+
+/// The bonuses of the client's sets that the equipped items reach, in the order the items reach
+/// them, or the refusal of a bonus that is not prepared yet. A set the reference registers is
+/// left to [`set_bonuses`]. Fewer pieces than the first bonus needs are plain items.
+fn client_set_bonuses(
+    go_sets: &[ItemSetRow],
+    client_sets: &'static [ClientItemSet],
+    items: &[(i32, &str, i32)],
+) -> Result<Vec<SetBonus>, Refusal> {
+    let mut active = Vec::new();
+    for client in client_sets {
+        let set = &client.set;
+        if find_set(go_sets, set.id, set.name).is_some() {
+            continue;
+        }
+        let mut pieces = 0;
+        for &(item_set, item_set_name, item_id) in items {
+            if item_set != set.id && item_set_name != set.name {
+                continue;
+            }
+            pieces += 1;
+            if client.not_prepared.contains(&pieces) {
+                return Err(Refusal::new(
+                    "item_set",
+                    format!(
+                        "set bonus {} {pieces}P is not prepared yet (item {item_id})",
+                        set.name
+                    ),
+                ));
+            }
+            if let Some((_, effect)) = set.bonuses.iter().find(|(count, _)| *count == pieces) {
+                active.push(SetBonus {
+                    set,
+                    pieces,
+                    effect: *effect,
+                });
+            }
+        }
+    }
+    Ok(active)
+}
+
 /// Go `applyItemSetBonusEffects`. Item swapping is refused before this runs, so only the
 /// equipped bonuses exist.
 pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), Refusal> {
@@ -129,7 +182,16 @@ pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), 
         .iter()
         .map(|(id, name, item)| (*id, name.as_str(), *item))
         .collect();
-    for bonus in set_bonuses(&tables().item_sets, &implemented_sets(), &items)? {
+    // The client's sets exist under Forever's rules alone, whose item rows are the only ones
+    // that name them.
+    let client = client_set_bonuses(
+        &tables().item_sets,
+        super::forever_client_sets::CLIENT_ITEM_SETS,
+        &items,
+    )?;
+    let mut bonuses = set_bonuses(&tables().item_sets, &implemented_sets(), &items)?;
+    bonuses.extend(client);
+    for bonus in bonuses {
         if !bonus.set.required_profession.is_empty()
             && !env.sim.has_profession(unit, bonus.set.required_profession)
         {
@@ -249,6 +311,52 @@ mod tests {
         };
         assert_eq!(refusal.code, "item_set");
         assert!(refusal.reason.contains("Gamma 2P"));
+    }
+
+    static CLIENT: &[ClientItemSet] = &[ClientItemSet {
+        set: ItemSet {
+            id: 21,
+            name: "Delta",
+            alternative_name: "",
+            bonuses: &[(2, nothing), (3, nothing)],
+            required_profession: "",
+        },
+        not_prepared: &[4],
+    }];
+
+    #[test]
+    fn a_client_set_applies_its_prepared_bonuses_and_refuses_the_others() {
+        let one = [(21, "Delta", 1), (0, "", 2)];
+        assert!(client_set_bonuses(&[], CLIENT, &one)
+            .expect("no bonus yet")
+            .is_empty());
+        let three = [(21, "Delta", 1), (21, "Delta", 2), (0, "Delta", 3)];
+        let active = client_set_bonuses(&[], CLIENT, &three).expect("prepared");
+        let reached: Vec<(&str, i32)> = active.iter().map(|b| (b.set.name, b.pieces)).collect();
+        assert_eq!(reached, [("Delta", 2), ("Delta", 3)]);
+        let four = [
+            (21, "Delta", 1),
+            (21, "Delta", 2),
+            (21, "Delta", 3),
+            (21, "Delta", 4),
+        ];
+        let refusal = match client_set_bonuses(&[], CLIENT, &four) {
+            Err(refusal) => refusal,
+            Ok(_) => panic!("a bonus that is not prepared must refuse"),
+        };
+        assert_eq!(refusal.code, "item_set");
+        assert!(refusal
+            .reason
+            .contains("set bonus Delta 4P is not prepared yet (item 4)"));
+    }
+
+    #[test]
+    fn a_client_set_the_reference_registers_is_left_to_it() {
+        let go = [set(21, "Delta", "", &[2])];
+        let two = [(21, "Delta", 1), (21, "Delta", 2)];
+        assert!(client_set_bonuses(&go, CLIENT, &two)
+            .expect("left to the reference")
+            .is_empty());
     }
 
     #[test]

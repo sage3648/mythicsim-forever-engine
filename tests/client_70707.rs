@@ -31,7 +31,10 @@ fn has_aura(prepared: &Value, spell_id: i64) -> bool {
 /// keeps rank 4 at the frozen data's 75.
 #[test]
 fn trueshot_aura_is_rank_5() {
-    let request = request("production-marksmanship-hunter");
+    // Without gear: items with live rows carry other stats under each rule set, and the
+    // Agility multipliers round the totals, so the difference would follow the gear worn.
+    let mut request = request("production-marksmanship-hunter");
+    request["raid"]["parties"][0]["players"][0]["equipment"] = serde_json::json!({ "items": [] });
     let forever = prepared(&request, Rules::Forever);
     let reference = prepared(&request, Rules::GoReference);
     assert!(has_aura(&forever, 20906));
@@ -45,6 +48,7 @@ fn trueshot_aura_is_rank_5() {
     // Trueshot Aura rank 5 is 100 since the live hotfix cache of 3 November (tests/
     // hotfix_20261103.rs), 25 above the reference's rank 4 at 75; 26 fewer from the raid's Grace
     // of Air Totem, rank II (77 Agility) under Forever's rules for rank III's 89, as rank III is
-    // an Ahn'Qiraj 20 book.
-    assert_eq!(rap(&reference) - rap(&forever), 26.0 - 25.0);
+    // an Ahn'Qiraj 20 book: those 12 Agility are 14 at the hunter's multipliers, 28 ranged Attack
+    // Power, on the bare character (26 with the production gear's totals).
+    assert_eq!(rap(&reference) - rap(&forever), 28.0 - 25.0);
 }

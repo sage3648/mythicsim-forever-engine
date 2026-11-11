@@ -245,18 +245,55 @@ impl<A: Agent> Fight<A> {
                     / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
     }
 
-    /// Go `Unit.MultiplyMeleeSpeed`.
+    /// Go `Unit.MultiplyMeleeSpeed`. A pet that swings at its owner's melee speed takes the
+    /// change at its next heartbeat.
     #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn multiply_melee_speed(&mut self, amount: f64) {
         self.player.melee_speed_multiplier *= amount;
+        self.pass_melee_speed_to_pets(amount);
         self.update_swing_timers();
     }
 
-    /// Go `Unit.MultiplyAttackSpeed`.
+    /// Go `Unit.MultiplyAttackSpeed`. A pet that swings at its owner's attack speed takes the
+    /// change at its next heartbeat.
     #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn multiply_attack_speed(&mut self, amount: f64) {
         self.player.attack_speed_multiplier *= amount;
+        self.pass_melee_speed_to_pets(amount);
         self.update_swing_timers();
+    }
+
+    /// Forever's rules: each enabled pet that swings at its owner's melee and attack speed
+    /// takes the owner's change at its next stat heartbeat, a pending action of its own for
+    /// each change.
+    fn pass_melee_speed_to_pets(&mut self, amount: f64) {
+        let (now, offset) = (self.now, self.heartbeat_offset);
+        for index in 0..self.active_pets.len() {
+            let pet = &self.active_pets[index];
+            if !pet.inherits_melee_speed || !pet.enabled {
+                continue;
+            }
+            let heartbeats = (now - offset) / super::pet::PET_UPDATE_INTERVAL;
+            let at = super::pet::PET_UPDATE_INTERVAL * (heartbeats + 1) + offset;
+            self.schedule(
+                at,
+                super::PRIORITY_DOT,
+                super::Action::PetMeleeSpeed {
+                    pet: Side::Pet(index as u8),
+                    amount,
+                },
+            );
+        }
+    }
+
+    /// The owner's melee or attack speed change reaching a pet at its heartbeat: a pet still
+    /// out multiplies its melee speed and rescales its pending swing.
+    pub(crate) fn pet_melee_speed(&mut self, side: Side, amount: f64) {
+        if !self.active_pet(side).enabled {
+            return;
+        }
+        self.unit_mut(side).melee_speed_multiplier *= amount;
+        self.rescale_pet_swing(side);
     }
 
     /// Go `Unit.MultiplyAttackSpeed` of an acting unit. A pet has no ranged swing.
@@ -265,6 +302,12 @@ impl<A: Agent> Fight<A> {
             return self.multiply_attack_speed(amount);
         }
         self.unit_mut(side).attack_speed_multiplier *= amount;
+        self.rescale_pet_swing(side);
+    }
+
+    /// A pet's swing timer after a speed change: the remaining part of its pending swing
+    /// scales with the change in speed.
+    fn rescale_pet_swing(&mut self, side: Side) {
         let autos = self.autos_of(side);
         if !autos.any_enabled() || !autos.melee || !autos.mh.enabled {
             return;
@@ -737,7 +780,7 @@ impl<A: Agent> Fight<A> {
         attack.pending_swing_delay = (now - attack.natural_ready_at).max(0);
         attack.natural_ready_at = attack.swing_at;
         // A melee swing resets the ranged auto timer, as if the shot had just fired. Forever's
-        // rule leaves the timer alone (README, Rust-only mechanics).
+        // rule leaves the timer alone (docs/mechanics.md).
         if side == Side::Player
             && hand != Hand::Ranged
             && self.autos.ranged_auto
@@ -1336,7 +1379,9 @@ impl<A: Agent> Fight<A> {
         if !physical {
             return self.calc_magic_weapon_damage(spell, target, base, attacker, outcome);
         }
-        if coefficient > 0.0 {
+        if let Some(coefficient) = self.spells[spell].physical_school_coefficient {
+            base += self.physical_school_bonus_damage(spell, coefficient);
+        } else if coefficient > 0.0 {
             base += coefficient * self.physical_bonus_damage(spell);
         } else {
             base += self.physical_bonus_damage(spell);
@@ -1518,8 +1563,21 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Spell.BonusDamage` for a physical spell.
-    fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
+    pub(crate) fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
         self.spells[spell].bonus_base_damage + self.unit(self.caster(spell)).powers.physical_damage
+    }
+
+    /// What a physical row that deals school damage adds under Forever's rules: the caster's
+    /// flat physical damage bonus at the row's bonus coefficient, and the spell's own bonus
+    /// whole. A row that states a coefficient of 0 takes none of the bonus from gear, as
+    /// Thunder Clap, Victory Rush and Shield Bash do not; Revenge and Hamstring state 1 and take
+    /// all of it (warrior damage measurements at levels 20 to 24, 7 November 2026).
+    pub(crate) fn physical_school_bonus_damage(&self, spell: SpellId, coefficient: f64) -> f64 {
+        if coefficient > 0.0 {
+            coefficient * self.physical_bonus_damage(spell)
+        } else {
+            self.spells[spell].bonus_base_damage
+        }
     }
 
     /// Go `PhysicalHitChance`: ranged attacks add ranged hit.
@@ -1571,9 +1629,9 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(min_time);
     }
 
-    /// Go `DodgeParrySuppression`.
+    /// Go `DodgeParrySuppression`: the caster's live expertise, which an item swap can change.
     fn dodge_parry_suppression(&self, spell: SpellId) -> f64 {
-        (self.unit_config(self.caster(spell)).expertise_percent
+        (self.unit(self.caster(spell)).powers.expertise_percent
             + self.spells[spell].bonus_expertise_percent)
             / 100.0
     }

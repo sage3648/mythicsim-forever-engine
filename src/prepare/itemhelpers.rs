@@ -173,7 +173,7 @@ pub(crate) fn add_weapon_proc_aura(
     let unit = env.player;
     aura(env);
     let dpm = dynamic_legacy_proc_for_weapon(&env.sim, unit, item_id, ppm, 0.0);
-    env.sim.make_proc_trigger_aura(
+    let trigger = env.sim.make_proc_trigger_aura(
         unit,
         &ProcTrigger {
             name: format!("{name} Proc"),
@@ -184,4 +184,10 @@ pub(crate) fn add_weapon_proc_aura(
             ..ProcTrigger::default()
         },
     );
+    // Go registers no item swap callback for it, so a swap that moves the weapon leaves the
+    // trigger up or down as it was. Under Forever's rules the trigger is up while a slot holds
+    // the weapon, as every other weapon proc's is (`CreateWeaponProcTrigger`).
+    if env.sim.rules == super::sim::Rules::Forever {
+        env.sim.register_item_proc(unit, item_id, trigger);
+    }
 }

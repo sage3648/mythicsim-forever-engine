@@ -17,15 +17,30 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
     if let Some(swap) = env.sim.item_swap(unit) {
         items.extend(swap.un_equipped.iter().cloned());
     }
+    let forever = env.sim.rules == super::sim::Rules::Forever;
+    let holds_shield = items
+        .iter()
+        .any(|item| item.weapon_type == "WeaponTypeShield");
     for item in items.iter() {
         let usable = item.class_allowlist.is_empty() || item.class_allowlist.contains(&class);
+        // Under Forever's rules a live client item's equip effect that acts when the wearer is
+        // struck and is not prepared yet refuses the character it can reach
+        // (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`).
+        if forever && usable {
+            super::forever_effect_items::struck_effect_not_prepared(env, item.id, holds_shield)?;
+        }
         // Under Forever's rules an item the reference has no effect for may still carry a
-        // chance on hit (forever_items.rs `CHANCE_ON_HIT_ITEMS`) or a class effect
+        // chance on hit (forever_items.rs `CHANCE_ON_HIT_ITEMS`), a live client item's use or
+        // equip damage proc (`forever_effect_items`) or a class effect
         // (`classes::forever_item_effect`).
         let has_effect = tables.item_effect_ids.contains(&item.id)
             || (env.sim.rules == super::sim::Rules::Forever
                 && (super::forever_items::has_chance_on_hit_item(item.id)
-                    || crate::classes::forever_item_effect(item.id)));
+                    || super::forever_effect_items::on_use_damage_item(item.id).is_some()
+                    || super::forever_effect_items::on_use_stat_item(item.id)
+                    || super::forever_effect_items::equip_damage_proc(item.id).is_some()
+                    || super::forever_items::versus_attack_power(item.id).is_some()
+                    || crate::classes::forever_item_effect(&env.sim, unit, item.id)));
         if has_effect && !seen_items.contains(&item.id) && usable {
             seen_items.push(item.id);
             if !super::items_registry::apply_item_effect(env, item.id)? {

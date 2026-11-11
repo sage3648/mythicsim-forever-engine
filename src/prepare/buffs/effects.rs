@@ -146,13 +146,17 @@ pub(crate) fn judgement_of_wisdom_effects(env: &Environment) -> Vec<Value> {
         .iter()
         .filter(|aura| env.sim.aura(**aura).label == "Judgement of Wisdom (External)")
         .map(|aura| {
-            json!({
+            let mut effect = json!({
                 "kind": "judgement_of_wisdom", "aura": env.sim.aura(*aura).label,
                 "proc_chance": paladin::JUDGEMENT_PROC_CHANCE,
                 "proc_mask": ProcMask::DIRECT.names(), "mana": rank.value,
                 "metrics_action_id": action_id(Some(&ActionId::spell(rank.spell_id))),
                 "delay_ns": SPELL_BATCH_WINDOW,
-            })
+            });
+            if env.sim.rules == crate::prepare::sim::Rules::Forever {
+                effect["landed_only"] = json!(true);
+            }
+            effect
         })
         .collect()
 }

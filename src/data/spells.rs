@@ -225,17 +225,26 @@ fn extras() -> &'static Extras {
 }
 
 /// The row for an id, parsed once and kept for the process. `None` where Go's `Find` answers
-/// its zero `Nil` row.
+/// its zero `Nil` row. An id the pinned rows lack may be a live Forever client row
+/// (`forever_client_spells`), which only Forever's effect items name.
 pub(crate) fn find(id: i32) -> Option<&'static Spell> {
     static CACHE: OnceLock<Mutex<HashMap<i32, Option<&'static Spell>>>> = OnceLock::new();
     let cache = CACHE.get_or_init(Default::default);
     let mut cache = cache.lock().expect("spell cache");
     *cache.entry(id).or_insert_with(|| {
-        super::SPELL_ROWS.row(i64::from(id)).map(|text| {
-            let row: Spell = serde_json::from_str(text)
-                .unwrap_or_else(|err| panic!("data/spells.jsonl row {id}: {err}"));
-            &*Box::leak(Box::new(row))
-        })
+        super::SPELL_ROWS
+            .row(i64::from(id))
+            .map(|text| {
+                let row: Spell = serde_json::from_str(text)
+                    .unwrap_or_else(|err| panic!("data/spells.jsonl row {id}: {err}"));
+                &*Box::leak(Box::new(row))
+            })
+            .or_else(|| {
+                super::forever_client_spells::rows()
+                    .into_iter()
+                    .find(|row| row.id == id)
+                    .map(|row| &*Box::leak(Box::new(row)))
+            })
     })
 }
 
@@ -279,5 +288,21 @@ mod tests {
         assert_eq!(blizzard.powers[0].cost, 320);
         assert!(find(1).is_none());
         assert_eq!(hand_triggers(20230), &[20240]);
+    }
+
+    #[test]
+    fn forever_client_rows_are_found_after_the_pinned_rows_and_never_replace_one() {
+        for row in super::super::forever_client_spells::rows() {
+            assert!(
+                super::super::SPELL_ROWS.row(i64::from(row.id)).is_none(),
+                "{}",
+                row.id
+            );
+            let found = must_find(row.id);
+            assert_eq!(found.name, row.name);
+            assert!(found.effects.iter().all(|effect| effect.spell_id == row.id));
+        }
+        // Only the pinned rows are listed: nothing iterating the store meets the client rows.
+        assert!(ids().all(|id| id != 1_295_039));
     }
 }
