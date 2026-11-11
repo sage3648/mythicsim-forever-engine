@@ -146,3 +146,47 @@ impl Rip {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rip(share_per_combo_point: f64) -> Rip {
+        Rip {
+            tick_base: 4.0,
+            tick_per_combo_point: 5.5,
+            share_per_combo_point,
+            share_max_points: 4.0,
+            tick_can_crit: false,
+            expected_combo_points: 5.0,
+            short_name: "Rip".to_string(),
+        }
+    }
+
+    /// The tick a Tauren druid's combat log read (levels 22 to 25, client 1.60.1.70862, 7 November
+    /// 2026): floor(4 + 5.5 x points + k x attack power x points), k from 0.0113 to 0.0115, over
+    /// 17 ticks at 3 and 4 combo points and 192 to 239 attack power. The earlier 0.0125 reads 37
+    /// at 4 points and 239 attack power, where the game read 36.
+    #[test]
+    fn a_tick_reads_the_measured_floor() {
+        let reading = |rip: &Rip, points: f64, attack_power: f64| {
+            rip.share(points)
+                .mul_add(attack_power, rip.flat_damage(points))
+                .floor()
+        };
+        for share in [0.0113, 0.0114, 0.0115] {
+            let rip = rip(share);
+            assert_eq!(reading(&rip, 3.0, 192.0), 27.0, "k {share}");
+            assert_eq!(reading(&rip, 4.0, 239.0), 36.0, "k {share}");
+        }
+        assert_eq!(reading(&rip(0.0125), 4.0, 239.0), 37.0);
+    }
+
+    /// The share counts up to four combo points, so a fifth adds flat damage only.
+    #[test]
+    fn the_share_stops_at_four_combo_points() {
+        let rip = rip(0.0114);
+        assert!((rip.share(4.0) - 0.0456).abs() < 1e-12);
+        assert_eq!(rip.share(5.0), rip.share(4.0));
+    }
+}

@@ -5,11 +5,11 @@
 use serde_json::{json, Value};
 
 use crate::prepare::aura_helpers::ProcTrigger;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::SPELL_BATCH_WINDOW;
 use crate::prepare::consumable_effects::proc_trigger_spells;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{Rules, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask};
 
@@ -53,7 +53,7 @@ impl Rogue {
         let target = env.encounter.targets[0];
         let target_index = sim.unit(target).unit_index as usize;
         let talents = &self.talents;
-        let level = CHARACTER_LEVEL;
+        let level = character_level();
         let target_aura_label = |auras: &[Option<crate::prepare::sim::AuraId>]| {
             auras
                 .get(target_index)
@@ -344,7 +344,9 @@ impl Rogue {
         // by the target's stun duration multiplier, and raises the rogue's damage on the target by
         // Improved Kidney Shot. A stun immune target ignores it. A stun also pauses the target's
         // swings, which only matter when it tanks the player.
-        if let Some(spell) = sim.get_spell(player, &spell_action(8643)) {
+        if let Some(spell) =
+            sim.get_spell(player, &spell_action(spell_data().kidney_shot.highest().id))
+        {
             let spell_id = sim.spell(spell).action_id.clone();
             let stun = sim
                 .unit(target)

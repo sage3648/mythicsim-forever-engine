@@ -130,6 +130,23 @@ impl Meta {
             .map_or(0.0, |applied| applied.value)
     }
 
+    /// [`Meta::value`] at the rank [`Meta::aura`] gives a levelling character under Forever's
+    /// rules (`levels::known_buff_rank`); at level 60 the meta's own. A level 42 shaman's Mana
+    /// Tide is rank 2's 133 every 3 sec (17355), and the checks that read the aura's MP5 read it
+    /// too.
+    pub(crate) fn known_value(&self, talent_points: i32) -> f64 {
+        if super::levels::character_level() == super::levels::MAX_LEVEL {
+            return self.value(talent_points);
+        }
+        let forever = forever_buff_rank(self.spell).unwrap_or(self.spell);
+        let known = super::levels::known_buff_rank(forever);
+        Meta {
+            spell: known,
+            ..*self
+        }
+        .value(talent_points)
+    }
+
     /// Go `Meta.Duration`.
     pub(crate) fn duration(&self, talent_points: i32) -> Duration {
         if self.talent_scales_duration {
@@ -188,11 +205,30 @@ impl Meta {
         count: f64,
     ) -> AuraId {
         if sim.rules == Rules::Forever {
-            if let Some(spell) = forever_buff_rank(self.spell) {
-                let meta = Meta { spell, ..*self };
-                return meta.aura(sim, unit, is_player, talent_points, count);
+            // Forever's own rank of the buff, then the rank a levelling character knows
+            // (prepare::levels), each applied once.
+            let forever = forever_buff_rank(self.spell).unwrap_or(self.spell);
+            let known = super::levels::known_buff_rank(forever);
+            if known != self.spell {
+                let meta = Meta {
+                    spell: known,
+                    ..*self
+                };
+                return meta.aura_at_rank(sim, unit, is_player, talent_points, count);
             }
         }
+        self.aura_at_rank(sim, unit, is_player, talent_points, count)
+    }
+
+    /// [`Meta::aura`] at this meta's own row, with no rank resolved.
+    fn aura_at_rank(
+        &self,
+        sim: &mut Sim,
+        unit: UnitId,
+        is_player: bool,
+        talent_points: i32,
+        count: f64,
+    ) -> AuraId {
         match self.kind {
             MetaKind::Buff => {
                 let mut options = self.options(talent_points);
@@ -317,7 +353,7 @@ impl Meta {
 
 /// Go `amount`: the caster's amount at the character level.
 fn amount(effect: &Effect) -> f64 {
-    effect.average(super::character::constants::CHARACTER_LEVEL)
+    effect.average(super::levels::character_level())
 }
 
 /// Go `auraDuration`.

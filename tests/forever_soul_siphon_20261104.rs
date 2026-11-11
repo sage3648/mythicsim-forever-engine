@@ -1,12 +1,13 @@
-//! Soul Siphon under Forever's rules (4 November 2026).
+//! Soul Siphon under Forever's rules (4 November 2026, text of 11 November 2026).
 //!
-//! The talent (17804, client 1.60.1.70755) reads "Increases the damage done or health drained by
-//! your Drain Life, Drain Soul, and Wrack spells by 12% per each of your other Affliction effects
-//! active on the target, up to a maximum increase of 36%." It is a dummy aura, so the server
-//! counts, and Forever's damage over time reads the caster's current modifiers at each tick, so
-//! each Wrack and Drain Life tick counts the warlock's Affliction effects up at that moment: its
-//! Affliction dots and its own curse. The Go reference counts every registered Affliction aura
-//! on the target, active or not, which is the full 36% on every tick.
+//! The talent (17804) reads, since the class tuning of 11 November 2026, "Increases the damage
+//! done or health drained by your Drain Life, Drain Soul, and Wrack spells by 12% per each of
+//! your Corruption, Siphon Life, and Bane of Agony effects active on the target, up to a maximum
+//! increase of 36%." Before it the text named "your other Affliction effects", which also counted
+//! the warlock's own curse. It is a dummy aura, so the server counts, and Forever's damage over
+//! time reads the caster's current modifiers at each tick, so each Wrack and Drain Life tick
+//! counts the named effects up at that moment. The Go reference counts every registered
+//! Affliction aura on the target, active or not, which is the full 36% on every tick.
 
 use forever_engine::{prepare_json_with, simulate_prepared, Rules};
 use serde_json::{json, Value};
@@ -115,10 +116,11 @@ fn each_active_dot_adds_a_step() {
     assert_ratio(two, alone, 1.0, 0.01);
 }
 
-/// The warlock's own Curse of the Elements is an Affliction effect too (skill line 355): with
-/// both dots it makes three, the 36% cap, on top of the curse's 10% more shadow damage taken.
+/// The warlock's own Curse of the Elements is not one of the three named effects: with both
+/// dots the bonus stays 24%, on top of the curse's 10% more shadow damage taken. Before
+/// 11 November 2026 it counted as a third effect.
 #[test]
-fn own_curse_counts_to_the_cap() {
+fn own_curse_does_not_count() {
     let all_up = json!({"and": {"vals": [
         dot_long(CORRUPTION),
         dot_long(BANE_OF_AGONY),
@@ -133,7 +135,7 @@ fn own_curse_counts_to_the_cap() {
     ]);
     let alone = wrack_tick(&wrack_alone(), Rules::Forever);
     let three = wrack_tick(&request, Rules::Forever);
-    assert_ratio(three, alone, 1.36 * 1.1, 1e-9);
+    assert_ratio(three, alone, 1.24 * 1.1, 1e-9);
 }
 
 /// Drain Life reads Soul Siphon the same way, in its 20 yard range.

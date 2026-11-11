@@ -5,11 +5,13 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::sim::{AuraConfig, AuraId, Cooldown, DotId, Duration, Sim, SpellId, UnitId, UnitType};
+use super::sim::{
+    AuraConfig, AuraId, Cooldown, DotId, Duration, Rules, Sim, SpellId, UnitId, UnitType,
+};
 use super::stats::SchoolIndex;
 
-/// Go `SpellFlag` bits, by exported name in bit order.
-pub(crate) const SPELL_FLAG_NAMES: [&str; 40] = [
+/// Go `SpellFlag` bits, by exported name in bit order. The last is Forever's own, past Go's.
+pub(crate) const SPELL_FLAG_NAMES: [&str; 41] = [
     "SpellFlagIgnoreResists",
     "SpellFlagIgnoreTargetModifiers",
     "SpellFlagIgnoreAttackerModifiers",
@@ -50,6 +52,7 @@ pub(crate) const SPELL_FLAG_NAMES: [&str; 40] = [
     "SpellFlagAgentReserved3",
     "SpellFlagAgentReserved4",
     "",
+    "SpellFlagIgnoreTargetSchoolBonus",
 ];
 
 /// Go `SpellFlag`: bit `i` is `1 << (i + 1)`, as Go's iota starts the list at its second line.
@@ -98,6 +101,10 @@ impl SpellFlag {
     pub const AGENT_RESERVED2: SpellFlag = SpellFlag(1 << 37);
     pub const AGENT_RESERVED3: SpellFlag = SpellFlag(1 << 38);
     pub const AGENT_RESERVED4: SpellFlag = SpellFlag(1 << 39);
+    /// Forever's rules: the spell takes none of the target's flat school damage bonus (Judgement
+    /// of the Crusader's Holy bonus) and keeps its spell power coefficient. Damage shields carry
+    /// it ([`super::buffs::support::new_damage_shield`]).
+    pub const IGNORE_TARGET_SCHOOL_BONUS: SpellFlag = SpellFlag(1 << 41);
     pub const IGNORE_MODIFIERS: SpellFlag =
         SpellFlag(Self::IGNORE_ATTACKER_MODIFIERS.0 | Self::IGNORE_TARGET_MODIFIERS.0);
 
@@ -510,6 +517,10 @@ pub(crate) struct Spell {
     pub crit_multiplier_additive: f64,
     pub bonus_base_damage: f64,
     pub bonus_coefficient: f64,
+    /// Forever's rules: the bonus coefficient column of a physical row that deals school damage,
+    /// which scales the caster's flat physical damage bonus (`prepare::physical_damage`). None
+    /// for any other spell, which takes the bonus whole, and under the Go reference.
+    pub physical_school_coefficient: Option<f64>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     /// Per target unit index, the dot on that unit.
@@ -634,6 +645,17 @@ impl Sim {
             crit_multiplier_additive: config.crit_multiplier_additive,
             bonus_base_damage: config.bonus_base_damage,
             bonus_coefficient: config.bonus_coefficient,
+            // A spell that names a coefficient of its own keeps it.
+            physical_school_coefficient: (self.rules == Rules::Forever
+                && config.bonus_coefficient == 0.0)
+                .then(|| {
+                    super::physical_damage::school_damage_effect(
+                        &config.action_id,
+                        config.spell_school,
+                    )
+                })
+                .flatten()
+                .map(|effect| effect.coeff()),
             threat_multiplier: config.threat_multiplier,
             flat_threat_bonus: config.flat_threat_bonus,
             dots: Vec::new(),

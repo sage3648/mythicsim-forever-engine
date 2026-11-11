@@ -30,6 +30,8 @@ pub(crate) mod env;
 pub(crate) mod export;
 pub(crate) mod export_items;
 pub(crate) mod external_cooldowns;
+pub(crate) mod forever_client_sets;
+pub(crate) mod forever_effect_items;
 pub(crate) mod forever_item_sets;
 pub(crate) mod forever_items;
 pub(crate) mod forever_items_generated;
@@ -48,6 +50,7 @@ pub(crate) mod item_test_support;
 pub(crate) mod itemhelpers;
 pub(crate) mod items;
 pub(crate) mod items_registry;
+pub(crate) mod levels;
 pub(crate) mod major_cooldown;
 pub(crate) mod mp5_sources;
 pub(crate) mod oil_of_immolation;
@@ -56,6 +59,7 @@ pub(crate) mod parse_effects;
 pub(crate) mod party_damage;
 pub(crate) mod periodic_action;
 pub(crate) mod pet;
+pub(crate) mod physical_damage;
 pub(crate) mod power_infusion;
 pub(crate) mod presets;
 pub(crate) mod proc_oil;
@@ -163,14 +167,221 @@ pub(crate) fn prepare_json_raid(
             request = known;
         }
     }
-    let mut env = env::Environment::with_options(
-        request.message(),
-        crate::classes::prepare_agent,
-        rules,
-        raid_live,
-    )
-    .map_err(PrepareError::Refused)?;
-    export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+    let mut character = levels::Character::from_request(request.message());
+    if let Some(reason) = levels::level_refusal(
+        &first_player_class(request.message()),
+        character.level,
+        character.sheet.is_some(),
+    ) {
+        return Err(PrepareError::Refused(Refusal::new(
+            "level_unsupported",
+            reason,
+        )));
+    }
+    if character.level != levels::MAX_LEVEL {
+        if let Some(sheet) = character.sheet.clone() {
+            let (calibration, first) = calibrate_level(bytes, &character, &sheet, scenario, rules)?;
+            character.calibration = calibration;
+            // Every unlearned spell is known from the start of the real pass, so each export of
+            // a spell, the item swap's included, flags it alike.
+            character.unlearned = first.unlearned.clone();
+            // The rotation names the ranks the character knows before preparation registers
+            // its actions (levels::rewrite_rotations), as known_ranks does for book ranks.
+            let mut value: serde_json::Value = serde_json::from_slice(bytes)
+                .map_err(|err| PrepareError::Invalid(err.to_string()))?;
+            if rules == Rules::Forever {
+                spelldata::book_ranks::rewrite_request(&mut value);
+            }
+            levels::rewrite_rotations(&mut value, &first);
+            let bytes =
+                serde_json::to_vec(&value).map_err(|err| PrepareError::Fault(err.to_string()))?;
+            request = Request::from_json(&bytes).map_err(PrepareError::Invalid)?;
+        }
+    }
+    levels::with_character(character, || {
+        let mut env = env::Environment::with_options(
+            request.message(),
+            crate::classes::prepare_agent,
+            rules,
+            raid_live,
+        )
+        .map_err(PrepareError::Refused)?;
+        export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+    })
+}
+
+/// A levelling character's calibration ([`levels::calibrate`]): the request prepared once with
+/// no buffs or consumables, in the gear the sheet was read in, its player's stats read against
+/// the sheet.
+fn calibrate_level(
+    bytes: &[u8],
+    character: &levels::Character,
+    sheet: &levels::Sheet,
+    scenario: &str,
+    rules: Rules,
+) -> Result<(levels::Calibration, levels::Character), PrepareError> {
+    let mut value: serde_json::Value =
+        serde_json::from_slice(bytes).map_err(|err| PrepareError::Invalid(err.to_string()))?;
+    without_buffs(&mut value);
+    in_sheet_gear(&mut value);
+    let bare = serde_json::to_vec(&value).map_err(|err| PrepareError::Fault(err.to_string()))?;
+    let mut request = Request::from_json(&bare).map_err(PrepareError::Invalid)?;
+    if rules == Rules::Forever {
+        if let Some(known) = known_ranks(&bare)? {
+            request = known;
+        }
+    }
+    let digest = request.sha256();
+    let (prepared, first, slopes) = levels::with_character(character.clone(), || {
+        let mut env =
+            env::Environment::with_rules(request.message(), crate::classes::prepare_agent, rules)
+                .map_err(PrepareError::Refused)?;
+        let prepared =
+            export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)?;
+        // How much of a point of base health or mana reaches the maximum: a talent or racial that
+        // raises maximum health or mana by a share (Arcane Mind, Tauren Endurance) scales the base
+        // too, and the solve divides by it.
+        let unit = env.sim.unit(env.player);
+        let slope = |stat: stats::Stat| {
+            let before = unit.sdm.apply_stat_dependencies(unit.stats_without_deps);
+            let mut plus = unit.stats_without_deps;
+            plus[stat] += 1000.0;
+            let slope = (unit.sdm.apply_stat_dependencies(plus)[stat] - before[stat]) / 1000.0;
+            if slope > 0.0 {
+                slope
+            } else {
+                1.0
+            }
+        };
+        let slopes = levels::Slopes {
+            health: slope(stats::Stat::Health),
+            mana: slope(stats::Stat::Mana),
+        };
+        Ok::<_, PrepareError>((prepared, levels::current(), slopes))
+    })?;
+    let player = &prepared["player"];
+    let mut first = first;
+    // Every spell the first pass registered, unlearned ones included, with its class spell:
+    // levels::rewrite_rotations points a rotation only at a known one of the same kind.
+    first.registered = player["spells"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|spell| {
+            let id = i32::try_from(spell["action_id"]["spell_id"].as_i64()?).ok()?;
+            let kind = spell["class_spell"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
+            Some((id, kind))
+        })
+        .collect();
+    let stats_of = |value: &serde_json::Value| {
+        let mut stats = stats::Stats::default();
+        for stat in stats::Stat::ALL {
+            stats[stat] = value[stat.name()].as_f64().unwrap_or(0.0);
+        }
+        stats
+    };
+    let engine = stats_of(&player["stats"]);
+    let class = player["class"].as_str().unwrap_or_default();
+    let race = player["race"].as_str().unwrap_or_default();
+    let used = levels::with_character(character.clone(), || {
+        character::base_stats(class, race, rules)
+    })
+    .unwrap_or_default();
+    let tables = crate::data::tables::tables();
+    let k_agi = tables
+        .crit_per_agi_max_level
+        .get(class)
+        .copied()
+        .unwrap_or(0.0);
+    let k_int = tables
+        .crit_per_int_max_level
+        .get(class)
+        .copied()
+        .unwrap_or(0.0);
+    Ok((
+        levels::calibrate(sheet, &engine, &used, k_agi, k_int, slopes),
+        first,
+    ))
+}
+
+/// The request with each player in the gear its sheet was read in, where the sheet names it: a
+/// Best Gear or Droptimizer set swaps other gear in, and the sheet is solved against its own
+/// (levels::calibrate), so a candidate's own crit is not solved away.
+fn in_sheet_gear(request: &mut serde_json::Value) {
+    let Some(parties) = request
+        .pointer_mut("/raid/parties")
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return;
+    };
+    for party in parties {
+        let Some(players) = party
+            .get_mut("players")
+            .and_then(serde_json::Value::as_array_mut)
+        else {
+            continue;
+        };
+        for player in players {
+            let gear = player
+                .pointer("/characterSheet/equipment")
+                .or_else(|| player.pointer("/character_sheet/equipment"))
+                .cloned();
+            if let (Some(gear), Some(player)) = (gear, player.as_object_mut()) {
+                player.remove("equipment");
+                player.insert("equipment".to_string(), gear);
+                // The swap set belongs to the simmed gear: swapped over the sheet's own weapons
+                // (a two-hander over a one-hander and shield) it can be one the engine refuses,
+                // and the sheet was read with nothing swapped.
+                for key in [
+                    "itemSwap",
+                    "item_swap",
+                    "enableItemSwap",
+                    "enable_item_swap",
+                ] {
+                    player.remove(key);
+                }
+            }
+        }
+    }
+}
+
+/// The class of the request's first player, as the schema names it (`ClassMage`).
+fn first_player_class(request: &crate::contracts::request::Message) -> String {
+    request
+        .message("raid")
+        .and_then(|raid| raid.messages("parties").first().copied())
+        .and_then(|party| party.messages("players").first().copied())
+        .map(|player| player.enum_name("class"))
+        .unwrap_or_default()
+}
+
+/// The request with no raid, party or player buffs, no debuffs and no consumables, the way a
+/// character sheet reads with nothing up.
+fn without_buffs(request: &mut serde_json::Value) {
+    fn clear(object: &mut serde_json::Value, keys: &[&str]) {
+        if let Some(map) = object.as_object_mut() {
+            for key in keys {
+                map.remove(*key);
+            }
+        }
+    }
+    let Some(raid) = request.get_mut("raid") else {
+        return;
+    };
+    clear(raid, &["buffs", "debuffs"]);
+    if let Some(parties) = raid.get_mut("parties").and_then(|p| p.as_array_mut()) {
+        for party in parties {
+            clear(party, &["buffs"]);
+            if let Some(players) = party.get_mut("players").and_then(|p| p.as_array_mut()) {
+                for player in players {
+                    clear(player, &["buffs", "consumables", "consumes"]);
+                }
+            }
+        }
+    }
 }
 
 /// The request with every Ahn'Qiraj 20 book rank it names read as the rank below, which is what

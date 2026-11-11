@@ -144,10 +144,6 @@ fn arcane_concentration_flag_is_forever_only() {
 }
 
 /// The first iteration's log lines of the Arcane board, a fight of two minutes.
-fn arcane_log() -> Vec<String> {
-    arcane_log_with_seed(None)
-}
-
 fn arcane_log_with_seed(seed: Option<u64>) -> Vec<String> {
     let mut request = request(ARCANE_BOARD, "arcane-mage");
     if let Some(seed) = seed {
@@ -169,21 +165,26 @@ fn time(line: &str) -> f64 {
 }
 
 /// A missile of Arcane Missiles (rank 7's, 10274) that lands rolls for Clearcasting: the log
-/// shows the aura gained or refreshed on the line after a missile's hit.
+/// shows the aura gained or refreshed on the line after a missile's hit. Each missile rolls a
+/// share of the talent's chance since the hotfixes of 9 November 2026, so forty seeded fights
+/// are read.
 #[test]
 fn arcane_missiles_proc_clearcasting() {
-    let lines = arcane_log();
     let missile_hit = |line: &str| {
         line.contains("SpellID: 10274} Hit for") || line.contains("SpellID: 10274} Crit for")
     };
-    let procs = lines
-        .windows(2)
-        .filter(|pair| {
-            missile_hit(&pair[0])
-                && pair[1].contains(CLEARCASTING)
-                && (pair[1].contains("Aura gained") || pair[1].contains("Aura refreshed"))
+    let procs: usize = (1..=40)
+        .map(|seed| {
+            arcane_log_with_seed(Some(seed))
+                .windows(2)
+                .filter(|pair| {
+                    missile_hit(&pair[0])
+                        && pair[1].contains(CLEARCASTING)
+                        && (pair[1].contains("Aura gained") || pair[1].contains("Aura refreshed"))
+                })
+                .count()
         })
-        .count();
+        .sum();
     assert!(procs > 0, "no missile proc Clearcasting");
 }
 

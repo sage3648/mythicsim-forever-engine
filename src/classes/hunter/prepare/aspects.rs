@@ -100,7 +100,7 @@ impl Hunter {
             let haste_multiplier = 1.0
                 + rank
                     .effect(dbcenums::A_MOD_RANGED_HASTE, 0)
-                    .average(crate::prepare::character::constants::CHARACTER_LEVEL)
+                    .average(crate::prepare::levels::character_level())
                     / 100.0;
             sim.get_or_register_aura(
                 unit,
@@ -123,7 +123,7 @@ impl Hunter {
 
         let rap = hawk_rank
             .effect(dbcenums::A_MOD_RANGED_ATTACK_POWER, 0)
-            .average(crate::prepare::character::constants::CHARACTER_LEVEL);
+            .average(crate::prepare::levels::character_level());
         let aura = sim.get_or_register_aura(
             unit,
             AuraConfig {
@@ -192,7 +192,7 @@ impl Hunter {
             let haste_multiplier = 1.0
                 + rank
                     .effect(dbcenums::A_MOD_MELEE_HASTE_3, 0)
-                    .average(crate::prepare::character::constants::CHARACTER_LEVEL)
+                    .average(crate::prepare::levels::character_level())
                     / 100.0;
             sim.get_or_register_aura(
                 unit,
@@ -215,7 +215,7 @@ impl Hunter {
 
         let ap = beast_rank
             .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-            .average(crate::prepare::character::constants::CHARACTER_LEVEL);
+            .average(crate::prepare::levels::character_level());
         let aura = sim.get_or_register_aura(
             unit,
             AuraConfig {

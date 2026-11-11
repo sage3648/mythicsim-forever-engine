@@ -8,7 +8,8 @@
 
 use std::rc::Rc;
 
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, Duration, EventCallbacks, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND,
 };
@@ -66,7 +67,7 @@ impl Rogue {
         let rank = spell_data().ambush.highest();
         // The client states the weapon share as a percentage on effect 2 (250, where TBC had
         // 275), counting from 1 by position.
-        let weapon_damage = rank.effect_n(2).average(CHARACTER_LEVEL) / 100.0;
+        let weapon_damage = rank.effect_n(2).average(character_level()) / 100.0;
         let spell = sim.register_spell(
             unit,
             SpellConfig {
@@ -90,7 +91,7 @@ impl Rogue {
     /// Go `registerBackstabSpell`.
     pub(super) fn register_backstab_spell(&mut self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().backstab.highest_for(sim.rules);
-        let weapon_damage = rank.effect_n(2).average(CHARACTER_LEVEL) / 100.0;
+        let weapon_damage = rank.effect_n(2).average(character_level()) / 100.0;
         let spell = sim.register_spell(
             unit,
             SpellConfig {
@@ -317,7 +318,7 @@ impl Rogue {
 
     /// Go `registerSliceAndDice`.
     pub(super) fn register_slice_and_dice(&mut self, sim: &mut Sim, unit: UnitId) {
-        let rank = spell_data().slice_and_dice.by_id(6774);
+        let rank = spell_data().slice_and_dice.highest();
         let action = spell_action(rank.id);
         let state = Rc::clone(&self.state);
 
@@ -325,7 +326,7 @@ impl Rogue {
         // (30).
         state.slice_and_dice_bonus_flat.set(
             rank.effect(crate::prepare::dbcenums::A_MOD_MELEE_HASTE_3, 0)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
         );
 

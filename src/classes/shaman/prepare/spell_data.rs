@@ -8,7 +8,7 @@
 
 use std::sync::OnceLock;
 
-use crate::prepare::spelldata::Ladder;
+use crate::prepare::spelldata::{Ladder, Spell};
 
 /// Go `generatedSpellData`, for the ladders `sim/shaman` uses.
 pub(crate) struct SpellData {
@@ -31,6 +31,9 @@ pub(crate) struct SpellData {
     pub fire_nova_triggered: Ladder,
     pub flame_shock: Ladder,
     pub flametongue_totem: Ladder,
+    /// Flametongue Weapon's ranks, the imbue a spellbook lists; each rank's hit is the proc row
+    /// [`flametongue_weapon_proc`] pairs with it.
+    pub flametongue_weapon: Ladder,
     pub flametongue_weapon_triggered: Ladder,
     pub flurry: Ladder,
     pub flurry_triggered: Ladder,
@@ -48,7 +51,6 @@ pub(crate) struct SpellData {
     pub lightning_bolt: Ladder,
     pub lightning_shield: Ladder,
     pub lightning_shield_triggered: Ladder,
-    pub maelstrom_weapon: Ladder,
     pub maelstrom_weapon_triggered: Ladder,
     pub magma_totem: Ladder,
     pub magma_totem_triggered: Ladder,
@@ -78,6 +80,51 @@ pub(crate) struct SpellData {
     pub windfury_weapon_triggered: Ladder,
 }
 
+/// The row `triggered` holds, in rank order, for the rank of `ladder` the character knows: a
+/// rank's hit or pulse is its own row. At level 60 the top rank's. Read off the top rank at
+/// every level, a level 22 shaman who has trained Flametongue Weapon rank 1 (8024) hit with rank
+/// 6's 2498 (16344), a spell level 56 row (MythicSim Quick Sims, 9 November 2026).
+fn paired_rank(ladder: &Ladder, triggered: &[i32]) -> i32 {
+    let known = ladder.highest().id;
+    let mut paired = triggered[triggered.len() - 1];
+    ladder.each(|rank, spell| {
+        if spell.id == known {
+            paired = triggered[(rank - 1) as usize];
+        }
+    });
+    paired
+}
+
+/// Each Flametongue Weapon rank's hit, "Flametongue Weapon Proc" ranks 1 to 6.
+const FLAMETONGUE_WEAPON_PROCS: [i32; 6] = [8026, 8028, 8029, 10445, 16343, 16344];
+/// Each Magma Totem rank's pulse (Magma Totem 8187 and on, 20 to 73 a pulse).
+const MAGMA_TOTEM_PULSES: [i32; 4] = [8187, 10579, 10580, 10581];
+/// Each Lightning Shield rank's orb (13 to 178 a discharge).
+const LIGHTNING_SHIELD_ORBS: [i32; 7] = [26364, 26365, 26366, 26367, 26369, 26370, 26363];
+
+/// The hit of the Flametongue Weapon rank the character knows: rank 6's (16344) at level 60.
+pub(crate) fn flametongue_weapon_proc() -> &'static Spell {
+    let data = spell_data();
+    data.flametongue_weapon_triggered.by_id(paired_rank(
+        &data.flametongue_weapon,
+        &FLAMETONGUE_WEAPON_PROCS,
+    ))
+}
+
+/// The pulse of the Magma Totem rank the character knows: rank 4's (10581) at level 60.
+pub(crate) fn magma_totem_pulse() -> &'static Spell {
+    let data = spell_data();
+    data.magma_totem_triggered
+        .by_id(paired_rank(&data.magma_totem, &MAGMA_TOTEM_PULSES))
+}
+
+/// The orb of the Lightning Shield rank the character knows: rank 7's (26363) at level 60.
+pub(crate) fn lightning_shield_orb() -> &'static Spell {
+    let data = spell_data();
+    data.lightning_shield_triggered
+        .by_id(paired_rank(&data.lightning_shield, &LIGHTNING_SHIELD_ORBS))
+}
+
 /// Go `spellData`.
 pub(crate) fn spell_data() -> &'static SpellData {
     static DATA: OnceLock<SpellData> = OnceLock::new();
@@ -101,6 +148,7 @@ pub(crate) fn spell_data() -> &'static SpellData {
         fire_nova_triggered: Ladder::ranked(&[408423, 408424, 408426, 408427, 408428]),
         flame_shock: Ladder::ranked(&[8050, 8052, 8053, 10447, 10448, 29228]),
         flametongue_totem: Ladder::ranked(&[8227, 8249, 10526, 16387]),
+        flametongue_weapon: Ladder::ranked(&[8024, 8027, 8030, 16339, 16341, 16342]),
         flametongue_weapon_triggered: Ladder::ranked(&[
             8026, 8028, 8029, 10444, 10445, 16343, 16344, 29469, 29470,
         ]),
@@ -124,7 +172,6 @@ pub(crate) fn spell_data() -> &'static SpellData {
         lightning_shield_triggered: Ladder::ranked(&[
             26363, 26364, 26365, 26366, 26367, 26369, 26370, 26545,
         ]),
-        maelstrom_weapon: Ladder::talent(408498, 5),
         maelstrom_weapon_triggered: Ladder::ranked(&[408505]),
         magma_totem: Ladder::ranked(&[8190, 10585, 10586, 10587]),
         magma_totem_triggered: Ladder::ranked(&[
@@ -157,4 +204,43 @@ pub(crate) fn spell_data() -> &'static SpellData {
         windfury_totem_triggered: Ladder::ranked(&[8515, 8516, 10608, 10609, 10610, 10612]),
         windfury_weapon_triggered: Ladder::ranked(&[8233, 8236, 10484, 16361]),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prepare::levels::{with_character, Character};
+
+    fn at<T>(level: i32, book: Option<&[i32]>, f: impl FnOnce() -> T) -> T {
+        let character = Character {
+            level,
+            known_spells: book.map(|book| book.iter().copied().collect()),
+            ..Character::default()
+        };
+        with_character(character, f)
+    }
+
+    /// Each rank's hit, pulse or orb is its own row: rank 6's Flametongue Weapon proc, rank 4's
+    /// Magma Totem pulse and rank 7's Lightning Shield orb at level 60, the known rank's below.
+    #[test]
+    fn a_hit_is_the_known_ranks_row() {
+        let ids = || {
+            (
+                flametongue_weapon_proc().id,
+                magma_totem_pulse().id,
+                lightning_shield_orb().id,
+            )
+        };
+        assert_eq!(ids(), (16344, 10581, 26363));
+        assert_eq!(at(30, None, ids), (8029, 8187, 26366));
+        assert_eq!(at(46, None, ids), (16343, 10580, 26369));
+        // A spellbook names the rank: a level 22 shaman who trained Flametongue Weapon rank 1.
+        assert_eq!(
+            at(22, Some(&[8024, 324]), || (
+                flametongue_weapon_proc().id,
+                lightning_shield_orb().id
+            )),
+            (8026, 26364)
+        );
+    }
 }

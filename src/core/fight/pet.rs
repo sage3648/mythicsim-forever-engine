@@ -446,6 +446,8 @@ pub(crate) struct ActivePet {
     /// Go `isDynamic` with its pending inheritance; `None` for a pet that only inherits at
     /// its summon.
     pub(crate) inheritance: Option<Inheritance>,
+    /// Forever's rules: the pet swings at its owner's melee and attack speed.
+    pub(crate) inherits_melee_speed: bool,
     /// Go `Pet.enabled`, false once the fight's end dismisses it.
     pub(crate) enabled: bool,
     /// A guardian an effect summons during a fight: each reset dismisses it instead.
@@ -516,6 +518,7 @@ impl ActivePet {
             start_distance: exported.distance_yards,
             movement_speed: exported.movement_speed,
             inheritance,
+            inherits_melee_speed: exported.inherits_melee_speed,
             enabled: false,
             summoned: exported.summoned,
             timeout: None,

@@ -12,7 +12,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use crate::contracts::prepared_v2::{Enemy, EnemyAttackPowerAura, EnemyRolls};
 
 use super::env::Environment;
-use super::sim::{school_array_index, UnitId, PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT};
+use super::sim::{school_array_index, Rules, UnitId, PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT};
 use super::spell::{school, Spell, SpellFlag};
 use super::stat_auras::{apply_level, StatLayout};
 use super::stats::{Stat, SCHOOL_LEN};
@@ -159,6 +159,20 @@ pub(crate) fn enemy_values(env: &Environment, target: UnitId) -> Result<Enemy, R
             * spell.damage_multiplier
             * (spell.damage_multiplier_additive + spell.direct_damage_multiplier_additive)
     };
+    // A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 -
+    // 1) (a 6 shield at 59 Strength blocks 7), with the multiplier an aura gives it. The reference
+    // takes off the fraction.
+    let (block_value, block_value_multiplier) = if env.sim.rules == Rules::Forever {
+        (
+            (defender.stats[Stat::BlockValue] * pseudo.block_value_multiplier).floor(),
+            1.0,
+        )
+    } else {
+        (
+            defender.stats[Stat::BlockValue],
+            pseudo.block_value_multiplier,
+        )
+    };
     let rolls = EnemyRolls {
         armor_multiplier,
         bonus_damage_taken: bonus_taken,
@@ -171,9 +185,9 @@ pub(crate) fn enemy_values(env: &Environment, target: UnitId) -> Result<Enemy, R
         block_chance: block,
         crit_chance: crit,
         crush_chance: crush,
-        block_reduction: defender.stats[Stat::BlockValue] * pseudo.block_value_multiplier,
-        block_value: Some(defender.stats[Stat::BlockValue]),
-        block_value_multiplier: Some(pseudo.block_value_multiplier),
+        block_reduction: block_value * block_value_multiplier,
+        block_value: Some(block_value),
+        block_value_multiplier: Some(block_value_multiplier),
     };
     Ok(Enemy {
         action_id: spell.action_id.clone(),

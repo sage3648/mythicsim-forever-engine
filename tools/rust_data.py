@@ -27,7 +27,11 @@ MANIFEST = DATA / "manifest.json"
 # Data written by their own generators, not the import, and checked by them
 # (tools/rust_client_items.py check), and the live rows of items whose reference row the live
 # game has changed, checked by the data tests (src/data.rs, tests/forever_av_vendor_items_20261106.rs).
-OWN_FILES = {"forever-client-items.jsonl", "forever-live-items.jsonl"}
+OWN_FILES = {
+    "forever-client-item-bonuses.jsonl",
+    "forever-client-items.jsonl",
+    "forever-live-items.jsonl",
+}
 
 # SimDatabase list, output file and the key each row is found by.
 DATABASE_TABLES = [
@@ -150,6 +154,11 @@ def write_data(raw):
 
 def check():
     manifest = load(MANIFEST)
+    if not isinstance(manifest, dict):
+        raise ValueError("data manifest must be an object")
+    version = manifest.get("schema_version")
+    if type(version) is not int or version != 1:
+        raise ValueError(f"unsupported data manifest schema_version: {version!r}")
     errors = []
     if manifest.get("engine_revision") != PIN:
         errors.append(f"data was imported at {manifest.get('engine_revision')}, the pin is {PIN}")

@@ -17,10 +17,14 @@ pub(crate) struct Bloodrage {
     pub(crate) rage_threshold: f64,
     /// Go `NewRageMetrics(actionID)`.
     pub(crate) metrics: usize,
+    /// Forever's rules: the instant rage's threat is not scaled by the stance.
+    pub(crate) instant_threat_unscaled: bool,
 }
 
 pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, params: Bloodrage) {
-    fight.add_rage(params.instant_rage, params.metrics);
+    let unscaled =
+        params.instant_threat_unscaled || fight.resources[params.metrics].unscaled_threat;
+    fight.add_rage_with_threat(params.instant_rage, params.metrics, unscaled);
     fight.remove_health(params.health_cost);
     fight.start_class_periodic(PERIODIC_TAG, params.period, params.ticks, PRIORITY_GCD);
 }

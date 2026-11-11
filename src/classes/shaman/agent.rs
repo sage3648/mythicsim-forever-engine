@@ -1558,7 +1558,10 @@ impl Agent for ShamanAgent {
                 state.on_trigger_hit(fight, spell, result);
             }
             ShamanAura::WindfuryTotemTrigger => {
-                Self::windfury_totem(fight).on_trigger_hit(fight, spell, result);
+                let totem = Self::windfury_totem(fight);
+                if totem.on_trigger_hit(fight, spell, result) {
+                    totem.cast_extra(fight, result);
+                }
             }
             ShamanAura::WindfuryTotemProc => {
                 Self::windfury_totem(fight).on_spend_hit(fight, spell, result);

@@ -210,8 +210,10 @@ fn lightning_overload_is_thirty_percent() {
     assert_eq!(effect(&reference, "lightning_bolt")["overload_chance"], 0.1);
 }
 
-/// Stormstrike 150% weapon damage on a 6 sec cooldown (was 100% and 8 sec), Flurry 30% at 5
-/// points (was 25%) and Maelstrom Weapon's doubled chance.
+/// Stormstrike 100% weapon damage on an 8 sec cooldown under both rules since the hotfixes of 10
+/// November 2026 (the notes of 2 November had made it 150% on 6 sec), Flurry 30% at 5 points (was
+/// 25%), and Maelstrom Weapon's chance at the fixture's 5 points: 10 PPM under both rules since
+/// the same hotfixes (6/7/8/9/10 by rank under Forever's; the notes had doubled it to 20).
 #[test]
 fn enhancement_talents_and_stormstrike() {
     let request = request("production-enhancement-shaman");
@@ -221,7 +223,7 @@ fn enhancement_talents_and_stormstrike() {
     let forever = prepared(&forever_request, Rules::Forever);
     let reference = prepared(&request, Rules::GoReference);
     for (prepared, multiplier, cooldown) in [
-        (&forever, 1.5, 6_000_000_000i64),
+        (&forever, 1.0, 8_000_000_000i64),
         (&reference, 1.0, 8_000_000_000),
     ] {
         let strikes = spell(prepared, "stormstrike_damage");
@@ -239,7 +241,24 @@ fn enhancement_talents_and_stormstrike() {
             .as_f64()
             .unwrap()
     };
-    assert!((chance(&forever) - 2.0 * chance(&reference)).abs() < 1e-12);
+    assert!((chance(&forever) - chance(&reference)).abs() < 1e-12);
     assert_eq!(effect(&forever, "flurry")["melee_speed_multiplier"], 1.3);
     assert_eq!(effect(&reference, "flurry")["melee_speed_multiplier"], 1.25);
+}
+
+/// Since the hotfixes of 10 November 2026 a main hand Windfury Weapon no longer blocks the party's
+/// Windfury Totem, nor a main hand Flametongue Weapon the party's Flametongue Totem, under
+/// Forever's rules ("Weapon imbues and Weapon totems can now be used at the same time"). The
+/// reference keeps the block.
+#[test]
+fn weapon_imbues_and_totems_stack_20261110() {
+    let mut windfury = request("production-enhancement-shaman");
+    let player = &mut windfury["raid"]["parties"][0]["players"][0];
+    player["enhancementShaman"]["options"]["classOptions"]["imbueMh"] = "WindfuryWeapon".into();
+    let mut forever_request = windfury.clone();
+    shaman_layout::forever_request(&mut forever_request);
+    let blocks =
+        |prepared: &Value| effect(prepared, "windfury_weapon")["blocks_windfury_totem"].clone();
+    assert_eq!(blocks(&prepared(&forever_request, Rules::Forever)), false);
+    assert_eq!(blocks(&prepared(&windfury, Rules::GoReference)), true);
 }

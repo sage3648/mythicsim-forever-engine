@@ -3,6 +3,9 @@
 //! Frost Blast's 0.271 coefficient, Arcane Wrath's cooldown, Missile Barrage) were already in the
 //! imported data through hotfix push 112753, so they are not new here.
 
+#[path = "support/live_items.rs"]
+mod live_items;
+
 use forever_engine::{
     contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
 };
@@ -54,6 +57,8 @@ fn log(rules: Rules, rotation: Vec<Value>, seconds: f64) -> (Value, Vec<String>)
     request["encounter"]["duration"] = seconds.into();
     request["encounter"]["durationVariation"] = 0.into();
     let player = &mut request["raid"]["parties"][0]["players"][0];
+    // The two rules are compared roll for roll, so both wear the same stats.
+    live_items::take_off_live_items(player);
     if rules == Rules::Forever {
         // The fixture's talents in client 1.60.1.70707's order: Arcane Focus's points on
         // Improved Channeling, which takes its square.

@@ -233,6 +233,9 @@ pub(crate) fn new_item(spec: &Message, rules: Rules) -> Result<Item, Refusal> {
         )
     })?;
     item.stats = stats_from_map(scaling, "stats");
+    if rules == Rules::Forever {
+        gear_attack_power_is_ranged_too(&mut item.stats);
+    }
     item.weapon_damage_max = scaling.f64("weapon_damage_max");
     item.weapon_damage_min = scaling.f64("weapon_damage_min");
     item.rand_prop_points = scaling.i32("rand_prop_points");
@@ -250,6 +253,19 @@ pub(crate) fn new_item(spec: &Message, rules: Rules) -> Result<Item, Refusal> {
         }
     }
     Ok(item)
+}
+
+/// Forever's rules: attack power on an item raises ranged attack power by as much. The equip
+/// spells that read "+N Attack Power" state both auras, 99 (attack power) and 124 (ranged attack
+/// power), at the same value (Attack Power 22, 9332, both at 22 in client 1.60.1.70862, the
+/// equip spell of Counterattack Lodestone 18537), where most item rows carry attack power alone (Devilsaur Gauntlets 15063, Cape of the Black
+/// Baron 13340). A row that already states ranged attack power keeps its own. Random suffixes
+/// ("of Power") and enchants carry their own ranged attack power and are left as they are; Death's
+/// Embrace (24153) is aura 99 alone.
+fn gear_attack_power_is_ranged_too(stats: &mut Stats) {
+    if stats[Stat::AttackPower] > 0.0 && stats[Stat::RangedAttackPower] == 0.0 {
+        stats[Stat::RangedAttackPower] = stats[Stat::AttackPower];
+    }
 }
 
 /// Go `ItemTypeToSlot`.

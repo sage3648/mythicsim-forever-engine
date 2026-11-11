@@ -86,3 +86,11 @@ checks the gate passes and runs it.
 | `feral-bear-druid-change-target-faerie-fire` | a Feral Bear tanking five targets that changes target with Faerie Fire in its rotation (3 November 2026) |
 | `protection-warrior-dreadnaught-8p` | a Protection Warrior in Dreadnaught's Battlegear (8), whose Cheat Death goes up on a hit taken below a fifth of health (3 November 2026) |
 | `survival-hunter-felstriker-pet-hit` | a hunter pet following the owner's physical hit from a stat aura (Felstriker's proc) |
+| `enhancement-shaman-ceremonial-mallet` | Ceremonial Mallet (279885), a Forever item with an encrypted ItemSparse row and "+33 Attack Power against Undead", on a level 40 Enhancement Shaman (9 November 2026) |
+| `assassination-rogue-defias-leather` | Defias Leather's 4 piece bleed, on a level 25 Assassination Rogue (9 November 2026) |
+| `feral-druid-defias-leather` | the same set on a level 25 Feral Druid in Cat Form (9 November 2026) |
+| `retribution-paladin-guardians-dualblade` | Guardian's Dualblade ("when damaged" 1080 armor), inert on a Retribution Paladin nothing attacks and a proc on the same Paladin tanking (level 31, 9 November 2026) |
+| `retribution-paladin-swap-sword-of-zeal` | a Manual Crowd Pummeler opener that swaps onto Sword of Zeal (a level 60 Droptimizer candidate, 9 November 2026) |
+| `enhancement-shaman-serpentbane-crown` | Serpentbane Crown (274609), a Forever item whose use (a Fire hit and damage over time) has encrypted client rows, on a level 41 Enhancement Shaman (9 November 2026) |
+| `warrior-bigger-rock-on-bigger-stick` | Bigger Rock on Bigger Stick (279480), a Forever two-hand mace whose chance on hit is a physical damage over time, on a level 46 Arms Warrior (9 November 2026) |
+| `feral-druid-bigger-rock-on-bigger-stick` | the same weapon on a level 43 Feral Druid in Cat Form (9 November 2026) |

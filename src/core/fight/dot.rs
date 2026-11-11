@@ -16,7 +16,13 @@ pub(crate) struct Dot {
     pub(crate) base_tick_count: i32,
     pub(crate) base_tick_length: i64,
     pub(crate) tick_period: i64,
+    /// How fast the dot ticks against its own rate: at 2 its ticks come twice as often while
+    /// it lasts as long, so it deals more of them (Wrack on the warlock's other dots since the
+    /// class tuning of 11 November 2026).
+    pub(crate) tick_rate: f64,
     pub(crate) remaining_ticks: i32,
+    /// Go `Dot.ticksDone`: the periodic ticks since the dot was applied.
+    pub(crate) ticks_done: i32,
     pub(crate) base_duration_multiplier: f64,
     pub(crate) base_duration_flat: i64,
     pub(crate) affected_by_haste: bool,
@@ -63,7 +69,9 @@ impl Dot {
             base_tick_count: exported.base_tick_count,
             base_tick_length: exported.base_tick_length_ns,
             tick_period: exported.base_tick_length_ns,
+            tick_rate: 1.0,
             remaining_ticks: exported.base_tick_count,
+            ticks_done: 0,
             base_duration_multiplier: exported.base_duration_multiplier,
             base_duration_flat: exported.base_duration_flat_ns,
             affected_by_haste: exported.affected_by_cast_speed || exported.affected_by_real_haste,
@@ -85,15 +93,13 @@ impl Dot {
         }
     }
 
-    /// Go `Dot.TickCount`: the ticks dealt so far. The runtime has no extra ticks and no
-    /// hasted dots, so the hasted count is the base duration over the tick period.
+    /// Go `Dot.TickCount`: the ticks dealt since the dot was applied. A tick length mod that
+    /// changes while the dot runs (Missile Barrage's shorter missile interval drops when Arcane
+    /// Missiles finishes casting, after the channel took the shorter ticks) does not move it,
+    /// where a total rebuilt from the live tick length read each missile as its number plus the
+    /// ticks the mod had taken off.
     pub(crate) fn tick_count(&self) -> i32 {
-        let total = if self.haste_reduces_duration {
-            self.base_tick_count
-        } else {
-            (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
-        };
-        total - self.remaining_ticks
+        self.ticks_done
     }
 
     /// Go `Dot.HastedTickCount`: the base duration over the snapshotted tick period.
@@ -122,6 +128,9 @@ impl<A: Agent> Fight<A> {
         let period = self.calc_tick_period(dot);
         let state = &mut self.dots[dot];
         state.tick_period = period;
+        // A dot applied anew ticks at its own rate; whatever sped it up says so again.
+        state.tick_rate = 1.0;
+        state.ticks_done = 0;
         let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
         state.remaining_ticks = ticks.round_ties_even() as i32;
         if state.affected_by_haste && !state.haste_reduces_duration {
@@ -150,6 +159,9 @@ impl<A: Agent> Fight<A> {
         let period = self.calc_tick_period(dot);
         let state = &mut self.dots[dot];
         state.tick_period = period;
+        // A dot applied anew ticks at its own rate; whatever sped it up says so again.
+        state.tick_rate = 1.0;
+        state.ticks_done = 0;
         let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
         state.remaining_ticks = ticks.round_ties_even() as i32;
         if state.affected_by_haste && !state.haste_reduces_duration {
@@ -162,6 +174,40 @@ impl<A: Agent> Fight<A> {
         state.remaining_ticks = ((duration - until_next_tick) / state.tick_period) as i32 + 1;
         self.aura_mut(aura).duration = duration;
         self.activate_aura(aura);
+    }
+
+    /// Make the dot tick `rate` times as often as its own period from now on, until the rate is
+    /// set again or the dot is applied anew. A running dot keeps its expiry: the wait for its
+    /// next tick and its tick period shrink or stretch by the change, and the ticks it has left
+    /// are the ones that then fit before it runs out, so a dot at twice the rate deals twice the
+    /// ticks in the time it is sped up. A dot that is not running takes nothing.
+    pub(crate) fn set_dot_tick_rate(&mut self, dot: DotId, rate: f64) {
+        let aura = self.dots[dot].aura;
+        let old = self.dots[dot].tick_rate;
+        if old == rate || !self.aura(aura).active {
+            return;
+        }
+        let Some(handle) = self.dots[dot].tick_action.take() else {
+            return;
+        };
+        let factor = old / rate;
+        let scale = |span: i64| (span as f64 * factor) as i64;
+        let expires = self.aura(aura).expires;
+        let state = &mut self.dots[dot];
+        state.tick_rate = rate;
+        state.tick_period = scale(state.tick_period).max(1);
+        let at = self.now + scale(state.tick_next_at - self.now);
+        state.tick_next_at = at;
+        if expires != crate::core::time::NEVER_EXPIRES {
+            state.remaining_ticks = if at > expires {
+                0
+            } else {
+                ((expires - at) / state.tick_period) as i32 + 1
+            };
+        }
+        self.queue.cancel(handle);
+        let handle = self.schedule(at, PRIORITY_GCD, Action::DotTick(dot));
+        self.dots[dot].tick_action = Some(handle);
     }
 
     /// Go `Dot.CalcTickPeriod`: a dot affected by cast speed or by real haste ticks faster,
@@ -272,6 +318,7 @@ impl<A: Agent> Fight<A> {
         }
         if self.dots[dot].tick_next_at == self.now {
             self.dots[dot].remaining_ticks -= 1;
+            self.dots[dot].ticks_done += 1;
             self.tick_once(dot);
         }
         if let Some(handle) = self.dots[dot].tick_action.take() {
@@ -353,6 +400,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.dots[dot].remaining_ticks -= 1;
+        self.dots[dot].ticks_done += 1;
         self.tick_once(dot);
         if self.dots[dot].channeled {
             if self.dots[dot].remaining_ticks == 0 && self.gcd_ready() {

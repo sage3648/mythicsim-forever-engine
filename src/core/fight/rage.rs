@@ -26,6 +26,11 @@ pub(crate) struct RageBar {
     /// Forever's rules: a critical hit gives `CRIT_RAGE_MULTIPLIER` times the swing's rage, a
     /// two-hander's factor included, in place of adding the crit rage above.
     pub(crate) crit_multiplies_swing: bool,
+    /// Forever's rules: rage gained before the pull makes no threat.
+    pub(crate) no_threat_before_pull: bool,
+    /// Forever's rules: the rage a point of damage taken gives, counted before armor, block and
+    /// absorbs. Zero for the Go reference, whose rule reads maximum health.
+    pub(crate) damage_taken_rage_per_damage: f64,
     pub(crate) threat_per_rage: f64,
     /// Go `RageGainThreatMultiplied` (patch 182): a gain counts `threat_per_rage` times the
     /// player's threat multiplier at the gain, split between the targets at the end of the fight.
@@ -92,6 +97,13 @@ impl<A: Agent> Fight<A> {
 
     /// Go `rageBar.AddRage`, which lets the rotation react.
     pub(crate) fn add_rage(&mut self, amount: f64, metrics: usize) {
+        let unscaled = self.resources[metrics].unscaled_threat;
+        self.add_rage_with_threat(amount, metrics, unscaled);
+    }
+
+    /// [`Fight::add_rage`] for a gain whose threat the player's threat multiplier does not scale
+    /// when `unscaled`, whatever its metrics say.
+    pub(crate) fn add_rage_with_threat(&mut self, amount: f64, metrics: usize, unscaled: bool) {
         assert!(amount >= 0.0, "Trying to add negative rage!");
         let bar = self.rage_bar();
         let (old, max) = (bar.current, bar.max);
@@ -101,9 +113,14 @@ impl<A: Agent> Fight<A> {
         resource.gain += amount;
         resource.actual_gain += new - old;
         let gain = new - old;
-        let threat_multiplier = self.player.threat_multiplier;
+        let threat_multiplier = if unscaled {
+            1.0
+        } else {
+            self.player.threat_multiplier
+        };
+        let before_pull = self.now < 0;
         let bar = self.rage.as_mut().expect("the player has a rage bar");
-        if gain > 0.0 && bar.threat_multiplied {
+        if gain > 0.0 && bar.threat_multiplied && !(bar.no_threat_before_pull && before_pull) {
             if bar.gain_threat.len() <= metrics {
                 bar.gain_threat.resize(metrics + 1, 0.0);
             }
@@ -202,6 +219,21 @@ impl<A: Agent> Fight<A> {
     /// armor and resistance, against maximum health.
     pub(crate) fn rage_bar_hit_taken(&mut self, result: &SpellResult) {
         if !self.rage_bar().in_use || !result.landed() {
+            return;
+        }
+        let per_damage = self.rage_bar().damage_taken_rage_per_damage;
+        if per_damage > 0.0 {
+            // Forever's rules (prepare/rage.rs): a hit blocked in full gives none (6 of 6 in
+            // combat logs of 6 and 8 November 2026); a block whose remainder a shield absorbs
+            // still does.
+            let (pre_armor, blocked_in_full) = self.player_hit_pre_armor;
+            if blocked_in_full {
+                return;
+            }
+            let bar = self.rage_bar();
+            let generated = pre_armor * per_damage * bar.damage_taken_multiplier;
+            let metrics = bar.damage_taken_metrics;
+            self.add_rage(generated, metrics);
             return;
         }
         let (post, multiplier) = self.player_hit_resistance;

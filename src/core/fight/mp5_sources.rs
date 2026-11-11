@@ -1,4 +1,4 @@
-//! The party's mana totems in the results (README, Rust-only mechanics): Mana Spring Totem's
+//! The party's mana totems in the results (docs/mechanics.md): Mana Spring Totem's
 //! party buff and Mana Tide Totem are MP5 auras whose mana arrives inside the player's regular
 //! mana ticks. A tick's share from each totem moves from the regeneration metrics to the
 //! totem's own, so the results name the totem. The mana gained is the same; only the metrics it

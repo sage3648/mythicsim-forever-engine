@@ -7,6 +7,8 @@ mod global_cooldown;
 mod hunter;
 mod item_effects;
 mod item_swap;
+#[path = "../support/live_items.rs"]
+mod live_items;
 mod mage;
 mod mana_totems;
 mod oil_of_immolation;

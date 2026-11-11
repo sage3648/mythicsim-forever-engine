@@ -105,6 +105,17 @@ impl Spell {
         self.has_attr(dbcenums::ATTR_INDEX_EX_1, dbcenums::ATTR_EX_1_NO_THREAT)
     }
 
+    /// Whether the spell needs a main hand weapon: Mortal Strike, Slam, Sunder Armor and the
+    /// other strikes of the weapon in the main hand.
+    pub(crate) fn requires_main_hand(&self) -> bool {
+        self.has_attr(dbcenums::ATTR_INDEX_EX_3, dbcenums::ATTR_EX_3_REQ_MAIN_HAND)
+    }
+
+    /// Whether the spell goes off in place of the next main hand swing.
+    pub(crate) fn on_next_swing(&self) -> bool {
+        self.has_attr(dbcenums::ATTR_INDEX_BASE, dbcenums::ATTR_ON_NEXT_SWING)
+    }
+
     pub(crate) fn suppresses_weapon_procs(&self) -> bool {
         self.has_attr(
             dbcenums::ATTR_INDEX_EX_4,

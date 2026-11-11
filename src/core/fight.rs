@@ -620,6 +620,11 @@ pub(crate) struct Flags {
     pub(crate) cannot_be_dodged: bool,
     /// Go `SpellFlagPushback`: damage taken during the hardcast pushes the cast back.
     pub(crate) pushback: bool,
+    /// A spell the levelling character has not trained (`prepare::levels`): registered for
+    /// what refers to it, never pressed by the rotation.
+    pub(crate) unlearned: bool,
+    /// Forever's damage shields: none of the target's flat school damage bonus.
+    pub(crate) ignore_target_school_bonus: bool,
 }
 
 impl Flags {
@@ -649,6 +654,8 @@ impl Flags {
                 "SpellFlagCombatPotion" => flags.combat_potion = true,
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
                 "SpellFlagPushback" => flags.pushback = true,
+                "SpellFlagUnlearned" => flags.unlearned = true,
+                "SpellFlagIgnoreTargetSchoolBonus" => flags.ignore_target_school_bonus = true,
                 _ => {}
             }
         }
@@ -869,11 +876,17 @@ pub(crate) struct Spell<S> {
     pub(crate) crit_multiplier_additive: f64,
     pub(crate) bonus_base_damage: f64,
     pub(crate) bonus_coefficient: f64,
+    /// Forever's rule that a physical row dealing school damage takes the flat physical damage
+    /// bonus at this share, its bonus coefficient column (see `prepare::physical_damage`).
+    pub(crate) physical_school_coefficient: Option<f64>,
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
     /// Go `Spell.PushbackResist`, which the pushback chance loses.
     pub(crate) pushback_resist: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
+    /// Forever's rule that the damage effect is a physical school damage row, whose roll lands
+    /// on a whole number.
+    pub(crate) physical_damage_effect: bool,
     pub(crate) dot: Option<DotId>,
     /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
     pub(crate) related_dot_spell: Option<SpellId>,
@@ -978,6 +991,9 @@ pub(crate) struct Powers {
     /// can change.
     pub(crate) physical_hit_percent: f64,
     pub(crate) spell_hit_percent: f64,
+    /// Go `stats.ExpertisePercent`, which `DodgeParrySuppression` takes off the target's dodge
+    /// and parry and an item swap can change.
+    pub(crate) expertise_percent: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -1122,6 +1138,11 @@ pub(crate) struct Windfury {
     /// Go `ProcTrigger.RequireDamageDealt` of the trigger and of the charge spender.
     pub(crate) trigger_require_damage: bool,
     pub(crate) spend_require_damage: bool,
+    /// Forever's rules: the proc grants every charge and the main hand auto that fired it spends
+    /// none.
+    pub(crate) trigger_spends_no_charge: bool,
+    /// Forever's rules: every outcome of a spending auto spends a charge, a miss included.
+    pub(crate) any_outcome_spends: bool,
 }
 
 /// The trigger aura of an effect `Fight::damage_procs` holds: a spell data damage proc, or a
@@ -1330,7 +1351,6 @@ pub(crate) struct Config {
     pub(crate) target_auto_swing_melee: bool,
     pub(crate) melee: crate::contracts::prepared_v2::Melee,
     pub(crate) melee_haste_rating: f64,
-    pub(crate) expertise_percent: f64,
     /// A pet's mana regeneration per second while casting and not, as Go computes it.
     pub(crate) fixed_regen: Option<(f64, f64)>,
     /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
@@ -1440,6 +1460,9 @@ pub(crate) struct ResourceMetrics {
     /// Go `ResourceMetrics.NoThreat`: a gain from a spell the client flags No Threat adds no
     /// threat at the end of the iteration.
     pub(crate) no_threat: bool,
+    /// Forever's rule: a rage gain from this source makes `threat_per_rage` a point without the
+    /// player's threat multiplier (Shield Specialization, Master of Defense).
+    pub(crate) unscaled_threat: bool,
 }
 
 /// A target's stats and pseudo stats that auras can change during a fight, reset to the
@@ -1624,6 +1647,12 @@ pub(crate) enum Action {
     /// Go `Pet.statInheritanceAction`: the pet takes its owner's pending stat changes at its
     /// heartbeat.
     PetInheritance(Side),
+    /// Forever's rules: an owner's melee or attack speed change reaching a pet that swings at
+    /// it, at the pet's heartbeat.
+    PetMeleeSpeed {
+        pet: Side,
+        amount: f64,
+    },
     /// Go `Pet.timeoutAction`: a summoned pet's time is up.
     PetTimeout(Side),
     /// A class's own pending action, which it may cancel: [`Agent::on_class_action`].
@@ -1784,6 +1813,10 @@ pub(crate) struct Fight<A: Agent> {
     /// The last hit on the player's resistance multiplier and the damage after it, as Go
     /// `SpellResult` carries them for rage from damage taken.
     pub(crate) player_hit_resistance: (f64, f64),
+    /// The last hit on the player before armor, resistances, block and absorbs, with its
+    /// outcome's multiplier and the player's damage taken multipliers, and whether a block took
+    /// all of it: what rage from damage taken reads under Forever's rules.
+    pub(crate) player_hit_pre_armor: (f64, bool),
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -1899,6 +1932,9 @@ pub(crate) struct Fight<A: Agent> {
     /// The logged fight's queued strikes that went out on an extra attack, for the
     /// application's timeline: when, the strike and the extra attack it replaced.
     pub(crate) extra_attack_strikes: Vec<serde_json::Value>,
+    /// The logged fight's cooldowns as casts started them, for the application's replay: when,
+    /// the unit, the spell and the cooldown's length. A spell with no cooldown lists nothing.
+    pub(crate) cast_cooldowns: Vec<serde_json::Value>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -1917,6 +1953,10 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) thunderfury: Option<thunderfury::Thunderfury>,
     /// The party Windfury Totem.
     pub(crate) windfury: Option<Windfury>,
+    /// Under Forever's rules, the main hand auto that fired a Windfury Totem proc (the party's or
+    /// the shaman's own) and the time it did, while that hit's listeners run: its charge spender
+    /// skips it. Another swing in that instant, as the off hand's, still spends.
+    pub(crate) windfury_free_swing: Option<(SpellId, i64)>,
     /// The generated buffs other players cast on the player on cooldown.
     pub(crate) external_cooldowns: Vec<external_cooldown::ExternalCooldown>,
     /// The auras other than the druid's own that carry Innervate's regeneration.
@@ -2031,6 +2071,10 @@ pub(crate) struct Fight<A: Agent> {
     /// Forever's rule that a prepull item swap puts its weapon in the hand and stays on into the
     /// fight.
     pub(crate) prepull_swap_stays_in_hand: bool,
+    /// Forever's rule that the channel clip guard walks the rotation as it would run with the
+    /// channel ended: into groups and the current step of a sequence, with the channel's own aura
+    /// down and a cast row through the major cooldown gate.
+    pub(crate) channel_clip_walks_rotation: bool,
     /// Forever's rule that a rotation with a Move keeps looking through the global cooldown:
     /// set only while the rule is on and the rotation holds a Move.
     pub(crate) rotation_with_moves_looks_through_gcd: bool,
@@ -2040,6 +2084,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autocast_skips_unready_cooldowns: bool,
     /// Forever's rule that a damage bonus applied after the calculation raises threat too.
     pub(crate) threat_follows_damage_bonus: bool,
+    /// Forever's rule that a physical school damage roll lands on a whole number.
+    pub(crate) physical_rolls_are_whole: bool,
     /// A healer sim's burst healing window under Forever's rules (see [`burst`]).
     pub(crate) burst: Option<burst::BurstWindow>,
     /// How each exclusive effect of an aura a rotation asks about reads.
@@ -2308,6 +2354,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             spell_piercing: stat(unit.stats, "SpellPiercing")?,
             physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
             spell_hit_percent: stat(unit.stats, "SpellHitPercent")?,
+            expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         },
         school_damage: [
             0.0,
@@ -2353,7 +2400,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         target_auto_swing_melee: target.auto_swing_melee,
         melee: unit.melee.clone(),
         melee_haste_rating: stat(unit.stats, "MeleeHasteRating")?,
-        expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         fixed_regen: unit.fixed_regen,
         ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
         ranged_crit_percent: stat(unit.stats, "RangedCritPercent")?,
@@ -2426,6 +2472,7 @@ impl<A: Agent> Fight<A> {
                 previous_actual_gain: 0.0,
                 is_mana_regen: regen,
                 no_threat: false,
+                unscaled_threat: false,
             });
             resources.len() - 1
         };
@@ -2462,6 +2509,8 @@ impl<A: Agent> Fight<A> {
                 threat_per_rage,
                 threat_multiplied,
                 crit_multiplies_swing,
+                no_threat_before_pull,
+                damage_taken_rage_per_damage,
                 ..
             } => Some(rage::RageBar {
                 max: max_rage.max(100.0),
@@ -2474,6 +2523,8 @@ impl<A: Agent> Fight<A> {
                 threat_per_rage: *threat_per_rage,
                 threat_multiplied: *threat_multiplied,
                 crit_multiplies_swing: *crit_multiplies_swing,
+                no_threat_before_pull: *no_threat_before_pull,
+                damage_taken_rage_per_damage: *damage_taken_rage_per_damage,
                 gain_threat: Vec::new(),
                 damage_taken_metrics: 0,
                 refund_metrics: 0,
@@ -3157,10 +3208,12 @@ impl<A: Agent> Fight<A> {
                 crit_multiplier_additive: exported.crit_multiplier_additive,
                 bonus_base_damage: exported.bonus_base_damage,
                 bonus_coefficient: exported.bonus_coefficient,
+                physical_school_coefficient: exported.physical_school_coefficient,
                 threat_multiplier: exported.threat_multiplier,
                 flat_threat_bonus: exported.flat_threat_bonus,
                 pushback_resist: exported.pushback_resist,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
+                physical_damage_effect: exported.damage_effect.is_some_and(|e| e.physical),
                 dot,
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
@@ -3391,6 +3444,10 @@ impl<A: Agent> Fight<A> {
                         .get("SpellHitPercent")
                         .copied()
                         .unwrap_or(config.powers.spell_hit_percent),
+                    expertise_percent: combo
+                        .get("ExpertisePercent")
+                        .copied()
+                        .unwrap_or(config.powers.expertise_percent),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -3442,12 +3499,14 @@ impl<A: Agent> Fight<A> {
                         mana,
                         metrics_action_id,
                         delay_ns,
+                        landed_only,
                         ..
                     } if side == Side::Target && *aura == exported.label => Some((
                         *proc_chance,
                         *mana,
                         metrics_action_id.clone(),
                         *delay_ns,
+                        *landed_only,
                     )),
                     _ => None,
                 }) {
@@ -3460,6 +3519,7 @@ impl<A: Agent> Fight<A> {
                         id: jow.2.clone(),
                         metrics,
                         delay: jow.3,
+                        landed_only: jow.4,
                     }
                 } else if let Some((chance, delay, drain)) =
                     effects.iter().find_map(|effect| match effect {
@@ -4095,6 +4155,7 @@ impl<A: Agent> Fight<A> {
             armor_category: None,
             extra_armor_categories: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
+            player_hit_pre_armor: (0.0, false),
             damage_taken_auras: Vec::new(),
             resetting_auras: false,
             self_target: None,
@@ -4206,6 +4267,7 @@ impl<A: Agent> Fight<A> {
             thunderfury: None,
             enemy_slows: Vec::new(),
             windfury: None,
+            windfury_free_swing: None,
             external_cooldowns: Vec::new(),
             innervate_regens: Vec::new(),
             ley_line_innervate: None,
@@ -4241,6 +4303,7 @@ impl<A: Agent> Fight<A> {
             checks: std::cell::RefCell::new(None),
             presentation: None,
             extra_attack_strikes: Vec::new(),
+            cast_cooldowns: Vec::new(),
             heartbeat_offset: 0,
             totals: metrics::Totals {
                 target_dtps: vec![
@@ -4274,10 +4337,12 @@ impl<A: Agent> Fight<A> {
             move_arrives_at_destination: player.move_arrives_at_destination,
             prepull_casts_finish_on_pull: player.prepull_casts_finish_on_pull,
             prepull_swap_stays_in_hand: player.prepull_swap_stays_in_hand,
+            channel_clip_walks_rotation: player.channel_clip_walks_rotation,
             rotation_with_moves_looks_through_gcd: player.rotation_with_moves_looks_through_gcd,
             off_hand_waits_from_attack_start: player.off_hand_waits_from_attack_start,
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,
             threat_follows_damage_bonus: player.threat_follows_damage_bonus,
+            physical_rolls_are_whole: player.physical_rolls_are_whole,
             burst: player.burst_window.map(burst::BurstWindow::new),
             aura_refresh: Vec::new(),
             derived_categories: Vec::new(),
@@ -4977,6 +5042,8 @@ impl<A: Agent> Fight<A> {
                 extra_attack_spell,
                 trigger_require_damage,
                 spend_require_damage,
+                trigger_spends_no_charge,
+                any_outcome_spends,
                 ..
             } = effect
             {
@@ -5016,6 +5083,8 @@ impl<A: Agent> Fight<A> {
                     blocked: false,
                     trigger_require_damage: *trigger_require_damage,
                     spend_require_damage: *spend_require_damage,
+                    trigger_spends_no_charge: *trigger_spends_no_charge,
+                    any_outcome_spends: *any_outcome_spends,
                 });
             }
         }
@@ -5949,6 +6018,7 @@ impl<A: Agent> Fight<A> {
         // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
         if side == Side::Player {
             self.oil_of_immolation_reset();
+            self.windfury_free_swing = None;
             if let Some(windfury) = &self.windfury {
                 let period = windfury.period;
                 self.schedule(period, PRIORITY_AUTO, Action::WindfuryRefresh);
@@ -6160,8 +6230,8 @@ impl<A: Agent> Fight<A> {
                     // A move the rotation held for this spell goes now, not at the end of the
                     // global cooldown the spell started (Forever's rule, `move_ready`). A
                     // rotation with a move goes on from a queued instant that went off, as it
-                    // does after one it casts itself (Forever's rule, README, Rust-only
-                    // mechanics); one that failed would only queue it again for this instant.
+                    // does after one it casts itself (Forever's rule, docs/mechanics.md);
+                    // one that failed would only queue it again for this instant.
                     if std::mem::take(&mut self.apl.move_held_for_queue)
                         || (cast
                             && self.rotation_with_moves_looks_through_gcd
@@ -6330,6 +6400,7 @@ impl<A: Agent> Fight<A> {
                 self.schedule(self.now + period, PRIORITY_AUTO, Action::WindfuryRefresh);
             }
             Action::PetInheritance(side) => self.pet_inheritance(side),
+            Action::PetMeleeSpeed { pet, amount } => self.pet_melee_speed(pet, amount),
             Action::PetTimeout(side) => {
                 let pet = self.active_pet_mut(side);
                 if pet.timeout == Some(handle) {

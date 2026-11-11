@@ -6,7 +6,7 @@ use crate::contracts::request::{Message, Request};
 use crate::prepare::agent::{ClassSpellName, PrepAgent};
 use crate::prepare::attack::{AutoAttackOptions, Weapon};
 use crate::prepare::aura_helpers::AbsorptionAuraConfig;
-use crate::prepare::sim::{AuraConfig, Sim, UnitType, NEVER_EXPIRES};
+use crate::prepare::sim::{AuraConfig, Rules, Sim, UnitType, NEVER_EXPIRES};
 use crate::prepare::stat_auras::{character_stat_auras, stat_auras_effect_reading, stat_layout};
 use std::rc::Rc;
 
@@ -194,6 +194,38 @@ fn the_swing_reads_the_defenders_table_and_stats() {
         1.0 - armor / (armor + 400.0 + 85.0 * 63.0),
     );
     assert!(enemy.changing_auras.is_empty());
+}
+
+/// A block takes off a whole number, the sheet's block value floor(shield + Strength x 0.05 - 1):
+/// a 6 shield at 59 Strength blocks 7 (warrior damage measurements at levels 20 to 24, 7 November
+/// 2026). The reference takes off the fraction, and keeps an aura's multiplier as a factor.
+#[test]
+fn a_block_takes_off_a_whole_number() {
+    for (rules, multiplier, reduction) in [
+        (Rules::Forever, 1.0, 7.0),
+        (Rules::GoReference, 1.0, 7.95),
+        (Rules::GoReference, 1.3, 7.95 * 1.3),
+    ] {
+        let request = request("RaceHuman", true, 1, "");
+        let mut env = match Environment::with_rules(request.message(), factory, rules) {
+            Ok(env) => env,
+            Err(refusal) => panic!("{refusal}"),
+        };
+        // The 6 shield and the 59 Strength's 2.95, less the 1 the warrior's sheet takes off.
+        env.sim
+            .add_stat_dynamic(env.player, Stat::BlockValue, 6.0 + 59.0 * 0.05 - 1.0);
+        env.sim
+            .unit_mut(env.player)
+            .pseudo_stats
+            .block_value_multiplier = multiplier;
+        let rolls = values(&env).rolls.remove(0);
+        close(rolls.block_reduction, reduction);
+        // Go subtracts the product of the two factors, which stay in the export.
+        close(
+            rolls.block_value.unwrap() * rolls.block_value_multiplier.unwrap(),
+            reduction,
+        );
+    }
 }
 
 #[test]

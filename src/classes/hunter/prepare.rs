@@ -450,7 +450,7 @@ impl Hunter {
             "Doomshot" => 20.0,
             "MiniatureCannonBalls" => 20.5,
             // Forever's Engineering ammo, which the reference does not have: "Adds 24.5 damage
-            // per second" on both tooltips (README, Rust-only mechanics).
+            // per second" on both tooltips (docs/mechanics.md).
             "SwiftfeatherArrow" | "SwiftstrikeShot" => 24.5,
             _ => self.ammo_dps,
         };

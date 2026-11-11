@@ -307,7 +307,7 @@ pub(crate) fn new_shaman(
         .windfury_weapon_triggered
         .highest()
         .effect_n(1)
-        .average(crate::prepare::character::constants::CHARACTER_LEVEL);
+        .average(crate::prepare::levels::character_level());
 
     let mut shaman = Shaman {
         talents,
