@@ -1,4 +1,4 @@
-//! MythicSim's healer sims under Forever's rules (README, Rust-only mechanics): the healing gear
+//! MythicSim's healer sims under Forever's rules (docs/mechanics.md): the healing gear
 //! the Go reference leaves out, which counts for nothing there.
 //!
 //! - **Set bonuses the reference does not register.** The client's own bonus rows
@@ -569,7 +569,10 @@ fn on_use_item(env: &mut Environment, item: i32, buff: AuraId) {
 /// An item's on-use spell on its effect's cooldowns, a major cooldown of the type given.
 fn on_use_item_spell(env: &mut Environment, item: i32, cooldown_type: u32, buff: Option<AuraId>) {
     let unit = env.player;
-    let Some(effect) = shared_on_use::on_use_effects_for(item).into_iter().next() else {
+    let Some(effect) = shared_on_use::on_use_effects_for(item, env.sim.rules)
+        .into_iter()
+        .next()
+    else {
         return;
     };
     let cast = shared_on_use::on_use_cast(&mut env.sim, unit, &effect);
@@ -1130,7 +1133,9 @@ fn stacking_cd_effect(
         .map(|aura| env.sim.aura(*aura).label.clone())
         .find(|label| label.starts_with(&format!("{} Limit Aura", config.name)))
         .unwrap_or_else(|| stat_label.clone());
-    let effect = shared_on_use::on_use_effects_for(item).into_iter().next()?;
+    let effect = shared_on_use::on_use_effects_for(item, env.sim.rules)
+        .into_iter()
+        .next()?;
     let stack_proc = effect.message("stack_proc");
     let trigger = stacking_trigger(&config);
     let trigger_spells = proc_trigger_spells(env, &trigger);

@@ -159,6 +159,17 @@ impl<A: Agent> Fight<A> {
         let after_target = result.damage;
         self.enemy_outcome(attacker, &rolls, &mut result);
         let after_outcome = result.damage;
+        let outcome_multiplier = if result.outcome & OUTCOME_CRIT != 0 {
+            2.0
+        } else if result.outcome & OUTCOME_CRUSH != 0 {
+            1.5
+        } else {
+            1.0
+        };
+        self.player_hit_pre_armor = (
+            after_attacker * target_multiplier * outcome_multiplier,
+            result.outcome & OUTCOME_BLOCK != 0 && after_outcome == 0.0,
+        );
         // Go ApplyPostOutcomeDamageModifiers: the player's dynamic damage taken modifiers, as
         // an absorb shield, then the floor.
         // Go registers the item shields before the class's modifiers.

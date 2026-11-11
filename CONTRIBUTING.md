@@ -17,6 +17,13 @@ comes from the milestone, order from the priority label and "after #N" from the 
 text, using `<...>` for the parts that vary, so the board stops listing that refusal as a gap
 without an issue. `python3 tools/board.py check` reports when the board is out of date.
 
+## Rotations
+
+The rotation presets live in [`presets/`](presets/README.md), mirrored from MythicSim. A pull
+request that edits a preset is welcome: say what changed and include a sim or a log that shows
+it doing better. Adopted changes are A/B tested on the reference builds, go into MythicSim, and
+return here with the next mirror.
+
 ## Code ownership and dependencies
 
 Solid arrows mean "calls or uses". The dotted arrow shows integration coverage.
@@ -137,7 +144,7 @@ access to the application repository. Captures never replace accepted snapshots.
    random outcomes and cover relevant timing and resource boundaries.
 4. Compare against Go where the same mechanic is supported. Explain intentional
    differences instead of forcing agreement with a known bug. A mechanic Go never had
-   (a Rust-only mechanic, see the README) has no Go golden: cite the client rows or
+   (see docs/mechanics.md) has no Go golden: cite the client rows or
    tooltips its numbers come from, and pin them in a test.
 
 Do not regenerate expected outputs merely to make a change pass. Fixture updates

@@ -1,10 +1,11 @@
 //! Soul Siphon (17804) under Forever's rules: Drain Life and Wrack deal 12% more per each of the
-//! warlock's other Affliction effects active on the target, up to 36% (the talent's text in
-//! client 1.60.1.70755). The talent is a dummy aura, so the server counts the effects; Forever's
-//! damage over time reads the caster's current modifiers at each tick, so each tick counts the
-//! effects up at that moment. Go counts every registered Affliction aura on the target, active
-//! or not (`AfflictionCount`), which makes the bonus the full 36% for every tick of every build;
-//! the Go reference keeps that.
+//! warlock's Corruption, Siphon Life and Bane of Agony effects active on the target, up to 36%
+//! (the talent's text since the tuning of 11 November 2026; before it "your other Affliction
+//! effects", which also counted Bane of Doom and the warlock's own curse). The talent is a dummy
+//! aura, so the server counts the effects; Forever's damage over time reads the caster's current
+//! modifiers at each tick, so each tick counts the effects up at that moment. Go counts every
+//! registered Affliction aura on the target, active or not (`AfflictionCount`), which makes the
+//! bonus the full 36% for every tick of every build; the Go reference keeps that.
 
 use crate::{
     classes::warlock::agent::WarlockAgent,
@@ -18,7 +19,7 @@ use crate::classes::warlock::spells::find_spell;
 pub(crate) struct SoulSiphon {
     per_effect: f64,
     max_effects: u32,
-    /// The auras of the warlock's Affliction damage over time effects, on the first target.
+    /// The auras of the damage over time effects the talent names, on the first target.
     dot_auras: Vec<AuraRef>,
 }
 
@@ -42,21 +43,14 @@ pub(crate) fn bind(
 }
 
 impl SoulSiphon {
-    /// The warlock's Affliction effects active on `target` now: its damage over time effects
-    /// and its own curse (Curse of the Elements or Curse of Recklessness, both Affliction spells
-    /// in the client's skill line 355). The raid's curse is another aura and does not count.
+    /// The warlock's named effects active on `target` now.
     pub(crate) fn effects(&self, fight: &Fight<WarlockAgent>, target: Side) -> u32 {
-        let active = |aura: AuraRef| fight.aura(fight.aura_on(aura, target)).active;
-        let dots = self.dot_auras.iter().filter(|&&aura| active(aura)).count();
-        let curses = [
-            fight.agent.curse_of_the_elements_aura(),
-            fight.agent.curse_of_recklessness_aura(),
-        ]
-        .into_iter()
-        .flatten()
-        .filter(|&aura| active(aura))
-        .count();
-        ((dots + curses) as u32).min(self.max_effects)
+        let dots = self
+            .dot_auras
+            .iter()
+            .filter(|&&aura| fight.aura(fight.aura_on(aura, target)).active)
+            .count();
+        (dots as u32).min(self.max_effects)
     }
 
     /// The multiplier on a tick at `target`, as Go's `1 + x*y`.

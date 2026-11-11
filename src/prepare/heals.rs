@@ -23,7 +23,7 @@ use super::spell_mod::{SpellModConfig, SpellModType};
 use super::spelldata::{Effect, Ladder, Spell as Row};
 use crate::contracts::prepared_v2::{ActionId, CritAbsorb, SmartHeal};
 use crate::contracts::request::{Message, Value as RequestValue};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::AuraConfig;
 use crate::prepare::stats::Stat;
 
@@ -117,9 +117,9 @@ pub(crate) fn register_heal_from(
 ) -> HealRank {
     let periodic = row.periodic_effect();
     let absorb = row.absorb_effect();
-    let direct = (!heal.is_nil()).then(|| (heal.average(CHARACTER_LEVEL), heal.variance));
-    let tick = (!periodic.is_nil()).then(|| periodic.average(CHARACTER_LEVEL));
-    let shield = (!absorb.is_nil()).then(|| absorb.average(CHARACTER_LEVEL));
+    let direct = (!heal.is_nil()).then(|| (heal.average(character_level()), heal.variance));
+    let tick = (!periodic.is_nil()).then(|| periodic.average(character_level()));
+    let shield = (!absorb.is_nil()).then(|| absorb.average(character_level()));
     let coefficient = if direct.is_some() {
         heal.coeff()
     } else if shield.is_some() {
@@ -309,7 +309,7 @@ pub(crate) fn register_totem_heal(
         .iter()
         .find(|effect| effect.aura == super::dbcenums::A_PERIODIC_HEAL)
         .unwrap_or_else(|| super::spelldata::nil_effect());
-    let tick = periodic.average(CHARACTER_LEVEL);
+    let tick = periodic.average(character_level());
     let mana = totem.mana_cost();
     let mut flags = totem.class_flags;
     for (word, other) in flags.mask.iter_mut().zip(heal.class_flags.mask) {
@@ -499,8 +499,8 @@ pub(crate) fn heals_effect(env: &Environment, ranks: &[HealRank]) -> Value {
             }
             if let Some(tick) = rank.tick {
                 heal["tick"] = json!(tick);
-                // Forever's heal ticks crit where the row says so (README, Rust-only
-                // mechanics); the reference's never do.
+                // Forever's heal ticks crit where the row says so (docs/mechanics.md);
+                // the reference's never do.
                 if rank.tick_can_crit && env.rules == Rules::Forever {
                     heal["tick_can_crit"] = json!(true);
                 }
@@ -511,12 +511,12 @@ pub(crate) fn heals_effect(env: &Environment, ranks: &[HealRank]) -> Value {
             if let (Some(absorb), Rules::Forever) = (rank.crit_absorb, env.rules) {
                 heal["crit_absorb"] = json!(absorb);
             }
-            // Forever's party damage decides how far these heals reach (README, Rust-only
-            // mechanics); the reference heals every target at once.
+            // Forever's party damage decides how far these heals reach (docs/mechanics.md);
+            // the reference heals every target at once.
             if let (Some(smart), Rules::Forever) = (rank.shape.smart, env.rules) {
                 heal["smart"] = json!(smart);
             }
-            // A healer's gear under Forever's rules (README, Rust-only mechanics).
+            // A healer's gear under Forever's rules (docs/mechanics.md).
             super::healer_gear::heal_shape(env, rank.row, &mut heal);
             heal
         })

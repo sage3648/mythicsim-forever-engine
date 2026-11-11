@@ -20,7 +20,7 @@
 
 use serde_json::{json, Value};
 
-use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Sim, UnitId};
 use crate::prepare::spell::SpellConfig;
 use crate::prepare::spell::{ProcMask, SpellFlag};
@@ -70,7 +70,7 @@ impl Paladin {
             return None;
         }
         let row = hotfix::oath_of_light();
-        let bonus = |n| row.effect_n(n).average(CHARACTER_LEVEL);
+        let bonus = |n| row.effect_n(n).average(character_level());
         let boundless = self.new_talent("boundless_light");
         Some(json!({
             "kind": "oath_of_light", "spell_id": row.id, "aura": format!("Oath of Light{label}"),

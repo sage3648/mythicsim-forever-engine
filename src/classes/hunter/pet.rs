@@ -276,7 +276,9 @@ impl PetAbility {
                 for side in fight.cleave_targets(target, cleave.max(1)) {
                     // Go Effect.Roll for a client row, Simulation.Roll for a literal range.
                     let base = match roll {
-                        Some((average, variance)) => fight.effect_roll(average, variance),
+                        Some((average, variance)) if magic => fight.effect_roll(average, variance),
+                        Some((average, variance)) => fight.physical_effect_roll(average, variance),
+                        None if draws && !magic => fight.physical_range_roll(min, max),
                         None if draws => fight.go_roll(min, max),
                         None => min,
                     };
@@ -315,7 +317,7 @@ impl PetAbility {
                     .min(fight.targets.len());
                 let mut side = target;
                 for _ in 0..count {
-                    let base = fight.effect_roll(cleave.average, cleave.variance);
+                    let base = fight.physical_effect_roll(cleave.average, cleave.variance);
                     let result = fight.calc_physical_damage(
                         spell,
                         side,

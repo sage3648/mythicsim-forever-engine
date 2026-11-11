@@ -456,12 +456,22 @@ pub(crate) fn read_ley_line_regen_multiplier(rules: Rules) -> f64 {
 /// Command, which the 26 October notes re-add: "increasing Warlock and Hunter pet damage by 5%".
 /// The pets exist by now, as in Go, where the class registers them before its effects.
 ///
-/// The client's rows since the 3 November hotfixes (Wowhead's Forever spell page, 4 November) give
-/// it two effects: all effects of the Tamed Pet Passive, which is the Hunter's pet, and a 5%
-/// damage modifier on Firebolt and Lash of Pain alone, the Warlock's. Forever's rules follow them,
-/// so a Warlock's Imp and Succubus gain 5% on those two spells (added to their other damage
-/// modifiers, as a spell modifier is) and its other demons nothing; a Hunter's pet keeps 5% of its
-/// damage. The reference keeps 5% on every pet's damage.
+/// (Forever rules) In client 1.60.1.70862, after hotfix push 113702, Command (20575) has two
+/// effects, and only one of them is live:
+/// - SpellEffect 697942: aura 107 (flat modifier) on all effect points (misc 8), base 5, class
+///   set 5 mask_0 0x4000000, which is the Tamed Pet Passive (DND) (18727 to 18730), whose only
+///   effect is aura 79 (damage done percent) on all schools (misc 127) at base 0. Command lifts
+///   that to 5: the pet deals 5% more damage of every kind, melee included. Re-pushed unchanged
+///   by push 113276.
+/// - SpellEffect 697943: aura 108 (percent modifier) on damage (misc 0), base 5, class set 5 mask_0
+///   0x3000, Firebolt and Lash of Pain. Push 113702 rewrites its EffectBasePointsF to 0: the 6
+///   November 2026 hotfix "Fixes an issue where some Warlock pet abilities were benefitting too
+///   much from the Orc Command racial ability", those two spells having taken this 5% on top of
+///   the all damage 5%.
+///
+/// So the owner's pets deal 5% more damage of every kind and Firebolt and Lash of Pain nothing
+/// more. A class that names its own pets for it (the Warlock's demons, not a gear guardian such
+/// as the Emerald Dragon Whelp) gets them; the others keep every pet.
 fn apply_command(env: &mut Environment, unit: UnitId) {
     if !matches!(
         env.sim.character(unit).class.as_str(),
@@ -469,23 +479,11 @@ fn apply_command(env: &mut Environment, unit: UnitId) {
     ) {
         return;
     }
-    if env.sim.rules == Rules::Forever {
-        if let Some(spells) = env.agent.command_pet_spells() {
-            for (pet, class_mask) in spells {
-                env.sim.add_static_mod(
-                    pet,
-                    SpellModConfig {
-                        kind: SpellModType::DamageDoneFlat,
-                        float_value: 0.05,
-                        class_mask,
-                        ..SpellModConfig::default()
-                    },
-                );
-            }
-            return;
-        }
-    }
-    for pet in env.sim.unit(unit).pets.clone() {
+    let pets = env
+        .agent
+        .command_pets()
+        .unwrap_or_else(|| env.sim.unit(unit).pets.clone());
+    for pet in pets {
         env.sim.unit_mut(pet).pseudo_stats.damage_dealt_multiplier *= 1.05;
     }
 }

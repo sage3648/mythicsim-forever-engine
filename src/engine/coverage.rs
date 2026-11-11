@@ -783,6 +783,9 @@ const DYNAMIC_STATS: &[&str] = &[
     // changes them.
     "PhysicalHitPercent",
     "SpellHitPercent",
+    // Expertise, which the target's dodge and parry read: the combinations carry it when one
+    // changes it, as a swapped weapon's expertise rating does.
+    "ExpertisePercent",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -841,6 +844,8 @@ const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
     ("stat_proc", &["chances"]),
     ("sulfuras_hand_of_ragnaros", &["chances"]),
     ("thunderfury", &["chances"]),
+    // Dragon's Call's proc manager, rebuilt for the weapon in the hand.
+    ("emerald_dragon_whelp", &["chances"]),
     ("spell_data_damage_proc", &["chances", "trigger_spells"]),
     ("extra_attack_proc", &["chances"]),
     ("stacking_cd_on_use", &["chances"]),
@@ -1450,6 +1455,8 @@ const INERT_STATS: &[&str] = &[
     "MeleeHitRating",
     "SpellHitRating",
     "MeleeCritRating",
+    // Expertise rating, whose percent the combinations carry.
+    "ExpertiseRating",
     "Health",
     "Armor",
     "BonusArmor",
@@ -2108,11 +2115,8 @@ pub(crate) fn prepared_coverage(
             format!("class {} is not supported", player.class),
         )];
     };
-    if player.level != 60 {
-        reasons.push(Refusal::new(
-            "level_unsupported",
-            format!("player level {} is not supported", player.level),
-        ));
+    if let Some(reason) = crate::prepare::levels::level_refusal(&player.class, player.level, true) {
+        reasons.push(Refusal::new("level_unsupported", reason));
     }
     // The exporter writes the count only for a fight against several targets.
     let targets = prepared.encounter.target_count as usize;
@@ -2125,7 +2129,7 @@ pub(crate) fn prepared_coverage(
             ),
         ));
     }
-    if !(60..=63).contains(&prepared.target.level) {
+    if !crate::prepare::levels::target_levels(player.level).contains(&prepared.target.level) {
         reasons.push(Refusal::new(
             "level_unsupported",
             format!("target level {} is not supported", prepared.target.level),
@@ -2621,6 +2625,8 @@ pub(crate) fn prepared_coverage(
                 moves_without_values(prepared, rotation),
             ));
         }
+        // A spell a levelling character has not trained is never pressed (prepare::levels).
+        reachable.retain(|spell| !spell.has_flag("SpellFlagUnlearned"));
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
         reasons.extend(coded(
             "several_targets_unsupported",

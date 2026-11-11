@@ -6,7 +6,7 @@ use crate::contracts::request::Message;
 use super::agent::PrepAgent;
 use super::attack::{new_attack_table, AttackTable};
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use super::character::constants::CHARACTER_LEVEL;
+use super::levels::character_level;
 use super::sim::{
     AuraConfig, BuildPhase, EnvState, EventCallbacks, Rules, Sim, UnitId, UnitType, NEVER_EXPIRES,
 };
@@ -689,6 +689,6 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
     // unit.reset: the energy bar and the rage bar follow the mana bar.
     sim.reset_energy_bar(unit);
     sim.reset_rage_bar(unit);
-    let _ = CHARACTER_LEVEL;
+    let _ = character_level();
     let _ = Stat::Mana;
 }

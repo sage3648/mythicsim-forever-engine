@@ -60,7 +60,7 @@ pub(crate) struct SpellDataProc {
 
 /// The rate MythicSim assumes for a chance on hit the client states no rate for: Classic servers
 /// roll a `ProcChance` of 101 at 1.8% per second of the hitting weapon's speed, which is 1.08
-/// procs a minute. No Blizzard source states Forever's; README, Rust-only mechanics.
+/// procs a minute. No Blizzard source states Forever's; docs/mechanics.md.
 pub(crate) const CHANCE_ON_HIT_PPM: f64 = 1.08;
 
 impl SpellDataProc {
@@ -240,7 +240,8 @@ fn contains_enchant(item: &items::Item, effect_id: i32) -> bool {
 /// the item, in either set of an item swap.
 pub(crate) fn eligible_slots_for_item(sim: &Sim, unit: UnitId, item_id: i32) -> Vec<usize> {
     use items::slot;
-    let Some(item) = items::database_item(item_id) else {
+    // Under Forever's rules also an item of the live client the reference lacks.
+    let Some(item) = items::database_item_under(item_id, sim.rules) else {
         return Vec::new();
     };
     let candidates: Vec<usize> = match item.item_type.as_str() {
@@ -786,7 +787,7 @@ fn apply_spell_data_damage_proc(env: &mut Environment, cfg: &SpellDataProc) {
     {
         config.dot.aura.label = format!("{} {}", damage.name, damage.id);
         // A damage over time a missile carries alone goes on as the hit lands: its flight is
-        // not modelled (README, Rust-only mechanics).
+        // not modelled (docs/mechanics.md).
         if damage.damage_effect().is_nil() {
             config.missile_speed = 0.0;
         }

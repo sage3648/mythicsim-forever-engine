@@ -10,15 +10,15 @@ use serde_json::{json, Value};
 
 use crate::prepare::aura_helpers::ProcTrigger;
 use crate::prepare::buffs::flametongue::{
-    flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
+    flametongue_totem_base_damage, flametongue_totem_proc, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
     WINDFURY_WEAPON_MAIN_HAND_STRIKE,
 };
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::{action_id_string, flat_string};
 use crate::prepare::consumable_effects::proc_trigger_spells;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export_items::{dpm_chances, outcome_names};
+use crate::prepare::levels::character_level;
 use crate::prepare::resolve_proc::{chance, proc_trigger};
 use crate::prepare::sim::{Duration, Rules, Sim, SpellId, MILLISECOND, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask, SpellFlag};
@@ -42,9 +42,11 @@ fn nanos(d: Duration) -> i64 {
 }
 
 /// `shamanDamageRows`: the rows by spell ID, those whose `ApplyEffects` roll a client damage
-/// effect: every Lightning Bolt and Chain Lightning rank, Lava Burst's, Flame Shock's, Earth
-/// Shock's and Frost Shock's highest rank. Under Forever's rules the rows are the notes of 2
-/// November 2026's, and Lava Burst has none.
+/// effect: every rank of Lightning Bolt, Chain Lightning, Lava Burst, Flame Shock, Earth Shock and
+/// Frost Shock. Under Forever's rules the rows are the notes of 2 November 2026's, and Lava Burst
+/// has none. The map is kept for the process, so it holds every rank: built from the highest rank
+/// the first character prepared knew, a level 22 shaman prepared after a level 60 one found no
+/// row for its Earth Shock rank 3 and its fight panicked on a spell with no behavior.
 fn damage_rows(rules: Rules) -> &'static HashMap<i32, &'static Row> {
     static GO: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     static FOREVER: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
@@ -60,20 +62,14 @@ fn damage_rows(rules: Rules) -> &'static HashMap<i32, &'static Row> {
                 rows.insert(row.id, rules_row(rules, row));
             });
         };
-        let highest = |rows: &mut HashMap<i32, &'static Row>, ladder: &Ladder| {
-            let row = ladder.highest();
-            if !row.is_nil() {
-                rows.insert(row.id, rules_row(rules, row));
-            }
-        };
         each(&mut rows, &data.lightning_bolt);
         each(&mut rows, &data.chain_lightning);
         if rules == Rules::GoReference {
-            highest(&mut rows, &data.lava_burst);
+            each(&mut rows, &data.lava_burst);
         }
-        highest(&mut rows, &data.flame_shock);
-        highest(&mut rows, &data.earth_shock);
-        highest(&mut rows, &data.frost_shock);
+        each(&mut rows, &data.flame_shock);
+        each(&mut rows, &data.earth_shock);
+        each(&mut rows, &data.frost_shock);
         rows
     })
 }
@@ -124,7 +120,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
     if effect.is_nil() {
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// The positions of the spellbook entries with this exact action.
@@ -182,7 +178,7 @@ impl Shaman {
         let tick = flame_shock.periodic_effect();
         effects.push(json!({
             "kind": "flame_shock", "spell_id": flame_shock.id,
-            "tick_base": tick.average(CHARACTER_LEVEL),
+            "tick_base": tick.average(character_level()),
             "tick_can_crit": flame_shock.periodic_can_crit()
                 && flame_shock.defense_type_core() == DefenseType::Magic,
         }));
@@ -200,7 +196,7 @@ impl Shaman {
         let nova = data.fire_nova_triggered.by_id(408428);
         let mut fire_nova = json!({
             "kind": "fire_nova", "spell_id": data.fire_nova.highest().id,
-            "base_damage": nova.damage_effect().average(CHARACTER_LEVEL),
+            "base_damage": nova.damage_effect().average(character_level()),
         });
         // Forever's rules: "enemies within 10 yd of your active Fire totem" (408341's tooltip).
         // The reference hits every target.
@@ -213,7 +209,7 @@ impl Shaman {
         let searing_attack = data.searing_totem_triggered.highest();
         let mut searing_totem = json!({
             "kind": "searing_totem", "spell_id": searing.id, "attack_spell_id": searing_attack.id,
-            "attack_damage": searing_attack.damage_effect().average(CHARACTER_LEVEL),
+            "attack_damage": searing_attack.damage_effect().average(character_level()),
             "magma_totem_aura": "Magma Totem", "flametongue_totem_aura": "Flametongue Totem (Self)",
             "duration_ns": nanos(searing.duration()),
         });
@@ -287,7 +283,8 @@ impl Shaman {
                     .effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0).percent(),
             }));
         }
-        // talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand.
+        // talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand
+        // (Forever's rules: by rank since the hotfixes of 10 November 2026).
         if let Some(trigger) = sim.get_aura(player, "Maelstrom Weapon Trigger") {
             let aura = sim.aura(trigger);
             if talent("maelstrom_weapon") > 0 {
@@ -295,8 +292,8 @@ impl Shaman {
                     effects.push(json!({
                         "kind": "maelstrom_weapon", "trigger_aura": aura.label,
                         "aura": "Maelstrom Weapon",
-                        "per_stack": data.maelstrom_weapon.effect_at(1)
-                            .fraction_at(talent("maelstrom_weapon")),
+                        "per_stack": super::talents::maelstrom_per_stack(
+                            sim.rules, talent("maelstrom_weapon")),
                         "max_stacks": 5,
                         "chances": dpm_chances(env, &dpm, |spell| {
                             spell.proc_mask.matches(ProcMask::MELEE)
@@ -315,7 +312,7 @@ impl Shaman {
                 data.rockbiter_weapon_triggered
                     .highest()
                     .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     * (1.0
                         + data
                             .elemental_weapons
@@ -420,10 +417,10 @@ impl Shaman {
         // registerMagmaTotemSpell: an area dot on the shaman whose pulses roll hit and crit on
         // each target from the pulse's damage row average.
         let magma = data.magma_totem.highest();
-        let pulse = data.magma_totem_triggered.by_id(10581);
+        let pulse = super::spell_data::magma_totem_pulse();
         let mut magma_totem = json!({
             "kind": "magma_totem", "spell_id": magma.id,
-            "pulse_damage": pulse.damage_effect().average(CHARACTER_LEVEL),
+            "pulse_damage": pulse.damage_effect().average(character_level()),
             // Trial by Fire (client 70425) lengthens it.
             "duration_ns": nanos(magma.duration() + super::spells::magma_totem_bonus(self.talent("trial_by_fire"))),
         });
@@ -545,7 +542,7 @@ impl Shaman {
                         && spend.require_damage_dealt =>
                 {
                     let buff = data.windfury_totem_triggered.by_id(10610);
-                    let value = buff.effect_n(1).average(CHARACTER_LEVEL);
+                    let value = buff.effect_n(1).average(character_level());
                     let bonus = Stats::from_pairs(&[(Stat::AttackPower, value)]);
                     let proc_id = sim.aura(proc_aura).action_id.clone().unwrap_or_default();
                     let white = ProcTrigger {
@@ -579,9 +576,15 @@ impl Shaman {
                     // 10612, which does not stack, and a main hand Windfury Weapon "disables any
                     // benefit you personally receive from Windfury Totem" (every rank's
                     // tooltip). So the own totem adds nothing beside either.
+                    // The same aura follows the party totem's Forever rules: a landed hit rolls
+                    // it without damage, the auto that fires it spends no charge and every
+                    // outcome of an auto spends one (src/prepare/buffs/windfury_effect.rs).
                     if sim.rules == Rules::Forever {
                         let last = effects.len() - 1;
                         effects[last]["one_aura"] = json!(true);
+                        effects[last]["trigger_without_damage"] = json!(true);
+                        effects[last]["trigger_spends_no_charge"] = json!(true);
+                        effects[last]["any_outcome_spends"] = json!(true);
                     }
                 }
                 _ => notes.push(
@@ -612,10 +615,14 @@ impl Shaman {
         if let Some(aura) = self.flametongue_totem_aura {
             let mut trigger = proc_trigger(sim, Some(player), must_find(15036), &[]);
             trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
-            // Windfury Weapon's main-hand strikes proc it as the main hand's autos do (MythicSim
-            // patch 141): the trigger hears main hand specials, kept to the autos and 439440.
+            // The Go reference lets Windfury Weapon's main-hand strikes proc it as the main hand's
+            // autos do (MythicSim patch 141): the trigger hears main hand specials, kept to the
+            // autos and 439440. Forever's rules keep it to the autos: the totem's row procs on
+            // landed auto attacks, and in two raw combat logs of client 1.60.1.70862 every swing
+            // with two Windfury Weapon strikes carries one totem hit and no strike carries one.
             let mut trigger_spells = proc_trigger_spells(env, &trigger);
-            if trigger.proc_mask.matches(ProcMask::MELEE_MH_AUTO) {
+            if sim.rules == Rules::GoReference && trigger.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
+            {
                 trigger.proc_mask = ProcMask(trigger.proc_mask.0 | ProcMask::MELEE_MH_SPECIAL.0);
                 let book = &sim.unit(player).spellbook;
                 trigger_spells = proc_trigger_spells(env, &trigger)
@@ -627,7 +634,7 @@ impl Shaman {
                     })
                     .collect();
             }
-            let attack = spell_positions(env, &spell_id_action(16389))
+            let attack = spell_positions(env, &spell_id_action(flametongue_totem_proc().id))
                 .last()
                 .copied();
             let weapon = &sim.character(player).equipment[crate::prepare::items::slot::MAIN_HAND];
@@ -640,7 +647,10 @@ impl Shaman {
                 "attack_damage": flametongue_totem_base_damage(weapon.swing_speed),
                 "trigger_spells": trigger_spells,
                 "trigger_outcome": outcome_names(trigger.outcome),
-                "disabled_by_weapon": sim.get_aura(player, "Flametongue Imbue ItemSlotMainHand").is_some(),
+                // Not under Forever's rules since the hotfixes of 10 November 2026: "Weapon
+                // imbues and Weapon totems can now be used at the same time".
+                "disabled_by_weapon": sim.rules != crate::Rules::Forever
+                    && sim.get_aura(player, "Flametongue Imbue ItemSlotMainHand").is_some(),
                 "duration_ns": nanos(rank.duration()),
                 "party_totem": sim.get_aura(player, FLAMETONGUE_PARTY_TOTEM_LABEL).is_some(),
             }));
@@ -658,7 +668,7 @@ impl Shaman {
         // RegisterFlametongueImbue: one trigger and one hit spell for each imbued weapon, main
         // hand first, registered in that order, the hit from the weapon's speed held to 1.3 to
         // 4.0.
-        let imbue_hit = data.flametongue_weapon_triggered.by_id(16344);
+        let imbue_hit = super::spell_data::flametongue_weapon_proc();
         let hits = spell_positions(env, &spell_id_action(imbue_hit.id));
         let equipment = &sim.character(player).equipment;
         let mut flametongue: Vec<Value> = Vec::new();
@@ -684,7 +694,7 @@ impl Shaman {
             let speed = weapon.swing_speed.clamp(1.3, 4.0);
             flametongue.push(json!({
                 "trigger_aura": label, "spell": hit, "deals_damage": weapon.swing_speed != 0.0,
-                "base_damage": speed * imbue_hit.effect_n(1).average(CHARACTER_LEVEL) / 100.0,
+                "base_damage": speed * imbue_hit.effect_n(1).average(character_level()) / 100.0,
                 "trigger_spells": proc_trigger_spells(env, &ProcTrigger {
                     proc_mask: mask,
                     is_weapon_proc: true,
@@ -737,8 +747,11 @@ impl Shaman {
                                 * (1.0 + data.elemental_weapons.effect_at(3)
                                     .fraction_at(self.talent("elemental_weapons"))),
                             // A main hand imbue outbids the party Windfury Totem's category
-                            // effect.
-                            "blocks_windfury_totem": mask.matches(ProcMask::MELEE_MH),
+                            // effect, except under Forever's rules since the hotfixes of 10
+                            // November 2026 ("Weapon imbues and Weapon totems can now be used at
+                            // the same time").
+                            "blocks_windfury_totem": mask.matches(ProcMask::MELEE_MH)
+                                && sim.rules != crate::Rules::Forever,
                         }));
                     }
                     _ => notes.push("Windfury Weapon is incomplete".to_string()),
@@ -752,7 +765,7 @@ impl Shaman {
                 let row = data.frostbrand_weapon_triggered.highest();
                 effects.push(json!({
                     "kind": "frostbrand_weapon", "trigger_aura": trigger.label, "spell_id": row.id,
-                    "base_damage": row.damage_effect().average(CHARACTER_LEVEL),
+                    "base_damage": row.damage_effect().average(character_level()),
                     "chances": dpm_chances(env, &dpm, |spell| {
                         !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
                     }),

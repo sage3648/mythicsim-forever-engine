@@ -115,10 +115,11 @@ fn lightning_bolt_by_rank() {
     );
 }
 
-/// Chain Lightning's cast time (2.5 sec, was 2) and mana cost (about 225% of the comparable
-/// Lightning Bolt rank), which the notes state and Wowhead's tooltips still state as 2 sec and
-/// 145, 200, 250 and 315 mana, and its primary target damage as Wowhead states the rows on 4
-/// November 2026: rank 4 is 510 base and 3.3 a level, 523 at level 60 (was 126).
+/// Chain Lightning's cast time (2.5 sec, was 2) as the notes state it and Wowhead's live tooltips
+/// of 6 November 2026 read it, its mana cost as those tooltips read it (245, 360, 425 and 495,
+/// where the notes' "approximately 225%" of Lightning Bolt's gave 248, 304, 428 and 495), and its
+/// primary target damage as Wowhead states the rows on 4 November 2026: rank 4 is 510 base and 3.3
+/// a level, 523 at level 60 (was 126).
 #[test]
 fn chain_lightning_by_rank() {
     let request = request("production-elemental-shaman");
@@ -139,7 +140,7 @@ fn chain_lightning_by_rank() {
     );
     assert_eq!(
         base_costs(&forever, "chain_lightning"),
-        [248.0, 304.0, 428.0, 495.0]
+        [245.0, 360.0, 425.0, 495.0]
     );
     assert_eq!(
         base_costs(&reference, "chain_lightning"),
@@ -159,16 +160,6 @@ fn chain_lightning_by_rank() {
     }
     for spell in spells(&forever, "chain_lightning_overload") {
         assert_eq!(spell["bonus_coefficient"], 0.357);
-    }
-
-    // Mana is about 225% of the comparable Lightning Bolt ranks 6, 7, 9 and 10, which the notes
-    // state. Damage is no longer a share of Lightning Bolt's: Wowhead's rows put rank 2 well above
-    // 145% (348 base against the 189 the notes' ratio gave).
-    let bolt_costs = base_costs(&forever, "lightning_bolt");
-    let chain_costs = base_costs(&forever, "chain_lightning");
-    for (chain, bolt) in [0, 1, 2, 3].into_iter().zip([5, 6, 8, 9]) {
-        let mana = chain_costs[chain] / bolt_costs[bolt];
-        assert!((mana - 2.25).abs() < 0.01, "mana {mana}");
     }
 }
 

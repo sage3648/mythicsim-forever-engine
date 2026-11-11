@@ -8,10 +8,10 @@ use std::sync::OnceLock;
 use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export::action_id;
+use crate::prepare::levels::character_level;
 use crate::prepare::rotation::rotation_spells;
 use crate::prepare::sim::{Sim, SpellId, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::{school, ProcMask, SpellFlag};
@@ -105,7 +105,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
     if effect.is_nil() {
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// The positions of the spells in the spellbook that satisfy a predicate.
@@ -302,7 +302,7 @@ impl Paladin {
                     "aura": Self::seal_aura_label("Seal of Righteousness", &label, rank),
                     "judgement_spell_id": judge_rank.id,
                     "proc_spell_id": Self::righteousness_proc_id(rank.rank_number()),
-                    "per_hit_value": judge_rank.effect_n(2).average(CHARACTER_LEVEL),
+                    "per_hit_value": judge_rank.effect_n(2).average(character_level()),
                 });
                 if share_follows_swap {
                     row["hit_coefficient"] = json!(super::seals::righteousness_hit_coefficient(
@@ -330,7 +330,7 @@ impl Paladin {
                     "seal_spell_id": rank.id,
                     "aura": Self::seal_aura_label("Seal of Fury", &label, rank),
                     "judgement_spell_id": judge_rank.id, "proc_spell_id": proc_rank.id,
-                    "proc_damage": proc_rank.damage_effect().average(CHARACTER_LEVEL),
+                    "proc_damage": proc_rank.damage_effect().average(character_level()),
                     "shield_aura": format!("Seal of Fury Shield{label} Rank {}", rank.rank_number()),
                     "shield_share": rank.effect_n(2).percent(),
                 }));
@@ -343,9 +343,9 @@ impl Paladin {
             if talents.bool("improved_seal_of_fury") {
                 let rank = data.improved_seal_of_fury.highest();
                 fury["improved"] = json!({
-                    "mana": rank.effect_n(1).average(CHARACTER_LEVEL),
+                    "mana": rank.effect_n(1).average(character_level()),
                     "per_level": rank.effect_n(2).percent(),
-                    "max_levels": rank.effect_n(3).average(CHARACTER_LEVEL),
+                    "max_levels": rank.effect_n(3).average(character_level()),
                     "levels": f64::from(sim.unit(target).level - sim.unit(unit).level),
                     "metrics_action_id": action_id(Some(&spell_action(rank.id))),
                     // 1314104 is No Threat since client 70374 (beta notes 8 October); the spell is
@@ -454,12 +454,12 @@ impl Paladin {
             let bonus = tick_spell.effect_n(2);
             let dummy = rank.effect(dbcenums::A_PERIODIC_DUMMY, 0);
             consecrations.push(json!({
-                "spell_id": rank.id, "tick": tick.average(CHARACTER_LEVEL),
-                "bonus": bonus.average(CHARACTER_LEVEL),
+                "spell_id": rank.id, "tick": tick.average(character_level()),
+                "bonus": bonus.average(character_level()),
                 // consecration.go consecrationTickCoefficient: the 16 October 2026 beta notes cut
                 // it to 0.042; the rows still carry 0.095.
                 "bonus_coefficient": 0.042,
-                "bonus_targets": dummy.average(CHARACTER_LEVEL) as i32,
+                "bonus_targets": dummy.average(character_level()) as i32,
             }));
         });
         let mut consecration = json!({"kind": "consecration", "ranks": consecrations});
@@ -507,7 +507,7 @@ impl Paladin {
                         "spell_id": rank.id,
                         "aura": format!("Light's Vigil{label} Rank {}", rank.rank_number()),
                         "heal_spell_id": heal_rank.id,
-                        "average": roll.average(CHARACTER_LEVEL), "variance": roll.variance,
+                        "average": roll.average(character_level()), "variance": roll.variance,
                         "players": VIGIL_PARTY,
                     }));
                 });
@@ -539,7 +539,7 @@ impl Paladin {
                 "kind": "divine_favor", "spell_id": rank.id, "aura": format!("Divine Favor{label}"),
                 "crit": rank
                     .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_CRITICAL_CHANCE)
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 "spells": ["holy_light", "flash_of_light", "holy_shock_heal", "holy_shock"],
             }));
         }
@@ -659,7 +659,7 @@ impl Paladin {
         data.lay_on_hands.each(|_, rank| {
             if rotation_spells.contains(&i64::from(rank.id)) {
                 lay_on_hands.push(json!({"spell_id": rank.id,
-                    "mana": rank.energize_effect().average(CHARACTER_LEVEL)}));
+                    "mana": rank.energize_effect().average(character_level())}));
             }
         });
         if !lay_on_hands.is_empty() {
@@ -750,7 +750,7 @@ impl Paladin {
                     rank.rank_number(),
                 ))
                 .heal_effect()
-                .average(CHARACTER_LEVEL);
+                .average(character_level());
             let judgement_aura = format!("Judgement of Light Rank {}", rank.rank_number());
             let proc_rank = rank.refs()[0];
             if chances.is_none() {
@@ -766,7 +766,7 @@ impl Paladin {
             }
             ranks.push(json!({
                 "seal_spell_id": rank.id, "aura": aura, "proc_spell_id": proc_rank.id,
-                "heal": proc_rank.heal_effect().average(CHARACTER_LEVEL),
+                "heal": proc_rank.heal_effect().average(character_level()),
                 "judgement_spell_id": judgement_id, "judgement_aura": judgement_aura,
             }));
             // buffs/paladin.go AttachJudgementOfLightHeal, under health metrics of the target.
@@ -799,6 +799,7 @@ impl Paladin {
         let data = spell_data();
         let mut ranks = Vec::new();
         let mut judgements = Vec::new();
+        let forever = sim.rules == crate::prepare::sim::Rules::Forever;
         data.seal_of_wisdom.each(|_, rank| {
             let judgement_id = rank.effect_n(2).base_value() as i32;
             let judgement_mana = data
@@ -808,24 +809,29 @@ impl Paladin {
                     rank.rank_number(),
                 ))
                 .energize_effect()
-                .average(CHARACTER_LEVEL);
+                .average(character_level());
             let judgement_aura = format!("Judgement of Wisdom Rank {}", rank.rank_number());
             let proc_rank = rank.refs()[0];
             ranks.push(json!({
                 "seal_spell_id": rank.id,
                 "aura": Self::seal_aura_label("Seal of Wisdom", &label, rank),
                 "proc_spell_id": proc_rank.id,
-                "mana": proc_rank.energize_effect().average(CHARACTER_LEVEL),
+                "mana": proc_rank.energize_effect().average(character_level()),
                 "judgement_spell_id": judgement_id, "judgement_aura": judgement_aura,
             }));
-            // buffs/paladin.go AttachJudgementOfWisdomMana.
-            judgements.push(json!({
+            // buffs/paladin.go AttachJudgementOfWisdomMana. Under Forever's rules only a landed
+            // hit rolls (crate::prepare::buffs::paladin::attach_judgement_of_wisdom_mana).
+            let mut judgement = json!({
                 "kind": "judgement_of_wisdom", "aura": judgement_aura,
                 "proc_chance": crate::prepare::buffs::paladin::JUDGEMENT_PROC_CHANCE,
                 "proc_mask": ProcMask::DIRECT.names(), "mana": judgement_mana,
                 "metrics_action_id": action_id(Some(&ActionId::spell(judgement_id))),
                 "delay_ns": crate::prepare::common_effects::SPELL_BATCH_WINDOW,
-            }));
+            });
+            if forever {
+                judgement["landed_only"] = json!(true);
+            }
+            judgements.push(judgement);
         });
         effects.push(json!({"kind": "seal_of_wisdom", "ranks": ranks}));
         effects.extend(judgements);

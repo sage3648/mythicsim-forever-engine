@@ -1,5 +1,5 @@
 //! A Shadow Priest's Dark Inspiration in the player's party, a Rust-only party buff
-//! (`PartyBuffs.dark_inspiration`, README, Rust-only mechanics) translated from wowsims/forever
+//! (`PartyBuffs.dark_inspiration`, docs/mechanics.md) translated from wowsims/forever
 //! at ce4dd1a69: `darkInspirationMeta` in sim/core/buffs/buffs_auto_gen.go and
 //! `NewSpellDataDarkInspirationAuraFor` in sim/core/buffs/buffs.go.
 //!

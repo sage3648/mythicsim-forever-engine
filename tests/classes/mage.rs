@@ -1,3 +1,4 @@
+mod arcane_concentration;
 mod area;
 mod frost;
 mod frost_blast;

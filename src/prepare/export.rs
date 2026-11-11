@@ -245,7 +245,14 @@ pub(crate) fn export_spell_of(
     out.insert("school".into(), json!(spell.spell_school));
     out.insert("defense_type".into(), json!(spell.defense_type.name()));
     out.insert("proc_mask".into(), json!(spell.proc_mask.names()));
-    out.insert("flags".into(), json!(spell.flags.names()));
+    // A spell the character has not learned is no APL or major cooldown spell: the rotation
+    // and the cooldown manager never press it.
+    let mut flags = spell.flags.names();
+    if super::levels::is_unlearned(spell.action_id.spell_id) {
+        flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
+        flags.push("SpellFlagUnlearned".to_string());
+    }
+    out.insert("flags".into(), json!(flags));
     if !class_spell.is_empty() {
         out.insert("class_spell".into(), json!(class_spell));
     }
@@ -321,6 +328,9 @@ pub(crate) fn export_spell_of(
     );
     out.insert("bonus_base_damage".into(), json!(spell.bonus_base_damage));
     out.insert("bonus_coefficient".into(), json!(spell.bonus_coefficient));
+    if let Some(coefficient) = spell.physical_school_coefficient {
+        out.insert("physical_school_coefficient".into(), json!(coefficient));
+    }
     out.insert("threat_multiplier".into(), json!(spell.threat_multiplier));
     out.insert("flat_threat_bonus".into(), json!(spell.flat_threat_bonus));
     out.insert("pushback_resist".into(), json!(spell.pushback_resist));
@@ -893,7 +903,18 @@ pub(crate) fn export_state(
         .map(|spell| export_spell_of(env, *spell, &mut timers, &mut unrepresented))
         .collect();
     for (i, spell) in spells.iter().enumerate() {
-        if let Some(effect) = env.agent.damage_effect(&env.sim, *spell) {
+        if let Some(mut effect) = env.agent.damage_effect(&env.sim, *spell) {
+            // Forever's rules: the roll of a physical school damage row lands on a whole number.
+            let sim_spell = env.sim.spell(*spell);
+            if env.sim.rules == super::sim::Rules::Forever
+                && super::physical_damage::school_damage_effect(
+                    &sim_spell.action_id,
+                    sim_spell.spell_school,
+                )
+                .is_some()
+            {
+                effect["physical"] = json!(true);
+            }
             exported_spells[i]["damage_effect"] = effect;
         }
         if let Some(related) = env.sim.spell(*spell).related_dot_spell {
@@ -906,6 +927,9 @@ pub(crate) fn export_state(
     let mut mcds = Vec::new();
     for mcd in &env.sim.character(player).initial_major_cooldowns {
         let action = env.sim.spell(mcd.spell).action_id.clone();
+        if super::levels::is_unlearned(action.spell_id) {
+            continue;
+        }
         let mut types = Vec::new();
         for (bit, name) in [
             (1u32, "mana"),
@@ -1107,56 +1131,63 @@ pub(crate) fn export_state(
     if !env.rotation_dot_base_durations.is_empty() {
         prepared["player"]["rotation_dot_base_durations"] = json!(env.rotation_dot_base_durations);
     }
-    // Forever's beta logs show no partial resists from the target's level (README, Rust-only
-    // mechanics); the reference keeps them.
+    // Forever's beta logs show no partial resists from the target's level (docs/mechanics.md);
+    // the reference keeps them.
     if env.rules == Rules::Forever {
         prepared["target"]["no_level_partial_resist"] = json!(true);
-        // The client's mana regeneration interrupt aura acts at once (README, Rust-only
-        // mechanics); the reference's cached tick waits for another refresh.
+        // The client's mana regeneration interrupt aura acts at once (docs/mechanics.md);
+        // the reference's cached tick waits for another refresh.
         prepared["player"]["casting_regen_at_once"] = json!(true);
-        // A player does not walk off before the spell they queued fires (README, Rust-only
-        // mechanics); the reference's move starts at once.
+        // A player does not walk off before the spell they queued fires (docs/mechanics.md);
+        // the reference's move starts at once.
         prepared["player"]["move_waits_for_queued_cast"] = json!(true);
-        // A melee swing does not restart the Auto Shot timer (README, Rust-only mechanics); the
+        // A melee swing does not restart the Auto Shot timer (docs/mechanics.md); the
         // reference restarts it on every swing.
         prepared["player"]["melee_keeps_auto_shot_timer"] = json!(true);
-        // A move whose end time has come has arrived (README, Rust-only mechanics); the
+        // A move whose end time has come has arrived (docs/mechanics.md); the
         // reference can read the walk a hair short of the destination at that instant.
         prepared["player"]["move_arrives_at_destination"] = json!(true);
-        // A rotation with a move keeps looking through the global cooldown (README, Rust-only
-        // mechanics); the reference's idle rotation sleeps until the global cooldown ends.
+        // A rotation with a move keeps looking through the global cooldown (docs/mechanics.md);
+        // the reference's idle rotation sleeps until the global cooldown ends.
         prepared["player"]["rotation_with_moves_looks_through_gcd"] = json!(true);
         // The off hand's half swing wait counts from the melee attack's start, which a walk in
-        // after an Auto Shot begins (README, Rust-only mechanics); the reference counts it from
+        // after an Auto Shot begins (docs/mechanics.md); the reference counts it from
         // every arrival in melee range.
         prepared["player"]["off_hand_waits_from_attack_start"] = json!(true);
-        // Autocasting looks past a cooldown the GCD holds back (README, Rust-only mechanics);
+        // Autocasting looks past a cooldown the GCD holds back (docs/mechanics.md);
         // the reference stops at the first ready one.
         prepared["player"]["autocast_skips_unready_cooldowns"] = json!(true);
         // A damage bonus applied after the calculation is damage the target takes, so threat
-        // (README, Rust-only mechanics); the reference kept the threat of the damage before it.
+        // (docs/mechanics.md); the reference kept the threat of the damage before it.
         prepared["player"]["threat_follows_damage_bonus"] = json!(true);
+        // A physical hit's roll lands on a whole number (docs/mechanics.md); the
+        // reference rolls the span without rounding.
+        prepared["player"]["physical_rolls_are_whole"] = json!(true);
         // A cast begun before the pull finishes on the pull at the earliest, as a player times a
-        // precast (README, Rust-only mechanics); the reference finishes a hasted precast early
+        // precast (docs/mechanics.md); the reference finishes a hasted precast early
         // and drops its damage, which lands before 0:00.
         prepared["player"]["prepull_casts_finish_on_pull"] = json!(true);
         // A weapon swapped in before the pull is the one in the hand at the pull, and the swap
-        // stays on until the rotation swaps again (README, Rust-only mechanics); the reference
+        // stays on until the rotation swaps again (docs/mechanics.md); the reference
         // keeps swinging the Main weapon and swaps back to Main a nanosecond before the pull.
         prepared["player"]["prepull_swap_stays_in_hand"] = json!(true);
+        // A channel is clipped by what the rotation would run with it ended, through groups and
+        // sequences and with its own aura down (docs/mechanics.md); the reference
+        // counts a group in the way as another action ready and reads the aura as up.
+        prepared["player"]["channel_clip_walks_rotation"] = json!(true);
         // A healer sim counts only the share of each heal real healers do not overheal
-        // (README, Rust-only mechanics); the reference counts every heal in full.
+        // (docs/mechanics.md); the reference counts every heal in full.
         let overheal = super::overheal::export(&player_message, &prepared["player"]["spells"]);
         if !overheal.is_empty() {
             prepared["player"]["overheal"] = Value::Array(overheal);
         }
-        // A healer sim reports its burst healing beside its healing per second (README,
-        // Rust-only mechanics); the reference reports none.
+        // A healer sim reports its burst healing beside its healing per second (docs/mechanics.md);
+        // the reference reports none.
         if super::overheal::is_healer(&player_message) {
             prepared["player"]["burst_window"] = super::burst_hps::export();
         }
         // The party's mana totems are reported under their own names rather than as plain
-        // regeneration (README, Rust-only mechanics); the reference reports regeneration only.
+        // regeneration (docs/mechanics.md); the reference reports regeneration only.
         let mp5_sources = super::mp5_sources::export(env, &stat_auras);
         if !mp5_sources.is_empty() {
             prepared["player"]["mp5_sources"] = json!(mp5_sources);
@@ -1196,7 +1227,8 @@ pub(crate) fn export_state(
     tank_notes(env, tanking, &mut unrepresented);
     // core/battle_squawk.go (the fork's patch 127): the party's engineers' chickens raise the
     // melee speed at the reset, which the exported melee state holds, for the aura's four
-    // minutes. Its expiry and its pass to a pet that follows the owner's melee speed are not run.
+    // minutes. A pet that swings at its owner's melee speed (Forever's rules) holds the stacks
+    // from its summon, and the runtime passes their expiry to it at its next heartbeat.
     if let Some(squawk) = env.sim.get_aura(player, "Battle Squawk") {
         if env.sim.aura(squawk).expires < env.encounter.duration + env.encounter.duration_variation
         {
@@ -1213,18 +1245,6 @@ pub(crate) fn export_state(
                 unrepresented
                     .push("a fight that outlasts Battle Squawk is unsupported".to_string());
             }
-        }
-        let pet_follows = env.sim.unit(player).pets.iter().any(|pet| {
-            env.sim
-                .unit(*pet)
-                .pet
-                .as_ref()
-                .is_some_and(|data| data.dynamic_melee_speed_enabled)
-        });
-        if pet_follows {
-            unrepresented.push(
-                "Battle Squawk's melee speed passes to a pet, which is unsupported".to_string(),
-            );
         }
     }
     if tanking {

@@ -1,0 +1,429 @@
+{
+ "encounter": {
+  "duration": 120,
+  "durationVariation": 15,
+  "executeProportion20": 0.2,
+  "executeProportion25": 0.25,
+  "executeProportion35": 0.35,
+  "executeProportion45": 0.45,
+  "executeProportion90": 0.9,
+  "noHitSuppression": true,
+  "targets": [
+   {
+    "canCrush": true,
+    "damageSpread": 0.3333,
+    "id": 213336,
+    "level": 44,
+    "minBaseDamage": 3000,
+    "name": "Level 44",
+    "parryHaste": true,
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     805,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     2606,
+     0,
+     127393,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "swingSpeed": 2
+   }
+  ]
+ },
+ "raid": {
+  "buffs": {},
+  "debuffs": {},
+  "parties": [
+   {
+    "buffs": {},
+    "players": [
+     {
+      "buffs": {},
+      "characterSheet": {
+       "attributes": [
+        31,
+        31,
+        132,
+        247,
+        127
+       ],
+       "base": [
+        31,
+        31,
+        39,
+        47,
+        47
+       ],
+       "equipment": {
+        "items": [
+         {
+          "enchant": 1509,
+          "id": 16693
+         },
+         {
+          "enchant": 8218,
+          "id": 13141
+         },
+         {
+          "id": 16718
+         },
+         {
+          "id": 18389
+         },
+         {
+          "enchant": 8492,
+          "id": 13346
+         },
+         {
+          "enchant": 7665,
+          "id": 13969
+         },
+         {
+          "enchant": 8213,
+          "id": 12554
+         },
+         {
+          "id": 18391
+         },
+         {
+          "enchant": 8492,
+          "id": 18386
+         },
+         {
+          "enchant": 8492,
+          "id": 18507
+         },
+         {
+          "id": 18395
+         },
+         {
+          "id": 18395
+         },
+         {
+          "enchant": 7662,
+          "id": 812
+         },
+         {
+          "id": 228176
+         }
+        ]
+       },
+       "health": 1982,
+       "level": 42,
+       "mana": 4381,
+       "meleeCrit": 3.88,
+       "spellCrit": [
+        4.74,
+        4.74,
+        4.74,
+        4.74,
+        4.74,
+        4.74
+       ]
+      },
+      "class": "ClassShaman",
+      "consumables": {},
+      "distanceFromTarget": 20,
+      "equipment": {
+       "items": [
+        {
+         "enchant": 1509,
+         "id": 16693
+        },
+        {
+         "enchant": 8218,
+         "id": 13141
+        },
+        {
+         "id": 16718
+        },
+        {
+         "id": 18389
+        },
+        {
+         "enchant": 8492,
+         "id": 13346
+        },
+        {
+         "enchant": 7665,
+         "id": 13969
+        },
+        {
+         "enchant": 8213,
+         "id": 12554
+        },
+        {
+         "id": 18391
+        },
+        {
+         "enchant": 8492,
+         "id": 18386
+        },
+        {
+         "enchant": 8492,
+         "id": 18507
+        },
+        {
+         "id": 18395
+        },
+        {
+         "id": 18395
+        },
+        {
+         "enchant": 7662,
+         "id": 812
+        },
+        {
+         "id": 228176
+        }
+       ]
+      },
+      "level": 42,
+      "name": "restoration-shaman",
+      "profession1": "Engineering",
+      "race": "RaceWindshaperSkyborne",
+      "reactionTimeMs": 100,
+      "restorationShaman": {
+       "options": {
+        "classOptions": {}
+       }
+      },
+      "rotation": {
+       "priorityList": [
+        {
+         "action": {
+          "autocastOtherCooldowns": {}
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 408510
+           }
+          },
+          "condition": {
+           "not": {
+            "val": {
+             "auraIsActive": {
+              "auraId": {
+               "spellId": 408510
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25357
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "auraIsActive": {
+            "auraId": {
+             "spellId": 16188
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 16188
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1325256
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpLe",
+            "rhs": {
+             "const": {
+              "val": "40%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 10463
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "and": {
+            "vals": [
+             {
+              "not": {
+               "val": {
+                "auraIsActive": {
+                 "auraId": {
+                  "spellId": 10463
+                 }
+                }
+               }
+              }
+             },
+             {
+              "not": {
+               "val": {
+                "auraIsActive": {
+                 "auraId": {
+                  "spellId": 1325256
+                 }
+                }
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 1239243
+           },
+           "target": {
+            "type": "Self"
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 10623
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "50%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 25357
+           },
+           "target": {
+            "type": "Self"
+           }
+          },
+          "condition": {
+           "cmp": {
+            "lhs": {
+             "currentManaPercent": {}
+            },
+            "op": "OpGe",
+            "rhs": {
+             "const": {
+              "val": "30%"
+             }
+            }
+           }
+          }
+         }
+        },
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 10468
+           },
+           "target": {
+            "type": "Self"
+           }
+          }
+         }
+        }
+       ],
+       "type": "TypeAPL"
+      },
+      "talentsString": "--5531500015512"
+     }
+    ]
+   }
+  ]
+ },
+ "simOptions": {
+  "iterations": 200,
+  "randomSeed": "42"
+ }
+}

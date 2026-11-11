@@ -3,8 +3,8 @@
 use crate::contracts::request::Message;
 
 use super::attack::{AutoAttackOptions, Weapon};
-use super::character::constants::CHARACTER_LEVEL;
 use super::character::{add_rating_conversions, unit_level_f64};
+use super::levels::character_level;
 use super::sim::{Sim, Unit, UnitId, UnitType};
 use super::spell::school;
 use super::stats::{Stat, Stats};
@@ -29,7 +29,7 @@ pub(crate) fn new_target(sim: &mut Sim, options: &Message, index: i32) -> Result
     unit.reaction_time = BOSS_GCD;
     unit.enabled = true;
     if unit.level == 0 {
-        unit.level = CHARACTER_LEVEL + 3;
+        unit.level = character_level() + 3;
     }
     let id = sim.add_unit(unit);
     let gcd = sim.new_timer(id);

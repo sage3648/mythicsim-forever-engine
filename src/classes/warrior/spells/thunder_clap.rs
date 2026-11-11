@@ -14,6 +14,12 @@ pub(crate) struct ThunderClap {
     pub(crate) attack_power_share: f64,
     /// The row's target cap.
     pub(crate) max_targets: usize,
+    /// Whether the clap spends a Sweeping Strikes charge on a normalized attack, as the Go
+    /// reference has it. Under Forever's rules it does not: Sweeping Strikes hears melee swings
+    /// and abilities and the clap is a magic hit. In raw combat logs of client 1.60.1.70862, 7
+    /// landed Thunder Claps with the buff up spent no charge and brought no strike, where 29 of
+    /// 30 Whirlwinds spent exactly one.
+    pub(crate) sweeping_strikes: bool,
 }
 
 /// The clap's `ApplyEffects`: Go `CalcCleaveDamage`, a Sweeping Strikes attack, then for each
@@ -34,7 +40,9 @@ pub(crate) fn apply<A: Agent>(
         .into_iter()
         .map(|hit| fight.calc_damage_with(spell, hit, base, Outcome::MagicHitAndCrit))
         .collect();
-    sweeping_strikes::cast_normalized(fight, sweeping, &results);
+    if params.sweeping_strikes {
+        sweeping_strikes::cast_normalized(fight, sweeping, &results);
+    }
     for result in results {
         if result.landed() {
             let aura = fight.aura_on(params.aura, result.target);

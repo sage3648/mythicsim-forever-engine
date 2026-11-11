@@ -4,10 +4,10 @@
 use serde_json::{json, Value};
 
 use crate::prepare::buffs::generated;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::{exclusive_category_effect, SPELL_BATCH_WINDOW};
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::rotation::rotation_spells;
 use crate::prepare::sim::{AuraId, Rules, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask};
@@ -39,9 +39,20 @@ pub(super) fn rotation_names_shield_block(sim: &Sim, unit: UnitId) -> bool {
 }
 
 /// The exporter's `damageRoll`: a client damage row's roll.
+/// Thunder Clap's share of attack power. The Go reference's literal is 0.0255. Under Forever's
+/// rules it is 0.07, measured in game on ranks 1 and 4 (rank 4 at levels 43 to 45, client
+/// 1.60.1.70862: every hit reads floor(0.99 * (55 + 0.07 * attack power))). Ranks 2, 3, 5 and
+/// 6 carry the share, unmeasured.
+fn thunder_clap_attack_power_share(rules: Rules) -> f64 {
+    match rules {
+        Rules::Forever => 0.07,
+        Rules::GoReference => 0.0255,
+    }
+}
+
 fn damage_roll(row: &Row) -> Value {
     let effect = row.damage_effect();
-    let average = effect.average(CHARACTER_LEVEL);
+    let average = effect.average(character_level());
     json!({"average": average, "min": average * (1.0 - effect.variance / 2.0),
         "max": average * (1.0 + effect.variance / 2.0), "rolls": effect.variance != 0.0,
         "variance": effect.variance})
@@ -138,7 +149,7 @@ impl Warrior {
         let sim = &env.sim;
         let unit = env.player;
         let data = spell_data();
-        let level = CHARACTER_LEVEL;
+        let level = character_level();
         let talent = |name: &str| self.talent(name);
         let mut effects: Vec<Value> = vec![crate::prepare::rage::rage_bar_effect(sim, unit, 1.0)];
 
@@ -184,9 +195,15 @@ impl Warrior {
         effects.push(whirlwind_effect);
         // execute.go: the dummy effect's base and ten times its chain amplitude per extra rage.
         let execute = data.execute.highest();
-        effects.push(json!({"kind": "execute", "spell_id": execute.id,
+        let mut execute_effect = json!({"kind": "execute", "spell_id": execute.id,
             "base_damage": execute.effect_n(1).average(level),
-            "damage_per_rage": f64::from(execute.effect_n(1).chain_amp) * 10.0}));
+            "damage_per_rage": f64::from(execute.effect_n(1).chain_amp) * 10.0});
+        if sim.rules == Rules::Forever {
+            // Combat logs of client 1.60.1.70862: 36 of 36 avoided Executes keep the extra rage
+            // and get none of the cost back (spells/execute.rs).
+            execute_effect["extra_rage_on_landed"] = json!(true);
+        }
+        effects.push(execute_effect);
         // hamstring.go
         let hamstring = data.hamstring.highest();
         effects.push(json!({"kind": "hamstring", "spell_id": hamstring.id,
@@ -194,7 +211,7 @@ impl Warrior {
         // pummel.go: the same strike in Berserker Stance. Go's exporter has no effect for it, so
         // only Forever's rules describe it.
         if sim.rules == Rules::Forever {
-            let pummel = data.pummel.by_id(6554);
+            let pummel = data.pummel.highest();
             effects.push(json!({"kind": "pummel", "spell_id": pummel.id,
                 "base_damage": pummel.damage_effect().average(level)}));
         }
@@ -232,14 +249,20 @@ impl Warrior {
         let improved_bloodrage = data
             .improved_bloodrage
             .multiplier_at(talent("improved_bloodrage"));
-        effects.push(json!({"kind": "bloodrage", "spell_id": bloodrage.id,
+        let mut bloodrage_effect = json!({"kind": "bloodrage", "spell_id": bloodrage.id,
             "instant_rage": data.bloodrage.effect_at(1).tenths_at(1) * improved_bloodrage,
             "rage_per_tick": over_time.periodic_effect().tenths() * improved_bloodrage,
             "ticks": (over_time.duration() / over_time.periodic_effect().period()) as i32,
             "period_ns": over_time.periodic_effect().period(),
             "health_cost": sim.character(unit).base_stats[Stat::Health]
                 * f64::from(bloodrage.power(dbcenums::POWER_HEALTH).cost_pct) / 100.0,
-            "rage_threshold": 70.0}));
+            "rage_threshold": 70.0});
+        // Forever combat logs: the instant 10 rage makes 50 threat in Battle and Defensive
+        // Stance alike; the ticks take the stance.
+        if sim.rules == Rules::Forever {
+            bloodrage_effect["instant_threat_unscaled"] = json!(true);
+        }
+        effects.push(bloodrage_effect);
         // berserker_rage.go: Improved Berserker Rage's rage.
         let berserker_rage = data.berserker_rage.highest();
         effects.push(
@@ -250,7 +273,7 @@ impl Warrior {
         );
         // charge.go: the cast spends no rage, gives rage, triples the warrior's movement speed
         // through its dash aura and runs to 3.5 yards inside the spell's minimum range.
-        let charge_row = data.charge.by_id(11578);
+        let charge_row = data.charge.highest();
         if let Some(charge) = Self::spell_of(sim, unit, charge_row) {
             let charge = sim.spell(charge);
             effects.push(
@@ -484,7 +507,7 @@ impl Warrior {
             "tick_can_crit": rend.periodic_can_crit(),
             "tick_magic": rend.defense_type_core() == DefenseType::Magic}));
         // overpower.go: the client base on normalized main hand damage.
-        let overpower = data.overpower.by_id(11585);
+        let overpower = data.overpower.highest();
         effects.push(json!({"kind": "overpower", "spell_id": overpower.id,
             "base_damage": overpower.damage_effect().average(level)}));
         if self.has_talent("mortal_strike") {
@@ -599,12 +622,28 @@ impl Warrior {
             if swords.matches(ProcMask::MELEE_OH) {
                 hands.push("off");
             }
-            effects.push(json!({"kind": "weaponmaster_sword",
+            let mut effect = json!({"kind": "weaponmaster_sword",
                 "trigger_aura": "Weaponmaster (Sword)",
                 "proc_chance": data.weaponmaster.effect_at(3).fraction_at(talent("weaponmaster")),
                 "extra_attack_tag": 1290261, "sword_hands": hands,
                 // 16 October 2026 beta notes: Shield Bash and Shield Slam no longer trigger it.
-                "excluded_class_spells": ["shield_bash", "shield_slam"]}));
+                "excluded_class_spells": ["shield_bash", "shield_slam"]});
+            // Forever combat logs with a two-hand sword at 5/5: Sweeping Strikes' hits never
+            // roll it (0 of 336 over two logs), a Windfury Totem swing's roll brings no swing (0
+            // of 6), and Whirlwind and Cleave roll it once a cast (Whirlwind 7 procs on 100
+            // casts and 283 landed hits).
+            if sim.rules == Rules::Forever {
+                effect["excluded_class_spells"] = json!([
+                    "shield_bash",
+                    "shield_slam",
+                    "sweeping_strikes_hit",
+                    "sweeping_strikes_normalized_hit"
+                ]);
+                effect["skips_windfury_totem_swing"] = json!(true);
+                effect["once_a_cast_class_spells"] =
+                    json!(["whirlwind", "whirlwind_off_hand", "cleave"]);
+            }
+            effects.push(effect);
         }
         // heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the
         // base damage the strike adds to a main hand weapon swing.
@@ -640,7 +679,7 @@ impl Warrior {
         let sim = &env.sim;
         let unit = env.player;
         let data = spell_data();
-        let level = CHARACTER_LEVEL;
+        let level = character_level();
         let target = env.encounter.targets[0];
         let tanking = sim.unit(target).current_target == Some(unit);
         let takes_damage = crate::prepare::export::player_takes_damage(env);
@@ -666,9 +705,14 @@ impl Warrior {
         // talents_protection.go registerShieldSlam
         if self.has_talent("shield_slam") {
             let row = data.shield_slam.highest();
-            effects.push(json!({"kind": "shield_slam", "spell_id": row.id,
+            let mut shield_slam = json!({"kind": "shield_slam", "spell_id": row.id,
                 "damage": damage_roll(row),
-                "can_block": sim.unit(unit).pseudo_stats.can_block}));
+                "can_block": sim.unit(unit).pseudo_stats.can_block});
+            if sim.rules == Rules::Forever {
+                // Twice the block value (spells/shield_slam.rs).
+                shield_slam["twice_block_value"] = json!(true);
+            }
+            effects.push(shield_slam);
         }
         // thunder_clap.go: the row's average plus a share of attack power; a landed clap slows
         // the target by its bid in the attack speed category, which holds only the clap, or the
@@ -730,12 +774,17 @@ impl Warrior {
             };
             match (aura, relative) {
                 (Some(aura), Some(bid)) => {
-                    effects.push(json!({"kind": "thunder_clap", "spell_id": clap_row.id,
+                    let mut clap = json!({"kind": "thunder_clap", "spell_id": clap_row.id,
                         "base_damage": clap_row.damage_effect().average(level),
-                        "attack_power_share": 0.0255,
+                        "attack_power_share": thunder_clap_attack_power_share(sim.rules),
                         "max_targets": i32::from(clap_row.max_targets),
                         "aura": sim.aura(aura).label,
-                        "bid": bid}));
+                        "bid": bid});
+                    if sim.rules == Rules::Forever {
+                        // A magic hit spends no Sweeping Strikes charge (spells/thunder_clap.rs).
+                        clap["no_sweeping_strikes"] = json!(true);
+                    }
+                    effects.push(clap);
                 }
                 _ => notes.push("Thunder Clap's slow shares its category".to_string()),
             }
@@ -795,6 +844,14 @@ impl Warrior {
                 "rage": energize.energize_effect().tenths(), "outcomes": ["dodge", "parry"],
                 "needs_block": true,
                 "chance": data.master_of_defense.fraction_at(self.talent("master_of_defense"))}));
+        }
+        // Forever's rules: warrior threat measurements at levels 20 to 24, 7 November 2026. The
+        // rage of an avoided hit makes 5 threat a point in Battle and Defensive Stance alike, and
+        // Defiance does not scale it.
+        if sim.rules == Rules::Forever {
+            for trigger in &mut avoid {
+                trigger["unscaled_threat"] = json!(true);
+            }
         }
         if !avoid.is_empty() {
             effects.push(json!({"kind": "rage_on_avoid",

@@ -6,6 +6,8 @@ use forever_engine::{prepare_json_with, Rules};
 use serde_json::Value;
 use std::{fs, path::Path};
 
+#[path = "support/live_items.rs"]
+mod live_items;
 #[path = "support/warrior_trees_20261104.rs"]
 mod warrior_trees_20261104;
 
@@ -63,9 +65,12 @@ fn hunters_mark_gives_143_ranged_attack_power() {
     assert_eq!(none, 0.0);
 }
 
+/// The Destruction request with `stone`, its items with a live row off, so both rule sets wear
+/// the same stats (Maleki's Footwraps carries 17 Shadow damage live, 27 in its reference row).
 fn warlock_with_stone(stone: &str) -> Value {
     let mut request = request("destruction-warlock-revelation");
     player(&mut request)["warlock"]["options"]["classOptions"]["weaponStone"] = stone.into();
+    live_items::take_off_live_items(player(&mut request));
     request
 }
 

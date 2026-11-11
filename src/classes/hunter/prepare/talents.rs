@@ -6,10 +6,10 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::env::{Environment, FinalizeEffect};
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::SpellId;
 use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, EventCallbacks, Rules, Sim, MILLISECOND};
 use crate::prepare::spell::{Cast, CastConfig, ProcMask, SpellConfig, SpellFlag};
@@ -698,7 +698,7 @@ impl Hunter {
         let buff = spell_data().resourcefulness_triggered.highest();
         let regen = buff
             .effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0;
         sim.register_aura(
             unit,

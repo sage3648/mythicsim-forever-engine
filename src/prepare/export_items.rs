@@ -186,6 +186,21 @@ fn hears_hits_taken(listener: &ProcTrigger) -> bool {
         && listener.proc_mask_exclude == ProcMask::UNKNOWN
 }
 
+/// Under Forever's rules: whether a listener hears all the damage the wearer takes ("When
+/// damaged", the client mask of every taken bit: its callbacks are the hit taken and the periodic
+/// damage taken) and is otherwise shaped as `hears_hits_taken` asks. The target's swings are the
+/// hits the wearer takes; nothing puts a damage over time on the wearer, so the periodic callback
+/// never fires. Guardian's Dualblade (273046) is the item, and the reference's exporter has no
+/// entry for it.
+fn hears_damage_taken(listener: &ProcTrigger) -> bool {
+    let taken = CallbackMask::ON_SPELL_HIT_TAKEN | CallbackMask::ON_PERIODIC_DAMAGE_TAKEN;
+    listener.callback == taken
+        && hears_hits_taken(&ProcTrigger {
+            callback: CallbackMask::ON_SPELL_HIT_TAKEN,
+            ..listener.clone()
+        })
+}
+
 /// melee_procs.go `hearsTheSappersHit`: the spellbook position of the Goblin Sapper Charge's hit
 /// on its thrower when a listener of hits taken hears it, its mask and flags matching the spell.
 fn hears_the_sappers_hit(env: &Environment, listener: &ProcTrigger) -> Option<usize> {
@@ -253,7 +268,10 @@ pub(crate) fn only_on_use_effect(item: i32) -> Option<Message> {
     if item == 0 {
         return None;
     }
-    let db_item = items::database_item(item)?;
+    // An id the reference database lacks is a live client item's, which only Forever's rules
+    // equip (Heart of the Primeval, `forever_effect_items::ON_USE_STAT_ITEMS`).
+    let db_item = items::database_item(item)
+        .or_else(|| items::database_item_under(item, super::sim::Rules::Forever))?;
     let mut on_use: Option<Message> = None;
     for effect in db_item.item_effects {
         if !effect.has("on_use") {
@@ -387,7 +405,7 @@ pub(crate) fn use_item_effect(
     if let Some(effect) = speed_on_use(env, spell) {
         return Some(vec![effect]);
     }
-    if DAMAGE_ON_USE_ITEMS.contains(&item) {
+    if DAMAGE_ON_USE_ITEMS.contains(&item) || forever_on_use_damage_item(env, item).is_some() {
         let effect = damage_on_use_effect(env, spell, unrepresented);
         return Some(if effect.is_null() {
             Vec::new()
@@ -550,6 +568,18 @@ fn spell_cost_aura_on_use_effect(env: &Environment, spell: SpellId, label: &str)
 /// registers.
 const DAMAGE_ON_USE_ITEMS: [i32; 6] = [8348, 11905, 13171, 21891, 219345, 274759];
 
+/// Under Forever's rules, a live client item's damage on-use (`forever_effect_items`), which the
+/// reference does not list.
+fn forever_on_use_damage_item(
+    env: &Environment,
+    item: i32,
+) -> Option<&'static super::forever_effect_items::OnUseDamageItem> {
+    if env.sim.rules != super::sim::Rules::Forever {
+        return None;
+    }
+    super::forever_effect_items::on_use_damage_item(item)
+}
+
 /// The outcome shared_utils.go `damageOutcome` picks for the defense type, by the runtime's name.
 fn on_use_outcome(defense: DefenseType, cannot_crit: bool) -> &'static str {
     match (defense, cannot_crit) {
@@ -572,7 +602,9 @@ fn damage_on_use_effect(
 ) -> Value {
     let s = env.sim.spell(spell);
     let item = s.action_id.item_id;
-    if !DAMAGE_ON_USE_ITEMS.contains(&item) || s.action_id.spell_id != 0 {
+    let forever_item = forever_on_use_damage_item(env, item);
+    if !(DAMAGE_ON_USE_ITEMS.contains(&item) || forever_item.is_some()) || s.action_id.spell_id != 0
+    {
         return Value::Null;
     }
     let position = env
@@ -581,14 +613,18 @@ fn damage_on_use_effect(
         .spellbook
         .iter()
         .rposition(|registered| *registered == spell);
-    let on_use = only_on_use_effect(item);
-    let (Some(on_use), Some(position)) = (on_use, position) else {
+    // A live client item states its use in `forever_effect_items`, the reference's in its item
+    // database entry.
+    let row = match forever_item {
+        Some(use_) => Some(must_find(use_.spell_id)),
+        None => only_on_use_effect(item).map(|on_use| must_find(on_use.i32("buff_id"))),
+    };
+    let (Some(row), Some(position)) = (row, position) else {
         unrepresented.push(format!(
             "damage on-use item {item} has no single on-use spell"
         ));
         return Value::Null;
     };
-    let row = must_find(on_use.i32("buff_id"));
     let direct = row.damage_effect();
     let periodic = row.periodic_damage_effect();
     let defense = s.defense_type;
@@ -633,11 +669,21 @@ fn damage_on_use_effect(
         ));
         return Value::Null;
     }
+    // A live client item's use that deals more to some creature types (Serpentbane Crown's twice
+    // against Beasts) does so when every target is of one, as a fight's targets are of one type.
+    let versus = forever_item
+        .filter(|use_| {
+            env.encounter.targets.iter().all(|&target| {
+                use_.creature_types
+                    .contains(&env.sim.unit(target).mob_type.as_str())
+            })
+        })
+        .map_or(1.0, |use_| use_.multiplier);
     let mut effect = json!({"kind": "damage_on_use", "item_id": item, "spell": position});
     if !direct.is_nil() {
-        let mut scale = 1.0;
+        let mut scale = versus;
         if direct.hits_an_area() && row.max_targets == 0 && !row.splits_damage {
-            scale = aoe_cap_multiplier(env);
+            scale *= aoe_cap_multiplier(env);
         }
         let mut shape = json!({
             "average": direct.average(level), "variance": direct.variance,
@@ -660,7 +706,7 @@ fn damage_on_use_effect(
     }
     if !periodic.is_nil() {
         let mut ticks = json!({
-            "tick_base": periodic.average(level), "tick_can_crit": row.periodic_can_crit(),
+            "tick_base": periodic.average(level) * versus, "tick_can_crit": row.periodic_can_crit(),
         });
         if direct.is_nil() {
             ticks["application_outcome"] = json!(on_use_outcome(defense, true));
@@ -687,7 +733,7 @@ struct SpellDataStatProc {
     parsed: bool,
 }
 
-const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
+const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 10] = [
     SpellDataStatProc {
         label: "Draconic Infused Emblem",
         trigger: 1318931,
@@ -738,6 +784,17 @@ const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
         parsed: false,
     },
     SpellDataStatProc {
+        // Under Forever's rules only (`describes_stat_proc`): the reference's exporter has no
+        // entry for it and refuses the aura. Equip: when damaged, a chance to grant 1080 armor
+        // for 12 sec (33%, one minute cooldown).
+        label: "Guardian's Dualblade",
+        trigger: 1293342,
+        buff: 1293345,
+        item: 273046,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
         label: "Enchant Weapon - Grand Sorcerer",
         trigger: 1231163,
         buff: 1231162,
@@ -763,6 +820,14 @@ const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
     },
 ];
 
+/// The stat procs only Forever's rules describe: the reference's exporter has no entry for them.
+const FOREVER_ONLY_STAT_PROCS: [&str; 1] = ["Guardian's Dualblade"];
+
+/// Whether the exporter describes a spell data stat proc under the environment's rules.
+fn describes_stat_proc(env: &Environment, proc: &SpellDataStatProc) -> bool {
+    env.sim.rules == super::sim::Rules::Forever || !FOREVER_ONLY_STAT_PROCS.contains(&proc.label)
+}
+
 /// shared_utils.go applySpellDataProc names the buff it builds after the trigger.
 fn spell_data_stat_proc_aura(label: &str) -> String {
     format!("{label} Proc")
@@ -774,11 +839,14 @@ fn spell_data_stat_proc_aura(label: &str) -> String {
 pub(crate) fn spell_data_stat_proc_auras(env: &Environment) -> Vec<String> {
     SPELL_DATA_STAT_PROCS
         .iter()
+        .filter(|proc| describes_stat_proc(env, proc))
         .filter(|proc| aura_named(env, proc.label).is_some())
         .filter(|proc| {
             let trigger = must_find(proc.trigger);
             let listener = trigger_for(env, trigger, true);
-            listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+            let forever = env.sim.rules == super::sim::Rules::Forever;
+            (listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+                && !(forever && hears_damage_taken(&listener)))
                 || tanks_the_target(env)
                 || hears_the_sappers_hit(env, &listener).is_some()
         })
@@ -802,6 +870,9 @@ pub(crate) fn spell_data_stat_proc_effects(
 ) -> Vec<Value> {
     let mut effects = Vec::new();
     for proc in &SPELL_DATA_STAT_PROCS {
+        if !describes_stat_proc(env, proc) {
+            continue;
+        }
         let Some(trigger_aura) = aura_named(env, proc.label) else {
             continue;
         };
@@ -830,10 +901,15 @@ pub(crate) fn spell_data_stat_proc_effects(
             }
         }
         let listener = trigger_for(env, trigger, true);
-        let names = callback_names(listener.callback);
+        let mut names = callback_names(listener.callback);
         // A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper
-        // Charge's hit on its thrower when its mask and flags match that spell.
-        let struck = hears_hits_taken(&listener);
+        // Charge's hit on its thrower when its mask and flags match that spell. Under Forever's
+        // rules one of all the damage taken hears the same, the periodic callback never firing.
+        let widened = env.sim.rules == super::sim::Rules::Forever && hears_damage_taken(&listener);
+        if widened {
+            names = vec!["on_spell_hit_taken"];
+        }
+        let struck = hears_hits_taken(&listener) || widened;
         let sapper_hit = hears_the_sappers_hit(env, &listener);
         let heard = (!names.is_empty()
             && names.iter().all(|name| {
@@ -1067,7 +1143,7 @@ pub(crate) fn melee_item_listeners(env: &Environment) -> Vec<Value> {
         return Vec::new();
     }
     let mut effects = Vec::new();
-    for (label, trigger, _) in SPELL_DATA_DAMAGE_PROCS {
+    for (label, trigger, _) in spell_data_damage_procs(env) {
         if aura_named(env, label).is_none() {
             continue;
         }
@@ -1322,6 +1398,53 @@ const SPELL_DATA_DAMAGE_PROCS: [(&str, i32, i32); 27] = [
     ("Satchel of Dark Iron Bombs", 1318123, 1318121),
 ];
 
+/// `SPELL_DATA_DAMAGE_PROCS` and, under Forever's rules, the live client items' equip damage procs
+/// (`forever_effect_items::EQUIP_DAMAGE_PROC_ITEMS`: Dreadfrost Saber), which the reference does
+/// not list.
+fn spell_data_damage_procs(env: &Environment) -> Vec<(&'static str, i32, i32)> {
+    let mut procs = SPELL_DATA_DAMAGE_PROCS.to_vec();
+    if env.sim.rules == super::sim::Rules::Forever {
+        procs.extend(
+            super::forever_effect_items::equip_damage_procs()
+                .map(|cfg| (cfg.name, cfg.trigger_spell_id, cfg.buff_spell_id)),
+        );
+    }
+    procs
+}
+
+/// Spell data damage procs that only spells with a damaging component trigger (Forever rules).
+/// Searing Dagger's Sear (1291568) reads "Harmful spell casts sear the target", and its mask is
+/// the harmful spell cast bit alone, which a curse or a debuff without damage also sets. The
+/// hotfixes of 6 November 2026 say "Searing Dagger is now only activated by spells that have a
+/// damaging component"; the client rows did not change, so the server decides.
+const DAMAGING_SPELLS_ONLY: [&str; 1] = ["Searing Dagger"];
+
+/// Whether a client row deals damage: a direct hit, a weapon strike, a leech or a mana burn, a
+/// damage over time aura, or a spell it triggers that does (a channel's missiles). `depth`
+/// bounds the walk through triggered spells.
+fn has_damaging_component(row: &Spell, depth: u8) -> bool {
+    row.effects.iter().any(|effect| {
+        matches!(
+            effect.effect_type,
+            dbcenums::E_SCHOOL_DAMAGE
+                | dbcenums::E_HEALTH_LEECH
+                | dbcenums::E_WEAPON_DAMAGE_NOSCHOOL
+                | dbcenums::E_WEAPON_PERCENT_DAMAGE
+                | dbcenums::E_WEAPON_DAMAGE
+                | dbcenums::E_NORMALIZED_WEAPON_DMG
+                | dbcenums::E_POWER_BURN
+        ) || matches!(
+            effect.aura,
+            dbcenums::A_PERIODIC_DAMAGE
+                | dbcenums::A_PERIODIC_LEECH
+                | dbcenums::A_PERIODIC_DAMAGE_PERCENT
+        ) || (effect.trigger_id != 0
+            && effect.trigger_id != row.id
+            && depth < 2
+            && has_damaging_component(find(effect.trigger_id), depth + 1))
+    })
+}
+
 /// melee_procs.go `spellDataDamageProcEffects`: a listener resolved from the trigger row that
 /// casts the damage spell at once on the unit hit, or, for a hit taken, on the attacker. The hit
 /// is described as `proc_damage_shape` does: dealt where it lands, or struck by a melee or ranged
@@ -1337,7 +1460,7 @@ fn spell_data_damage_proc_effects(
             .proc_mask
             .matches(ProcMask::MELEE_SPECIAL)
     });
-    for (label, trigger_id, damage_id) in SPELL_DATA_DAMAGE_PROCS {
+    for (label, trigger_id, damage_id) in spell_data_damage_procs(env) {
         if aura_named(env, label).is_none() {
             continue;
         }
@@ -1377,11 +1500,26 @@ fn spell_data_damage_proc_effects(
         // A cast carries no result: AttachProcTriggerCallback checks no outcome and no damage for it.
         let casts = names[0] == "on_cast_complete";
         // A struck proc hears the attacker's hits, which the Rust runtime tells by their masks.
-        let trigger_spells = if struck {
+        let mut trigger_spells = if struck {
             Vec::new()
         } else {
             proc_trigger_spells(env, &listener)
         };
+        if env.sim.rules == super::sim::Rules::Forever && DAMAGING_SPELLS_ONLY.contains(&label) {
+            trigger_spells.retain(|&position| {
+                let spell = env.sim.unit(env.player).spellbook[position];
+                // A spell the sim gives a spell power coefficient or runs as a damage over time
+                // deals damage even where its row scripts it with a dummy effect (Holy Shock's
+                // hit, Fire Nova). An item's own action or a spell the store lacks is left as it
+                // was.
+                let state = env.sim.spell(spell);
+                state.bonus_coefficient != 0.0
+                    || state.dots.iter().any(Option::is_some)
+                    || state.aoe_dot.is_some()
+                    || crate::data::spells::find(state.action_id.spell_id)
+                        .is_none_or(|row| has_damaging_component(row, 0))
+            });
+        }
         let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": label, "trigger_spells": trigger_spells,
             "landed_only": listener.outcome == HitOutcome::LANDED && !casts,
@@ -1468,6 +1606,59 @@ fn set_melee_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects
 }
 
+/// Defias Leather's 4 piece, Devious Strike (client set spell 1292028, ItemSetSpell 161), under
+/// Forever's rules: "Grants your melee attacks a 5% chance when striking from behind to hit a
+/// vital point, causing the target to Bleed for 68 to 83 Physical damage over 5 sec" (Wowhead
+/// Forever tooltip, 9 November 2026). The trigger row (ProcFlags 4, ProcChance 5) hears the
+/// wearer's landed white hits and the bleed row (1292029: Mechanic 15, a periodic damage aura of
+/// 15 a second, variance 0.2, for 5 sec) goes on the unit hit with no hit roll of its own. Its
+/// ticks take no armor, as every physical tick here. The set registers the listener only when
+/// the wearer strikes from behind (`defias_leather_4`), so a wearer in front has nothing to
+/// describe.
+fn defias_leather_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    const LABEL: &str = "Defias Leather 4P";
+    if env.sim.rules != super::sim::Rules::Forever {
+        return Vec::new();
+    }
+    let Some(aura) = aura_named(env, LABEL) else {
+        return Vec::new();
+    };
+    let a = env.sim.aura(aura);
+    if !a.events.on_spell_hit_dealt {
+        return Vec::new();
+    }
+    let bleed = must_find(1292029);
+    let listener = proc_trigger(&env.sim, Some(env.player), must_find(1292028), &[]);
+    let names = callback_names(listener.callback);
+    let position = spell_position(env, &ActionId::spell(bleed.id));
+    let shape = position.and_then(|position| proc_damage_shape(env, bleed, position).ok());
+    let (Some(_), Some(shape)) = (position, shape) else {
+        unrepresented.push(format!("{LABEL}'s proc is not a bleed on the unit hit"));
+        return Vec::new();
+    };
+    if a.dpm.is_some()
+        || a.icd.is_some()
+        || listener.dpm.is_some()
+        || names != ["on_spell_hit_dealt"]
+        || listener.proc_mask == ProcMask::UNKNOWN
+        || listener.proc_mask.0 & !ProcMask::MELEE.0 != 0
+        || (listener.outcome != HitOutcome::EMPTY && listener.outcome != HitOutcome::LANDED)
+    {
+        unrepresented.push(format!("{LABEL}'s proc is not a bleed on the unit hit"));
+        return Vec::new();
+    }
+    let mut exported = json!({
+        "kind": "spell_data_damage_proc", "trigger_aura": LABEL,
+        "trigger_spells": proc_trigger_spells(env, &listener),
+        "landed_only": true, "require_damage": listener.require_damage_dealt,
+        "proc_chance": chance_or_certain(&listener),
+    });
+    for (key, value) in shape {
+        exported[key] = value;
+    }
+    vec![exported]
+}
+
 /// buffs/flametongue_totem.go `driveFlametongueTotem` for a character the party's totem reaches
 /// and no class effect describes: the totem's permanent aura is the only member of its exclusive
 /// category, so `FlametongueTotemTrigger` is on all fight. The trigger hears the landed main hand
@@ -1481,7 +1672,7 @@ fn party_flametongue_totem_effect(
     unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
     use super::buffs::flametongue::{
-        flametongue_totem_base_damage, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
+        flametongue_totem_base_damage, flametongue_totem_proc, FLAMETONGUE_TOTEM_TRIGGER_LABEL,
     };
     let player = env.player;
     let trigger_aura = aura_named(env, FLAMETONGUE_TOTEM_TRIGGER_LABEL)?;
@@ -1498,7 +1689,7 @@ fn party_flametongue_totem_effect(
         return None;
     }
     let weapon = &sim.character(player).equipment[super::items::slot::MAIN_HAND];
-    let attack = spell_position(env, &ActionId::spell(16389));
+    let attack = spell_position(env, &ActionId::spell(flametongue_totem_proc().id));
     let mut trigger = proc_trigger(sim, Some(player), must_find(15036), &[]);
     trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
     let names = callback_names(trigger.callback);
@@ -2492,6 +2683,7 @@ fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> 
 pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = spell_data_damage_proc_effects(env, unrepresented);
     effects.extend(set_melee_damage_proc_effects(env, unrepresented));
+    effects.extend(defias_leather_effects(env, unrepresented));
     effects.extend(spell_data_heal_proc_effects(env, unrepresented));
     effects.extend(weapon_enchant_damage_proc_effects(env, unrepresented));
     effects.extend(proc_damage_item_effects(env, unrepresented));
@@ -2570,6 +2762,44 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                 "kind": "mob_type_bonus", "aura": label, "attack_power": attack_power,
                 "ranged_attack_power": attack_power, "spell_damage": spell_damage,
             }));
+        }
+    }
+    // Under Forever's rules: an item's melee attack power and spell damage against creature
+    // types (Ceremonial Mallet's 33 attack power against Undead, Courier's Clasp's 10 spell damage
+    // against Humanoids), when every target is of a type its equip line names. A target of
+    // another type, or none, never takes it. The spell damage is Mark of the Champion's kind.
+    if env.sim.rules == super::sim::Rules::Forever {
+        let swaps_items = env.sim.item_swap(env.player).is_some();
+        for item in chance_on_hit_items(env) {
+            let Some(bonus) = super::forever_items::versus_attack_power(item) else {
+                continue;
+            };
+            if aura_named(env, &bonus.name).is_none() {
+                continue;
+            }
+            let against_targets = |bonuses: &[(String, f64)]| -> f64 {
+                bonuses
+                    .iter()
+                    .filter(|(mob_type, _)| {
+                        env.encounter
+                            .targets
+                            .iter()
+                            .all(|&target| env.sim.unit(target).mob_type == *mob_type)
+                    })
+                    .map(|(_, value)| value)
+                    .sum()
+            };
+            let power = against_targets(&bonus.bonuses);
+            let spell_damage = against_targets(&bonus.spell_bonuses);
+            // With an item swap the effect is described even at zero, so that the swap's toggling
+            // of the aura is one the runtime follows: a target of another type takes nothing.
+            if power != 0.0 || spell_damage != 0.0 || swaps_items {
+                effects.push(json!({
+                    "kind": "mob_type_bonus", "aura": bonus.name, "attack_power": 0.0,
+                    "ranged_attack_power": 0.0, "spell_damage": spell_damage,
+                    "melee_attack_power": power,
+                }));
+            }
         }
     }
     // Under Forever's rules (Go's exporter refuses the swap): with an item swap, the item and

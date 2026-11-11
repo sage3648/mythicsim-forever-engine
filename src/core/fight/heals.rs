@@ -9,7 +9,7 @@
 //! falloff's share of the one before, each with its own roll and crit. A heal over time
 //! snapshots its tick and the caster's multipliers when it goes up, as Go `Dot.SnapshotHeal`
 //! does. Under Forever's rules each tick rolls the healing crit where the row states Periodic
-//! Can Crit (README, Rust-only mechanics); the Go reference's ticks never crit. Cast again while
+//! Can Crit (docs/mechanics.md); the Go reference's ticks never crit. Cast again while
 //! it runs, it goes on another player: the
 //! one running is not cut short, and its ticks left are counted when the new one goes up. A shield counts its absorb, with its coefficient and the
 //! caster's multipliers, as shielding when it goes up; nothing in the fight hits the shield.

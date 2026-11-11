@@ -118,8 +118,8 @@ impl Shaman {
         let data = spell_data();
         let rank = data.lightning_shield.highest();
         // The shield spell itself carries no damage; the orb that fires is a separate spell, and
-        // rank 7's is 26363.
-        let orb = data.lightning_shield_triggered.by_id(26363);
+        // the rank the shaman knows has its own (rank 7, 26363, at level 60).
+        let orb = super::spell_data::lightning_shield_orb();
         let action_id = spell_action(rank.id);
 
         sim.register_spell(

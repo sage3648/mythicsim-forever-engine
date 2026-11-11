@@ -229,16 +229,18 @@ const OFF_HAND: usize = 15;
 #[test]
 fn each_hand_takes_the_skill_of_its_weapon_type() {
     // Redfall's test: Alcor's Sunrazor and Distracting Dagger with Aged Core Leather Gloves.
+    // Forever's live tooltips (11 November 2026) give Distracting Dagger +1 Daggers (Classic's +6);
+    // Aged Core Leather Gloves is unrevealed and keeps Classic's +5.
     let daggers = prepared_with(&[(MAIN_HAND, 14555), (OFF_HAND, 18392), (HANDS, 18823)]);
-    assert_eq!(hand_skills(&daggers), [11.0, 11.0, 0.0]);
-    // Against the level 63 boss, a 4 point gap: 5.4% miss and dodge, no hit suppression, and a
-    // glance keeps 91% to 99%. Glancing chance stays on the base table.
+    assert_eq!(hand_skills(&daggers), [6.0, 6.0, 0.0]);
+    // Against the level 63 boss, a 9 point gap: 5.9% miss and dodge, no hit suppression, and a
+    // glance keeps 85% to 93%. Glancing chance stays on the base table.
     let main_hand = &daggers["melee"]["main_hand_skill"];
     for (field, value) in [
-        ("miss_chance", 0.054),
+        ("miss_chance", 0.059),
         ("hit_suppression", 0.0),
-        ("defender_dodge", 0.054),
-        ("glance_multiplier", 0.95),
+        ("defender_dodge", 0.059),
+        ("glance_multiplier", 0.89),
         ("glance_spread", 0.04),
     ] {
         let got = main_hand[field].as_f64().unwrap();
@@ -246,9 +248,10 @@ fn each_hand_takes_the_skill_of_its_weapon_type() {
     }
     assert_eq!(daggers["melee"]["base_glance_chance"], 0.4);
     assert_eq!(daggers["melee"]["base_miss_chance"], 0.08);
-    // Edgemaster's Handguards raise swords and daggers alike; Distracting Dagger only daggers.
+    // Edgemaster's Handguards raise swords and daggers alike (+1 each in Forever, Classic's +7);
+    // Distracting Dagger only daggers.
     let sword = prepared_with(&[(MAIN_HAND, 18832), (OFF_HAND, 18392), (HANDS, 14551)]);
-    assert_eq!(hand_skills(&sword), [7.0, 13.0, 0.0]);
+    assert_eq!(hand_skills(&sword), [1.0, 2.0, 0.0]);
     // Dagger skill does nothing for an axe, and the axe's table is the base one.
     let axe = prepared_with(&[(MAIN_HAND, 17068), (HANDS, 18823)]);
     assert_eq!(hand_skills(&axe), [0.0, 0.0, 0.0]);

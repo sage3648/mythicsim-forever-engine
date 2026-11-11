@@ -9,7 +9,7 @@ use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::env::Environment;
 use crate::prepare::item_sets::ItemSet;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, SECOND};
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Rules, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::must_find;
@@ -231,7 +231,8 @@ fn pvp_stamina(env: &mut Environment, aura: AuraId) {
 /// The totems the shaman package registers whose effect needs nothing of a shaman (Go
 /// `core.NewItemEffect` over `agent.GetCharacter()`): Totem of the Storm (23199) and Totem of
 /// Thunder (228176). A character of another class wears them as well, and their spell mods find
-/// spells by class mask alone. Answers whether the item is one of them.
+/// spells by class mask alone. Under Forever's rules Totem of Rage answers here too, and Rage of
+/// the Storm for a Shaman. Answers whether the item is one of them.
 pub(crate) fn apply_agentless_totem_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
     match item {
         23199 => {
@@ -242,8 +243,98 @@ pub(crate) fn apply_agentless_totem_effect(sim: &mut Sim, unit: UnitId, item: i3
             totem_of_thunder(sim, unit);
             true
         }
+        TOTEM_OF_RAGE if sim.rules == Rules::Forever => {
+            totem_of_rage(sim, unit);
+            true
+        }
+        RAGE_OF_THE_STORM
+            if sim.rules == Rules::Forever && rage_of_the_storm_applies(sim, unit) =>
+        {
+            rage_of_the_storm(sim, unit);
+            true
+        }
         _ => false,
     }
+}
+
+/// Totem of Rage (22395), which the Go reference has neither a row nor an effect for, so only
+/// Forever's rules register it.
+pub(crate) const TOTEM_OF_RAGE: i32 = 22395;
+
+/// Rage of the Storm (280604), the Enhancement Shaman's two-hand mace. The Go reference has its
+/// row and no effect for it, so only Forever's rules register one.
+pub(crate) const RAGE_OF_THE_STORM: i32 = 280604;
+
+/// Whether the shaman package registers an effect for the item on this character under Forever's
+/// rules alone.
+pub(crate) fn forever_item(sim: &Sim, unit: UnitId, item: i32) -> bool {
+    item == TOTEM_OF_RAGE || (item == RAGE_OF_THE_STORM && rage_of_the_storm_applies(sim, unit))
+}
+
+/// Whether Rage of the Storm's equip effect is registered for this character. The weapon has no
+/// class restriction and its effect names a Shaman spell, so only a Shaman has one. The mod is a
+/// fixed one, which an item swap that takes the mace off or puts it on cannot follow: a request
+/// whose swap moves the mace prepares without the effect, as every request did before it was
+/// modelled.
+fn rage_of_the_storm_applies(sim: &Sim, unit: UnitId) -> bool {
+    if sim.character(unit).class != "ClassShaman" {
+        return false;
+    }
+    !sim.item_swap(unit).is_some_and(|swap| {
+        swap.slots.iter().any(|&slot| {
+            swap.original_equip[slot].id == RAGE_OF_THE_STORM
+                || swap.swap_equip[slot].id == RAGE_OF_THE_STORM
+        })
+    })
+}
+
+/// Rage of the Storm under Forever's rules: "Equip: Increases the damage dealt by your Stormstrike
+/// ability by 10%." (Wowhead's Forever tooltip, 11 November 2026). Its equip spell, Rage of Earth
+/// (1309422, ItemEffect 236558), is not in the pinned store; the live client's one effect is
+/// readable (wago.tools `product=wowf`, client 1.60.1.70888, 11 November 2026):
+///
+/// - SpellEffect 1338404: `A_ADD_PCT_MODIFIER` (108) of 10 on `SPELLMOD_DAMAGE` (misc 0), class
+///   mask words 0, 16, 5120, 0. Stormstrike (17364) is the one row of the pinned store that
+///   carries any of those bits (word 1, 16).
+///
+/// So both of Stormstrike's weapon hits take 0.10 in the additive damage modifier, where Totem of
+/// Rage's percentage of the same aura goes.
+fn rage_of_the_storm(sim: &mut Sim, unit: UnitId) {
+    sim.add_static_mod(
+        unit,
+        SpellModConfig {
+            kind: SpellModType::DamageDoneFlat,
+            class_mask: masks::STORMSTRIKE_DAMAGE,
+            float_value: 0.10,
+            ..SpellModConfig::default()
+        },
+    );
+}
+
+/// Totem of Rage under Forever's rules: "Equip: Increases the damage of your Shock spells by 2%."
+/// (Wowhead's Forever tooltip, 11 November 2026). Its equip spell, Increased Shock Damage (27859,
+/// ItemEffect 102980), is not in the pinned store; the live client's two effects are readable
+/// (wago.tools `product=wowf`, 11 November 2026):
+///
+/// - SpellEffect 704622: `A_ADD_PCT_MODIFIER` (108) of 2 on `SPELLMOD_DAMAGE` (misc 0), class mask
+///   word 0 0x90100000: Earth Shock (0x00100000), Flame Shock (0x10000000) and Frost Shock
+///   (0x80000000), each rank's own bit in the pinned store.
+/// - SpellEffect 1328150: the same aura of 2 on `SPELLMOD_DOT` (misc 22), class mask 0x10000000:
+///   Flame Shock's damage over time.
+///
+/// So every shock's hit and Flame Shock's ticks take 2%, as a percent damage modifier the way the
+/// talents' are here (Concussion's 16035 is `DamageDoneFlat` on its mask). Classic's row was a
+/// flat 30 to the shocks' damage; the live one is the percentage.
+fn totem_of_rage(sim: &mut Sim, unit: UnitId) {
+    sim.add_static_mod(
+        unit,
+        SpellModConfig {
+            kind: SpellModType::DamageDoneFlat,
+            class_mask: masks::SHOCK,
+            float_value: 0.02,
+            ..SpellModConfig::default()
+        },
+    );
 }
 
 /// The shaman package's `core.NewItemEffect` calls.

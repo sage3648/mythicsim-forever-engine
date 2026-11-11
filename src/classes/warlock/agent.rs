@@ -369,11 +369,19 @@ impl WarlockAgent {
                     tick_can_crit,
                     soul_siphon,
                     dot_bonus,
+                    dot_rate,
                     dot_spells,
                     soul_siphon_live,
                 } => {
                     let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
-                    let bound = wrack::bind(&mut fight, dot, *soul_siphon, dot_spells, *dot_bonus);
+                    let bound = wrack::bind(
+                        &mut fight,
+                        dot,
+                        *soul_siphon,
+                        dot_spells,
+                        *dot_bonus,
+                        *dot_rate,
+                    );
                     fight.agent.wrack = Some(bound);
                     if let Some(live) = soul_siphon_live {
                         fight.agent.soul_siphon = Some(soul_siphon::bind(&fight, live)?);
@@ -709,24 +717,29 @@ impl WarlockAgent {
     }
 }
 
-impl WarlockAgent {
-    /// The warlock's own Curse of the Elements on the first target, when it can cast one.
-    pub(crate) fn curse_of_the_elements_aura(&self) -> Option<AuraRef> {
-        self.curse_of_the_elements.as_ref().map(|curse| curse.aura)
-    }
-
-    /// The warlock's own Curse of Recklessness on the first target, when it can cast one.
-    pub(crate) fn curse_of_recklessness_aura(&self) -> Option<AuraRef> {
-        self.curse_of_recklessness.map(|curse| curse.aura)
-    }
-}
-
 /// Soul Siphon's multiplier on a tick of `dot`: counted now under Forever's rules, the
 /// prepared constant otherwise.
 fn soul_siphon_now(fight: &Fight<WarlockAgent>, dot: DotId, prepared: f64) -> f64 {
     match &fight.agent.soul_siphon {
         Some(soul_siphon) => soul_siphon.multiplier(fight, fight.dots[dot].side),
         None => prepared,
+    }
+}
+
+/// Wrack's channel starts or ends on the target `channel` is on: the dots it speeds up there
+/// take its rate or go back to their own.
+fn wrack_channel(fight: &mut Fight<WarlockAgent>, channel: DotId, channeling: bool) {
+    let Some(wrack) = fight.agent.wrack.as_mut() else {
+        return;
+    };
+    if wrack.rated_dots.is_empty() {
+        return;
+    }
+    let rate = if channeling { wrack.dot_rate } else { 1.0 };
+    let dots = std::mem::take(&mut wrack.rated_dots);
+    wrack::set_dot_rate(fight, channel, &dots, rate);
+    if let Some(wrack) = fight.agent.wrack.as_mut() {
+        wrack.rated_dots = dots;
     }
 }
 
@@ -772,7 +785,7 @@ impl Agent for WarlockAgent {
                 corruption::apply(fight, spell, target, dot);
             }
             WarlockSpell::Wrack => {
-                let dot = fight.agent.wrack.expect("Wrack is bound").dot;
+                let dot = fight.agent.wrack.as_ref().expect("Wrack is bound").dot;
                 corruption::apply(fight, spell, target, dot);
             }
             WarlockSpell::Hellfire => hellfire::apply_channel(fight, spell),
@@ -943,6 +956,18 @@ impl Agent for WarlockAgent {
         }
     }
 
+    fn on_dot_gain(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
+        if behavior == WarlockSpell::Wrack {
+            wrack_channel(fight, dot, true);
+        }
+    }
+
+    fn on_dot_expire(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
+        if behavior == WarlockSpell::Wrack {
+            wrack_channel(fight, dot, false);
+        }
+    }
+
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
         match behavior {
             WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight, dot),
@@ -959,9 +984,14 @@ impl Agent for WarlockAgent {
                 drain.tick(fight, dot, soul_siphon);
             }
             WarlockSpell::Wrack => {
-                let wrack = fight.agent.wrack.expect("Wrack is bound");
-                let soul_siphon = soul_siphon_now(fight, dot, wrack.soul_siphon);
-                wrack.tick(fight, dot, soul_siphon);
+                let prepared = fight
+                    .agent
+                    .wrack
+                    .as_ref()
+                    .expect("Wrack is bound")
+                    .soul_siphon;
+                let soul_siphon = soul_siphon_now(fight, dot, prepared);
+                wrack::tick(fight, dot, soul_siphon);
             }
             WarlockSpell::Hellfire => hellfire::tick(fight, dot),
             WarlockSpell::RainOfFire => {

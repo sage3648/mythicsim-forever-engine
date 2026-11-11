@@ -4,8 +4,8 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId};
 use crate::prepare::spell::school;
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -191,7 +191,7 @@ impl Priest {
                 class_mask: masks::HOLY_NOVA,
                 float_value: free_nova
                     .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::PowerCostPctAdd,
                 ..SpellModConfig::default()

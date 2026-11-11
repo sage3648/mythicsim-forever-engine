@@ -807,7 +807,9 @@ impl Shaman {
 
     /// Maelstrom Weapon is new in Forever: melee hits stack a buff that makes the next Lightning
     /// Bolt faster and cheaper, and the cast consumes it. The client states no proc rate; beta
-    /// logs give 10 PPM whatever the points, Season of Discovery's base (community #775).
+    /// logs give 10 PPM whatever the points, Season of Discovery's base (community #775), which
+    /// the Go reference keeps. Under Forever's rules the hotfixes of 10 November 2026 set it by
+    /// rank ([`MAELSTROM_PPM_20261110`]) and the cut per stack to 20% at every rank.
     fn apply_maelstrom_weapon(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talent("maelstrom_weapon");
         if points == 0 {
@@ -816,12 +818,13 @@ impl Shaman {
         let data = spell_data();
         let buff = data.maelstrom_weapon_triggered.highest();
         let max_stacks = 5;
-        let per_stack = data.maelstrom_weapon.effect_at(1).fraction_at(points);
+        let per_stack = maelstrom_per_stack(sim.rules, points);
 
         // NewLegacyPPMManager: an item swap rebuilds it. The development notes of 2 November 2026
-        // double the chance to trigger, so 20 PPM under Forever's rules.
+        // doubled the chance to 20 PPM; since the hotfixes of 10 November 2026 it "activates
+        // 6/7/8/9/10 times per minute" by rank.
         let ppm = match sim.rules {
-            Rules::Forever => 20.0,
+            Rules::Forever => MAELSTROM_PPM_20261110[(points - 1) as usize],
             Rules::GoReference => 10.0,
         };
         let ppmm = Rc::new(
@@ -1123,4 +1126,18 @@ impl Shaman {
                 .multiplier_at(points),
         );
     }
+}
+
+/// Maelstrom Weapon's procs per minute at each rank under Forever's rules since the hotfixes of
+/// 10 November 2026: "chance to activate now increases with rank and activates 6/7/8/9/10 times
+/// per minute (was 20 times per minute regardless of rank)".
+pub(crate) const MAELSTROM_PPM_20261110: [f64; 5] = [6.0, 7.0, 8.0, 9.0, 10.0];
+
+/// What one Maelstrom Weapon stack takes off Lightning Bolt's cast time and mana cost, as a
+/// fraction (negative), at these points: the hotfixed curve under Forever's rules
+/// (`hotfix_113554::TALENT_CURVES_20261102`), the frozen one under the reference's.
+pub(crate) fn maelstrom_per_stack(rules: Rules, points: i32) -> f64 {
+    crate::prepare::hotfix_113554::talent(rules, 408498, 5)
+        .effect_at(1)
+        .fraction_at(points)
 }

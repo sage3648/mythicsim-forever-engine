@@ -242,16 +242,16 @@ pub(crate) fn glance(table: &AttackTable, units: TableUnits, bonus: f64) -> (f64
 mod tests {
     use super::*;
     use crate::prepare::attack::new_attack_table;
-    use crate::prepare::character::constants::CHARACTER_LEVEL;
+    use crate::prepare::levels::character_level;
 
     fn boss(level: i32) -> (AttackTable, TableUnits) {
         let units = TableUnits {
-            attacker_level: CHARACTER_LEVEL,
+            attacker_level: character_level(),
             defender_type: UnitType::Enemy,
             defender_level: level,
         };
         (
-            new_attack_table(CHARACTER_LEVEL, UnitType::Enemy, level),
+            new_attack_table(character_level(), UnitType::Enemy, level),
             units,
         )
     }
@@ -264,7 +264,7 @@ mod tests {
     /// table's own field, bit for bit.
     #[test]
     fn at_base_skill_every_lookup_is_the_table() {
-        for level in CHARACTER_LEVEL - 2..=CHARACTER_LEVEL + 3 {
+        for level in character_level() - 2..=character_level() + 3 {
             let (table, units) = boss(level);
             let (multiplier, spread) = glance(&table, units, 0.0);
             assert_eq!(
@@ -288,7 +288,7 @@ mod tests {
     /// formulas give the boss table.
     #[test]
     fn the_formulas_meet_the_boss_table() {
-        let (table, _) = boss(CHARACTER_LEVEL + 3);
+        let (table, _) = boss(character_level() + 3);
         let low = (1.3f64 - 0.05 * 15.0).clamp(0.01, 0.91);
         let high = (1.2f64 - 0.03 * 15.0).clamp(0.2, 0.99);
         for (name, formula, stored) in [
@@ -316,7 +316,7 @@ mod tests {
     /// Go `TestWeaponSkillAgainstABoss`: a level 63 boss (315 defense), per hand.
     #[test]
     fn against_a_boss() {
-        let (table, units) = boss(CHARACTER_LEVEL + 3);
+        let (table, units) = boss(character_level() + 3);
         // Main hand 311 (Aged Core Leather Gloves and Distracting Dagger with a dagger): a 4
         // point gap, 5.4% miss and dodge, no hit suppression, glances keep 91-99%.
         // Off hand 305: a 10 point gap, 6%, still no suppression, glances keep 80-90%.
@@ -355,15 +355,16 @@ mod tests {
     /// Go `TestWeaponSkillOnlyAgainstEnemiesAtOrAboveTheAttacker`.
     #[test]
     fn only_against_enemies_at_or_above_the_attacker() {
-        let (table, units) = boss(CHARACTER_LEVEL - 2);
+        let (table, units) = boss(character_level() - 2);
         assert_eq!(miss_chance(&table, units, 11.0), table.base_miss_chance);
         // An enemy's table against a player.
         let enemy = TableUnits {
-            attacker_level: CHARACTER_LEVEL + 3,
+            attacker_level: character_level() + 3,
             defender_type: UnitType::Player,
-            defender_level: CHARACTER_LEVEL,
+            defender_level: character_level(),
         };
-        let enemy_table = new_attack_table(CHARACTER_LEVEL + 3, UnitType::Player, CHARACTER_LEVEL);
+        let enemy_table =
+            new_attack_table(character_level() + 3, UnitType::Player, character_level());
         assert_eq!(
             dodge_chance(&enemy_table, enemy, 11.0),
             enemy_table.base_dodge_chance

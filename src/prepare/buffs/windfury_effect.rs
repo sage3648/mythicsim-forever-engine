@@ -6,9 +6,10 @@ use serde_json::{json, Value};
 use super::super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::super::env::Environment;
 use super::super::resolve_proc::{chance, proc_trigger};
+use super::super::sim::Rules;
 use super::super::sim::SECOND;
 use super::super::spell::ProcMask;
-use super::super::spelldata::must_find;
+use super::super::spelldata::{find, must_find};
 
 /// Go `outcomeNames`: the names of the outcome bits a listener hears. A single bit's name is the
 /// one `HitOutcome.String()` answers; a partial resist bit alone names nothing.
@@ -74,10 +75,22 @@ fn proc_trigger_spells(env: &Environment, trigger: &ProcTrigger) -> Vec<usize> {
 /// does (`WindfuryTotemMainHandOnly`). The narrowing keeps main hand attacks and off hand
 /// specials, and its extra condition refuses an off hand special when the character wields an
 /// off hand weapon: a shield strike is a main hand attack to the server.
+///
+/// Under Forever's rules the trigger hears main hand autos, extra swings included, and only the
+/// abilities whose client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off in
+/// place of the next swing (`Attributes[0]` 0x4). Forever combat logs: Bloodthirst 0 of 45,
+/// Whirlwind 0 of 55 and 0 of 279, Overpower 0 of 97 and Holy Strike 0 of 78 rolls, while Mortal
+/// Strike procs it 29 times in 150 and Maul, which goes off on the next swing, 27.2% of the time.
+/// No off hand special hears it, a shield strike included.
 pub(crate) fn windfury_trigger_spells(env: &Environment, trigger: &ProcTrigger) -> Vec<usize> {
+    let forever = env.sim.rules == Rules::Forever;
     let mut trigger = trigger.clone();
-    trigger.proc_mask =
-        ProcMask(trigger.proc_mask.0 & (ProcMask::MELEE_MH.0 | ProcMask::MELEE_OH_SPECIAL.0));
+    let hands = if forever {
+        ProcMask::MELEE_MH.0
+    } else {
+        ProcMask::MELEE_MH.0 | ProcMask::MELEE_OH_SPECIAL.0
+    };
+    trigger.proc_mask = ProcMask(trigger.proc_mask.0 & hands);
     let has_oh_weapon = env.sim.oh_weapon(env.player).is_some();
     env.sim
         .unit(env.player)
@@ -86,8 +99,16 @@ pub(crate) fn windfury_trigger_spells(env: &Environment, trigger: &ProcTrigger) 
         .enumerate()
         .filter(|(_, spell)| {
             let spell = env.sim.spell(**spell);
-            trigger.matches_spell(spell)
-                && !(spell.proc_mask.matches(ProcMask::MELEE_OH_SPECIAL) && has_oh_weapon)
+            if !trigger.matches_spell(spell) {
+                return false;
+            }
+            if forever {
+                let row = find(spell.action_id.spell_id);
+                return spell.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
+                    || row.requires_main_hand()
+                    || row.on_next_swing();
+            }
+            !(spell.proc_mask.matches(ProcMask::MELEE_OH_SPECIAL) && has_oh_weapon)
         })
         .map(|(position, _)| position)
         .collect()
@@ -95,7 +116,8 @@ pub(crate) fn windfury_trigger_spells(env: &Environment, trigger: &ProcTrigger) 
 
 /// buffs/drivers.go `driveWindfuryTotem`: the totem aura, refreshed every 5 seconds, holds a
 /// trigger that can grant charges of attack power and cast an extra main hand attack; the
-/// charges are spent by landed autos. Triggers resolve from client rows as Go resolves them.
+/// charges are spent by landed autos, or under Forever's rules by every auto but the one that
+/// fired the proc. Triggers resolve from client rows as Go resolves them.
 ///
 /// `meleeProcEffects` has to call this where Go does, as its last effect.
 #[allow(dead_code)]
@@ -148,6 +170,15 @@ pub(crate) fn windfury_totem_effect(
     });
     if let Some(extra) = extra {
         effect["extra_attack_spell"] = json!(extra);
+    }
+    // Forever combat logs: a landed hit that deals no damage rolls the totem (Sunder Armor
+    // applications at 15%), the auto that fires it spends no charge (the next off hand auto
+    // keeps the attack power, 46 of 47), and a missed auto spends one (8 of 8).
+    if sim.rules == Rules::Forever {
+        effect["trigger_require_damage"] = json!(false);
+        effect["spend_require_damage"] = json!(false);
+        effect["trigger_spends_no_charge"] = json!(true);
+        effect["any_outcome_spends"] = json!(true);
     }
     Some(effect)
 }

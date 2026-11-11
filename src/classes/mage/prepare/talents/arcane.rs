@@ -4,9 +4,9 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Rules, Sim, UnitId, MILLISECOND};
 use crate::prepare::spell::school;
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -263,7 +263,7 @@ impl Mage {
                 class_mask: masks::ARCANE_MISSILES_CAST,
                 float_value: buff
                     .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::PowerCostPctAdd,
                 ..SpellModConfig::default()
@@ -278,7 +278,7 @@ impl Mage {
                         dbcenums::A_ADD_FLAT_MODIFIER,
                         dbcenums::SPELLMOD_ACTIVATION_TIME,
                     )
-                    .average(CHARACTER_LEVEL) as i64)
+                    .average(character_level()) as i64)
                     .wrapping_mul(MILLISECOND),
                 kind: SpellModType::DotTickLengthFlat,
                 ..SpellModConfig::default()
@@ -386,7 +386,7 @@ impl Mage {
         let intellect_per_stack = buff_rank.effect_n(1).percent();
         let cost_per_stack = buff_rank
             .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0;
 
         let spell_damage =
