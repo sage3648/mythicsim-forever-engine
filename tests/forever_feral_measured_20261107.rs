@@ -57,7 +57,7 @@ fn the_measured_shares_are_forever_rules_only() {
     assert_eq!(number(&rip["attack_power_share_per_combo_point"]), 0.0114);
     assert_eq!(number(&rip["attack_power_share_max_points"]), 4.0);
     let bite = effect(&cat, "ferocious_bite");
-    assert_eq!(number(&bite["attack_power_per_combo_point"]), 0.0375);
+    assert_eq!(number(&bite["attack_power_per_combo_point"]), 0.037);
 
     let reference = prepared(&production("feral-druid"), Rules::GoReference);
     assert_eq!(

@@ -71,10 +71,11 @@ fn every_attack_power_item_of_the_hunter_references_counts_for_ranged() {
 }
 
 /// A row that states ranged attack power beside attack power keeps it: Counterattack Lodestone
-/// gives 22 of each, not 44 ranged.
+/// gives 22 of each in the reference, not 44 ranged, and its live row's 30 of each under
+/// Forever's rules, not 60 ranged.
 #[test]
 fn a_row_with_its_own_ranged_attack_power_is_not_doubled() {
-    assert_eq!(added(&[(18537, 0)], Rules::Forever), (22.0, 22.0));
+    assert_eq!(added(&[(18537, 0)], Rules::Forever), (30.0, 30.0));
     assert_eq!(added(&[(18537, 0)], Rules::GoReference), (22.0, 22.0));
 }
 

@@ -615,10 +615,14 @@ impl Shaman {
         if let Some(aura) = self.flametongue_totem_aura {
             let mut trigger = proc_trigger(sim, Some(player), must_find(15036), &[]);
             trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
-            // Windfury Weapon's main-hand strikes proc it as the main hand's autos do (MythicSim
-            // patch 141): the trigger hears main hand specials, kept to the autos and 439440.
+            // The Go reference lets Windfury Weapon's main-hand strikes proc it as the main hand's
+            // autos do (MythicSim patch 141): the trigger hears main hand specials, kept to the
+            // autos and 439440. Forever's rules keep it to the autos: the totem's row procs on
+            // landed auto attacks, and in two raw combat logs of client 1.60.1.70862 every swing
+            // with two Windfury Weapon strikes carries one totem hit and no strike carries one.
             let mut trigger_spells = proc_trigger_spells(env, &trigger);
-            if trigger.proc_mask.matches(ProcMask::MELEE_MH_AUTO) {
+            if sim.rules == Rules::GoReference && trigger.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
+            {
                 trigger.proc_mask = ProcMask(trigger.proc_mask.0 | ProcMask::MELEE_MH_SPECIAL.0);
                 let book = &sim.unit(player).spellbook;
                 trigger_spells = proc_trigger_spells(env, &trigger)

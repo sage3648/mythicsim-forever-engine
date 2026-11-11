@@ -735,8 +735,10 @@ fn seal_of_justice_judges_justice() {
 #[test]
 fn warrior_strikes_and_freezing_trap_run() {
     for (name, spell_id, casts) in [
-        // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before).
-        ("protection-warrior-shield-bash", 1672, 530.0),
+        // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before). 531
+        // since rage from damage taken reads the attacker's level and Shield Bash strikes with
+        // the main hand (12 November 2026).
+        ("protection-warrior-shield-bash", 1672, 531.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
         // 77 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.

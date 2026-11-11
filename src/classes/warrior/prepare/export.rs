@@ -39,6 +39,17 @@ pub(super) fn rotation_names_shield_block(sim: &Sim, unit: UnitId) -> bool {
 }
 
 /// The exporter's `damageRoll`: a client damage row's roll.
+/// Thunder Clap's share of attack power. The Go reference's literal is 0.0255. Under Forever's
+/// rules it is 0.07, measured in game on ranks 1 and 4 (rank 4 at levels 43 to 45, client
+/// 1.60.1.70862: every hit reads floor(0.99 * (55 + 0.07 * attack power))). Ranks 2, 3, 5 and
+/// 6 carry the share, unmeasured.
+fn thunder_clap_attack_power_share(rules: Rules) -> f64 {
+    match rules {
+        Rules::Forever => 0.07,
+        Rules::GoReference => 0.0255,
+    }
+}
+
 fn damage_roll(row: &Row) -> Value {
     let effect = row.damage_effect();
     let average = effect.average(character_level());
@@ -184,9 +195,15 @@ impl Warrior {
         effects.push(whirlwind_effect);
         // execute.go: the dummy effect's base and ten times its chain amplitude per extra rage.
         let execute = data.execute.highest();
-        effects.push(json!({"kind": "execute", "spell_id": execute.id,
+        let mut execute_effect = json!({"kind": "execute", "spell_id": execute.id,
             "base_damage": execute.effect_n(1).average(level),
-            "damage_per_rage": f64::from(execute.effect_n(1).chain_amp) * 10.0}));
+            "damage_per_rage": f64::from(execute.effect_n(1).chain_amp) * 10.0});
+        if sim.rules == Rules::Forever {
+            // Combat logs of client 1.60.1.70862: 36 of 36 avoided Executes keep the extra rage
+            // and get none of the cost back (spells/execute.rs).
+            execute_effect["extra_rage_on_landed"] = json!(true);
+        }
+        effects.push(execute_effect);
         // hamstring.go
         let hamstring = data.hamstring.highest();
         effects.push(json!({"kind": "hamstring", "spell_id": hamstring.id,
@@ -688,9 +705,14 @@ impl Warrior {
         // talents_protection.go registerShieldSlam
         if self.has_talent("shield_slam") {
             let row = data.shield_slam.highest();
-            effects.push(json!({"kind": "shield_slam", "spell_id": row.id,
+            let mut shield_slam = json!({"kind": "shield_slam", "spell_id": row.id,
                 "damage": damage_roll(row),
-                "can_block": sim.unit(unit).pseudo_stats.can_block}));
+                "can_block": sim.unit(unit).pseudo_stats.can_block});
+            if sim.rules == Rules::Forever {
+                // Twice the block value (spells/shield_slam.rs).
+                shield_slam["twice_block_value"] = json!(true);
+            }
+            effects.push(shield_slam);
         }
         // thunder_clap.go: the row's average plus a share of attack power; a landed clap slows
         // the target by its bid in the attack speed category, which holds only the clap, or the
@@ -752,12 +774,17 @@ impl Warrior {
             };
             match (aura, relative) {
                 (Some(aura), Some(bid)) => {
-                    effects.push(json!({"kind": "thunder_clap", "spell_id": clap_row.id,
+                    let mut clap = json!({"kind": "thunder_clap", "spell_id": clap_row.id,
                         "base_damage": clap_row.damage_effect().average(level),
-                        "attack_power_share": 0.0255,
+                        "attack_power_share": thunder_clap_attack_power_share(sim.rules),
                         "max_targets": i32::from(clap_row.max_targets),
                         "aura": sim.aura(aura).label,
-                        "bid": bid}));
+                        "bid": bid});
+                    if sim.rules == Rules::Forever {
+                        // A magic hit spends no Sweeping Strikes charge (spells/thunder_clap.rs).
+                        clap["no_sweeping_strikes"] = json!(true);
+                    }
+                    effects.push(clap);
                 }
                 _ => notes.push("Thunder Clap's slow shares its category".to_string()),
             }

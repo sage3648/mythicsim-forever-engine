@@ -58,12 +58,14 @@ fn weapon_multiplier(rules: Rules, ladder: &Ladder, forever: f64) -> f64 {
 
 /// The notes of 2 November 2026 raise Rip's, Rake's and Ferocious Bite's base damage and attack
 /// power scaling by "about 25%". The live rows state the new base damage (`hotfix_113554`); no
-/// row or tooltip states the attack power shares, which are server side literals. Rip's and
-/// Rake's were measured in game on 7 November 2026 (below); Ferocious Bite's, 3% a combo point,
-/// still keeps the notes' 25%. 1 for the Go reference.
+/// row or tooltip states the attack power shares, which are server side literals, so each is
+/// measured in game: Rip's and Rake's on 7 November 2026 (below), Ferocious Bite's on client
+/// 1.60.1.70862, 0.037 a combo point. Rank 1 fits 0.03683 to 0.03707 over 157 landed bites and
+/// ranks 2 and 3 read 0.0367 to 0.0376 over 24; ranks 4 to 6 carry the share, unmeasured (the
+/// notes' 25% would give 0.0375). 0.03 for the Go reference.
 pub(super) fn ferocious_bite_attack_power_share(rules: Rules) -> f64 {
     match rules {
-        Rules::Forever => 0.03 * 1.25,
+        Rules::Forever => 0.037,
         Rules::GoReference => 0.03,
     }
 }
@@ -773,7 +775,7 @@ mod tests {
         assert_eq!(live.average(60), 19.0);
         let frozen = cat_rank(Rules::GoReference, &RIP_RANKS).periodic_effect();
         assert_eq!(frozen.average(60), 15.0);
-        assert_eq!(ferocious_bite_attack_power_share(Rules::Forever), 0.0375);
+        assert_eq!(ferocious_bite_attack_power_share(Rules::Forever), 0.037);
         assert_eq!(ferocious_bite_attack_power_share(Rules::GoReference), 0.03);
     }
 

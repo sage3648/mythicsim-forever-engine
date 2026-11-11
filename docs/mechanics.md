@@ -390,6 +390,44 @@ the Go goldens and exporter uses. The departures:
   still switches Flametongue Totem off, totem against totem. The curves are in
   `prepare::hotfix_113554` (`TALENT_CURVES_20261102`) and the proc rate in
   `MAELSTROM_PPM_20261110` (`tests/hotfix_20261103.rs`).
+- Rules measured on combat logs of client 1.60.1.70862 (Forever preparation only; the reference
+  keeps its own; `tests/forever_rules_20261112.rs`):
+  - Flametongue Totem casts its hit off landed main hand auto attacks alone. In two raw combat
+    logs every swing that brought two Windfury Weapon strikes carries one totem hit, and no
+    strike carries one. The reference lets the main hand strike (439440) proc it too.
+  - An Execute that misses, is dodged or parried costs its base rage alone: the extra rage
+    stays and none of the cost comes back (36 of 36 avoided Executes from 14 warriors). The
+    reference spends the extra rage before the roll and refunds its share of the cost.
+  - Thunder Clap is a magic hit and spends no Sweeping Strikes charge (7 of 7 landed claps with
+    the buff up, where 29 of 30 Whirlwinds spent one). Its share of attack power is 0.07,
+    measured on ranks 1 and 4 (rank 4 reads floor(0.99 * (55 + 0.07 * attack power))); ranks 2,
+    3, 5 and 6 carry it, unmeasured. The reference's literal is 0.0255.
+  - Shield Slam and Shield Bash are main hand specials: the main hand weapon's proc fired on 54
+    of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks. Their
+    rows still require the shield, and Windfury Totem still never rolls on them. Shield Slam adds
+    twice the block value (at a block value of 28 the mean hit sits about 28 above one block
+    value's worth, 481 against 453). Its flat threat is 178 on rank 1 (177.7 measured at levels
+    40 to 42); ranks 2 to 4 are not measured and carry rank 1's 4.45 a spell level as whole
+    numbers, 214, 240 and 267, where the reference adds 508 on every rank.
+  - Maul rolls Omen of Clarity at the full two a minute: 46.5 procs over 431 rolls (10.8%). The
+    half chance of 10 November came from a sample of 14 in 342 and is gone.
+  - Ferocious Bite takes 0.037 of attack power a combo point: rank 1 fits 0.03683 to 0.03707
+    over 157 landed bites, ranks 2 and 3 read 0.0367 to 0.0376, and ranks 4 to 6 carry it,
+    unmeasured. It replaces the 0.0375 placeholder of the notes' "about 25%".
+  - Rage from damage taken is `2.5 * (1 - A) * damage / c`: the damage before armor,
+    resistances, block and absorbs, `c` the rage conversion value at the attacker's level (230.6
+    at 60) and `A` an armor reduction the game assumes in place of the defender's own, which the
+    game build's notes describe (rage balanced around 20% to 40% armor by level instead of 50%).
+    `A` is measured by attacker level: 21.8% up to 38, 23.9% at 42 and 31% at 44 on hundreds of
+    hits each, 36% at 46 and 38% at 50 on a few dozen. The 40% a level 63 boss gets is the top
+    of the notes' range and is not measured. The defender's health and armor play no part, and a
+    hit blocked in full gives none (6 of 6). The reference gives 10 times the damage before armor
+    over maximum health. Periodic damage taken gives no rage on either side yet.
+- Live item rows read from Wowhead's Forever tooltips on 12 November 2026
+  (`data/forever-live-items.jsonl`): Counterattack Lodestone (18537) gives 30 attack power and
+  no parry; Briarwood Reed (12930) 15 spell damage and healing (the tooltip doubles it in Marsh
+  and Swamp areas, which no fight assumes); the Warlock's and the Shaman's Royal Seal of
+  Eldre'Thalas (18467, 18471) 18 spell damage and healing, where the rows kept Classic's 23.
 - The rest of the hotfixes of 10 November 2026 (Forever preparation only):
   - Beast Mastery: "Melee damage dealt by the Hawk pet increased by about 80%." The hawk's swing
     was fitted on level 30 logs taken before it, so its fixed part and its slope on the owner's
