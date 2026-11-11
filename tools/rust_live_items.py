@@ -38,13 +38,8 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   stays the row's.
 
 Existing live rows keep their stats, damage and speed as they are; only their on use cooldown
-<<<<<<< HEAD
 and weapon skills follow a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
 yet stays: Rage of the Storm (280604) is the ItemSparse row of hotfix push 113886 (docs/mechanics.md). An item with a "+N" line this tool cannot read is left out
-=======
-follows a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
-yet stays: Rage of the Storm (280604) is the ItemSparse row of hotfix push 113886 (docs/mechanics.md). An item with a "+N" line this tool cannot read is left out
->>>>>>> 842da72a5d (Shorten the README and move mechanics notes to docs/mechanics.md)
 and listed.
 
     python3 tools/rust_live_items.py fetch --cache DIR [ID ...]
