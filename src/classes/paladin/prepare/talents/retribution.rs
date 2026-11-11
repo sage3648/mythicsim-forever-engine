@@ -3,8 +3,8 @@
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Rules, Sim, UnitId, NEVER_EXPIRES};
 use crate::prepare::spell::{school, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -164,7 +164,7 @@ impl Paladin {
         // The tooltip's ${$m1/-3*$440667m1}: the trigger's -201 scaled by the points over three.
         let target_attack_power = rank
             .effect(dbcenums::A_MOD_ATTACK_POWER, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             * points
             / 3.0;
 

@@ -1,4 +1,4 @@
-//! A healer's gear under Forever's rules (`prepare::healer_gear`, README Rust-only mechanics):
+//! A healer's gear under Forever's rules (`prepare::healer_gear`, docs/mechanics.md):
 //! the set bonuses, relics and trinkets the Go reference counts for nothing, read from their
 //! client rows, and the set listeners it registers that Rust used to refuse. Each test puts the
 //! gear on one of `fixtures/healers`' requests and checks what the export carries, then that the

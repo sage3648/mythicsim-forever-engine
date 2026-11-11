@@ -4,10 +4,10 @@
 use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export::action_id;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::Rules;
 
 use super::poisons::{poison_proc_mask, IMBUES};
@@ -61,7 +61,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         let row = data.sinister_strike.highest();
         effects.push(json!({
             "kind": "sinister_strike", "spell_id": row.id,
-            "base_damage": row.damage_effect().average(CHARACTER_LEVEL),
+            "base_damage": row.damage_effect().average(character_level()),
         }));
     }
     // backstab.go: the base, the dagger and behind conditions, and Puncturing Wounds' combo point.
@@ -69,7 +69,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         let row = data.backstab.highest_for(env.rules);
         effects.push(json!({
             "kind": "backstab", "spell_id": row.id,
-            "base_damage": row.damage_effect().average(CHARACTER_LEVEL),
+            "base_damage": row.damage_effect().average(character_level()),
             "main_hand_dagger": has_dagger(sim, env.player, Hand::Main),
             "extra_combo_point_chance": data
                 .puncturing_wounds
@@ -86,7 +86,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         let damage = row.damage_effect();
         effects.push(json!({
             "kind": "eviscerate", "spell_id": row.id,
-            "damage_average": damage.average(CHARACTER_LEVEL),
+            "damage_average": damage.average(character_level()),
             "damage_variance": damage.variance,
             "combo_point_damage": f64::from(damage.points_per_resource) + state.deathmantle_bonus.get(),
             "attack_power_per_combo_point": 0.03,
@@ -121,7 +121,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
             "kind": "blade_flurry", "spell_id": row.id, "aura": sim.aura(aura).label,
             "hit_spell_id": 22482,
             "attack_speed_multiplier": 1.0
-                + row.effect(dbcenums::A_MOD_MELEE_HASTE_3, 0).average(CHARACTER_LEVEL) / 100.0,
+                + row.effect(dbcenums::A_MOD_MELEE_HASTE_3, 0).average(character_level()) / 100.0,
         }));
     }
     // talents_combat.go registerAdrenalineRush: the regeneration multiplier and the energy at or
@@ -131,7 +131,7 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
         effects.push(json!({
             "kind": "adrenaline_rush", "spell_id": row.id, "aura": sim.aura(aura).label,
             "regen_multiplier": 1.0
-                + row.effect(dbcenums::A_MOD_POWER_REGEN_PERCENT, 3).average(CHARACTER_LEVEL) / 100.0,
+                + row.effect(dbcenums::A_MOD_POWER_REGEN_PERCENT, 3).average(character_level()) / 100.0,
             "energy_threshold": 45.0,
         }));
     }
@@ -166,21 +166,33 @@ fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
     };
     let bonus = poison_bonus(rogue);
     let hands = |imbue: i32| poison_proc_mask(sim, env.player, imbue).names();
+    // A levelling rogue's Instant Poison is the rank it brews (Instant Poison II: 20 to 26 from
+    // 28); at level 60 Go's 76 to 100, rank VI.
+    let level = crate::prepare::levels::character_level();
+    let instant_damage = match super::poisons::imbue_poison_rank(IMBUES.instant) {
+        super::poisons::PoisonRank::Known(rank) => {
+            (rank.effect_n(1).min(level), rank.effect_n(1).max(level))
+        }
+        _ => (76.0, 100.0),
+    };
     if let Some(spell) = rogue.spells.instant_poison {
         effects.push(json!({
             "kind": "instant_poison", "trigger_aura": "Instant Poison",
             "spell_id": sim.spell(spell).action_id.spell_id,
             "proc_mask": hands(IMBUES.instant), "proc_chance": 0.2 + bonus,
-            "min_damage": 76.0, "max_damage": 100.0, "attack_power_share": instant_share,
+            "min_damage": instant_damage.0, "max_damage": instant_damage.1,
+            "attack_power_share": instant_share,
         }));
     }
     if let Some(spell) = rogue.spells.deadly_poison {
         let id = &sim.spell(spell).action_id;
         // Deadly Poison V (dot 25349, 23 a tick) is taught by an Ahn'Qiraj 20 book, so under
         // Forever's rules the rogue brews rank IV (dot 11354, 18 a tick); see book_ranks.
-        let tick_damage = match env.rules {
-            Rules::Forever => 18.0,
-            Rules::GoReference => 23.0,
+        let tick_damage = match (env.rules, super::poisons::imbue_poison_rank(IMBUES.deadly)) {
+            // A levelling rogue's rank, the dot's tick (Deadly Poison II: 9 a tick from 38).
+            (_, super::poisons::PoisonRank::Known(rank)) => rank.effect_n(1).average(level),
+            (Rules::Forever, _) => 18.0,
+            (Rules::GoReference, _) => 23.0,
         };
         effects.push(json!({
             "kind": "deadly_poison", "trigger_aura": "Deadly Poison", "spell_id": id.spell_id,

@@ -1,4 +1,4 @@
-//! Rake (9904), from Go sim/druid/rake.go: a flat hit plus 5% of attack power on the weapon
+//! Rake (9904), from Go sim/druid/rake.go: a flat hit plus a share of attack power on the weapon
 //! special table that gives a combo point and applies a bleed when it lands, a refund when it
 //! does not. The bleed ticks a flat amount plus the same share, which it snapshots as a flat
 //! amount but reads from the attack power each tick has, as Go `SnapshotPhysical` and
@@ -137,5 +137,42 @@ impl Rake {
         } else {
             self.expected_tick(fight, spell, target, dot)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rake(attack_power_share: f64, flat_damage: f64, tick_base: f64) -> Rake {
+        Rake {
+            flat_damage,
+            tick_base,
+            attack_power_share,
+            tick_can_crit: false,
+            short_name: "Rake".to_string(),
+        }
+    }
+
+    /// A Tauren druid's combat log (levels 22 to 25, client 1.60.1.70862, 7 November 2026): at
+    /// 221 attack power with Savage Fury 2/2 (+20%) a tick read 37 on 55 of 55 ticks, from a base
+    /// of 17. A share of 0.06875 reads 38 and the earlier 0.0625 reads 36.
+    #[test]
+    fn a_tick_at_221_attack_power_reads_37() {
+        let reading = |share: f64| (1.2 * rake(share, 24.0, 17.0).tick_damage(221.0)).floor();
+        assert_eq!(reading(0.065), 37.0);
+        assert_eq!(reading(0.06875), 38.0);
+        assert_eq!(reading(0.0625), 36.0);
+    }
+
+    /// The hit and the tick take the same share of attack power and nothing of a weapon: the
+    /// attack power adds 6.5% of itself to the flat amounts and no more.
+    #[test]
+    fn the_hit_and_the_tick_take_the_same_share() {
+        let rake = rake(0.065, 24.0, 17.0);
+        assert!((rake.hit_damage(221.0) - (24.0 + 14.365)).abs() < 1e-9);
+        assert!((rake.tick_damage(221.0) - (17.0 + 14.365)).abs() < 1e-9);
+        assert!((rake.hit_damage(300.0) - rake.hit_damage(200.0) - 6.5).abs() < 1e-9);
+        assert!((rake.tick_damage(300.0) - rake.tick_damage(200.0) - 6.5).abs() < 1e-9);
     }
 }

@@ -5,8 +5,10 @@
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::items::slot as item_slot;
+use crate::prepare::levels::{character_level, known_rank, MAX_LEVEL};
 use crate::prepare::sim::{AuraConfig, Rules, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag};
+use crate::prepare::spelldata::{book_ranks, must_find, Spell};
 
 use super::masks;
 use super::util::{aura_array_map, new_enemy_aura_array, spell_action, tagged_action};
@@ -19,6 +21,59 @@ const DEADLY_IMBUE_ID: i32 = 27186;
 const INSTANT_POISON_SPELL_ID: i32 = 11340;
 const DEADLY_POISON_SPELL_ID: i32 = 25347;
 const WOUND_POISON_SPELL_ID: i32 = 13227;
+
+/// Each poison's ranks, lowest first: the spells a hit casts, whose spell level is the level the
+/// rogue learns to brew the rank at.
+const INSTANT_POISON_RANKS: [i32; 6] = [8680, 8685, 8689, 11335, 11336, 11337];
+const DEADLY_POISON_RANKS: [i32; 5] = [2818, 2819, 11353, 11354, 25349];
+const WOUND_POISON_RANKS: [i32; 4] = [13218, 13222, 13223, 13224];
+
+/// The poison a levelling rogue brews.
+#[derive(Clone, Copy, Debug)]
+pub(super) enum PoisonRank {
+    /// A level 60 rogue: the Go literals stand.
+    Top,
+    /// The highest rank its level teaches (Deadly Poison V, an Ahn'Qiraj 20 book, never under
+    /// Forever's rules).
+    Known(&'static Spell),
+    /// A rogue below the first rank's level: Instant Poison is learned at 20, Deadly Poison at 30
+    /// and Wound Poison at 32. Its weapons carry no poison.
+    Unknown,
+}
+
+fn poison_rank(ranks: &[i32]) -> PoisonRank {
+    if character_level() == MAX_LEVEL {
+        return PoisonRank::Top;
+    }
+    let rows: Vec<&'static Spell> = ranks
+        .iter()
+        .filter(|id| !book_ranks::is_book_rank(**id))
+        .map(|id| must_find(*id))
+        .collect();
+    match known_rank(&rows) {
+        Some(rank) => PoisonRank::Known(rank),
+        None => PoisonRank::Unknown,
+    }
+}
+
+/// The rank of the poison an imbue applies, for the character being prepared.
+pub(super) fn imbue_poison_rank(imbue_id: i32) -> PoisonRank {
+    match imbue_id {
+        INSTANT_IMBUE_ID => poison_rank(&INSTANT_POISON_RANKS),
+        DEADLY_IMBUE_ID => poison_rank(&DEADLY_POISON_RANKS),
+        WOUND_IMBUE_ID => poison_rank(&WOUND_POISON_RANKS),
+        _ => PoisonRank::Top,
+    }
+}
+
+/// The spell a poison's hit is listed as: the Go literal at level 60, and below it the rank the
+/// rogue brews.
+fn poison_spell_id(imbue_id: i32, top: i32) -> i32 {
+    match imbue_poison_rank(imbue_id) {
+        PoisonRank::Known(rank) => rank.id,
+        PoisonRank::Top | PoisonRank::Unknown => top,
+    }
+}
 
 /// Go `getPoisonProcMask`: the hands the imbue is on, in the set worn. With a Rogue's swap set
 /// worn, the hands follow the swap set's poisons (see [`hand_imbues`]).
@@ -62,10 +117,10 @@ pub(super) fn hand_imbues(sim: &Sim, unit: UnitId, swapped: bool) -> [i32; 2] {
     let mut imbues = [consumables.i32("mhImbue_id"), consumables.i32("ohImbue_id")];
     let swap = sim.character(unit).item_swap.as_ref();
     if !swapped || sim.rules != Rules::Forever {
-        return imbues;
+        return imbues.map(brewed);
     }
     let Some(swap) = swap else {
-        return imbues;
+        return imbues.map(brewed);
     };
     for (hand, (slot, field)) in [
         (item_slot::MAIN_HAND, "mh_imbue_swap_id"),
@@ -78,7 +133,16 @@ pub(super) fn hand_imbues(sim: &Sim, unit: UnitId, swapped: bool) -> [i32; 2] {
             imbues[hand] = consumables.i32(field);
         }
     }
-    imbues
+    imbues.map(brewed)
+}
+
+/// The imbue, or none for a poison the levelling rogue cannot brew yet: a level 15 rogue's
+/// weapons carry no Instant Poison, which the request's level 60 consumables name.
+fn brewed(imbue_id: i32) -> i32 {
+    match imbue_poison_rank(imbue_id) {
+        PoisonRank::Unknown => 0,
+        PoisonRank::Top | PoisonRank::Known(_) => imbue_id,
+    }
 }
 
 /// What a Rogue's swap set may change, noted for the item swap to refuse otherwise: under
@@ -210,7 +274,10 @@ impl Rogue {
                     ..DotConfig::default()
                 },
                 ..poison_config(
-                    tagged_action(DEADLY_POISON_SPELL_ID, 100),
+                    tagged_action(
+                        poison_spell_id(DEADLY_IMBUE_ID, DEADLY_POISON_SPELL_ID),
+                        100,
+                    ),
                     masks::DEADLY_POISON,
                 )
             },
@@ -226,7 +293,10 @@ impl Rogue {
         // The healing debuff has no effect on a DPS sim.
         let debuff = AuraConfig {
             label: "Wound Poison".to_string(),
-            action_id: Some(spell_action(WOUND_POISON_SPELL_ID)),
+            action_id: Some(spell_action(poison_spell_id(
+                WOUND_IMBUE_ID,
+                WOUND_POISON_SPELL_ID,
+            ))),
             duration: 15 * SECOND,
             max_stacks: 5,
             ..AuraConfig::default()
@@ -239,7 +309,10 @@ impl Rogue {
             unit,
             SpellConfig {
                 related_aura_arrays: related,
-                ..poison_config(spell_action(WOUND_POISON_SPELL_ID), masks::WOUND_POISON)
+                ..poison_config(
+                    spell_action(poison_spell_id(WOUND_IMBUE_ID, WOUND_POISON_SPELL_ID)),
+                    masks::WOUND_POISON,
+                )
             },
         );
         self.spells.wound_poison = Some(spell);
@@ -252,7 +325,10 @@ impl Rogue {
         }
         let spell = sim.register_spell(
             unit,
-            poison_config(spell_action(INSTANT_POISON_SPELL_ID), masks::INSTANT_POISON),
+            poison_config(
+                spell_action(poison_spell_id(INSTANT_IMBUE_ID, INSTANT_POISON_SPELL_ID)),
+                masks::INSTANT_POISON,
+            ),
         );
         self.spells.instant_poison = Some(spell);
     }

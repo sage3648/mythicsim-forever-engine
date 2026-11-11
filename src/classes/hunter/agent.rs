@@ -690,6 +690,7 @@ impl HunterAgent {
                     swing_share,
                     always_hits,
                     hawk_spells,
+                    guardian,
                     ..
                 } => {
                     let bound = SummonHawk::bind(
@@ -698,6 +699,7 @@ impl HunterAgent {
                         *attack_power_share,
                         *swing_share,
                         *always_hits,
+                        *guardian,
                         hawk_spells,
                     )?;
                     fight.agent.summon_hawk = Some(Rc::new(bound));
@@ -966,7 +968,7 @@ impl Agent for HunterAgent {
                     .expect("Serpent Sting is bound");
                 sting.tick(fight, dot);
             }
-            HunterSpell::Hawk => SummonHawk::tick(fight, dot),
+            HunterSpell::Hawk => Self::summon_hawk(fight).tick(fight, dot),
             HunterSpell::LaceratingStrikes => Self::mongoose(fight).bleed_tick(fight, dot),
             HunterSpell::ImmolationTrap => fight.snapshot_dot_tick(dot),
             HunterSpell::ExplosiveTrap => fight

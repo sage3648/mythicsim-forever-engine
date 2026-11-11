@@ -102,10 +102,10 @@ pub(crate) trait PrepAgent: CloneAgent {
     fn eureka_spells(&self) -> Option<super::racials::EurekaSpells> {
         None
     }
-    /// The pet spells the Orc racial Command raises 5% under Forever's rules, as the owner's pet
-    /// and the class mask of the spell (the client's row names Firebolt and Lash of Pain). A
-    /// class without any leaves the racial on every pet's damage.
-    fn command_pet_spells(&self) -> Option<Vec<(UnitId, i64)>> {
+    /// The pets the Orc racial Command raises 5% (all their damage, the Tamed Pet Passive's
+    /// effect) under Forever's rules. A class without its own list leaves the racial on every
+    /// pet the owner has.
+    fn command_pets(&self) -> Option<Vec<UnitId>> {
         None
     }
     /// Go `Agent.NewAPLAction`, asked first for every rotation action: `Some(true)` when the

@@ -802,6 +802,10 @@ pub struct DamageEffect {
     pub average: f64,
     /// Client variance: the roll is uniform over average x (1 +- variance / 2).
     pub variance: f64,
+    /// Forever's rules: the row is a physical school damage row, whose roll lands on a whole
+    /// number (`physical_rolls_are_whole`).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub physical: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -845,6 +849,11 @@ pub struct Spell {
     pub crit_multiplier_additive: f64,
     pub bonus_base_damage: f64,
     pub bonus_coefficient: f64,
+    /// Forever's rules: a physical row that deals school damage takes the caster's flat physical
+    /// damage bonus at this share, its bonus coefficient column; with none, a physical spell
+    /// takes the bonus whole, as a weapon strike does.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub physical_school_coefficient: Option<f64>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     pub pushback_resist: f64,
@@ -979,6 +988,12 @@ pub struct Player {
     /// which kept the threat of the damage before the bonus.
     #[serde(default, skip_serializing_if = "is_false")]
     pub threat_follows_damage_bonus: bool,
+    /// Forever's rule: a physical hit that deals school damage rolls its client row's base
+    /// points a half Variance either side and lands on a whole number, so Revenge rank 1 (22,
+    /// Variance 0.154) rolls 20 to 24 with the two ends rarer than the three between. False is
+    /// the Go reference, which rolls the same span without rounding.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub physical_rolls_are_whole: bool,
     /// Forever's rule: a cast begun before the pull that would finish before it finishes on the
     /// pull, as a player times a precast to land as the fight starts. False is the Go reference,
     /// under which a hasted precast finishes early and its damage, landing before 0:00, is not
@@ -992,6 +1007,15 @@ pub struct Player {
     /// before the pull.
     #[serde(default, skip_serializing_if = "is_false")]
     pub prepull_swap_stays_in_hand: bool,
+    /// Forever's rule: the look that decides whether to clip a channel with an interrupt condition
+    /// reads the rotation as it would run with the channel ended. It walks into groups and into
+    /// the current step of a sequence, reads the channel's own dot aura as down, passes over a
+    /// sequence that is not running, and sends a cast row through the major cooldown gate. False
+    /// is the Go reference, which counts a group or sequence in the way as another action ready,
+    /// reads the channel's aura as up, and recasts a channel gated on its own aura every tick it
+    /// clips.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub channel_clip_walks_rotation: bool,
     /// MythicSim's healer sims under Forever's rules: each heal's share that real healers
     /// overheal, measured on foreverlogs.gg (`prepare::overheal`). Only the rest counts as
     /// healing; the share counts as overhealing. Empty is the Go reference, which counts every
@@ -1129,6 +1153,11 @@ pub struct Pet {
     pub active_dismiss_log: Option<String>,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
+    /// Forever's rules: the pet swings at its owner's melee and attack speed. The owner's speed
+    /// at the summon is already in `melee`; each later change reaches the pet at its next stat
+    /// heartbeat and rescales the swing under way.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inherits_melee_speed: bool,
     /// A focus bar, for a pet without a mana bar.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub focus: Option<PetFocus>,
@@ -1220,6 +1249,24 @@ pub struct PetMana {
     pub max: f64,
     pub regen_per_second_casting: f64,
     pub regen_per_second_not_casting: f64,
+}
+
+/// A Summon Hawk hawk's swing under Forever's rules.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HawkGuardian {
+    /// The average swing before the owner's ranged attack power, armor and the damage
+    /// multipliers that reach Summon Hawk.
+    pub swing_average: f64,
+    /// The roll's half width as a share of the average.
+    pub swing_spread: f64,
+    /// Damage a swing gains for each point of the owner's ranged attack power.
+    pub attack_power_coefficient: f64,
+    /// The share of the owner's crit a hawk has, before Ferocity's flat crit.
+    pub crit_share: f64,
+    /// The owner's crit offset the hawk shares: the higher of the Auto Shot's ranged-only crit
+    /// and the main-hand swing's melee-only crit, as the tamed pet inherits it.
+    pub crit_offset: f64,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -1642,6 +1689,11 @@ pub struct AvoidTrigger {
     pub outcomes: Vec<String>,
     pub needs_block: bool,
     pub chance: f64,
+    /// Forever's rule: the rage's threat is `threat_per_rage` a point whatever the warrior's
+    /// threat multiplier, so Defiance and the stance leave it alone. False is the Go reference,
+    /// which takes the multiplier at the gain.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub unscaled_threat: bool,
 }
 
 /// A flat change to a spell's cost, by spellbook position.
@@ -2049,6 +2101,10 @@ pub enum Effect {
         /// The spells that never trigger it in Cat or Bear Form: Faerie Fire since the 16 October
         /// 2026 beta notes.
         form_excluded_spells: Vec<usize>,
+        /// Forever rules: the spells that roll at half the chance. Maul procs it on 14 of 342
+        /// hits in bear logs (4.1%), where every other special fits the full chance.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        half_chance_spells: Vec<usize>,
     },
     /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
     NaturesGrace {
@@ -2223,6 +2279,10 @@ pub enum Effect {
         max_stacks: i32,
         tick_can_crit: bool,
         tick_magic: bool,
+        /// Forever rules: the weapon hit's own spell (414647). The cast rolls miss, dodge and
+        /// parry; a landed cast's hit rolls only crit, on this spell's crit multiplier.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        hit_spell: Option<usize>,
     },
     /// Primal Bite: flat damage plus main hand weapon damage; Berserk lifts its cooldown.
     PrimalBite {
@@ -2402,6 +2462,15 @@ pub enum Effect {
         /// such as a landed Mutilate's own roll, does not reach it.
         trigger_require_damage: bool,
         spend_require_damage: bool,
+        /// Forever's rules: the proc grants every charge and the main hand auto that fired it
+        /// spends none, so the next off hand auto keeps the attack power (Forever combat logs,
+        /// 46 of 47). Without it an auto that fires the proc takes one charge off.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules: every outcome of a spending auto spends a charge, a miss included
+        /// (Forever combat logs, 8 of 8 missed swings). Without it only landed autos do.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -3501,6 +3570,10 @@ pub enum Effect {
         mana: f64,
         metrics_action_id: ActionId,
         delay_ns: i64,
+        /// Forever's rules: only a landed hit rolls the chance, a miss, dodge or parry of any
+        /// kind none (a level 41 log: 164 of 336 landed melee swings paid, 1 of 52 misses).
+        #[serde(default, skip_serializing_if = "is_false")]
+        landed_only: bool,
     },
     /// Go buffs/paladin.go `AttachJudgementOfLightHeal`: a landed melee hit on the judged target
     /// that is no proc runs the handler a spell batch window later, which rolls `proc_chance`
@@ -3685,13 +3758,17 @@ pub enum Effect {
         soul_siphon_live: Option<SoulSiphonLive>,
     },
     /// Wrack: a channel scaled by Soul Siphon, and while it runs a bonus on the ticks of
-    /// `dot_spells`.
+    /// `dot_spells` (the Go reference) or faster ticks for them (Forever's rules).
     Wrack {
         spell_id: i32,
         tick_base: f64,
         tick_can_crit: bool,
         soul_siphon: f64,
         dot_bonus: f64,
+        /// Forever's rules since 11 November 2026: how many times as often `dot_spells` tick
+        /// while the channel runs.
+        #[serde(default = "one", skip_serializing_if = "is_one")]
+        dot_rate: f64,
         dot_spells: Vec<usize>,
         /// Forever's rules: as Drain Life's.
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -4100,6 +4177,18 @@ pub enum Effect {
         contested: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         one_aura: bool,
+        /// Forever's rules: a landed hit rolls the trigger whether or not it deals damage, as
+        /// a Sunder Armor application does. Without it the hit must deal damage.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_without_damage: bool,
+        /// Forever's rules, as on the party's totem: the auto that fires the proc spends no
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        trigger_spends_no_charge: bool,
+        /// Forever's rules, as on the party's totem: every outcome of a spending auto spends a
+        /// charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_outcome_spends: bool,
     },
     /// Mana Spring Totem: the water totem's aura, whose MP5 is a class stat aura.
     ManaSpringTotem {
@@ -4253,6 +4342,15 @@ pub enum Effect {
         /// in Go, a two-hander's crit adds the rage of the swing before that factor.
         #[serde(default, skip_serializing_if = "is_false")]
         crit_multiplies_swing: bool,
+        /// Forever's rules: rage gained before the pull makes no threat (Forever combat logs).
+        /// Without it, it counts as any other gain.
+        #[serde(default, skip_serializing_if = "is_false")]
+        no_threat_before_pull: bool,
+        /// Forever's rules: the rage a point of damage taken gives, counted before armor, block
+        /// and absorbs, whatever the defender's health; a hit blocked in full gives none.
+        /// Without it, as in Go, 10 times the damage before armor over maximum health.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        damage_taken_rage_per_damage: f64,
     },
     /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
     /// auras that are not up from the reset: the gain multiplies, the expiry divides.
@@ -4360,6 +4458,10 @@ pub enum Effect {
         spell_id: i32,
         base_damage: f64,
         damage_per_rage: f64,
+        /// Forever's rules: only a landed Execute spends the extra rage, and an avoided one
+        /// gets none of its cost back.
+        #[serde(default, skip_serializing_if = "is_false")]
+        extra_rage_on_landed: bool,
     },
     /// Hamstring: a fixed base on the special hit table.
     Hamstring {
@@ -4418,6 +4520,11 @@ pub enum Effect {
         period_ns: i64,
         health_cost: f64,
         rage_threshold: f64,
+        /// Forever's rules: the instant rage makes its threat unscaled by the stance, 50 for its
+        /// 10 rage in Battle and Defensive Stance alike (Forever combat logs); the ticks take
+        /// the stance. Without it the instant rage takes the stance too.
+        #[serde(default, skip_serializing_if = "is_false")]
+        instant_threat_unscaled: bool,
     },
     /// Berserker Rage: rage from Improved Berserker Rage and an aura.
     BerserkerRage {
@@ -4582,8 +4689,18 @@ pub enum Effect {
         extra_attack_tag: i32,
         sword_hands: Vec<String>,
         /// The class spells that never trigger it: Shield Bash and Shield Slam since the 16
-        /// October 2026 beta notes.
+        /// October 2026 beta notes, and under Forever's rules Sweeping Strikes' hits.
         excluded_class_spells: Vec<String>,
+        /// Forever's rules: the party Windfury Totem's extra swing never rolls it (Forever
+        /// combat logs, 0 of 6). A queued Heroic Strike that replaces that swing still does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        skips_windfury_totem_swing: bool,
+        /// Forever's rules: the class spells that roll it once a cast, on their first landed hit,
+        /// however many targets they strike (Whirlwind 7 procs on 100 casts and 283 landed hits).
+        /// Each spell keeps its own roll, so Whirlwind's off hand strike rolls apart from its main
+        /// hand strike.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        once_a_cast_class_spells: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {
@@ -4604,6 +4721,9 @@ pub enum Effect {
         spell_id: i32,
         damage: DamageRoll,
         can_block: bool,
+        /// Forever's rules: the hit adds twice the block value.
+        #[serde(default, skip_serializing_if = "is_false")]
+        twice_block_value: bool,
     },
     /// Thunder Clap: the row's average plus a share of attack power on the magic table; a
     /// landed clap slows the target by its bid.
@@ -4614,6 +4734,9 @@ pub enum Effect {
         max_targets: i32,
         aura: String,
         bid: f64,
+        /// Forever's rules: a magic hit, so it spends no Sweeping Strikes charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        no_sweeping_strikes: bool,
     },
     /// Warrior items.go Battlegear of Might's 5 piece bonus: landed hits taken that dealt
     /// damage roll the chance under the label, then give rage a batch window later.
@@ -4752,6 +4875,12 @@ pub enum Effect {
         always_hits: bool,
         hawk_spells: Vec<usize>,
         hawk_duration_ns: i64,
+        /// Forever's rules: a hawk's swing is a guardian's, rolled on `swing_average` plus a
+        /// share of the owner's ranged attack power, taken through armor and able to crit.
+        /// Without it, as in Go, a swing is `swing_share` of the base, never crits and ignores
+        /// armor.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        guardian: Option<HawkGuardian>,
     },
     /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
     ConjuredEnergy {

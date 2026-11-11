@@ -18,6 +18,9 @@
 //!   are. Regenerate it with `UPDATE_HEALER_GOLDENS=1 cargo test --test healers` after a change
 //!   that should move it, and say why in the commit.
 
+#[path = "support/live_items.rs"]
+mod live_items;
+
 use forever_engine::{check_prepared, prepare, prepare_json_with, simulate_prepared, Rules};
 use serde_json::{json, Map, Value};
 use std::{fs, path::Path};
@@ -146,7 +149,8 @@ fn logs(name: &str, result: &Value, lines: &[&str]) {
 
 /// The 38/13 Holy priest: Spiritual Healing 3 (10% direct and periodic), Improved Renew 3
 /// (15%), Twin Disciplines 5 (5% periodic on Renew), Improved Power Word: Shield 3 (20%), on
-/// 268.2 healing power.
+/// 265.75 healing power (since the 11 November live rows of Spellweaver's Turban, Amplifying
+/// Cloak, Maleki's Footwraps and the rest of its gear).
 #[test]
 fn holy_priest_heals_as_its_rows_state() {
     let result = run("holy-priest");
@@ -154,15 +158,15 @@ fn holy_priest_heals_as_its_rows_state() {
         "holy-priest",
         &result,
         &[
-            // Prayer of Mending rank 1 (401859): 172 + 0.429 x 268.2 = 287.06, then +10%, on
+            // Prayer of Mending rank 1 (401859): 172 + 0.429 x 265.75 = 286.01, then +10%, on
             // each charge that heals.
-            "{SpellID: 401859} [DEBUG] HealingPower: 268.2, BaseHealing:287.1, AfterCasterMods:315.8",
-            // Power Word: Shield rank 10 (10901): 928 + 0.1 x 268.2 = 954.82, then +20%.
-            "{SpellID: 10901} Shield for 1145.790.",
+            "{SpellID: 401859} [DEBUG] HealingPower: 265.8, BaseHealing:286.0, AfterCasterMods:314.6",
+            // Power Word: Shield rank 10 (10901): 928 + 0.1 x 265.75 = 954.575, then +20%.
+            "{SpellID: 10901} Shield for 1145.490.",
             // Renew rank 9 (10929; rank 10, 25315, is an Ahn'Qiraj 20 book rank that Forever's
-            // rules leave out): 134 + 0.2 x 268.2 = 187.64 a tick, then 1.10 x 1.15 x 1.05,
-            // 249.246, of which Renew's 16.06% is overhealing.
-            "{SpellID: 10929} tick Hit for 209.217 healing, 40.029 overhealing.",
+            // rules leave out): 134 + 0.2 x 265.75 = 187.15 a tick, then 1.10 x 1.15 x 1.05,
+            // 248.582, of which Renew's 16.06% is overhealing.
+            "{SpellID: 10929} tick Hit for 208.660 healing, 39.922 overhealing.",
         ],
     );
     // Under Forever's rules a charge heals only when the player holding it is hit
@@ -183,7 +187,8 @@ fn holy_priest_heals_as_its_rows_state() {
 
 /// The 46-point Restoration druid: Gift of Nature 5 (10% direct and periodic), Improved
 /// Rejuvenation 3 (15%), Genesis 5 (10% periodic since hotfix push 113531, which also gives Wild
-/// Growth a cast), Nature's Splendor, on 302 healing power.
+/// Growth a cast), Nature's Splendor, on 344 healing power (since the 11 November live rows of
+/// Spellweaver's Turban, Amplifying Cloak, Hands of Power and the rest of its gear).
 #[test]
 fn restoration_druid_heals_as_its_rows_state() {
     let result = run("restoration-druid");
@@ -191,25 +196,25 @@ fn restoration_druid_heals_as_its_rows_state() {
         "restoration-druid",
         &result,
         &[
-            // Wild Growth rank 3 (1238215): 97 + 0.033 x 302 = 106.97 a tick, then 1.10 x 1.10
+            // Wild Growth rank 3 (1238215): 97 + 0.033 x 344 = 108.352 a tick, then 1.10 x 1.10
             // (Gift of Nature, and Genesis 5/5 at 2% a rank, whose first effect names Wild
-            // Growth), on each of five players, 129.429, of which a group heal's 24.58% is
+            // Growth), on each of five players, 131.106, of which a group heal's 24.58% is
             // overhealing.
-            "{SpellID: 1238215} tick Hit for 97.615 healing, 31.814 overhealing.",
+            "{SpellID: 1238215} tick Hit for 98.880 healing, 32.226 overhealing.",
             // Rejuvenation rank 10 (9841; rank 11, 25299, is an Ahn'Qiraj 20 book rank that
-            // Forever's rules leave out): 161 + 0.2 x 302 = 221.4 a tick, then 1.10 x 1.15 x 1.10
-            // (Genesis 5/5 at 2% a rank since hotfix push 113531), 308.078, of which
+            // Forever's rules leave out): 161 + 0.2 x 344 = 229.8 a tick, then 1.10 x 1.15 x 1.10
+            // (Genesis 5/5 at 2% a rank since hotfix push 113531), 319.767, of which
             // Rejuvenation's 17.76% is overhealing.
-            "{SpellID: 9841} tick Hit for 253.363 healing, 54.715 overhealing.",
+            "{SpellID: 9841} tick Hit for 262.976 healing, 56.791 overhealing.",
             // Swiftmend consumes that Rejuvenation: its five ticks with Nature's Splendor, 1540.4,
             // then Gift of Nature's 10% and Genesis's 10% (its second effect names Swiftmend) on
             // Swiftmend's own direct heal.
-            "{SpellID: 18562} [DEBUG] HealingPower: 302.0, BaseHealing:1540.4, AfterCasterMods:1848.5",
+            "{SpellID: 18562} [DEBUG] HealingPower: 344.0, BaseHealing:1598.8, AfterCasterMods:1918.6",
             // Bloom, when the Regrowth cast at 9 s and the Rejuvenation cast at 21.5 s end by
-            // their duration (27 s and 15 s with Nature's Splendor): 255 Spirit, of which a
+            // their duration (27 s and 15 s with Nature's Splendor): 296 Spirit, of which a
             // heal at once's 5.37% is overhealing. The Swiftmends consumed the rest.
-            "[36.00] [restoration-druid (#1)] [restoration-druid (#1)] {SpellID: 1328621} Hit for 241.306 healing, 13.694 overhealing.",
-            "[36.50] [restoration-druid (#1)] [restoration-druid (#1)] {SpellID: 1328621} Hit for 241.306 healing, 13.694 overhealing.",
+            "[36.00] [restoration-druid (#1)] [restoration-druid (#1)] {SpellID: 1328621} Hit for 280.105 healing, 15.895 overhealing.",
+            "[36.50] [restoration-druid (#1)] [restoration-druid (#1)] {SpellID: 1328621} Hit for 280.105 healing, 15.895 overhealing.",
         ],
     );
     golden("restoration-druid", &result);
@@ -233,7 +238,9 @@ fn bloom_heals_the_druids_spirit_when_a_heal_over_time_ends() {
         let prepared = serde_json::to_value(&prepared).unwrap();
         prepared["player"]["stats"]["Spirit"].as_f64().unwrap()
     };
-    assert_eq!(spirit, 255.0);
+    // 259 before the 11 November live rows of Amplifying Cloak (14 Spirit) and Spellweaver's
+    // Turban (13 Spirit).
+    assert_eq!(spirit, 296.0);
     // Every Bloom is a hit for the whole Spirit less the heal at once's overhealing share, and
     // nothing else of the druid's heals moves.
     let blooms = action_total(&with, 1328621, "hits");
@@ -425,6 +432,11 @@ fn forever_healer_sims_count_healing_less_overhealing() {
     // overhealing split alone.
     let mut holy: Value = serde_json::from_slice(&request("holy-paladin-healing")).unwrap();
     holy["raid"]["parties"][0]["players"][0]["disableRacials"] = true.into();
+    // Nor the items whose live rows carry other stats under Forever's rules.
+    live_items::take_off_live_items(&mut holy["raid"]["parties"][0]["players"][0]);
+    // Judgement of Wisdom rolls on a missed hit under the reference's rules and not under
+    // Forever's, which would part the rolls: the raid leaves it off.
+    holy["raid"]["debuffs"]["judgementOfWisdom"] = false.into();
     // Talents that mean the same in the reference's tree and push 113554's, which Forever's
     // rules read, so both draw the same rolls: Divine Strength 5, Healing Light 3, Infusion of
     // Light 2, Illumination 5, Divine Favor and Holy Shock; Precision 3, Guardian's Favor 2,
@@ -560,12 +572,12 @@ fn forever_heal_ticks_crit_as_their_rows_state() {
         assert_eq!(totals(&reference, spell, "critTicks"), 0.0, "{spell}");
         assert!(totals(&forever, spell, "critTicks") > 0.0, "{spell}");
     }
-    // A crit tick heals 1.5 times the 308.078 a tick of Rejuvenation rank 10 heals (above),
-    // 462.117, of which Rejuvenation's 17.76% is overhealing.
+    // A crit tick heals 1.5 times the 319.767 a tick of Rejuvenation rank 10 heals (above),
+    // 479.650, of which Rejuvenation's 17.76% is overhealing.
     logs(
         "restoration-druid",
         &forever,
-        &["{SpellID: 9841} tick Crit for 380.045 healing, 82.072 overhealing."],
+        &["{SpellID: 9841} tick Crit for 394.464 healing, 85.186 overhealing."],
     );
 }
 
@@ -661,6 +673,11 @@ fn a_heal_spends_inner_focus() {
         serde_json::from_slice(&fs::read(fixtures().join("holy-priest.request.json")).unwrap())
             .unwrap();
     request["simOptions"]["iterations"] = json!(1);
+    // A fixed 200 second fight, so heals follow the second Inner Focus (its cooldown is three
+    // minutes): a random length can end the fight on the very cast, as the fight of the 11
+    // November live rows did at 180.00.
+    request["encounter"]["duration"] = json!(200);
+    request["encounter"]["durationVariation"] = json!(0);
     let prepared = prepare(request.to_string().as_bytes(), "rust").unwrap();
     check_prepared(&prepared).unwrap();
     let result = simulate_prepared(&prepared).unwrap().result;
@@ -746,7 +763,7 @@ fn base_healing(result: &Value, spell: i64) -> Vec<f64> {
 }
 
 /// The 31/18 Holy Paladin on push 113554's tree with Oath of Light (1328548) and Boundless Light
-/// 2/2, on 305 healing power, sworn on the heal target before the pull and again when under five
+/// 2/2, on 284 healing power, sworn on the heal target before the pull and again when under five
 /// seconds are left. The Oath adds its flat bonus to the heal's base amount, before healing power
 /// (the Greater Blessing of Light's 400 and 115 are the same numbers): Holy Light 400, Flash of
 /// Light 115 and Holy Shock 229, the rows' 6.67, 1.92 and 3.83 a level at level 60. While the
@@ -763,12 +780,12 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
             // Sworn three seconds before the pull for 8% of the paladin's base mana, 120.
             "Casting {SpellID: 1328548} (Cost = 120.000, Cast Time = 0s, GCD = 1.5s",
             "Aura gained: {SpellID: 1328548}",
-            // Holy Shock rank 4 (25903) heals 320 and has no roll: 320 + 229 + 0.429 x 305, then
+            // Holy Shock rank 4 (25903) heals 320 and has no roll: 320 + 229 + 0.429 x 284, then
             // Healing Light's 12%.
-            "{SpellID: 25903} [DEBUG] HealingPower: 305.0, BaseHealing:679.8, AfterCasterMods:761.4",
+            "{SpellID: 25903} [DEBUG] HealingPower: 284.0, BaseHealing:670.8, AfterCasterMods:751.3",
         ],
     );
-    // Without the Oath's cast the same heal is 320 + 0.429 x 305.
+    // Without the Oath's cast the same heal is 320 + 0.429 x 284.
     let mut bare = request_value("holy-paladin");
     let rotation = rotation_of(&mut bare);
     rotation["prepullActions"] = json!([]);
@@ -777,7 +794,7 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
     logs(
         "holy-paladin (no Oath)",
         &bare,
-        &["{SpellID: 25903} [DEBUG] HealingPower: 305.0, BaseHealing:450.8, AfterCasterMods:504.9"],
+        &["{SpellID: 25903} [DEBUG] HealingPower: 284.0, BaseHealing:441.8, AfterCasterMods:494.9"],
     );
     assert!(!bare["logs"].as_str().unwrap().contains("1328548"));
 
@@ -804,7 +821,7 @@ fn holy_paladin_oath_of_light_adds_its_bonus_to_the_three_heals() {
         let bare = base_healing(&bare, spell);
         assert!(!swore.is_empty() && !bare.is_empty(), "{spell}");
         let in_range = |base: f64, plus: f64| {
-            (min - 0.1..=max + 0.1).contains(&(base - coefficient * 305.0 - plus))
+            (min - 0.1..=max + 0.1).contains(&(base - coefficient * 284.0 - plus))
         };
         // Without the Oath's cast every heal is a plain roll.
         for &base in &bare {
@@ -888,5 +905,5 @@ fn an_oath_sworn_on_another_unit_bonuses_nothing() {
         .as_str()
         .unwrap()
         .contains("Aura gained: {SpellID: 1328548}"));
-    assert_eq!(base_healing(&elsewhere, 25903)[0], 450.8);
+    assert_eq!(base_healing(&elsewhere, 25903)[0], 441.8);
 }

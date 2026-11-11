@@ -570,3 +570,54 @@ fn a_completed_hard_cast_restarts_the_swing_a_full_weapon_speed_later() {
         assert!(later > 0, "{case}: no swing follows a cast");
     }
 }
+
+/// Under `--rotation-stats` the logged fight lists each cooldown a cast started, so the
+/// application's replay sweeps a button for its real cooldown: Judgement has one and a seal has
+/// none, however far apart the rotation presses it (MythicSim Discord #paladin, 10 November
+/// 2026). Each entry is a cast completed at that time in the first fight's log, and the result
+/// without the adapter's additions does not carry the list.
+#[test]
+fn the_logged_fight_lists_cooldowns_and_none_for_a_seal() {
+    let mut value = retribution_json();
+    value["sim"]["iterations"] = json!(1);
+    value["sim"]["debug_first_iteration"] = json!(true);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let mut report = forever_engine::simulate_prepared(&prepared).unwrap();
+    let player = "/raidMetrics/parties/0/players/0";
+    assert!(report
+        .result
+        .pointer(&format!("{player}/castCooldowns"))
+        .is_none());
+    assert!(report.add_rotation_stats());
+    let logs = report.result["logs"].as_str().unwrap().to_string();
+    let cooldowns = report
+        .result
+        .pointer(&format!("{player}/castCooldowns"))
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .clone();
+    let mut judgements = 0;
+    for entry in &cooldowns {
+        let spell = entry["spell"].as_str().unwrap();
+        let unit = entry["unit"].as_str().unwrap();
+        let seconds = entry["seconds"].as_f64().unwrap();
+        assert!(seconds > 0.0, "{entry}");
+        let line = format!(
+            "[{:.2}] [{unit}] Completed cast {spell}",
+            entry["time"].as_f64().unwrap()
+        );
+        assert!(logs.lines().any(|l| l == line), "no log line {line}");
+        // Seal of Righteousness and Seal of Command.
+        assert!(
+            !spell.starts_with("{SpellID: 20293") && !spell.starts_with("{SpellID: 20423"),
+            "{entry}"
+        );
+        if spell.starts_with("{SpellID: 20271") {
+            judgements += 1;
+        }
+    }
+    assert!(judgements > 0, "no Judgement cooldown in {cooldowns:?}");
+    // The rotation does press a seal in this fight.
+    assert!(logs.contains("Completed cast {SpellID: 20293"));
+}

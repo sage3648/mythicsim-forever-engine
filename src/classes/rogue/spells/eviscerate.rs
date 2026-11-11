@@ -24,7 +24,7 @@ impl Eviscerate {
         finisher: &Finisher,
     ) {
         let points = f64::from(fight.energy_bar().combo_points);
-        let roll = fight.effect_roll(self.damage_average, self.damage_variance);
+        let roll = fight.physical_effect_roll(self.damage_average, self.damage_variance);
         // Go's arm64 build fuses both multiplies into their adds.
         let base = (self.attack_power_per_combo_point * points).mul_add(
             fight.melee_attack_power(),

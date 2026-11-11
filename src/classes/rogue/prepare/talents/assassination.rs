@@ -3,10 +3,11 @@
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::MAX_MELEE_RANGE;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::Cooldown;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Rules, Sim, UnitId, MILLISECOND};
 use crate::prepare::spell::{Cast, CastConfig, ProcMask, SpellConfig, SpellFlag};
@@ -235,7 +236,7 @@ impl Rogue {
                         dbcenums::A_ADD_FLAT_MODIFIER,
                         dbcenums::SPELLMOD_CRITICAL_CHANCE,
                     )
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 ..SpellModConfig::default()
             },
         );
@@ -312,13 +313,13 @@ impl Rogue {
         } else {
             (
                 rank.effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 rank.effect(
                     dbcenums::A_ADD_FLAT_MODIFIER,
                     dbcenums::SPELLMOD_CHANCE_OF_SUCCESS,
                 )
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                     / 100.0,
             )
         };

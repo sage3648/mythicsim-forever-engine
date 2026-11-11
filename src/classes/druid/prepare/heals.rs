@@ -5,15 +5,16 @@
 //! Wild Growth's ticks land on the party of five. Swiftmend consumes a Rejuvenation or Regrowth
 //! up on the player and heals what all of that heal over time's ticks would, as Forever's
 //! Swiftmend does (`classes::druid::spells::swiftmend`). Tranquility heals the party over its
-//! channel, and Nature's Swiftness makes the next Healing Touch or Regrowth instant.
+//! channel, and Nature's Swiftness makes the next Healing Touch or Regrowth instant (and, under
+//! Forever's rules since the hotfixes of 10 November 2026, Wild Growth).
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::heals::{
     apply_heal_talent, heal_talent_mod, register_channel_heal, register_heal, ChannelHeal,
     HealShape,
 };
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, Cooldown, EventCallbacks, Rules, Sim, NEVER_EXPIRES, SECOND,
 };
@@ -60,6 +61,15 @@ const HEAL_TALENTS: &[(&str, i32, i32)] = &[
 /// Nature's Splendor (1223083) lengthens Rejuvenation by 3 seconds and Regrowth by 6, one and
 /// two of their 3 second ticks.
 const NATURES_SPLENDOR_TICKS: &[(i64, i32)] = &[(masks::REJUVENATION, 1), (masks::REGROWTH, 2)];
+
+/// The heals Nature's Swiftness makes instant: Wild Growth too under Forever's rules (hotfixes of
+/// 10 November 2026).
+fn natures_swiftness_mask(rules: Rules) -> i64 {
+    match rules {
+        Rules::Forever => masks::HEALING_TOUCH | masks::REGROWTH | masks::WILD_GROWTH,
+        Rules::GoReference => masks::HEALING_TOUCH | masks::REGROWTH,
+    }
+}
 
 impl Druid {
     /// Registers every heal rank the druid knows.
@@ -128,7 +138,7 @@ impl Druid {
                     row,
                     ChannelHeal {
                         direct: None,
-                        tick: tick.average(CHARACTER_LEVEL),
+                        tick: tick.average(character_level()),
                         tick_coefficient: tick.coeff(),
                         ticks: (row.duration() / period.max(1)) as i32,
                         period,
@@ -179,6 +189,9 @@ impl Druid {
 
     /// Nature's Swiftness (17116): on use, the next Healing Touch or Regrowth casts at once; a
     /// 3 minute cooldown. Its aura's mods are the row's, on the druid's heals with a cast time.
+    /// Blizzard's hotfixes of 10 November 2026: "Nature's Swiftness now also makes Wild Growth
+    /// instant", under Forever's rules only. The row's mask still names the two heals; the
+    /// reference keeps them.
     pub(super) fn register_natures_swiftness(&self, sim: &mut Sim) {
         if !self.talents.bool("natures_swiftness") {
             return;
@@ -204,7 +217,7 @@ impl Druid {
             SpellModConfig {
                 kind: SpellModType::CastTimePct,
                 float_value: row.effect_n(1).percent(),
-                class_mask: masks::HEALING_TOUCH | masks::REGROWTH,
+                class_mask: natures_swiftness_mask(sim.rules),
                 ..SpellModConfig::default()
             },
         );

@@ -3,9 +3,9 @@
 use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, Cooldown, EventCallbacks, Sim, UnitId, UnitType};
 use crate::prepare::spell::{school, Cast, CastConfig, CostOptions, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -190,7 +190,7 @@ impl Priest {
                         dbcenums::A_ADD_FLAT_MODIFIER,
                         dbcenums::SPELLMOD_CRITICAL_CHANCE,
                     )
-                    .average(CHARACTER_LEVEL),
+                    .average(character_level()),
                 kind: SpellModType::BonusCritPercent,
                 ..SpellModConfig::default()
             },
@@ -198,7 +198,7 @@ impl Priest {
 
         let cost_percent = rank
             .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-            .average(CHARACTER_LEVEL) as i32;
+            .average(character_level()) as i32;
 
         let aura = sim.register_aura(
             unit,

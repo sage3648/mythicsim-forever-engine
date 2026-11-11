@@ -5,8 +5,8 @@ use std::rc::Rc;
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::buffs::dark_inspiration::bid_own_dark_inspiration;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
     AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES, SECOND,
 };
@@ -281,7 +281,7 @@ impl Priest {
         let stack_aura = data.shadow_weaving_triggered.highest();
         let per_stack = stack_aura
             .effect(dbcenums::A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0;
 
         // Shadow Weaving's stacks are a debuff on the target, raising only this priest's Shadow
@@ -401,7 +401,7 @@ impl Priest {
                 school: school::SHADOW,
                 float_value: rank
                     .effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 32)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::DamageDonePct,
                 ..SpellModConfig::default()
@@ -414,7 +414,7 @@ impl Priest {
                 school: school::SHADOW,
                 float_value: rank
                     .effect(dbcenums::A_MOD_POWER_COST_SCHOOL_PCT, 32)
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::PowerCostPct,
                 ..SpellModConfig::default()
@@ -433,7 +433,7 @@ impl Priest {
                         dbcenums::A_ADD_PCT_MODIFIER,
                         dbcenums::SPELLMOD_CRIT_DAMAGE_BONUS,
                     )
-                    .average(CHARACTER_LEVEL)
+                    .average(character_level())
                     / 100.0,
                 kind: SpellModType::CritMultiplierFlat,
                 ..SpellModConfig::default()
@@ -444,7 +444,7 @@ impl Priest {
             PseudoStatField::SchoolDamageTakenMultiplier(SchoolIndex::Physical),
             1.0 + rank
                 .effect(dbcenums::A_MOD_DAMAGE_PERCENT_TAKEN, 1)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
         );
 

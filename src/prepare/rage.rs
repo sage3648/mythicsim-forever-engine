@@ -126,8 +126,87 @@ pub(crate) fn rage_bar_effect(
     });
     // Forever's combat logs of 9 October 2026: a two-hander's critical white hit gives exactly
     // twice the swing's rage, two-hander factor included (src/core/fight/rage.rs).
+    // Forever combat logs: rage gained before the pull, as a prepull Bloodrage's, makes no
+    // threat.
     if sim.rules == super::sim::Rules::Forever {
         effect["crit_multiplies_swing"] = serde_json::json!(true);
+        effect["no_threat_before_pull"] = serde_json::json!(true);
+        if let Some(attacker) = sim.unit(unit).current_target {
+            effect["damage_taken_rage_per_damage"] =
+                serde_json::json!(damage_taken_rage_per_damage(sim.unit(attacker).level));
+        }
     }
     effect
+}
+
+/// The Go reference's rage from a hit taken is 10 times its damage before armor over the
+/// defender's maximum health. Under Forever's rules it is `2.5 * (1 - A) * damage / c`, where
+/// the damage is the hit before armor, resistances, block and absorbs, `c` is the rage
+/// conversion value at the attacker's level (230.6 at 60) and `A` is an armor reduction the game
+/// assumes in place of the defender's own. The defender's level, health and armor play no part.
+/// The game build's notes describe the change: rage balanced around 20% to 40% armor by level
+/// instead of 50%.
+///
+/// `A` by the attacker's level is measured on combat logs of warriors and bears taking melee
+/// hits (client 1.60.1.70862 and earlier): 21.8% from attackers of levels 17 to 38, 23.9% at 42
+/// and 31% at 44 on hundreds of hits each, 36% at 46 and 38% at 50 on a few dozen. The 40% at
+/// 63 is the top of the notes' range and is not measured; no log covers attackers of 47 to 49
+/// or 51 to 63. Levels between two rows take the line between them.
+const DAMAGE_TAKEN_RAGE_FACTOR_FOREVER: f64 = 2.5;
+const DAMAGE_TAKEN_RAGE_ASSUMED_ARMOR: [(i32, f64); 6] = [
+    (38, 0.218),
+    (42, 0.239),
+    (44, 0.31),
+    (46, 0.36),
+    (50, 0.38),
+    (63, 0.40),
+];
+
+fn damage_taken_rage_assumed_armor(attacker_level: i32) -> f64 {
+    let rows = &DAMAGE_TAKEN_RAGE_ASSUMED_ARMOR;
+    if attacker_level <= rows[0].0 {
+        return rows[0].1;
+    }
+    for pair in rows.windows(2) {
+        let (low, high) = (pair[0], pair[1]);
+        if attacker_level <= high.0 {
+            return low.1
+                + (high.1 - low.1) * f64::from(attacker_level - low.0) / f64::from(high.0 - low.0);
+        }
+    }
+    rows[rows.len() - 1].1
+}
+
+/// The rage conversion value at a level.
+fn rage_conversion(level: i32) -> f64 {
+    let level = f64::from(level);
+    0.0091107836 * level * level + 3.225598133 * level + 4.2652911
+}
+
+/// The rage a point of damage taken gives under Forever's rules, from an attacker of this level.
+pub(crate) fn damage_taken_rage_per_damage(attacker_level: i32) -> f64 {
+    DAMAGE_TAKEN_RAGE_FACTOR_FOREVER * (1.0 - damage_taken_rage_assumed_armor(attacker_level))
+        / rage_conversion(attacker_level)
+}
+
+#[cfg(test)]
+mod damage_taken_rage_tests {
+    use super::*;
+
+    #[test]
+    fn the_assumed_armor_follows_the_measured_rows() {
+        assert_eq!(damage_taken_rage_assumed_armor(17), 0.218);
+        assert_eq!(damage_taken_rage_assumed_armor(38), 0.218);
+        assert!((damage_taken_rage_assumed_armor(40) - 0.2285).abs() < 1e-12);
+        assert_eq!(damage_taken_rage_assumed_armor(44), 0.31);
+        assert_eq!(damage_taken_rage_assumed_armor(63), 0.40);
+        assert_eq!(damage_taken_rage_assumed_armor(70), 0.40);
+    }
+
+    #[test]
+    fn a_level_60_attacker_converts_at_230_6() {
+        assert!((rage_conversion(60) - 230.6).abs() < 0.01);
+        // A level 63 boss: 2.5 * 0.6 / 243.64, a point of rage for about 162 damage.
+        assert!((1.0 / damage_taken_rage_per_damage(63) - 162.43).abs() < 0.01);
+    }
 }

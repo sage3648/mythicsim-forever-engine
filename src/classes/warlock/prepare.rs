@@ -359,18 +359,11 @@ impl PrepAgent for Warlock {
         export::unmasked_spell(id)
     }
 
-    /// The spells Command raises: Wowhead's Forever spell page for the Orc racial (20575, 4
-    /// November 2026) lists Firebolt and Lash of Pain as the spells its damage effect modifies,
-    /// so the Imp's Firebolt and the Succubus' Lash of Pain.
-    fn command_pet_spells(&self) -> Option<Vec<(UnitId, i64)>> {
-        let mut spells = Vec::new();
-        if let Some(imp) = self.pets.imp {
-            spells.push((imp, masks::IMP_FIRE_BOLT));
-        }
-        if let Some(succubus) = self.pets.succubus {
-            spells.push((succubus, masks::SUCCUBUS_LASH_OF_PAIN));
-        }
-        Some(spells)
+    /// The pets Command raises (Forever rules): the demons, whose Tamed Pet Passive (DND) its
+    /// live effect (SpellEffect 697942, client 1.60.1.70862) lifts to 5% more damage of every
+    /// kind. A gear guardian, such as the Emerald Dragon Whelp, has no such passive.
+    fn command_pets(&self) -> Option<Vec<UnitId>> {
+        Some(self.pets.base.clone())
     }
 
     /// Go `Warlock.EurekaSpells`.

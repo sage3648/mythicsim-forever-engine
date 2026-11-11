@@ -69,6 +69,10 @@ pub(crate) enum AuraBehavior<K> {
         /// The player's metrics, shared by every Judgement of Wisdom.
         metrics: usize,
         delay: i64,
+        /// Forever's rules: only a landed hit rolls ([`Effect::JudgementOfWisdom`]).
+        ///
+        /// [`Effect::JudgementOfWisdom`]: crate::contracts::prepared_v2::Effect::JudgementOfWisdom
+        landed_only: bool,
     },
     /// Go racials.go `applyTouchOfTheGrave`: a proc trigger that casts the drain.
     TouchOfTheGrave {
@@ -1417,9 +1421,19 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::RageBar if side == Side::Player => {
                         self.rage_bar_hit_taken(result)
                     }
-                    AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
-                        self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
-                    }
+                    AuraBehavior::JudgementOfWisdom {
+                        chance,
+                        delay,
+                        landed_only,
+                        ..
+                    } => self.judgement_of_wisdom_callback(
+                        aura,
+                        spell,
+                        result,
+                        chance,
+                        delay,
+                        landed_only,
+                    ),
                     AuraBehavior::JudgementOfLight(index) if !dealt => {
                         self.judgement_of_light_callback(aura, index, spell, result)
                     }
@@ -1431,10 +1445,14 @@ impl<A: Agent> Fight<A> {
                     }
                     AuraBehavior::WindfuryProc { .. } if dealt => {
                         let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
-                        // The charges' own trigger: a landed auto spends one, at once.
+                        // The charges' own trigger: a landed auto spends one, at once. Under
+                        // Forever's rules any outcome spends one, but the auto that fired the
+                        // proc spends none.
                         if windfury.spend_spells[spell]
-                            && result.outcome & super::OUTCOME_LANDED != 0
+                            && (windfury.any_outcome_spends
+                                || result.outcome & super::OUTCOME_LANDED != 0)
                             && !(windfury.spend_require_damage && result.damage == 0.0)
+                            && self.windfury_free_swing != Some((spell, self.now))
                         {
                             self.remove_stack(aura);
                         }
@@ -1520,10 +1538,17 @@ impl<A: Agent> Fight<A> {
                 }
             }
         }
+        // A Windfury Totem proc's swing has passed every listener, its charge spender among
+        // them, whichever order they heard it in.
+        if self.windfury_free_swing == Some((spell, self.now)) {
+            self.windfury_free_swing = None;
+        }
     }
 
     /// Go `AttachProcTriggerCallback` with `ProcMaskDirect` and no outcome filter, delayed by
-    /// the spell batch window.
+    /// the spell batch window. Under Forever's rules (`landed_only`) a hit that does not land
+    /// rolls nothing: a level 41 log paid on 164 of 336 landed melee swings, 59 of 116 direct
+    /// spells and 44 of 102 ranged shots, and on 1 of 52 misses.
     fn judgement_of_wisdom_callback(
         &mut self,
         aura: AuraRef,
@@ -1531,9 +1556,13 @@ impl<A: Agent> Fight<A> {
         result: &SpellResult,
         chance: f64,
         delay: i64,
+        landed_only: bool,
     ) {
         let spell_state = &self.spells[spell];
         if spell_state.flags.proc || !spell_state.direct_proc {
+            return;
+        }
+        if landed_only && result.outcome & super::OUTCOME_LANDED == 0 {
             return;
         }
         if chance != 1.0 && self.random_for_aura(aura) > chance {
@@ -1618,7 +1647,8 @@ impl<A: Agent> Fight<A> {
 
     /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
     /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
-    /// extra main hand attack at once.
+    /// extra main hand attack at once. Under Forever's rules every charge, and the auto that
+    /// granted them spends none.
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
         if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
@@ -1627,8 +1657,12 @@ impl<A: Agent> Fight<A> {
         if windfury.trigger_require_damage && result.damage == 0.0 {
             return;
         }
-        let (trigger_chance, proc_aura, extra) =
-            (windfury.trigger_chance, windfury.proc_aura, windfury.extra);
+        let (trigger_chance, proc_aura, extra, keeps_charge) = (
+            windfury.trigger_chance,
+            windfury.proc_aura,
+            windfury.extra,
+            windfury.trigger_spends_no_charge,
+        );
         let icd = self.aura(aura).icd;
         if let Some((timer, _)) = icd {
             if self.timers[timer] > self.now {
@@ -1643,7 +1677,12 @@ impl<A: Agent> Fight<A> {
         }
         self.activate_aura(proc_aura);
         let mut charges = self.aura(proc_aura).max_stacks;
-        if self.spells[spell].white_hit {
+        if keeps_charge {
+            // Forever's rules: every charge, and the main hand auto that fired the proc skips
+            // the spender in this instant.
+            let swing = self.spells[spell].white_hit && !self.spells[spell].off_hand_proc;
+            self.windfury_free_swing = swing.then_some((spell, self.now));
+        } else if self.spells[spell].white_hit {
             charges -= 1;
         }
         self.set_stacks(proc_aura, charges);
@@ -1853,7 +1892,8 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::JudgementOfWisdom {
                 mana, metrics, id, ..
             } => {
-                // Go: melee and ranged hits always pay; spells must land.
+                // Go: melee and ranged hits always pay; spells must land. Under Forever's rules
+                // (`landed_only`) a miss of any kind never got here.
                 if !self.spells[spell].melee_or_ranged_proc
                     && result.outcome & super::OUTCOME_LANDED == 0
                 {

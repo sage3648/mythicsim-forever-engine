@@ -4,7 +4,7 @@
 //! The Go reference adds to `SpiritRegenRateCasting` without `UpdateManaRegenRates`, so the
 //! cached tick ignores the buff until something else refreshes it (a change of MP5, Spirit or
 //! Intellect). In the client the mana regeneration interrupt aura (type 134) acts at once, so
-//! Forever's rule (README, Rust-only mechanics) refreshes the rates as the aura changes, and the
+//! Forever's rule (docs/mechanics.md) refreshes the rates as the aura changes, and the
 //! mana the aura adds to a tick lands in metrics of its own, named after it, as Innervate's does.
 
 use super::{Agent, AuraRef, Fight, ResourceKind};

@@ -9,10 +9,10 @@ use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::export::action_id;
 use crate::prepare::hotfix_113554;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{Duration, Rules, Sim, SpellId, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::DefenseType;
 use crate::prepare::spelldata::{Ladder, Spell as Row};
@@ -23,7 +23,9 @@ use super::spell_data::spell_data;
 /// so a frozen hit deals 3 times an unfrozen one.
 const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 3.0;
 
-/// `mageDamageRows`: the rows by spell ID.
+/// `mageDamageRows`: the rows by spell ID, every rank of each spell. The map is kept for the
+/// process, so it holds no one character's rank: built from the highest rank the first character
+/// prepared knew, a later character of another level found no row for its own rank.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
     static ROWS: OnceLock<HashMap<i32, &'static Row>> = OnceLock::new();
     ROWS.get_or_init(|| {
@@ -34,29 +36,23 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
                 rows.insert(row.id, row);
             });
         };
-        let highest = |rows: &mut HashMap<i32, &'static Row>, ladder: &Ladder| {
-            let row = ladder.highest();
-            if !row.is_nil() {
-                rows.insert(row.id, row);
-            }
-        };
         each(&mut rows, &data.frostbolt);
         each(&mut rows, &data.arcane_missiles_triggered);
-        highest(&mut rows, &data.ice_lance);
-        highest(&mut rows, &data.arcane_blast);
-        highest(&mut rows, &data.arcane_wrath);
-        highest(&mut rows, &data.fire_blast);
+        each(&mut rows, &data.ice_lance);
+        each(&mut rows, &data.arcane_blast);
+        each(&mut rows, &data.arcane_wrath);
+        each(&mut rows, &data.fire_blast);
         each(&mut rows, &data.scorch);
         each(&mut rows, &data.fireball);
         each(&mut rows, &data.frostfire_bolt);
-        highest(&mut rows, &data.pyroblast);
+        each(&mut rows, &data.pyroblast);
         for ladder in [
             &data.arcane_explosion,
             &data.blast_wave,
             &data.cone_of_cold,
             &data.frost_nova,
         ] {
-            highest(&mut rows, ladder);
+            each(&mut rows, ladder);
         }
         each(&mut rows, &data.flamestrike_ranks);
         rows
@@ -81,7 +77,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
         // Go's exporter stops on a row without a damage effect; there is nothing to describe.
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// A Frost Blast rank's client row.
@@ -110,7 +106,7 @@ fn dot_ranks(ladder: &Ladder) -> Vec<Value> {
     ladder.each(|_, row| {
         ranks.push(json!({
             "spell_id": row.id,
-            "tick_base": row.periodic_effect().average(CHARACTER_LEVEL),
+            "tick_base": row.periodic_effect().average(character_level()),
             "tick_can_crit": tick_can_crit(row),
         }));
     });
@@ -160,12 +156,12 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "rng_label": "Missile Barrage",
             "cost_percent_add": buff
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
             "tick_length_delta_ns": nanos(
                 (buff
                     .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_ACTIVATION_TIME)
-                    .average(CHARACTER_LEVEL) as i64)
+                    .average(character_level()) as i64)
                     .wrapping_mul(MILLISECOND)
             ),
         }));
@@ -232,13 +228,13 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         let frigid = hotfix_113554::row(sim.rules, data.ice_barrier_triggered.by_id(1326891).id);
         let pct = |row: &Row, misc: i32| {
             row.effect(dbcenums::A_ADD_PCT_MODIFIER, misc)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0
         };
         effects.push(json!({
             "kind": "ice_barrier", "spell_id": rank.id, "aura": "Ice Barrier",
             "frigid_power_aura": frigid.name,
-            "absorb_base": rank.effect_n(1).average(CHARACTER_LEVEL),
+            "absorb_base": rank.effect_n(1).average(character_level()),
             "warding": 1.0 + data.frost_warding.effect_at(3).fraction_at(talents.i32("frost_warding")),
             "hit": pct(rank, dbcenums::SPELLMOD_DAMAGE), "dot": pct(rank, dbcenums::SPELLMOD_DOT),
             "frigid_hit": pct(frigid, dbcenums::SPELLMOD_DAMAGE),
@@ -252,7 +248,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         "channel_aura": "Evocation",
         "regen_multiplier": evocation
             .effect(dbcenums::A_MOD_POWER_REGEN_PERCENT, 0)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             / 100.0,
     }));
     // arcane_missiles.go: channel rank N fires tick rank N.
@@ -277,7 +273,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "intellect_per_stack": buff.effect_n(1).percent(),
             "cost_per_stack": buff
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
         }));
     }
@@ -311,7 +307,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         scorch["improved_scorch"] = json!({
             "aura": "Fire Vulnerability",
             "proc_chance": data.improved_scorch.fraction_at(improved_scorch),
-            "damage_per_stack": data.fire_vulnerability.highest().effect_n(1).average(CHARACTER_LEVEL) / 100.0,
+            "damage_per_stack": data.fire_vulnerability.highest().effect_n(1).average(character_level()) / 100.0,
         });
     }
     effects.push(scorch);
@@ -320,7 +316,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         let row = data.pyroblast.highest();
         effects.push(json!({
             "kind": "pyroblast", "spell_id": row.id,
-            "tick_base": row.periodic_effect().average(CHARACTER_LEVEL),
+            "tick_base": row.periodic_effect().average(character_level()),
             "tick_can_crit": tick_can_crit(row),
         }));
     }
@@ -331,7 +327,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "kind": "combustion", "spell_id": data.combustion.highest().id, "aura": "Combustion",
             "crit_per_stack": buff
                 .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_CRITICAL_CHANCE)
-                .average(CHARACTER_LEVEL),
+                .average(character_level()),
             "max_crits": i32::from(data.combustion.highest().proc_charges),
         }));
     }
@@ -377,11 +373,11 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "kind": "arcane_power", "spell_id": rank.id, "aura": "Arcane Power",
             "damage": rank
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
             "cost_percent_add": rank
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
         }));
     }
@@ -392,7 +388,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "kind": "presence_of_mind", "spell_id": rank.id, "aura": "Presence of Mind",
             "cast_time_percent": rank
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_CASTING_TIME)
-                .average(CHARACTER_LEVEL)
+                .average(character_level())
                 / 100.0,
         }));
     }
@@ -414,7 +410,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
                 .flamestrike_triggered
                 .rank(row.rank_number())
                 .damage_effect()
-                .average(CHARACTER_LEVEL),
+                .average(character_level()),
         }));
     });
     effects.push(json!({"kind": "flamestrike", "ranks": flamestrikes}));
@@ -424,7 +420,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
     let tick = data.blizzard_triggered.rank(blizzard.rank_number());
     let mut blizzard_effect = json!({
         "kind": "blizzard", "spell_id": blizzard.id, "tick_spell_id": tick.id,
-        "tick_base": tick.damage_effect().average(CHARACTER_LEVEL),
+        "tick_base": tick.damage_effect().average(character_level()),
     });
     if talents.i32("improved_blizzard") > 0 {
         blizzard_effect["improved_blizzard_spell_id"] =
@@ -440,7 +436,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
     ]
     .into_iter()
     .map(|(item, row)| {
-        json!({"item_id": item, "mana": row.energize_effect().average(CHARACTER_LEVEL)})
+        json!({"item_id": item, "mana": row.energize_effect().average(character_level())})
     })
     .collect();
     effects.push(json!({"kind": "mana_gems", "gems": gems, "regen_window_seconds": 2.0}));

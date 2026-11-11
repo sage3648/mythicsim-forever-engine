@@ -218,7 +218,7 @@ impl Warrior {
                 class_spell_mask: masks::SHIELD_SLAM,
                 spell_school: rank.spell_school(),
                 defense_type: rank.defense_type_core(),
-                proc_mask: ProcMask::MELEE_OH_SPECIAL,
+                proc_mask: super::super::spells::shield_strike_proc_mask(sim.rules),
                 flags: F::MELEE_METRICS | F::APL,
                 max_range: MELEE_RANGE,
                 cost: rage_cost_with_refund(rank),
@@ -226,7 +226,7 @@ impl Warrior {
                 has_extra_cast_condition: true,
                 damage_multiplier: 1.0,
                 threat_multiplier: 1.0,
-                flat_threat_bonus: 508.0,
+                flat_threat_bonus: super::super::spells::shield_slam_threat(sim.rules, rank),
                 ..SpellConfig::default()
             },
         );

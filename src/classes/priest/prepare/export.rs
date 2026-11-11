@@ -9,12 +9,12 @@ use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::consumable_effects::proc_trigger_spells;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::export::action_id;
 use crate::prepare::export_items::{callback_names, outcome_names};
+use crate::prepare::levels::character_level;
 use crate::prepare::pet::apply_dependencies;
 use crate::prepare::sim::{Rules, Sim, SpellId};
 use crate::prepare::spell::{school, SpellFlag};
@@ -73,7 +73,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
     if effect.is_nil() {
         return None;
     }
-    Some(json!({"average": effect.average(CHARACTER_LEVEL), "variance": effect.variance}))
+    Some(json!({"average": effect.average(character_level()), "variance": effect.variance}))
 }
 
 /// `priestDotRank`: the base a priest dot rank's ticks snapshot and whether `priestTickOutcome`
@@ -81,7 +81,7 @@ pub(super) fn damage_effect(sim: &Sim, spell: SpellId) -> Option<Value> {
 fn dot_rank(row: &Row) -> Value {
     json!({
         "spell_id": row.id,
-        "tick_base": row.periodic_effect().average(CHARACTER_LEVEL),
+        "tick_base": row.periodic_effect().average(character_level()),
         "tick_can_crit": row.periodic_can_crit(),
     })
 }
@@ -350,7 +350,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
             let heal = data.holy_nova_triggered.rank(row.rank_number());
             ranks.push(json!({
                 "spell_id": row.id, "heal_spell_id": heal.id,
-                "heal_base": heal.heal_effect().average(CHARACTER_LEVEL),
+                "heal_base": heal.heal_effect().average(character_level()),
             }));
         });
         // The party is the priest alone: Rust prepares one player.
@@ -409,11 +409,11 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
         let rank = data.shadowform.highest();
         effects.push(json!({
             "kind": "shadowform", "spell_id": rank.id, "aura": sim.aura(aura).label,
-            "damage_percent": rank.effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 32).average(CHARACTER_LEVEL) / 100.0,
-            "cost_percent": rank.effect(dbcenums::A_MOD_POWER_COST_SCHOOL_PCT, 32).average(CHARACTER_LEVEL) / 100.0,
+            "damage_percent": rank.effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 32).average(character_level()) / 100.0,
+            "cost_percent": rank.effect(dbcenums::A_MOD_POWER_COST_SCHOOL_PCT, 32).average(character_level()) / 100.0,
             "crit_multiplier": rank
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_CRIT_DAMAGE_BONUS)
-                .average(CHARACTER_LEVEL) / 100.0,
+                .average(character_level()) / 100.0,
             "school_spells": mod_spells(sim, player, masks::ALL, school::SHADOW),
             "crit_spells": mod_spells(
                 sim,
@@ -448,8 +448,8 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
         crit_spells.extend(heals_named(sim, player, &crit.class_flags));
         effects.push(json!({
             "kind": "inner_focus", "spell_id": rank.id, "aura": sim.aura(aura).label,
-            "cost_percent": cost.average(CHARACTER_LEVEL) as i32,
-            "crit_percent": crit.average(CHARACTER_LEVEL),
+            "cost_percent": cost.average(character_level()) as i32,
+            "crit_percent": crit.average(character_level()),
             "crit_spells": crit_spells,
             "spender_spells": spenders,
         }));
@@ -476,7 +476,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
             // The debuff on each target, multiplying this priest's Shadow damage on it.
             "damage_per_stack": stack
                 .effect(dbcenums::A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32)
-                .average(CHARACTER_LEVEL) / 100.0,
+                .average(character_level()) / 100.0,
         }));
     }
     // talents_shadow.go applyVampiricEmbrace, under Forever's rules (Go's exporter leaves the
@@ -495,7 +495,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
         if let Some(aura) = aura {
             effects.push(json!({
                 "kind": "vampiric_embrace", "spell_id": rank.id, "aura": aura.label,
-                "heal_fraction": rank.effect(dbcenums::A_DUMMY, 0).average(CHARACTER_LEVEL) / 100.0,
+                "heal_fraction": rank.effect(dbcenums::A_DUMMY, 0).average(character_level()) / 100.0,
                 "metrics_action_id": action_id(Some(&ActionId::spell(rank.id))),
             }));
         }
@@ -512,7 +512,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
             let bolt = rank.refs()[0];
             ranks.push(json!({
                 "spell_id": rank.id,
-                "tick_base": bolt.damage_effect().average(CHARACTER_LEVEL), "tick_can_crit": true,
+                "tick_base": bolt.damage_effect().average(character_level()), "tick_can_crit": true,
             }));
         });
         effects.push(json!({"kind": "penance", "ranks": ranks}));
@@ -559,7 +559,7 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
             "trigger_spells": proc_trigger_spells(env, &trigger),
             "cost_percent_add": free
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
-                .average(CHARACTER_LEVEL) / 100.0,
+                .average(character_level()) / 100.0,
             "cost_spells": mod_spells(sim, player, masks::HOLY_NOVA, 0),
             "cancel_spells": spells_matching(sim, player, masks::HOLY_NOVA),
         }));

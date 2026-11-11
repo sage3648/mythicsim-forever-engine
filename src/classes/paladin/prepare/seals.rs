@@ -8,8 +8,8 @@ use crate::prepare::buffs::paladin::{
     judgement_of_light_rank_aura, judgement_of_the_crusader_aura, judgement_of_wisdom_rank_aura,
     JudgementRank, JUDGEMENT_AURA_TAG,
 };
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
+use crate::prepare::levels::character_level;
 use crate::prepare::sim::{AuraConfig, AuraId, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -296,7 +296,7 @@ impl Paladin {
         let judgement_rank = JudgementRank {
             spell_id: judgement_id,
             rank: rank.rank_number(),
-            value: heal_rank.heal_effect().average(CHARACTER_LEVEL),
+            value: heal_rank.heal_effect().average(character_level()),
         };
         let judgement_auras = self.new_judgement_auras(sim, |sim, target| {
             judgement_of_light_rank_aura(sim, target, &judgement_rank)
@@ -376,7 +376,7 @@ impl Paladin {
         let judgement_rank = JudgementRank {
             spell_id: judgement_id,
             rank: rank.rank_number(),
-            value: mana_rank.energize_effect().average(CHARACTER_LEVEL),
+            value: mana_rank.energize_effect().average(character_level()),
         };
         let judgement_auras = self.new_judgement_auras(sim, |sim, target| {
             judgement_of_wisdom_rank_aura(sim, target, &judgement_rank)
@@ -490,7 +490,7 @@ impl Paladin {
             .by_id(rank.effect_n(3).base_value() as i32);
         let value = judgement_rank
             .effect(dbcenums::A_MOD_DAMAGE_TAKEN, 2)
-            .average(CHARACTER_LEVEL)
+            .average(character_level())
             + self.judgement_of_the_crusader_bonus;
         let crusader_rank = JudgementRank {
             spell_id: judgement_rank.id,
@@ -519,7 +519,7 @@ impl Paladin {
         // The high end of the attack power, which is the number the game shows where the two
         // differ. Go fuses the high end's multiply with the bonus.
         let effect = rank.effect(dbcenums::A_MOD_ATTACK_POWER, 0);
-        let attack_power = effect.average(CHARACTER_LEVEL).mul_add(
+        let attack_power = effect.average(character_level()).mul_add(
             1.0 + effect.variance / 2.0,
             self.seal_of_the_crusader_bonus_attack_power,
         );

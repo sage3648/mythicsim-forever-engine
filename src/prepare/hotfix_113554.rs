@@ -41,6 +41,20 @@ pub(crate) fn hotfixed(id: i32) -> Option<&'static Spell> {
 /// Ice Lance, every rank: the Frozen bonus and the cooldown below.
 pub(crate) const ICE_LANCE_RANKS: [i32; 6] = [1312002, 400640, 1240044, 1240045, 1240046, 1240047];
 
+/// Wrack's tick since the class tuning of 11 November 2026, as (base points at level 40, points
+/// per level, spell power coefficient): Wowhead's Forever tooltip marker `ppl40:60:25.2:175` and
+/// spell page "SP mod: 0.2002".
+pub(crate) const WRACK_TICK_20261111: (f64, f64, f64) = (25.2, 1.75, 0.2002);
+
+/// How many times as often the warlock's Siphon Life, Corruption and Bane of Agony tick while Wrack is
+/// channelled, since the same tuning: "deal their periodic damage 100% faster" (effect 2, a
+/// dummy of 100 with a server-side script).
+pub(crate) const WRACK_DOT_RATE_20261111: f64 = 2.0;
+
+/// Arcane Shot and Summon Hawk cost this percent of base mana at every rank, since the same
+/// tuning (Wowhead's Forever spell page for Summon Hawk rank 4 and its news post).
+pub(crate) const HUNTER_SHOT_BASE_MANA_PERCENT_20261111: f64 = 11.0;
+
 /// Mage cooldown category 19, Fire Blast's, which Ice Lance joins (push 113531).
 pub(crate) const FIRE_BLAST_CATEGORY: i16 = 19;
 
@@ -174,10 +188,16 @@ const TALENT_CURVES_20261102: &[(i32, &[&[f64]])] = &[
             &[4.0, 8.0, 12.0, 16.0, 20.0],
         ],
     ),
-    // Shaman: Lightning Overload 10/20/30% (was 3/7/10%), Mental Dexterity 50/100/150% of
-    // Intellect (was 33/67/100%), Flurry 6/12/18/24/30% (was 5/10/15/20/25%).
+    // Shaman: Lightning Overload 10/20/30% (was 3/7/10%), Flurry 6/12/18/24/30% (was
+    // 5/10/15/20/25%). Mental Dexterity was 50/100/150% of Intellect from the notes of 2 November
+    // (33/67/100% frozen); the hotfixes of 10 November 2026 make it 33/66/100% ("Intellect to
+    // Attack Power conversion ratio reduced to 33/66/100% (was 50/100/150%)"). Maelstrom
+    // Weapon's cast time and mana cost cut per stack is 20% at every rank since the same
+    // hotfixes ("20% reduced cast time and Mana cost per application at all ranks (was
+    // 4/8/12/16/20%)"); the client curve states it as a negative modifier on its first effect.
     (408438, &[&[10.0, 20.0, 30.0]]),
-    (415140, &[&[50.0, 100.0, 150.0]]),
+    (415140, &[&[33.0, 66.0, 100.0]]),
+    (408498, &[&[-20.0, -20.0, -20.0, -20.0, -20.0]]),
     (16256, &[&[6.0, 12.0, 18.0, 24.0, 30.0]]),
     // Rogue: Aggression 5/10/15% (was 2/4/6%), on Sinister Strike and Eviscerate only; the mask
     // is in the Rogue's registration.
@@ -317,13 +337,17 @@ pub(crate) const CHAIN_LIGHTNING_COEFFICIENTS_20261102: [(i32, i32, f64); 8] = [
     (408484, 1072638, 0.357),
 ];
 
-/// Chain Lightning's mana cost ("approximately 225%" of the
-/// comparable Lightning Bolt rank's) under the notes of 2 November, as (spell, mana). The
-/// comparable Lightning Bolt ranks are 6, 7, 9 and 10, the nearest by the level each is learnt.
-pub(crate) const CHAIN_LIGHTNING_COSTS_20261102: [(i32, i32); 4] =
-    [(421, 248), (930, 304), (2860, 428), (10605, 495)];
+/// Chain Lightning's mana cost as Wowhead's Forever tooltips read it from the live client on 6
+/// November 2026, as (spell, mana): 245, 360, 425 and 495 for ranks 1 to 4. The notes of 2
+/// November say "approximately 225%" of the comparable Lightning Bolt rank's, which the first pass
+/// turned into 248, 304, 428 and 495 (Lightning Bolt ranks 6, 7, 9 and 10 at 110, 135, 190 and
+/// 220 mana). The live rows replace that approximation; rank 4 agrees with it. The frozen rows
+/// say 145, 200, 250 and 315.
+pub(crate) const CHAIN_LIGHTNING_COSTS_LIVE_20261106: [(i32, i32); 4] =
+    [(421, 245), (930, 360), (2860, 425), (10605, 495)];
 
-/// Chain Lightning's cast time under the notes of 2 November.
+/// Chain Lightning's cast time under the notes of 2 November, which the live tooltips state too
+/// (2.5 sec on every rank, 6 November 2026).
 pub(crate) const CHAIN_LIGHTNING_CAST_MS_20261102: i32 = 2500;
 /// Every Mutilate hit spell, a main hand and an off hand strike for each of four ranks, whose
 /// weapon damage effect the notes of 2 November raise from 75% to 90%. The flat damage a hit adds
@@ -351,6 +375,13 @@ pub(crate) const RIPTIDE_COSTS_20261104: [(i32, i32); 3] =
 
 /// Riptide's cooldown under the notes of 2 November.
 pub(crate) const RIPTIDE_COOLDOWN_MS_20261102: i32 = 12000;
+
+/// Light's Vigil's range in yards as Wowhead's Forever tooltips read it on 6 November 2026, a
+/// single 40 yd on ranks 1 to 3 (1310911, 1311590 and 1311595; the frozen rows say 20, a hostile
+/// range the heal never has: Holy Shock's "20 - 40 yd" tooltip is the one that names both). The
+/// Paladin's ladders read the frozen rows, so the ally spell of the healer sim takes the live
+/// range from here.
+pub(crate) const LIGHTS_VIGIL_RANGE_LIVE_20261106: f32 = 40.0;
 
 /// Every rank of Slam, whose cooldown the notes of 2 November cut from 18 to 15 sec.
 pub(crate) const SLAM_RANKS: [i32; 5] = [1240193, 1464, 8820, 11604, 11605];
@@ -473,16 +504,21 @@ fn build() -> HashMap<i32, &'static Spell> {
     for id in SLAM_RANKS {
         patch(id, &|row| row.category_cooldown_ms = 15000);
     }
-    // Warlock (notes of 2 November): Wrack's spell damage coefficient doubles (0.143 to 0.286
-    // a tick, "0.286 per second of cast time") and its base damage a second grows 2.5 a level,
-    // from 36 at its level 40 to 86 at 60 (was 36 at every level).
+    // Warlock: Wrack's tick as the live rows have it since the class tuning of 11 November 2026
+    // (Wowhead's Forever spell page and tooltip that morning): 25.2 a second at its level 40
+    // growing 1.75 a level to 60.2 at 60 (60 once floored, as the tooltip reads), with 0.2002 of
+    // spell power. The notes of 2 November
+    // had made it 36 growing 2.5 a level to 86, with 0.286; the frozen row is 36 at every level
+    // with 0.143.
     patch(1316697, &|row| {
         let tick = effect(row, 1349556);
-        tick.ppl = 2.5;
-        tick.sp_coef *= 2.0;
+        tick.base_points = WRACK_TICK_20261111.0;
+        tick.ppl = WRACK_TICK_20261111.1;
+        tick.sp_coef = WRACK_TICK_20261111.2;
     });
-    // Shaman (notes of 2 November): Stormstrike's cooldown 8 sec to 6.
-    patch(17364, &|row| row.cooldown_ms = 6000);
+    // Shaman: the notes of 2 November cut Stormstrike's cooldown from 8 sec to 6; the hotfixes
+    // of 10 November 2026 put it back to 8 ("cooldown increased to 8 seconds (was 6 seconds)"),
+    // the frozen row's, so no patch.
     // Rogue (notes of 2 November): Mutilate deals 90% weapon damage with each hand (was 75%), and
     // Flawless Execution takes 15 Energy off Eviscerate (was 10). The client has no rows for
     // either yet.
@@ -501,7 +537,8 @@ fn build() -> HashMap<i32, &'static Spell> {
 
     // Shaman (notes of 2 November, rows as Wowhead states them on 4 November): Lightning Bolt,
     // Chain Lightning and the shocks, then Lightning Overload's copies at half of their primary,
-    // then Chain Lightning's cast time, coefficient and mana from the notes.
+    // then Chain Lightning's cast time and coefficient from the notes and its mana from the live
+    // tooltips.
     for &(spell, id, base, per_level) in SHAMAN_ROWS_20261104 {
         patch(spell, &|row| {
             let effect = effect(row, id);
@@ -525,7 +562,7 @@ fn build() -> HashMap<i32, &'static Spell> {
     for (spell, id, coefficient) in CHAIN_LIGHTNING_COEFFICIENTS_20261102 {
         patch(spell, &|row| effect(row, id).sp_coef = coefficient);
     }
-    for (spell, cost) in CHAIN_LIGHTNING_COSTS_20261102 {
+    for (spell, cost) in CHAIN_LIGHTNING_COSTS_LIVE_20261106 {
         patch(spell, &|row| {
             row.cast_time_ms = CHAIN_LIGHTNING_CAST_MS_20261102;
             row.powers[0].cost = cost;
@@ -582,9 +619,10 @@ mod tests {
             assert_eq!(effect.base_points, points, "spell {spell}");
         }
         let wrack = row(Rules::Forever, 1316697);
-        assert_eq!(wrack.effects[0].average(60), 86.0);
+        assert_eq!(wrack.effects[0].average(60), 60.0);
+        assert_eq!(wrack.effects[0].average(40), 25.0);
         assert_eq!(must_find(1316697).effects[0].average(60), 36.0);
-        assert!((wrack.effects[0].sp_coef - 0.286).abs() < 1e-6);
+        assert!((wrack.effects[0].sp_coef - 0.2002).abs() < 1e-6);
         let stance = hotfixed(7376).unwrap();
         let threat = stance
             .effects
@@ -595,7 +633,9 @@ mod tests {
         for id in SLAM_RANKS {
             assert_eq!(hotfixed(id).unwrap().category_cooldown_ms, 15000);
         }
-        assert_eq!(hotfixed(17364).unwrap().cooldown_ms, 6000);
+        // Stormstrike: back on the frozen row's 8 sec since the hotfixes of 10 November 2026.
+        assert!(hotfixed(17364).is_none());
+        assert_eq!(must_find(17364).cooldown_ms, 8000);
         for id in MUTILATE_HIT_RANKS {
             let weapon = hotfixed(id).unwrap().effect_n(2);
             assert_eq!(
@@ -627,6 +667,10 @@ mod tests {
             assert_eq!(must_find(id).category_cooldown_ms, 6000, "{id}");
             assert!(!must_find(id).heal_effect().is_nil(), "{id}");
         }
+        for id in [1310911, 1311590, 1311595] {
+            assert_eq!(must_find(id).max_range, 20.0, "{id}");
+        }
+        assert_eq!(LIGHTS_VIGIL_RANGE_LIVE_20261106, 40.0);
         assert_eq!(must_find(1239243).powers[0].cost, 385);
         for (id, base_points, ppl) in STARFIRE_LIVE_20261104 {
             let starfire = hotfixed(id).unwrap();
@@ -759,19 +803,22 @@ mod tests {
         // Chain Lightning rank 4: 510 and 3.3 a level, 523 (was 126).
         assert_eq!(effect_of(10605, 688920).average(60), 523.0);
 
-        // Chain Lightning's mana is about 225% of the comparable Lightning Bolt ranks' (110, 135,
-        // 190 and 220 mana, ranks 6, 7, 9 and 10, the nearest by the level each is learnt), the
-        // notes' number, which Wowhead's tooltips still state as 145, 200, 250 and 315.
-        for ((spell, mana), bolt) in CHAIN_LIGHTNING_COSTS_20261102
+        // Chain Lightning's mana and cast time as Wowhead's Forever tooltips read the live client
+        // on 6 November 2026 ("245 Mana" and "2.5 sec cast" on rank 1, 360 on rank 2, 425 on
+        // rank 3 and 495 on rank 4). The notes' "approximately 225%" of Lightning Bolt's mana,
+        // which the first pass read as 248, 304, 428 and 495, is replaced by the live rows.
+        for ((spell, mana), live) in CHAIN_LIGHTNING_COSTS_LIVE_20261106
             .into_iter()
-            .zip([6041, 10391, 15207, 15208])
+            .zip([245, 360, 425, 495])
         {
-            let bolt_cost = f64::from(must_find(bolt).powers[0].cost);
-            assert_eq!(f64::from(mana), (bolt_cost * 2.25).round(), "spell {spell}");
+            assert_eq!(mana, live, "spell {spell}");
             let chain = row(Rules::Forever, spell);
-            assert_eq!(chain.powers[0].cost, mana);
-            assert_eq!(chain.cast_time_ms, 2500);
-            assert_eq!(must_find(spell).cast_time_ms, 2000);
+            assert_eq!(chain.powers[0].cost, live, "spell {spell}");
+            assert_eq!(chain.cast_time_ms, 2500, "spell {spell}");
+            assert_eq!(must_find(spell).cast_time_ms, 2000, "spell {spell}");
+        }
+        for (spell, frozen) in [(421, 145), (930, 200), (2860, 250), (10605, 315)] {
+            assert_eq!(must_find(spell).powers[0].cost, frozen, "spell {spell}");
         }
         // 2.5 sec of cast at the standard 3.5 sec rate, which Wowhead's spell pages state as
         // "SP mod: 0.714" on all four ranks.
@@ -817,5 +864,29 @@ mod tests {
         ));
         assert!(!std::ptr::eq(row(Rules::Forever, 12579), must_find(12579)));
         assert!(std::ptr::eq(row(Rules::Forever, 25306), must_find(25306)));
+    }
+
+    /// The hotfixes of 10 November 2026: Mental Dexterity 33/66/100% of Intellect and Maelstrom
+    /// Weapon's 20% per stack at every rank under Forever's rules; the reference keeps the frozen
+    /// curves (33/67/100% and 4/8/12/16/20%).
+    #[test]
+    fn enhancement_hotfix_curves_20261110() {
+        let dexterity = |rules| {
+            (1..=3)
+                .map(|n| talent(rules, 415140, 3).effect_at(1).fraction_at(n))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(dexterity(Rules::Forever), vec![0.33, 0.66, 1.0]);
+        assert_eq!(dexterity(Rules::GoReference), vec![0.33, 0.67, 1.0]);
+        let maelstrom = |rules| {
+            (1..=5)
+                .map(|n| talent(rules, 408498, 5).effect_at(1).fraction_at(n))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(maelstrom(Rules::Forever), vec![-0.2; 5]);
+        assert_eq!(
+            maelstrom(Rules::GoReference),
+            vec![-0.04, -0.08, -0.12, -0.16, -0.2]
+        );
     }
 }

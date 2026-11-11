@@ -1202,6 +1202,9 @@ pub(crate) const FORM_SPIRIT_OF_REDEMPTION: ShapeshiftForm = 32;
 /// in `Attributes[3]`. Read them through the Spell helpers rather than indexing Attributes.
 /// The spell is never cast: a stance's passive, a talent that only modifies other spells.
 pub(crate) const ATTR_PASSIVE: u32 = 0x40;
+/// The spell goes off in place of the next main hand swing: Heroic Strike, Cleave, Maul and
+/// Raptor Strike.
+pub(crate) const ATTR_ON_NEXT_SWING: u32 = 0x4;
 /// The spell cannot be cast while the caster is in any shapeshift form.
 pub(crate) const ATTR_NOT_SHAPESHIFTED: u32 = 0x10000;
 /// The two bits the client marks a channel with. Arcane Missiles and Blizzard carry the first,
