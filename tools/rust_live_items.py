@@ -24,6 +24,9 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   (src/prepare/items.rs);
 - hit and crit within one rating point of the tooltip's percentage are the same, and a rating
   the row carries as a percent pseudo stat (Eye of the Beast's 1% spell crit) is not added again;
+- the weapon skill lines ("Increased Daggers +1") replace the row's weapon skill pseudo stats,
+  and a skill the tooltip no longer states is dropped: Forever cut Edgemaster's Handguards from
+  +7 Axes, Swords and Daggers to +1 each, and Mugger's Belt from +5 Daggers to +1;
 - weapon damage and speed follow the tooltip, and so does the item level of a row that changes;
 - the cooldown of the "Use:" line, "(5 Min Cooldown)", replaces the on use cooldown of a row
   with one item effect on use, when the tooltip has one such line (Adaptive Combat Assistant,
@@ -31,7 +34,7 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   stays the row's.
 
 Existing live rows keep their stats, damage and speed as they are; only their on use cooldown
-follows a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
+and weapon skills follow a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
 yet stays: Rage of the Storm (280604) is the ItemSparse row of hotfix push 113886 (README). An item with a "+N" line this tool cannot read is left out
 and listed.
 
@@ -58,6 +61,7 @@ import rust_client_items as client  # noqa: E402
 DATA = client.DATA
 ITEMS = client.ITEMS
 LIVE = DATA / "forever-live-items.jsonl"
+SKILL_INDICES = set(client.WEAPON_SKILLS.values())
 
 STAT_ARMOR, STAT_BONUS_ARMOR, STAT_BLOCK_VALUE = 30, 31, 27
 ATTACK_POWER, RANGED_ATTACK_POWER = 17, 18
@@ -152,7 +156,7 @@ def read_tooltip(response):
     if response.get("missing") or response.get("error") or "tooltip" not in response:
         return None
     lines, _ = client.tooltip_lines(response["tooltip"])
-    out = {"stats": {}, "text": " ".join(lines), "use_cooldowns": []}
+    out = {"stats": {}, "text": " ".join(lines), "use_cooldowns": [], "skills": {}}
 
     def add(stat, value):
         out["stats"][stat] = out["stats"].get(stat, 0) + value
@@ -183,6 +187,9 @@ def read_tooltip(response):
         elif match := client.REGEN_LINE.match(line):
             if match.group(2) == "mana":
                 add(34, int(match.group(1)))
+        elif match := client.SKILL_LINE.fullmatch(line):
+            index = client.WEAPON_SKILLS[match.group(1)]
+            out["skills"][index] = out["skills"].get(index, 0) + int(match.group(2))
         elif line.startswith("Equip:"):
             try:
                 stats = client.equip_stats(line)
@@ -214,6 +221,19 @@ def cooldown_change(row, live):
     current = row["item_effects"][index]["on_use"].get("cooldown_ms", 0)
     stated = live["use_cooldowns"][0]
     return stated if current and stated != current else None
+
+
+def skill_change(row, live):
+    """The row's pseudo stats with the weapon skills the tooltip states, else None when they agree."""
+    pseudo = list(row.get("pseudo_stats") or [])
+    skills = live.get("skills", {})
+    held = {i: v for i, v in enumerate(pseudo) if v and i in SKILL_INDICES}
+    if held == skills:
+        return None
+    pseudo += [0] * (client.PSEUDO_STATS_LEN - len(pseudo))
+    for index in SKILL_INDICES:
+        pseudo[index] = skills.get(index, 0)
+    return pseudo
 
 
 def effect_stats(row):
@@ -276,6 +296,9 @@ def changes(row, live):
     cooldown = cooldown_change(row, live)
     if cooldown is not None:
         out["cooldown_ms"] = cooldown
+    pseudo = skill_change(row, live)
+    if pseudo is not None:
+        out["pseudo_stats"] = pseudo
     if out and live.get("ilvl") and live["ilvl"] != option.get("ilvl"):
         out["ilvl"] = live["ilvl"]
     return out
@@ -303,6 +326,11 @@ def live_row(row, change):
         option["ilvl"] = change["ilvl"]
     if "cooldown_ms" in change:
         row["item_effects"][on_use_effect(row)]["on_use"]["cooldown_ms"] = change["cooldown_ms"]
+    if "pseudo_stats" in change:
+        if any(change["pseudo_stats"]):
+            row["pseudo_stats"] = change["pseudo_stats"]
+        else:
+            row.pop("pseudo_stats", None)
     order = ["rand_prop_points", "weapon_damage_min", "weapon_damage_max", "stats", "ilvl"]
     row["scaling_options"]["0"] = {
         **{k: option[k] for k in order if k in option},
@@ -323,15 +351,21 @@ def build(cache, report=None):
         if not path.exists():
             continue
         if item_id in live:
-            # A live row keeps what it has but its on use cooldown.
+            # A live row keeps what it has but its on use cooldown and weapon skills.
             try:
                 stated = read_tooltip(json.loads(path.read_text()))
             except client.Unreadable:
                 continue
-            cooldown = stated and cooldown_change(live[item_id], stated)
-            if cooldown:
-                added[item_id] = (row["name"], {"cooldown_ms": cooldown})
-                live[item_id] = live_row(live[item_id], {"cooldown_ms": cooldown})
+            if not stated:
+                continue
+            change = {}
+            if cooldown := cooldown_change(live[item_id], stated):
+                change["cooldown_ms"] = cooldown
+            if (pseudo := skill_change(live[item_id], stated)) is not None:
+                change["pseudo_stats"] = pseudo
+            if change:
+                added[item_id] = (row["name"], change)
+                live[item_id] = live_row(live[item_id], change)
             continue
         try:
             stated = read_tooltip(json.loads(path.read_text()))

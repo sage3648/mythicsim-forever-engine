@@ -313,6 +313,9 @@ NUMBER = r"(\d+(?:\.\d+)?)"
 # the two figures (Naga Battle Gloves), 3 mana per 5 sec 3 MP5 (Mindthrust Bracers).
 EQUIP_STATS = [
     (rf"Increased Defense \+{NUMBER}", [(25, 1, 1)]),
+    # Spell penetration as Wowhead's Forever tooltips write it since 10 November 2026 (Elemental
+    # Mage Staff's "+8 Spell Penetration" became "Equip: Your spells pierce 8 Magical Resistance.").
+    (rf"Your spells pierce {NUMBER} Magical Resistance", [(15, 1, 1)]),
     (rf"\+{NUMBER} Attack Power", [(17, 1, 1), (18, 1, 1)]),
     (rf"\+{NUMBER} ranged Attack Power", [(18, 1, 1)]),
     (

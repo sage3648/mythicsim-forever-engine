@@ -111,6 +111,58 @@ class ChangesTest(unittest.TestCase):
         )
         self.assertEqual(live.changes(row({}, pseudo_stats=pseudo), stated), {})
 
+    def test_spell_penetration_reads_in_either_wording(self):
+        # Elemental Mage Staff, 9 and 11 November 2026.
+        old = live.read_tooltip(tooltip("Item Level 61", "+26 Intellect", "+8 Spell Penetration"))
+        new = live.read_tooltip(
+            tooltip("Item Level 61", "+26 Intellect", "Equip: Your spells pierce 8 Magical Resistance.")
+        )
+        self.assertEqual(old["stats"], {3: 26, 15: 8})
+        self.assertEqual(new["stats"], {3: 26, 15: 8})
+        self.assertEqual(live.changes(row({3: 26, 15: 8}), new), {})
+
+    def test_weapon_skills_follow_the_tooltip(self):
+        # Edgemaster's Handguards: +7 Axes, Swords and Daggers in the reference row, +1 each live.
+        pseudo = [0] * 42
+        pseudo[28] = pseudo[29] = pseudo[31] = 7
+        pseudo[15] = 1
+        stated = live.read_tooltip(
+            tooltip(
+                "Item Level 49",
+                "Equip: Increased Axes +1.",
+                "Equip: Increased Daggers +1.",
+                "Equip: Increased Swords +1.",
+            )
+        )
+        self.assertEqual(stated["skills"], {28: 1, 29: 1, 31: 1})
+        change = live.changes(row({}, pseudo_stats=pseudo), stated)
+        expected = [0] * 42
+        expected[28] = expected[29] = expected[31] = 1
+        expected[15] = 1
+        self.assertEqual(change["pseudo_stats"], expected)
+        self.assertEqual(live.live_row(row({}, pseudo_stats=pseudo), change)["pseudo_stats"], expected)
+
+    def test_agreeing_weapon_skills_change_nothing(self):
+        pseudo = [0] * 42
+        pseudo[31] = 4
+        stated = live.read_tooltip(tooltip("Item Level 60", "Equip: Increased Daggers +4."))
+        self.assertEqual(live.changes(row({}, pseudo_stats=pseudo), stated), {})
+
+    def test_a_weapon_skill_the_tooltip_drops_is_dropped(self):
+        pseudo = [0] * 42
+        pseudo[31] = 5
+        stated = live.read_tooltip(tooltip("Item Level 60", "+10 Agility"))
+        change = live.changes(row({1: 10}, pseudo_stats=pseudo), stated)
+        self.assertEqual(change, {"pseudo_stats": [0] * 42})
+        self.assertNotIn("pseudo_stats", live.live_row(row({1: 10}, pseudo_stats=pseudo), change))
+
+    def test_a_new_weapon_skill_is_added(self):
+        # Taran Icebreaker: no skill in the reference row, +1 Maces live.
+        stated = live.read_tooltip(tooltip("Item Level 39", "Equip: Increased Maces +1."))
+        change = live.changes(row({}), stated)
+        self.assertEqual(change["pseudo_stats"][30], 1)
+        self.assertEqual(sum(change["pseudo_stats"]), 1)
+
     def test_live_row_keeps_the_reference_row_but_the_change(self):
         reference = row({1: 15, 2: 4}, unique=True)
         out = live.live_row(reference, {"stats": {1: 10, 35: 10, 2: None}, "ilvl": 61})
