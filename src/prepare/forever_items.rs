@@ -74,6 +74,10 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
             super::forever_effect_items::apply_on_use_damage(env, use_);
             return Ok(true);
         }
+        if super::forever_effect_items::on_use_stat_item(item) {
+            shared_on_use::apply(env, OnUseKind::SimpleStatActive, item);
+            return Ok(true);
+        }
         if let Some(cfg) = super::forever_effect_items::equip_damage_proc(item) {
             shared_items::apply(env, ProcKind::Damage, &cfg);
             return Ok(true);

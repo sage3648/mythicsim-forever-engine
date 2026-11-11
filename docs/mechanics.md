@@ -1111,7 +1111,9 @@ the Go goldens and exporter uses. The departures:
   the same line of a Classic item. Since 10 November 2026 it holds the five pieces of Krol'dok
   Battlegear, a Forever set the reference does not register: fewer pieces than its first bonus
   needs are plain items, and an equipment that reaches a bonus is refused by name until the bonus
-  is applied (`CLIENT_SETS_NOT_PREPARED`, `tests/forever_client_items_sets_20261110.rs`). Items
+  is applied (`tests/forever_client_items_sets_20261110.rs`). Since 12 November 2026 a client
+  set's bonuses of plain stats are applied and only the others refuse
+  (`src/prepare/forever_client_sets.rs`, `CLIENT_ITEM_SETS`). Items
   with a use, chance on hit or other equip effect, a piece of any other set or a line the
   generator does not read are left out and stay refused
   (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
@@ -1435,6 +1437,51 @@ the Go goldens and exporter uses. The departures:
     (`forever_effect_items::FACING_DAMAGE_ITEMS`). With several targets the one flag stands for
     all of them, as it does for Backstab.
   The reference's rules still refuse the item as unknown.
+- Items and set bonuses that refused players' Quick Sims on 11 and 12 November 2026
+  (`tests/forever_client_items_20261112.rs`), from Wowhead's Forever tooltips and the client rows
+  wago.tools serves (`product=wowf`, client 1.60.1.70888) on 12 November 2026:
+  - Krol'dok Battlegear (ItemSet 2135): the (2) +100 Armor (Increased Armor 100, 1324287: an
+    armor aura of 100) and the (3) Increased Defense +5 (1324288: a skill aura of 5 on Defense)
+    are applied, as Ironweave Battlesuit's Armor and Imperial Plate's Defense are. The (4) chance
+    on block to heal for 14 to 23 (Krol'dok Resolve, 1324298) and the (5) Stamina when taking
+    damage (Ogre Dominance, 1324309) are procs whose chance the rows do not state plainly; an
+    equipment that reaches four pieces is refused by name.
+  - Defias Enforcer's Garb (ItemSet 2136), five leather pieces the reference does not register:
+    Mask 287019 (124 Armor, +20 Stamina, 1% less dodged or parried, +30 Attack Power),
+    Shoulderpads 276741 (115 Armor, +13 Stamina, 0.5% crit, +28 Attack Power), Chest 287020 (156
+    Armor, +14 Strength, +22 Agility, +11 Stamina), Legguards 276746 (138 Armor, +20 Agility, +16
+    Fire Resistance, 1% hit) and Prowlers 287021 (105 Armor, +16 Stamina, +28 Attack Power). The
+    (2) +10 Fire Resistance (1324673), (3) +15 Stamina (1324674, whose name says 10 and whose row
+    and tooltip say 15) and (4) Increased Swords +1 (1324675) are applied. The (5) "Melee attacks
+    have a chance to increase your Critical Strike chance by 2% for 20 sec" (Defias Juggernaut,
+    1324684) states no chance and refuses the fifth piece by name.
+  - Heart of the Primeval (274615), a trinket of item level 40: +18 Frost Resistance and "Use:
+    Increases damage and healing done by magical spells and effects by up to 19 for 30 sec. (6
+    Min Cooldown)". ItemEffect 234049 uses Heart of the Primeval (1295233) with no cooldowns of
+    its own, so the spell's stand (SpellCooldowns 99612: 360000 ms, and 30000 ms on category
+    1141, the one the reference's stat trinkets share); SpellEffect 1317148 and 1348726 are 19
+    damage done and 19 healing done, SpellMisc 842632 a duration of 30 sec. The row carries the
+    use as an item effect, as Talisman of Ephemeral Power's row does, and the shared stat on-use
+    constructor registers it (`forever_effect_items::ON_USE_STAT_ITEMS`).
+  - Zealot Plate (274651), a plate chest of item level 48 (509 Armor, +13 Strength): "Equip: When
+    struck in combat, has a chance to energize you for 66 to 110 mana. This effect cannot occur
+    more than once every 15 sec." Proc Self Energize 88 (1294668, ItemEffect 233963) has
+    ProcChance 100, melee hits taken and a proc recovery of 15000 ms, and casts Zealotry
+    (1294666), an Energize of 88 with a variance of 0.5. Girdle of Extracted Answers (276742), a
+    plate waist of item level 53 (313 Armor, +12 Strength, +15 Stamina): "Equip: Deals 20 to 30
+    Physical damage every time you block." Shield Spike (1308777, ItemEffect 236443) is a damage
+    on proc aura of 25 with a variance of 0.4, and SpellCooldowns 100881 gives it a recovery of
+    5000 ms. Neither effect is applied yet. Each acts only when the wearer is struck, so the item
+    is exact as a plain one on a character the effect cannot reach, and preparation refuses the
+    character it can (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate on a
+    character a target attacks who has a mana bar, the girdle on one a target attacks who holds a
+    shield.
+  - Left out: Zarla's Snack Pouch (276744), a trinket of item level 55 (+13 Nature Resistance, 11
+    spell damage and healing) whose use "Calls forth a Black Dragon Whelp to protect you in
+    battle for a short period of time" (15 Min Cooldown). Its use spell 1315190 summons creature
+    274297 (SpellEffect 1347318), and no client row states what the whelp deals, so the item
+    stays refused as unknown.
+  The reference's rules still refuse every one of these items as unknown.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
