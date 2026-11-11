@@ -292,7 +292,10 @@ impl Druid {
         let omen = Ladder::ranked(&[16864]).highest();
         let moonkin = Ladder::ranked(&[24858]).highest();
         let trigger = proc_trigger(sim, Some(unit), omen, &[chance(1.0)]);
-        let mut omen_effect = json!({
+        // Maul rolls it at the full rate, as every other special does: on client 1.60.1.70862
+        // bear logs show 46.5 procs over 431 rolls (10.8%), the two a minute the 2.5 s paw gives.
+        // An earlier sample of 14 in 342 had read as half the chance.
+        let omen_effect = json!({
             "kind": "omen_of_clarity", "trigger_aura": trigger.name, "aura": "Clearcasting",
             "callbacks": callback_names(trigger.callback), "outcome": outcome_names(trigger.outcome),
             "require_damage_dealt": trigger.require_damage_dealt,
@@ -309,11 +312,6 @@ impl Druid {
             "form_excluded_spells":
                 spells_matching(sim, unit, masks::FAERIE_FIRE | masks::FAERIE_FIRE_FERAL),
         });
-        if sim.rules == crate::prepare::sim::Rules::Forever {
-            // Bear logs: Maul procs it on 14 of 342 hits (4.1%), half the chance every other
-            // special fits.
-            omen_effect["half_chance_spells"] = json!(spells_matching(sim, unit, masks::MAUL));
-        }
         effects.push(omen_effect);
         if self.tal.natures_grace {
             // talents_balance.go applyNaturesGrace

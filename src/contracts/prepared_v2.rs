@@ -4346,6 +4346,11 @@ pub enum Effect {
         /// Without it, it counts as any other gain.
         #[serde(default, skip_serializing_if = "is_false")]
         no_threat_before_pull: bool,
+        /// Forever's rules: the rage a point of damage taken gives, counted before armor, block
+        /// and absorbs, whatever the defender's health; a hit blocked in full gives none.
+        /// Without it, as in Go, 10 times the damage before armor over maximum health.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        damage_taken_rage_per_damage: f64,
     },
     /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
     /// auras that are not up from the reset: the gain multiplies, the expiry divides.
@@ -4453,6 +4458,10 @@ pub enum Effect {
         spell_id: i32,
         base_damage: f64,
         damage_per_rage: f64,
+        /// Forever's rules: only a landed Execute spends the extra rage, and an avoided one
+        /// gets none of its cost back.
+        #[serde(default, skip_serializing_if = "is_false")]
+        extra_rage_on_landed: bool,
     },
     /// Hamstring: a fixed base on the special hit table.
     Hamstring {
@@ -4712,6 +4721,9 @@ pub enum Effect {
         spell_id: i32,
         damage: DamageRoll,
         can_block: bool,
+        /// Forever's rules: the hit adds twice the block value.
+        #[serde(default, skip_serializing_if = "is_false")]
+        twice_block_value: bool,
     },
     /// Thunder Clap: the row's average plus a share of attack power on the magic table; a
     /// landed clap slows the target by its bid.
@@ -4722,6 +4734,9 @@ pub enum Effect {
         max_targets: i32,
         aura: String,
         bid: f64,
+        /// Forever's rules: a magic hit, so it spends no Sweeping Strikes charge.
+        #[serde(default, skip_serializing_if = "is_false")]
+        no_sweeping_strikes: bool,
     },
     /// Warrior items.go Battlegear of Might's 5 piece bonus: landed hits taken that dealt
     /// damage roll the chance under the label, then give rage a batch window later.

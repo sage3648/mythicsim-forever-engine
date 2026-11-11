@@ -2,9 +2,10 @@
 //! 41 on client 1.60.1.70862 (8 November 2026). Lacerate's hit is its own spell (414647): the
 //! rank's cast is what misses, is dodged or parried, the hit is never blocked (0 of 790), and its
 //! class flags lie outside Natural Instinct's, so it crits for x2.0 (147 crits) while the bleed's
-//! ticks take the talent. Maul procs Omen of Clarity on 14 of 342 hits (4.1%), half the chance
-//! every other special fits. Forever's rules only; the Go reference keeps one Lacerate spell and
-//! the full chance.
+//! ticks take the talent. Maul's first sample, 14 procs in 342 hits, read as half the chance of
+//! every other special; a larger one on the same client (46.5 over 431 rolls, 10.8%) fits the
+//! full two a minute, so the half chance is gone. Forever's rules only; the Go reference keeps
+//! one Lacerate spell.
 
 use forever_engine::{
     contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
@@ -69,20 +70,21 @@ fn ids(values: &Value) -> Vec<u64> {
 }
 
 #[test]
-fn lacerates_hit_and_mauls_half_chance_are_forever_rules_only() {
+fn lacerates_hit_is_forever_rules_only_and_maul_rolls_omen_at_the_full_rate() {
     let forever = prepared(&bear(), Rules::Forever);
     let lacerate = effect(&forever, "lacerate");
     assert_eq!(
         lacerate["hit_spell"].as_u64(),
         positions(&forever, LACERATE_HIT).first().copied()
     );
+    // Maul is among Omen of Clarity's triggers and rolls as the others do: 46.5 procs over 431
+    // rolls (10.8%) on client 1.60.1.70862, where the first sample of 14 in 342 read as half.
     let maul = positions(&forever, MAUL);
     assert!(!maul.is_empty());
-    let half = ids(&effect(&forever, "omen_of_clarity")["half_chance_spells"]);
-    assert!(maul.iter().all(|spell| half.contains(spell)), "{half:?}");
-    assert!(positions(&forever, LACERATE)
-        .iter()
-        .all(|spell| !half.contains(spell)));
+    let omen = effect(&forever, "omen_of_clarity");
+    let triggers = ids(&omen["trigger_spells"]);
+    assert!(maul.iter().all(|spell| triggers.contains(spell)));
+    assert!(omen.get("half_chance_spells").is_none());
 
     let reference = prepared(&production("feral-bear-druid"), Rules::GoReference);
     assert!(effect(&reference, "lacerate").get("hit_spell").is_none());

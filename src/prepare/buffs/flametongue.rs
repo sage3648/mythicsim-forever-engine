@@ -56,7 +56,7 @@ pub(crate) struct FlametongueAttackTraits {
 pub(crate) const FLAMETONGUE_TOTEM_TRIGGER_LABEL: &str = "Flametongue Totem Trigger";
 
 /// Go `WindfuryWeaponMainHandStrikeID`: Windfury Weapon's main-hand strike, which procs
-/// Flametongue Totem (MythicSim patch 141).
+/// Flametongue Totem in the Go reference (MythicSim patch 141) and never under Forever's rules.
 pub(crate) const WINDFURY_WEAPON_MAIN_HAND_STRIKE: i32 = 439440;
 
 /// Go `flametongueTotemValue`: the proc's dummy value at the character's level, 1363, flat, since

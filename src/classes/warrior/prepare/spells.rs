@@ -95,6 +95,41 @@ fn slam_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
     }
     whole_threat_per_level(FOREVER_SLAM_THREAT_PER_LEVEL, rank)
 }
+/// Shield Slam's flat threat. The Go reference adds 508 on every rank. Under Forever's rules
+/// rank 1 (23922, spell level 40) adds 178: a protection warrior's combat and threat logs at
+/// levels 40 to 42 (client 1.60.1.70862, 8 November 2026) held 177.7 over damage from 223 to
+/// 400, once on a crit too. Ranks 2 to 4 are not measured: they carry rank 1's 4.45 a spell
+/// level as whole numbers, 214, 240 and 267.
+const SHIELD_SLAM_REFERENCE_FLAT_THREAT: f64 = 508.0;
+const SHIELD_SLAM_RANK_1_ID: i32 = 23922;
+const SHIELD_SLAM_RANK_1_THREAT: f64 = 178.0;
+const FOREVER_SHIELD_SLAM_THREAT_PER_LEVEL: f64 = 4.45;
+
+pub(super) fn shield_slam_threat(rules: Rules, rank: &crate::prepare::spelldata::Spell) -> f64 {
+    if rules != Rules::Forever {
+        return SHIELD_SLAM_REFERENCE_FLAT_THREAT;
+    }
+    match rank.id {
+        SHIELD_SLAM_RANK_1_ID => SHIELD_SLAM_RANK_1_THREAT,
+        _ => whole_threat_per_level(FOREVER_SHIELD_SLAM_THREAT_PER_LEVEL, rank),
+    }
+}
+
+/// The hand Shield Slam and Shield Bash strike with. Their rows require the shield and name no
+/// hand, and the Go reference gives them the off hand's special mask. Under Forever's rules
+/// they are main hand specials: the main hand weapon's chance on hit and enchant hear them and
+/// the main hand weapon skill sets their miss and parry. In a protection warrior's combat log
+/// of client 1.60.1.70862 the main hand weapon's proc fired on 54 of 80 isolated Shield Slams
+/// and 7 of 8 Shield Bashes, against none on 74 Shield Block and 9 Battle Shout casts. Windfury
+/// Totem still never rolls on them: their rows carry neither the main hand nor the next swing
+/// bit.
+pub(super) fn shield_strike_proc_mask(rules: Rules) -> ProcMask {
+    match rules {
+        Rules::Forever => ProcMask::MELEE_MH_SPECIAL,
+        Rules::GoReference => ProcMask::MELEE_OH_SPECIAL,
+    }
+}
+
 /// Go `revengeThreatMultiplier`: patch 183.
 const REVENGE_THREAT_MULTIPLIER: f64 = 2.25;
 /// Go `sunderThreatPerAttackPower`: patch 185, a share of the spell's melee attack power that
@@ -916,7 +951,7 @@ impl Warrior {
                 class_spell_mask: masks::SHIELD_BASH,
                 spell_school: school::PHYSICAL,
                 defense_type: DefenseType::Melee,
-                proc_mask: ProcMask::MELEE_OH_SPECIAL,
+                proc_mask: shield_strike_proc_mask(sim.rules),
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
                 max_range: MELEE_RANGE,
                 cost: rage_cost_with_refund(rank),

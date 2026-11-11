@@ -239,7 +239,7 @@ pub(crate) struct WarriorAgent {
     bloodthrill: Option<Bloodthrill>,
     weaponmaster: Option<WeaponmasterSword>,
     revenge: Option<Revenge>,
-    shield_slam: Option<DamageRoll>,
+    shield_slam: Option<(DamageRoll, bool)>,
     can_block: bool,
     thunder_clap: Option<ThunderClap>,
     /// Demoralizing Shout's debuff on the first target.
@@ -629,9 +629,12 @@ impl WarriorAgent {
                     })
                 }
                 Effect::ShieldSlam {
-                    damage, can_block, ..
+                    damage,
+                    can_block,
+                    twice_block_value,
+                    ..
                 } => {
-                    fight.agent.shield_slam = Some(*damage);
+                    fight.agent.shield_slam = Some((*damage, *twice_block_value));
                     fight.agent.can_block = *can_block;
                 }
                 Effect::ImprovedHamstring {
@@ -659,6 +662,7 @@ impl WarriorAgent {
                     max_targets,
                     aura,
                     bid,
+                    no_sweeping_strikes,
                     ..
                 } => {
                     let index = fight.trackers[Side::Target.index()]
@@ -673,6 +677,7 @@ impl WarriorAgent {
                         base_damage: *base_damage,
                         attack_power_share: *attack_power_share,
                         max_targets: *max_targets as usize,
+                        sweeping_strikes: !*no_sweeping_strikes,
                     });
                     fight.register_enemy_slow(aura, thunder_clap::slow(*bid));
                 }
@@ -945,11 +950,13 @@ impl WarriorAgent {
                 Effect::Execute {
                     base_damage,
                     damage_per_rage,
+                    extra_rage_on_landed,
                     ..
                 } => {
                     fight.agent.execute = Some(Execute {
                         base_damage: *base_damage,
                         damage_per_rage: *damage_per_rage,
+                        extra_rage_on_landed: *extra_rage_on_landed,
                     })
                 }
                 Effect::Hamstring { base_damage, .. } => fight.agent.hamstring = *base_damage,
@@ -1500,8 +1507,9 @@ impl Agent for WarriorAgent {
                 revenge::apply(fight, spell, target, params);
             }
             WarriorSpell::ShieldSlam => {
-                let damage = fight.agent.shield_slam.expect("Shield Slam is bound");
-                shield_slam::apply(fight, spell, target, damage);
+                let (damage, twice_block_value) =
+                    fight.agent.shield_slam.expect("Shield Slam is bound");
+                shield_slam::apply(fight, spell, target, damage, twice_block_value);
             }
             WarriorSpell::ThunderClap => {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");

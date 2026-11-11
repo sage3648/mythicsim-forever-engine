@@ -1804,6 +1804,10 @@ pub(crate) struct Fight<A: Agent> {
     /// The last hit on the player's resistance multiplier and the damage after it, as Go
     /// `SpellResult` carries them for rage from damage taken.
     pub(crate) player_hit_resistance: (f64, f64),
+    /// The last hit on the player before armor, resistances, block and absorbs, with its
+    /// outcome's multiplier and the player's damage taken multipliers, and whether a block took
+    /// all of it: what rage from damage taken reads under Forever's rules.
+    pub(crate) player_hit_pre_armor: (f64, bool),
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -2491,6 +2495,7 @@ impl<A: Agent> Fight<A> {
                 threat_multiplied,
                 crit_multiplies_swing,
                 no_threat_before_pull,
+                damage_taken_rage_per_damage,
                 ..
             } => Some(rage::RageBar {
                 max: max_rage.max(100.0),
@@ -2504,6 +2509,7 @@ impl<A: Agent> Fight<A> {
                 threat_multiplied: *threat_multiplied,
                 crit_multiplies_swing: *crit_multiplies_swing,
                 no_threat_before_pull: *no_threat_before_pull,
+                damage_taken_rage_per_damage: *damage_taken_rage_per_damage,
                 gain_threat: Vec::new(),
                 damage_taken_metrics: 0,
                 refund_metrics: 0,
@@ -4134,6 +4140,7 @@ impl<A: Agent> Fight<A> {
             armor_category: None,
             extra_armor_categories: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
+            player_hit_pre_armor: (0.0, false),
             damage_taken_auras: Vec::new(),
             resetting_auras: false,
             self_target: None,

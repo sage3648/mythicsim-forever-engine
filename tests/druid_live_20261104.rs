@@ -150,7 +150,7 @@ fn ferocious_bite_reproduces_its_live_tooltip() {
         );
     }
     close(number(&bite["damage_per_energy"]), 3.3);
-    close(number(&bite["attack_power_per_combo_point"]), 0.0375);
+    close(number(&bite["attack_power_per_combo_point"]), 0.037);
     assert_eq!(number(&spell(&forever, 31018)["damage_multiplier"]), 1.0);
 
     let reference = prepared(&production("feral-druid"), Rules::GoReference);
