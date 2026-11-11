@@ -135,6 +135,11 @@ pub(super) const SUMMON_HAWK_SWING_SHARE: f64 = 0.35;
 /// share of the creature dps at level 60 is an extrapolation, as the hawk's own scaling row is
 /// not in the client files.
 pub(super) const HAWK_SWING_SHARE_OF_CREATURE_DPS: f64 = 0.0815;
+/// Blizzard's hotfixes of 10 November 2026: "Melee damage dealt by the Hawk pet increased by
+/// about 80%". The swing above and its slope below are read from logs taken before it, so both
+/// take this factor. No client row or Wowhead Forever spell states the hawk's damage (the
+/// summon, 1293248, carries none), so it is the post's 80%.
+pub(super) const HAWK_MELEE_HOTFIX_20261110: f64 = 1.8;
 /// A hawk's swing time in seconds, before the owner's ranged haste.
 pub(super) const HAWK_SWING_SECONDS: f64 = 2.5;
 /// A hawk's swing spans a third either side of its average.

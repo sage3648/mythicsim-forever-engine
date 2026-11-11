@@ -20,9 +20,10 @@ use super::pet::{creature_auto_attack_dps, pet_crit_offset_now};
 use super::spell_data::spell_data;
 use super::spells::{
     arcane_shot_rap_coefficient, serpent_sting_rap_per_tick, EXPLOSIVE_TRAP_RANGE, HAWK_CRIT_SHARE,
-    HAWK_DAMAGE_PER_RANGED_ATTACK_POWER, HAWK_LOGGED_UNLEASHED_FURY_RANK, HAWK_SWING_SECONDS,
-    HAWK_SWING_SHARE_OF_CREATURE_DPS, HAWK_SWING_SPREAD, SUMMON_HAWK_RAP_SHARE,
-    SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE, VOLLEY_TICK_DAMAGE,
+    HAWK_DAMAGE_PER_RANGED_ATTACK_POWER, HAWK_LOGGED_UNLEASHED_FURY_RANK,
+    HAWK_MELEE_HOTFIX_20261110, HAWK_SWING_SECONDS, HAWK_SWING_SHARE_OF_CREATURE_DPS,
+    HAWK_SWING_SPREAD, SUMMON_HAWK_RAP_SHARE, SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE,
+    VOLLEY_TICK_DAMAGE,
 };
 use super::{masks, Hunter};
 
@@ -31,11 +32,14 @@ const SPELL_BATCH_WINDOW: i64 = 10 * MILLISECOND;
 
 /// A hawk's swing under Forever's rules (`HawkGuardian`): the fixed part and the slope on the
 /// owner's ranged attack power are what four level 30 logs read, which all had Unleashed Fury
-/// 5/5, so both are stated before it and the owner's rank multiplies them back.
+/// 5/5, so both are stated before it and the owner's rank multiplies them back. The logs predate
+/// the hotfixes of 10 November 2026, whose 80% more hawk melee damage both take. The guardian is
+/// Forever's alone, so the reference never reads it.
 fn hawk_guardian(sim: &Sim, unit: UnitId) -> Value {
     let logged = spell_data()
         .unleashed_fury
-        .multiplier_at(HAWK_LOGGED_UNLEASHED_FURY_RANK);
+        .multiplier_at(HAWK_LOGGED_UNLEASHED_FURY_RANK)
+        / HAWK_MELEE_HOTFIX_20261110;
     json!({
         "swing_average": HAWK_SWING_SHARE_OF_CREATURE_DPS
             * creature_auto_attack_dps()
