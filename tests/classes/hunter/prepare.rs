@@ -275,10 +275,14 @@ fn a_pets_spell_hit_is_seventeen_eighths_of_its_masters_ranged_hit() {
     let ranged = owner["RangedHitPercent"].as_f64().unwrap();
     assert!(melee + ranged > 0.0, "the production build carries hit");
     let stat = |prepared: &Value, name: &str| prepared["pets"][0]["stats"][name].as_f64().unwrap();
-    assert_eq!(
-        stat(&forever, "PhysicalHitPercent"),
-        stat(&go, "PhysicalHitPercent")
-    );
+    // Each rule set reads its own owner: Truestrike Shoulders carries 1.5% hit live and 2% in its
+    // reference row, so the owners differ and each pet follows its own.
+    let owner_hit = |prepared: &Value| {
+        let owner = &prepared["player"]["stats"];
+        owner["PhysicalHitPercent"].as_f64().unwrap() + owner["RangedHitPercent"].as_f64().unwrap()
+    };
+    assert_eq!(stat(&forever, "PhysicalHitPercent"), owner_hit(&forever));
+    assert_eq!(stat(&go, "PhysicalHitPercent"), owner_hit(&go));
     assert_eq!(
         stat(&forever, "SpellHitPercent") - stat(&go, "SpellHitPercent"),
         melee * 2.125 + ranged * 2.125
