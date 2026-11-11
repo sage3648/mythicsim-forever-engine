@@ -23,6 +23,10 @@ use super::talents::millis;
 use super::{flags, masks, Shaman, CAST_TAG_LIGHTNING_OVERLOAD};
 use crate::prepare::dbcenums;
 
+/// Stormstrike's share of weapon damage on each hit (hotfixes of 10 November 2026: "Stormstrike
+/// damage reduced to 100% weapon damage (was 150%)").
+const STORMSTRIKE_WEAPON_SHARE: f64 = 1.0;
+
 pub(super) fn spell_action(id: i32) -> ActionId {
     ActionId {
         spell_id: id,
@@ -518,14 +522,11 @@ impl Shaman {
 
     /// Go `registerStormstrikeSpell`: the two hits, the debuff on every enemy, then the cast.
     pub(super) fn register_stormstrike_spell(&self, sim: &mut Sim, unit: UnitId) {
-        // The 8 sec cooldown is 6 under Forever's rules since the notes of 2 November 2026, and
-        // each hit deals 150% weapon damage (was 100%).
+        // Each hit deals 100% weapon damage on an 8 sec cooldown under both rules: the hotfixes
+        // of 10 November 2026 undid the notes of 2 November (150% on a 6 sec cooldown).
         let rank =
             crate::prepare::hotfix_113554::row(sim.rules, spell_data().stormstrike.highest().id);
-        let strike_multiplier = match sim.rules {
-            Rules::Forever => 1.5,
-            Rules::GoReference => 1.0,
-        };
+        let strike_multiplier = STORMSTRIKE_WEAPON_SHARE;
         for is_mh in [true, false] {
             sim.register_spell(
                 unit,

@@ -376,6 +376,18 @@ the Go goldens and exporter uses. The departures:
   them: the Arms and Fury tree changes, pet health and spellstones (Lightning Bolt,
   Chain Lightning, the shocks and Lava Burst are in the next bullet). `tools/dev_notes_check.py`
   checks every number of these bullets against a live client spell store.
+- The Enhancement Shaman hotfixes of 10 November 2026 (Blizzard's hotfix post; Forever
+  preparation, the reference keeps the frozen rows): Stormstrike back to 100% weapon damage on
+  an 8 sec cooldown (the frozen row's; the notes of 2 November had made it 150% on 6), Mental
+  Dexterity 33/66/100% of Intellect as attack power (was 50/100/150%), and Maelstrom Weapon's cut
+  to Lightning Bolt's cast time and mana 20% a stack at every rank (was 4/8/12/16/20%) with 6, 7,
+  8, 9 or 10 procs a minute by rank (was 20 at any rank). "Weapon imbues and Weapon totems can
+  now be used at the same time": a main hand Windfury Weapon no longer blocks the party's
+  Windfury Totem, nor a main hand Flametongue Weapon the party's Flametongue Totem
+  (`blocks_windfury_totem` and `disabled_by_weapon` in the prepared effects). Windfury Totem
+  still switches Flametongue Totem off, totem against totem. The curves are in
+  `prepare::hotfix_113554` (`TALENT_CURVES_20261102`) and the proc rate in
+  `MAELSTROM_PPM_20261110` (`tests/hotfix_20261103.rs`).
 - The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
   preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
   The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the

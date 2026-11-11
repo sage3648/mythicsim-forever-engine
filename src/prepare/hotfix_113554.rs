@@ -188,10 +188,16 @@ const TALENT_CURVES_20261102: &[(i32, &[&[f64]])] = &[
             &[4.0, 8.0, 12.0, 16.0, 20.0],
         ],
     ),
-    // Shaman: Lightning Overload 10/20/30% (was 3/7/10%), Mental Dexterity 50/100/150% of
-    // Intellect (was 33/67/100%), Flurry 6/12/18/24/30% (was 5/10/15/20/25%).
+    // Shaman: Lightning Overload 10/20/30% (was 3/7/10%), Flurry 6/12/18/24/30% (was
+    // 5/10/15/20/25%). Mental Dexterity was 50/100/150% of Intellect from the notes of 2 November
+    // (33/67/100% frozen); the hotfixes of 10 November 2026 make it 33/66/100% ("Intellect to
+    // Attack Power conversion ratio reduced to 33/66/100% (was 50/100/150%)"). Maelstrom
+    // Weapon's cast time and mana cost cut per stack is 20% at every rank since the same
+    // hotfixes ("20% reduced cast time and Mana cost per application at all ranks (was
+    // 4/8/12/16/20%)"); the client curve states it as a negative modifier on its first effect.
     (408438, &[&[10.0, 20.0, 30.0]]),
-    (415140, &[&[50.0, 100.0, 150.0]]),
+    (415140, &[&[33.0, 66.0, 100.0]]),
+    (408498, &[&[-20.0, -20.0, -20.0, -20.0, -20.0]]),
     (16256, &[&[6.0, 12.0, 18.0, 24.0, 30.0]]),
     // Rogue: Aggression 5/10/15% (was 2/4/6%), on Sinister Strike and Eviscerate only; the mask
     // is in the Rogue's registration.
@@ -510,8 +516,9 @@ fn build() -> HashMap<i32, &'static Spell> {
         tick.ppl = WRACK_TICK_20261111.1;
         tick.sp_coef = WRACK_TICK_20261111.2;
     });
-    // Shaman (notes of 2 November): Stormstrike's cooldown 8 sec to 6.
-    patch(17364, &|row| row.cooldown_ms = 6000);
+    // Shaman: the notes of 2 November cut Stormstrike's cooldown from 8 sec to 6; the hotfixes
+    // of 10 November 2026 put it back to 8 ("cooldown increased to 8 seconds (was 6 seconds)"),
+    // the frozen row's, so no patch.
     // Rogue (notes of 2 November): Mutilate deals 90% weapon damage with each hand (was 75%), and
     // Flawless Execution takes 15 Energy off Eviscerate (was 10). The client has no rows for
     // either yet.
@@ -626,7 +633,9 @@ mod tests {
         for id in SLAM_RANKS {
             assert_eq!(hotfixed(id).unwrap().category_cooldown_ms, 15000);
         }
-        assert_eq!(hotfixed(17364).unwrap().cooldown_ms, 6000);
+        // Stormstrike: back on the frozen row's 8 sec since the hotfixes of 10 November 2026.
+        assert!(hotfixed(17364).is_none());
+        assert_eq!(must_find(17364).cooldown_ms, 8000);
         for id in MUTILATE_HIT_RANKS {
             let weapon = hotfixed(id).unwrap().effect_n(2);
             assert_eq!(
@@ -855,5 +864,29 @@ mod tests {
         ));
         assert!(!std::ptr::eq(row(Rules::Forever, 12579), must_find(12579)));
         assert!(std::ptr::eq(row(Rules::Forever, 25306), must_find(25306)));
+    }
+
+    /// The hotfixes of 10 November 2026: Mental Dexterity 33/66/100% of Intellect and Maelstrom
+    /// Weapon's 20% per stack at every rank under Forever's rules; the reference keeps the frozen
+    /// curves (33/67/100% and 4/8/12/16/20%).
+    #[test]
+    fn enhancement_hotfix_curves_20261110() {
+        let dexterity = |rules| {
+            (1..=3)
+                .map(|n| talent(rules, 415140, 3).effect_at(1).fraction_at(n))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(dexterity(Rules::Forever), vec![0.33, 0.66, 1.0]);
+        assert_eq!(dexterity(Rules::GoReference), vec![0.33, 0.67, 1.0]);
+        let maelstrom = |rules| {
+            (1..=5)
+                .map(|n| talent(rules, 408498, 5).effect_at(1).fraction_at(n))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(maelstrom(Rules::Forever), vec![-0.2; 5]);
+        assert_eq!(
+            maelstrom(Rules::GoReference),
+            vec![-0.04, -0.08, -0.12, -0.16, -0.2]
+        );
     }
 }

@@ -283,7 +283,8 @@ impl Shaman {
                     .effect(dbcenums::A_MOD_MANA_REGEN_INTERRUPT, 0).percent(),
             }));
         }
-        // talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand.
+        // talents_enhancement.go applyMaelstromWeapon: 10 PPM, a Go literal, rolled per hand
+        // (Forever's rules: by rank since the hotfixes of 10 November 2026).
         if let Some(trigger) = sim.get_aura(player, "Maelstrom Weapon Trigger") {
             let aura = sim.aura(trigger);
             if talent("maelstrom_weapon") > 0 {
@@ -291,8 +292,8 @@ impl Shaman {
                     effects.push(json!({
                         "kind": "maelstrom_weapon", "trigger_aura": aura.label,
                         "aura": "Maelstrom Weapon",
-                        "per_stack": data.maelstrom_weapon.effect_at(1)
-                            .fraction_at(talent("maelstrom_weapon")),
+                        "per_stack": super::talents::maelstrom_per_stack(
+                            sim.rules, talent("maelstrom_weapon")),
                         "max_stacks": 5,
                         "chances": dpm_chances(env, &dpm, |spell| {
                             spell.proc_mask.matches(ProcMask::MELEE)
@@ -642,7 +643,10 @@ impl Shaman {
                 "attack_damage": flametongue_totem_base_damage(weapon.swing_speed),
                 "trigger_spells": trigger_spells,
                 "trigger_outcome": outcome_names(trigger.outcome),
-                "disabled_by_weapon": sim.get_aura(player, "Flametongue Imbue ItemSlotMainHand").is_some(),
+                // Not under Forever's rules since the hotfixes of 10 November 2026: "Weapon
+                // imbues and Weapon totems can now be used at the same time".
+                "disabled_by_weapon": sim.rules != crate::Rules::Forever
+                    && sim.get_aura(player, "Flametongue Imbue ItemSlotMainHand").is_some(),
                 "duration_ns": nanos(rank.duration()),
                 "party_totem": sim.get_aura(player, FLAMETONGUE_PARTY_TOTEM_LABEL).is_some(),
             }));
@@ -739,8 +743,11 @@ impl Shaman {
                                 * (1.0 + data.elemental_weapons.effect_at(3)
                                     .fraction_at(self.talent("elemental_weapons"))),
                             // A main hand imbue outbids the party Windfury Totem's category
-                            // effect.
-                            "blocks_windfury_totem": mask.matches(ProcMask::MELEE_MH),
+                            // effect, except under Forever's rules since the hotfixes of 10
+                            // November 2026 ("Weapon imbues and Weapon totems can now be used at
+                            // the same time").
+                            "blocks_windfury_totem": mask.matches(ProcMask::MELEE_MH)
+                                && sim.rules != crate::Rules::Forever,
                         }));
                     }
                     _ => notes.push("Windfury Weapon is incomplete".to_string()),

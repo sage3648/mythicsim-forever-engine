@@ -51,7 +51,6 @@ pub(crate) struct SpellData {
     pub lightning_bolt: Ladder,
     pub lightning_shield: Ladder,
     pub lightning_shield_triggered: Ladder,
-    pub maelstrom_weapon: Ladder,
     pub maelstrom_weapon_triggered: Ladder,
     pub magma_totem: Ladder,
     pub magma_totem_triggered: Ladder,
@@ -173,7 +172,6 @@ pub(crate) fn spell_data() -> &'static SpellData {
         lightning_shield_triggered: Ladder::ranked(&[
             26363, 26364, 26365, 26366, 26367, 26369, 26370, 26545,
         ]),
-        maelstrom_weapon: Ladder::talent(408498, 5),
         maelstrom_weapon_triggered: Ladder::ranked(&[408505]),
         magma_totem: Ladder::ranked(&[8190, 10585, 10586, 10587]),
         magma_totem_triggered: Ladder::ranked(&[

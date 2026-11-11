@@ -284,16 +284,19 @@ fn own_windfury_totem_beside_the_partys_is_one_aura() {
     assert!(party > 0.0);
 }
 
-/// A main hand Windfury Weapon turns off the benefit of the shaman's own totem, as it does the
-/// party's: the imbue's attacks only.
+/// A main hand Windfury Weapon no longer turns off the shaman's own totem since the hotfixes of
+/// 10 November 2026 ("Weapon imbues and Weapon totems can now be used at the same time"): the
+/// totem's attacks land beside the imbue's (before, the imbue's alone).
 #[test]
-fn windfury_weapon_turns_off_the_own_totem() {
+fn windfury_weapon_and_the_own_totem_both_strike() {
     let request = enhancement_with_own_windfury(false, "WindfuryWeapon");
     assert_eq!(refusal(&request, Rules::Forever), None);
     assert!(refusal(&request, Rules::GoReference).is_some());
     let player = run(&request, Rules::Forever);
     assert!(action(&player, WINDFURY_TOTEM).0 > 0.0);
-    assert_eq!(windfury_attacks(&player), (0.0, 0.0));
+    let (own, party) = windfury_attacks(&player);
+    assert!(own > 0.0);
+    assert_eq!(party, 0.0);
     // Windfury Weapon's main hand strike still lands.
     assert!(action(&player, 439440).1 > 0.0);
     assert!(action(&player, STORMSTRIKE).0 > 0.0);

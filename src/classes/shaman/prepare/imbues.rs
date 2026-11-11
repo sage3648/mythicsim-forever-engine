@@ -2,6 +2,7 @@
 //! on the swap set's weapon (`imbueMhSwap`), the callbacks that switch each imbue with the weapon in
 //! the hand, and Rockbiter and Flametongue following one weapon alone (mythicsim patch 133).
 
+use crate::Rules;
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
@@ -159,10 +160,12 @@ impl Shaman {
         );
 
         // Go `WindfuryImbueReplacesTotemAfterSwap` (MythicSim patch 156): Windfury Weapon on only the
-        // swap's main hand also replaces the party's totem once that weapon is in the hand.
+        // swap's main hand also replaces the party's totem once that weapon is in the hand. Not
+        // under Forever's rules since the hotfixes of 10 November 2026: "Weapon imbues and Weapon
+        // totems can now be used at the same time", so the imbue and the totem both roll.
         let swap_main_hand = sim.item_swap(unit).is_some_and(|swap| swap.is_enabled())
             && Self::swap_main_hand_carries(sim, unit, WINDFURY_ENCHANT_ID);
-        if mask.matches(ProcMask::MELEE_MH) || swap_main_hand {
+        if sim.rules != Rules::Forever && (mask.matches(ProcMask::MELEE_MH) || swap_main_hand) {
             // Needs to be higher than Windfury Totem priority.
             sim.new_exclusive_effect(
                 aura,
@@ -277,8 +280,10 @@ impl Shaman {
                 SwapCallback::Flametongue { aura, slot },
             );
             // "When applied to main hand, disables any benefit you personally receive from
-            // Flametongue Totem" (patch 70). An off-hand Flametongue Weapon leaves the totem on.
-            if slot == crate::prepare::items::slot::MAIN_HAND {
+            // Flametongue Totem" (patch 70). An off-hand Flametongue Weapon leaves the totem on,
+            // and under Forever's rules since the hotfixes of 10 November 2026 a main-hand one
+            // does too ("Weapon imbues and Weapon totems can now be used at the same time").
+            if slot == crate::prepare::items::slot::MAIN_HAND && sim.rules != Rules::Forever {
                 disable_flametongue_totem(sim, aura);
             }
         }
