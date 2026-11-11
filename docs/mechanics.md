@@ -85,6 +85,8 @@ the Go goldens and exporter uses. The departures:
   fixtures (1,900 ranged attack power, 976 armor) the hawks' swings deal 5.5 thousand damage a
   fight against 5.0 thousand. The dive bomb, the hawks' hit and expertise (the owner's, as the
   pet's) and their uptime are unchanged. The prepared `summon_hawk` effect carries `guardian`.
+  The logged figures above predate the hotfixes of 10 November 2026; since then the fixed part
+  and the slope both take 1.8 (see that bullet below).
 - Improved Mind Flay, from its Forever tooltip ("Each instance of damage of Mind Flay deals 20%
   more damage than its previous instance of damage"): each tick deals the step more than the tick
   before it, compounding (1, 1.2 and 1.44 times the tick at two points), where the reference adds
@@ -388,6 +390,16 @@ the Go goldens and exporter uses. The departures:
   still switches Flametongue Totem off, totem against totem. The curves are in
   `prepare::hotfix_113554` (`TALENT_CURVES_20261102`) and the proc rate in
   `MAELSTROM_PPM_20261110` (`tests/hotfix_20261103.rs`).
+- The rest of the hotfixes of 10 November 2026 (Forever preparation only):
+  - Beast Mastery: "Melee damage dealt by the Hawk pet increased by about 80%." The hawk's swing
+    was fitted on level 30 logs taken before it, so its fixed part and its slope on the owner's
+    ranged attack power both take 1.8 (`HAWK_MELEE_HOTFIX_20261110`, 19.3 and 0.0280 at level 60
+    after Unleashed Fury 5/5). No client row states the hawk's damage, and Wowhead's Forever page
+    of the summon (1293248) carries none, so the factor is the post's 80%. The reference's hawk
+    has no guardian.
+  - Restoration: "Nature's Swiftness now also makes Wild Growth instant." The talent's cast time
+    mod reaches Wild Growth beside Healing Touch and Regrowth; its row still names the two, which
+    the reference keeps (`tests/hotfix_20261110.rs`).
 - The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
   preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
   The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the

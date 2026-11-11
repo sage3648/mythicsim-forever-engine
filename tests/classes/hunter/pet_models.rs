@@ -207,16 +207,17 @@ fn the_reference_hawk_swings_a_fixed_share_of_the_base() {
     }
 }
 
-/// Forever's hawk swing before armor is a roll of 10.7 a third either side plus 0.0156 a point of
+/// Forever's hawk swing before armor is a roll of 19.3 a third either side plus 0.0280 a point of
 /// the owner's ranged attack power (the logged 3.35 to 6.71 plus 0.0179, before Unleashed Fury
-/// 5/5's 1.15): every swing lies in that range at the ranged attack power its debug line shows,
-/// the rolls average the middle, and 1,000 more ranged attack power adds 15.6 to the average.
+/// 5/5's 1.15, and 80% more since the hotfixes of 10 November 2026): every swing lies in that
+/// range at the ranged attack power its debug line shows, the rolls average the middle, and
+/// 1,000 more ranged attack power adds 28.0 to the average.
 #[test]
 fn a_hawk_swing_is_a_roll_plus_a_share_of_ranged_attack_power() {
     let mut value = prepared(Rules::Forever, 1, true);
     let guardian = hawk_effect(&mut value)["guardian"].clone();
-    let average = CREATURE_DPS * 0.0815 * 2.5 / 1.15;
-    let coefficient = 0.0179 / 1.15;
+    let average = CREATURE_DPS * 0.0815 * 2.5 * 1.8 / 1.15;
+    let coefficient = 0.0179 * 1.8 / 1.15;
     assert!((guardian["swing_average"].as_f64().unwrap() - average).abs() < 1e-9);
     assert!((guardian["attack_power_coefficient"].as_f64().unwrap() - coefficient).abs() < 1e-12);
 
@@ -246,7 +247,7 @@ fn a_hawk_swing_is_a_roll_plus_a_share_of_ranged_attack_power() {
             "a roll each swing"
         );
     }
-    // 15.6 more a swing for the 1,000 ranged attack power, within the rolls' noise.
+    // 28.0 more a swing for the 1,000 ranged attack power, within the rolls' noise.
     assert!(
         (means[1] - means[0] - coefficient * 1000.0).abs() < 1.5,
         "{means:?}"
