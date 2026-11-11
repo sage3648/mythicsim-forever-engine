@@ -313,6 +313,9 @@ NUMBER = r"(\d+(?:\.\d+)?)"
 # the two figures (Naga Battle Gloves), 3 mana per 5 sec 3 MP5 (Mindthrust Bracers).
 EQUIP_STATS = [
     (rf"Increased Defense \+{NUMBER}", [(25, 1, 1)]),
+    # Spell penetration as Wowhead's Forever tooltips write it since 10 November 2026 (Elemental
+    # Mage Staff's "+8 Spell Penetration" became "Equip: Your spells pierce 8 Magical Resistance.").
+    (rf"Your spells pierce {NUMBER} Magical Resistance", [(15, 1, 1)]),
     (rf"\+{NUMBER} Attack Power", [(17, 1, 1), (18, 1, 1)]),
     (rf"\+{NUMBER} ranged Attack Power", [(18, 1, 1)]),
     (
@@ -418,6 +421,15 @@ NO_FIGHT_EFFECT = [
         # Ankle Slicers 284587, Earthshaker 288900.
         r"Chance on hit: Slice the target's ankle, slowing movement speed by \d+% for \d+ sec\.",
         r"Chance on hit: Knocks down all nearby enemies for \d+ sec\.",
+        # Items revealed by 11 November 2026: 260308 (run and swim speed), 281598 (movement speed in
+        # Mount Hyjal), 285066 (mining ore), 284231 (charms a humanoid), 287026 (disarms the target),
+        # 287045 (sifts a dirt pile).
+        r"Equip: Increases running and swimming speed by \d+%\.",
+        r"Equip: Increases movement speed by \d+% in [A-Z][A-Za-z' ]+\.",
+        r"Equip: You have a small chance to find additional ore when mining [A-Za-z ]+\.",
+        r"Use: Charms the target, preventing all actions for up to \d+ sec\. .*",
+        r"Use: Disarm target's weapon for \d+ sec\. .*",
+        r"Use: Sift through an [A-Za-z' ]+ Dirt Pile\. .*",
     ]
 ]
 # Use, chance on hit and equip lines the engine models by hand

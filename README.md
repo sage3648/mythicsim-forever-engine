@@ -1192,6 +1192,18 @@ the Go goldens and exporter uses. The departures:
   copies of Choker of the Fire Lord, Quick Strike Ring, Heavy Dark Iron Ring, Band of Sulfuras,
   Cauterizing Band and Ring of Spell Power (288926 to 288931) and of Hammer of Bestial Fury
   (289292).
+  The fourth batch (Wowhead's Forever tooltips of 11 November 2026, all 11,920 reference weapon
+  and armor rows asked again; 318 still unrevealed) adds 181 rows for items revealed since 9
+  November, and no item revealed before had new stats. Three rules join the tool and also reach
+  existing live rows: weapon skill lines replace the row's weapon skill pseudo stats (Edgemaster's
+  Handguards +1 Axes, Swords and Daggers, was +7; Mugger's Belt, Distracting Dagger, Skilled
+  Fighting Blade and Expert Goldminer's Helmet +1); a tooltip that states only one kind of hit or
+  crit drops the row's other kind, since Forever's preparation adds an item's melee and spell hit
+  and crit together (23 rows, Tempest Talisman and Crown of the Ogre King among them, simmed 2%
+  crit for their 1%); and "Your spells pierce N Magical Resistance", Wowhead's new wording, is
+  spell penetration. The client items gain 61 rows for Forever items revealed since 9 November
+  (`tools/rust_client_items.py add`; 5,022 unrevealed client ids asked again, 73 revealed, 12 left
+  for hand modelling).
 - Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
   Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
   preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two

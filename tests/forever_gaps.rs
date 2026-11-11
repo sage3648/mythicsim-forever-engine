@@ -721,11 +721,13 @@ fn seal_of_justice_judges_justice() {
     assert!(!effects(&value, "seal_of_justice").is_empty());
     // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
     // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
-    assert_eq!(action(&player, 20164, 0).0, 3262.0);
+    // 3258 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
+    assert_eq!(action(&player, 20164, 0).0, 3258.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
-    // Wisdom pays only on landed hits.
-    assert_eq!(action(&player, 20184, 0).0, 751.0);
+    // Wisdom pays only on landed hits. 748 since the 11 November live rows of Truestrike
+    // Shoulders and Battleborn Armbraces.
+    assert_eq!(action(&player, 20184, 0).0, 748.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -737,7 +739,8 @@ fn warrior_strikes_and_freezing_trap_run() {
         ("protection-warrior-shield-bash", 1672, 530.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
-        ("arms-warrior-mocking-blow", 20560, 78.0),
+        // 77 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
+        ("arms-warrior-mocking-blow", 20560, 77.0),
         ("protection-warrior-disarm", 676, 129.0),
         ("warrior-intercept", 20617, 50.0),
         ("arms-warrior-revenge", 25288, 0.0),
@@ -745,8 +748,9 @@ fn warrior_strikes_and_freezing_trap_run() {
         // 212 since the Aimed Shot precast at -1.75 s, which haste finished at -0.01 s, finishes
         // on the pull (docs/prepull-damage.md); 213 before. 215 since the Cat swings at its
         // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws. 211
-        // since Judgement of Wisdom pays only on landed hits.
-        ("hunter-freezing-trap", 1499, 211.0),
+        // since Judgement of Wisdom pays only on landed hits. 212 since the 11 November live row
+        // of Truestrike Shoulders.
+        ("hunter-freezing-trap", 1499, 212.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");
@@ -770,8 +774,9 @@ fn a_druids_own_thorns_strikes_back() {
     assert!(shield["roll"].is_null());
     // 991 with the raid's Battle Shout VII, Strength of Earth V and Grace of Air III at the
     // ranks below their Ahn'Qiraj 20 books (993 before). 993 again since the 9 November live row
-    // of Tarnished Elven Ring (10 Agility, was 15), which the bear wears twice.
-    assert_eq!(action(&player, 9910, 0).0, 993.0);
+    // of Tarnished Elven Ring (10 Agility, was 15), which the bear wears twice. 995 since the
+    // 11 November live rows of Truestrike Shoulders and Blackmist Armguards.
+    assert_eq!(action(&player, 9910, 0).0, 995.0);
     assert!(action(&player, 9910, 2).1 > 0.0);
     // Off the target's threat nothing hits the druid, so the shield never strikes.
     let (_, player) = run("balance-druid-thorns");
@@ -779,8 +784,10 @@ fn a_druids_own_thorns_strikes_back() {
     // Starfire VII, 25298, an Ahn'Qiraj 20 book, read as Starfire VI; 1634 before that). 1680
     // since the 9 November live rows of Crimson Felt Hat, Star of Mystaria, Waterspout Boots and
     // Songstone of Ironforge. 1659 since Judgement of Wisdom pays only on landed hits, which
-    // moved the rolls after a missed spell.
-    assert_eq!(action(&player, 9910, 0).0, 1659.0);
+    // moved the rolls after a missed spell. 1647 since the 11 November live rows of Ban'thok Sash,
+    // Hands of Power, Robe of Everlasting Night and Burial Shawl, and Star of Mystaria's hit
+    // counted once (1.3%, not 1.3% and 1% spell hit).
+    assert_eq!(action(&player, 9910, 0).0, 1647.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
