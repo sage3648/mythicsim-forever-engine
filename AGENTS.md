@@ -4,7 +4,7 @@
   and ROADMAP.md before changing scope.
 - New Forever work happens here only: do not patch the Go fork or port upstream
   wowsims commits. Keep every accepted Go golden passing, and check Rust-only
-  mechanics against the client rows and tooltips (README, Rust-only mechanics).
+  mechanics against the client rows and tooltips (docs/mechanics.md).
 - Follow docs/contributor-guide.md for module ownership. Keep class spells and
   talents in their class domain, spec behavior in that class's specs domain, and
   reusable primitives in core/mechanics. Shared code must not import classes.

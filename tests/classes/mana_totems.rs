@@ -1,4 +1,4 @@
-//! The party's mana totems in the results (README, Rust-only mechanics): Mana Spring Totem's
+//! The party's mana totems in the results (docs/mechanics.md): Mana Spring Totem's
 //! party buff and Mana Tide Totem are MP5 auras, and each mana tick's share from them is booked
 //! under the totem rather than as regeneration. Only the booking changes: the mana gained, every
 //! row's sum and the damage are the same as with the regeneration rows alone.

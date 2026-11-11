@@ -144,7 +144,7 @@ access to the application repository. Captures never replace accepted snapshots.
    random outcomes and cover relevant timing and resource boundaries.
 4. Compare against Go where the same mechanic is supported. Explain intentional
    differences instead of forcing agreement with a known bug. A mechanic Go never had
-   (a Rust-only mechanic, see the README) has no Go golden: cite the client rows or
+   (see docs/mechanics.md) has no Go golden: cite the client rows or
    tooltips its numbers come from, and pin them in a test.
 
 Do not regenerate expected outputs merely to make a change pass. Fixture updates

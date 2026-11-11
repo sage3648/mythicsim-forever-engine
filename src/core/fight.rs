@@ -6188,8 +6188,8 @@ impl<A: Agent> Fight<A> {
                     // A move the rotation held for this spell goes now, not at the end of the
                     // global cooldown the spell started (Forever's rule, `move_ready`). A
                     // rotation with a move goes on from a queued instant that went off, as it
-                    // does after one it casts itself (Forever's rule, README, Rust-only
-                    // mechanics); one that failed would only queue it again for this instant.
+                    // does after one it casts itself (Forever's rule, docs/mechanics.md);
+                    // one that failed would only queue it again for this instant.
                     if std::mem::take(&mut self.apl.move_held_for_queue)
                         || (cast
                             && self.rotation_with_moves_looks_through_gcd

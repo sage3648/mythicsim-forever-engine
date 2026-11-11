@@ -1776,7 +1776,7 @@ fn multi_shot_casts(logs: &str) -> Vec<(bool, bool, &str)> {
     casts
 }
 
-/// Forever's rule (README, Rust-only mechanics): Multi-Shot casts over half a second divided by
+/// Forever's rule (docs/mechanics.md): Multi-Shot casts over half a second divided by
 /// the ranged haste multiplier, as Aimed Shot's two seconds are. Our Forever beta logs: 0.44 to
 /// 0.45 seconds with the quiver's 15% (0.5 / 1.15), 0.32 under Rapid Fire as well (0.5 / 1.61).
 /// Seed 20's first fight casts it with the quiver alone and with Rapid Fire up (seed 4 did until

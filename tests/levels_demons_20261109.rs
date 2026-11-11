@@ -1,4 +1,4 @@
-//! A Warlock's demons by level (docs/levels.md, README Rust-only mechanics), 9 November 2026.
+//! A Warlock's demons by level (docs/levels.md, docs/mechanics.md), 9 November 2026.
 //!
 //! A levelling sweep found every demon at level 60: the Imp cast Firebolt rank 7 and the Succubus
 //! Lash of Pain rank 6 at any level, and both swung and cast from level 60 stats, so a level 10

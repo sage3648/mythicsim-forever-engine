@@ -1,5 +1,5 @@
 //! The healer talents past each class's heals, which Forever's rules model from the client rows
-//! and tooltips (README, Rust-only mechanics): Riptide's bonus to Chain Heal, Genesis on Wild
+//! and tooltips (docs/mechanics.md): Riptide's bonus to Chain Heal, Genesis on Wild
 //! Growth and Swiftmend, and the Holy Paladin's Oath of Light share. Each test puts a reference build's
 //! talents on one of the healer fixtures, checks what the export carries and what the spell did
 //! in the fights, and that the Go reference's rules do not read it.
@@ -284,8 +284,8 @@ fn request_if(name: &str, talents: &str, casts: &[(i64, Option<Value>)]) -> Valu
 
 /// The mana the regeneration row (mana per 5, spirit) gave in every fight together.
 /// The mana ticks' gain: the regeneration rows and the rows of the mana totems whose MP5 the
-/// ticks carry, Mana Tide Totem's and Mana Spring Totem's, booked under the totem (README,
-/// Rust-only mechanics). A totem's cast books its cost under the same id, as a negative gain.
+/// ticks carry, Mana Tide Totem's and Mana Spring Totem's, booked under the totem (docs/mechanics.md).
+/// A totem's cast books its cost under the same id, as a negative gain.
 fn regeneration(result: &Value) -> f64 {
     const MANA_SPRING_TOTEMS: [i64; 4] = [5675, 10495, 10496, 10497];
     result["raidMetrics"]["parties"][0]["players"][0]["resources"]

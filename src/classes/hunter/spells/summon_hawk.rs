@@ -6,7 +6,7 @@
 //! of the rank's base, on the melee special hit table without a crit roll (community #703).
 //!
 //! Under Forever's rules (the effect's `guardian`) a hawk swing is a guardian's, from Forever's
-//! combat logs (README, Rust-only mechanics): a roll on a fixed average plus a share of the
+//! combat logs (docs/mechanics.md): a roll on a fixed average plus a share of the
 //! owner's ranged attack power, taken through the target's armor, on the melee special table with
 //! a crit roll at Ferocity's crit plus half the owner's.
 

@@ -118,7 +118,7 @@ impl Summon {
 ///
 /// A demon is a creature of its warlock's level, and Forever scales a creature with the
 /// client's `ExpectedStat` rows: its swing, the weapon and the attack power from its own
-/// Strength, follows the creature auto attack dps of its level (README, Rust-only mechanics),
+/// Strength, follows the creature auto attack dps of its level (docs/mechanics.md),
 /// and so does its melee crit from Agility. A level 25 Succubus swings at 0.345 of a level 60
 /// one.
 pub(crate) fn demon_level_share(rules: Rules) -> Option<f64> {

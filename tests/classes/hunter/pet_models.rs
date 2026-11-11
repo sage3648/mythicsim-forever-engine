@@ -1,4 +1,4 @@
-//! The Hunter pet models of Forever's rules (README, Rust-only mechanics): the tamed pet's own
+//! The Hunter pet models of Forever's rules (docs/mechanics.md): the tamed pet's own
 //! attack power, weapon and inherited attack power, and a Summon Hawk hawk's swing and crit. The
 //! reference rules keep Classic's pet and Go's hawk, which these tests pin beside them.
 

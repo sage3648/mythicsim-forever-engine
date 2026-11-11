@@ -249,7 +249,7 @@ impl Hunter {
     /// Go `registerMultiShotSpell`: the beta client has one rank of Multi-Shot, with a 6 sec
     /// cooldown shared with Aimed Shot. Its row has no cast time, so the reference casts it at
     /// once; under Forever's rules it takes [`FOREVER_MULTI_SHOT_CAST_TIME`], which the ranged
-    /// haste multiplier divides as it does Aimed Shot's (README, Rust-only mechanics).
+    /// haste multiplier divides as it does Aimed Shot's (docs/mechanics.md).
     fn register_multi_shot_spell(&mut self, sim: &mut Sim, timer: crate::prepare::sim::TimerId) {
         let rank = spell_data().multi_shot.highest();
         let cast_time = match sim.rules {

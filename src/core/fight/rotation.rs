@@ -2754,7 +2754,7 @@ impl<A: Agent> Fight<A> {
         let ready = !self.player.moving
             && (self.get_float(range) != self.config.distance || self.now < 0)
             && self.player.hardcast.expires < self.now;
-        // Forever's rule (README, Rust-only mechanics): a player who has queued a spell stays
+        // Forever's rule (docs/mechanics.md): a player who has queued a spell stays
         // put until it fires. The reference walks at once, so a shot queued for the end of the
         // global cooldown fires inside its minimum range, or a strike outside melee range.
         if ready && self.move_waits_for_queued_cast && self.queued_cast_pending() {
@@ -3563,8 +3563,8 @@ impl<A: Agent> Fight<A> {
             self.player_log("No available actions!");
         }
         if self.player.rotation_timer <= self.now {
-            // A moving unit does not wait for its GCD. Forever's rule (README, Rust-only
-            // mechanics): neither does a rotation with a move, so a walk timed to a swing timer
+            // A moving unit does not wait for its GCD. Forever's rule (docs/mechanics.md):
+            // neither does a rotation with a move, so a walk timed to a swing timer
             // starts when its condition turns true, as moving needs no GCD.
             let mut next = self.now + self.config.reaction;
             if !self.player.moving && !self.rotation_with_moves_looks_through_gcd {

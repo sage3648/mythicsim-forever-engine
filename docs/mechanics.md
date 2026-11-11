@@ -1,0 +1,1438 @@
+# Mechanics notes
+
+How the engine models mechanics the Go reference never had, and where it departs from the
+reference on purpose.
+
+Mechanics the Go engine never had have no Go golden. They are checked against the game's own
+numbers instead: the client spell rows, Wowhead Forever tooltips and logs, with focused tests
+that pin the expected heal, cost or timing from those numbers. A request that reaches one runs
+in Rust or is refused; it never falls back to Go, which would skip the spells it does not know.
+The healer sims are the first: every Holy Paladin, Priest, Restoration Shaman and Restoration
+Druid heal lands on a player who needs it, less the share real healers overheal (below), so
+healing per second is what the healer's mana heals in a dungeon.
+
+Where Rust departs from a mechanic the Go reference has, preparation follows Forever by default
+and the reference with `Rules::GoReference` (`prepare --go-rules`), which every comparison with
+the Go goldens and exporter uses. The departures:
+
+- Pet hit, from Forever's developers on their tracker (22 October 2026): a Hunter's pet takes
+  17/8 of its master's ranged hit as spell hit (Lightning Breath and the other magic pet hits),
+  and a Warlock's demon takes 8/17 of its master's spell hit as melee hit, where the reference
+  gives a Hunter pet no spell hit and a demon the whole spell hit.
+- A Hunter's tamed pet, a fitted model from the client's creature table, Forever's pet sheets and
+  level 30 beta logs (levels 11, 17 and 30; extrapolated to level 60). The pet's own attack power
+  is 30% of the creature auto attack dps as attack power, 14 attack power a point of dps (4.2
+  times the dps, 253.9 at level 60), with nothing from Strength; its weapon is the rest of that
+  dps (the dps less that attack power over 14), 42.3 a second at level 60, a fifth either side;
+  and it takes 10% of its owner's higher attack power, melee or ranged. The sheets of a level 11,
+  a level 17 and a level 30 pet read 36, 61 and 103 own attack power, each the client's
+  `ExpectedStat` creature dps (8.60, 14.56 and 24.69) times 4.2 rounded down, with the owner's 10%
+  rounded down beside it (the three rows were checked against the table on 6 November 2026). A
+  level 30 Cat's 152 logged swings before armor, 42 to 55 at 119 attack power and 46 to 59 at 146
+  (1.2 second swing, Unleashed Fury 5/5), all lie inside this weapon's range with the Cat's 10%
+  and happiness: the model gives 42.4 to 55.5 and 46.0 to 59.1, where the whole creature dps as the
+  weapon puts 131 of them outside. The swing counts are those of the analysis of the logs, which
+  are not in this repository; the table rows, the 3 sheet readings and the two swing ranges are
+  reproduced by `the_own_attack_power_is_four_point_two_a_point_of_creature_dps` and
+  `the_weapon_is_the_creature_dps_less_its_attack_power_share`. Only the shares are measured
+  at level 30 and below: that they hold at level 60, where the creature dps row is the one
+  input, is an extrapolation. The owner's higher attack power is the one the owner has at the
+  reset (the ranged one for an Agility Hunter), inherited as a linear term, so it follows Aspect
+  of the Hawk and the other ranged auras but never swaps to the melee one mid fight. The
+  reference gives the pet Classic's numbers: 136 Strength at two attack power each less 20 (252),
+  an 18.17 to 27.66 a second weapon and nothing of its owner's attack power. At level 60 that is
+  41 dps of the pet's own against 60.5 (18.1 of attack power and 42.3 of weapon), plus the owner's
+  tenth: the Beast Mastery Cat on the board request goes from 149 to 220 DPS and its Hunter from
+  895 to 966 (+7.9%). The pet's abilities, focus, hit, crit and expertise are unchanged.
+- A levelling Warlock's demons, from the client's rank rows and creature table and Forever's
+  levelling logs (foreverlogs.gg public reports, 5 to 8 November 2026, levels 12 to 31). The
+  reference's demon is the level 60 one at any level: Firebolt rank 7 and Lash of Pain rank 6,
+  Go literals, and the level 60 Strength, Agility and melee weapon, so a level 12 Imp's Firebolt
+  hit for 44 where the log reads 8.5. Below level 60 a demon casts the rank its Warlock's level
+  teaches, each from its client row (wowf `SpellEffect`, `SpellLevels` and `SpellPower`):
+  Firebolt ranks 1 to 7 (3110 to 11763), the row's base plus its points per level up to the
+  rank's cap, its variance, coefficient (0.164 at rank 1 to 0.571 from rank 4) and cost (10 to
+  115); Lash of Pain ranks 1 to 6 (7814 to 11780), 16 to 50, learned from level 20, costing 65 to
+  160. A Succubus below 20, which its Warlock cannot summon, knows no Lash. A rank the spellbook
+  lists is taken first; the addon reads the Warlock's spellbook, not the demon's, so today the
+  level decides, which counts every rank as trained (4 of 6 logged Imps cast the top rank of
+  their level, 2 one rank behind). The demon's weapon and its own Strength and Agility are the
+  level 60 ones times the client's creature auto attack dps at the level over level 60's
+  (`ExpectedStat`, 0.345 at 25), so its whole own swing follows the creature row as a Hunter
+  pet's does. Its mana, Intellect and Spirit stay: the logged Imps cast Firebolt every 2.44
+  seconds in runs of 13 to 19 at levels 12 to 18, where a pool scaled down would run dry after
+  5. Against the logs, the Imp's mean non-crit Firebolt at levels 12 to 31 reads 3 to 21% over
+  the engine (7.0 against 8.5 at 12, 12.5 against 12.9 at 18, 21.1 against 23.8 at 31), the gap
+  the Warlocks' own spells show, the captures' unknown level 12 or 13 and an Improved Imp the
+  captures cannot show; a level 25 Succubus's Lash of Pain is 17.5 against 17.2, and its swings
+  through the client's level 26 creature armor are 32.4 to 41.1 against a logged 32 to 41 on a
+  level 26 caster. The engine's demon is the reference's at level 60 and under `Rules::GoReference`
+  (`tests/levels_demons_20261109.rs`, `tests/levels_demon_logs_20261109.rs`).
+- A Summon Hawk hawk, a fitted model from Forever's level 30 combat logs (extrapolated to level
+  60). A swing is a roll a third either side of 0.0815 of the creature auto attack dps over its
+  2.5 seconds (10.7 at level 60, before Unleashed Fury) plus 0.0179 (before Unleashed Fury,
+  0.0156) a point of the owner's ranged attack power, taken through the target's armor, on the
+  melee special hit table with a crit roll at Ferocity's flat crit plus half the owner's crit (the
+  higher of melee and ranged, as the pet inherits it). Four logs of 2,862 swings at 407 to 1,023
+  owner ranged attack power read the swing before armor as 3.3 to 6.7 plus 0.0179 a point in every
+  log (the client's level 30 row gives 0.0815 x 24.69 x 2.5 = 3.35 to 6.71), all with Unleashed
+  Fury 5/5, which reaches the hawks as it does the pet; 4,340 swings with Ferocity 5/5 read 10
+  plus half the owner's crit against targets 2 levels below to 3 above, and two logs without
+  Ferocity half the pet's. The fixed part scaling with the creature dps (the hawk's own scaling
+  row is not in the client files) and the slope holding at level 60 are extrapolations. The
+  reference swings 0.35 of the dive bomb's base, 37.8 at level 60, whatever the ranged attack
+  power, without armor and without a crit roll (community #703). On the Summon Hawk request in the
+  fixtures (1,900 ranged attack power, 976 armor) the hawks' swings deal 5.5 thousand damage a
+  fight against 5.0 thousand. The dive bomb, the hawks' hit and expertise (the owner's, as the
+  pet's) and their uptime are unchanged. The prepared `summon_hawk` effect carries `guardian`.
+- Improved Mind Flay, from its Forever tooltip ("Each instance of damage of Mind Flay deals 20%
+  more damage than its previous instance of damage"): each tick deals the step more than the tick
+  before it, compounding (1, 1.2 and 1.44 times the tick at two points), where the reference adds
+  the step per tick (1, 1.2 and 1.4). The talent is a dummy aura run by a server-side script, so
+  the client data has no stacking rule of its own.
+- Level partial resists, from Forever's beta logs on foreverlogs.gg (23 October 2026): a target
+  above the caster's level partially resists nothing, dot ticks and direct hits alike, so only
+  resistance past the caster's Spell Piercing does. About 1,000 dot ticks and 100 direct
+  non-binary hits on Razorfen Kraul and Scarlet Monastery bosses, which miss level 30 casters'
+  Shadow Bolts a third of the time, all landed whole. The reference's level 63 boss partially
+  resists 18% of them, 6% of the damage on average. The prepared target carries
+  `no_level_partial_resist`.
+- The raid's Expose Armor, from MythicSim's Discord (28 October 2026, Bae and Vrelk): a player
+  who picks the raid's Expose Armor instead of its Sunder Armor should not gain from the pick, but
+  the reference applies Expose Armor at full from the pull while Sunder Armor ramps a stack every
+  default GCD, so a Hunter simmed 1,241 DPS with Expose Armor against 1,226 with Sunder Armor.
+  Under Forever's rules, Expose Armor alone lands at full 3 s into the fight, which leaves the same
+  6,750 armor-seconds of its 2,250 armor unapplied as Sunder Armor's ramp: the Marksmanship
+  production request sims 609.87 against 609.86. With both, Expose Armor stays up from the pull.
+  Forever preparation writes `external_expose_armor`.
+- Flurry's charges, from three level 30 Warrior logs on build 1.60.1.70450 (magey/forever-warrior
+  discussion 30, counted in wowsims/forever PR 745): with Flurry up, every white swing spends a
+  charge whatever its outcome (misses 180 of 180, dodges 75 of 75, parries 72 of 72), and a
+  Heroic Strike spends one only when it misses (23 of 23; landed ones 3 of 265, each sharing its
+  moment with a white swing, dodged or parried ones 0 of 38). Cleave follows Heroic Strike, an
+  assumption, as the logs hold one Cleave. The reference spends a charge on each landed white
+  hit, Heroic Strike and Cleave included, and never on a miss. The prepared `warrior_flurry`
+  effect carries `every_swing_spends`.
+- Casting regeneration auras, from the client's mana regeneration interrupt aura (type 134),
+  which acts as it is applied: Resourcefulness, Rapid Recuperation and Improved Stormstrike let
+  more spirit regeneration continue while casting from the moment they are up. The reference
+  raises the rate without refreshing its cached mana tick, so the buff acts only once a change of
+  MP5, Spirit or Intellect refreshes it, which on a Survival Hunter is almost never. Each one's
+  mana lands in a resource row of its own, named after the aura, as Innervate's does. The
+  prepared player carries `casting_regen_at_once`.
+- Mana totems in the results, from MythicSim's Discord (3 November 2026): Mana Spring Totem's
+  party buff and Mana Tide Totem are MP5 auras, so their mana arrives inside the regular mana
+  ticks, and the reference books all of it as regeneration while casting or not casting, which
+  players read as the totem doing nothing. Each tick's share from a totem's MP5 lands in a
+  resource row of its own, named after the totem (`src/core/fight/mp5_sources.rs`). The mana
+  gained is the same; as with Innervate, the rest of the regeneration fills the mana bar first.
+  The prepared player carries `mp5_sources`.
+- Overhealing, from Forever's level 30 beta logs on foreverlogs.gg (1 to 24 October 2026, 74
+  public reports): a healer sim counts each heal less the share real Holy and Discipline
+  Priests, Holy Paladins and Restoration Druids and Shamans overhealed of it, such as Flash Heal
+  1%, Holy Light 10%, Renew 16%, Prayer of Healing 23% and Healing Stream Totem 63%. Heals the
+  logs do not hold yet (Greater Heal, Chain Heal, Prayer of Mending and the other heals above
+  level 30) take the pooled share of their kind: 5.4% on one player at once, 16.7% over time,
+  24.6% on a group. Shields keep their whole absorb. The shares are dungeon play at level 30 and
+  will move with level 60 raids. The reference, like Go, counts every heal in full. The prepared
+  player carries `overheal`, and each heal's overhealing is reported beside its healing
+  (`src/prepare/overheal.rs`, `validation/2026-10-24-healer-overheal.json`).
+- Heal over time crits, from Forever's level 30 beta logs on foreverlogs.gg (1 to 24 October
+  2026) and the client rows: Renew, Rejuvenation, Regrowth and Healing Stream Totem ticks crit
+  for 1.5 times the tick, between normal ticks on the same player (a Holy Priest's Renew ticks
+  97 and crits 145 and 146, a Restoration Druid's Rejuvenation ticks 95 and crits 141 and 142).
+  Pooled over 104 reports, 7.0% of 8,245 Renew ticks and 5.7% of 7,171 Rejuvenation ticks crit,
+  near the casters' direct heal crit (9.4% and 5.9%); a tick that wholly overheals loses its crit
+  flag, so heavy overhealers read low. Every heal over time row the healer sims use states
+  Periodic Can Crit, the client bit damage ticks already follow. A tick rolls the healing crit on
+  spell crit and the spell's crit bonus, as a direct heal does (Improved Regrowth's reaches
+  Regrowth's ticks, as the talent names the whole spell), less what a damage tick does not take
+  (Inner Focus). The reference, like Go, never crits a heal tick. Each prepared heal over time
+  whose row says so carries `tick_can_crit`
+  (`validation/2026-10-25-heal-tick-crits.json`).
+- Conjured cooldown, from the client's item effects (1.60.1.70532, ItemEffect and
+  ItemXItemEffect): every mana gem (Agate, Jade, Citrine, Ruby) is in spell category 1153 with a
+  2 minute category cooldown, with Demonic and Dark Rune, the healthstones and Thistle Tea, so a
+  mage who uses a gem cannot use a rune for 2 minutes, and the reverse. The reference gives the
+  gems a category 30 timer of their own, which no Forever item has, so a gem and a rune went back
+  to back. Forever preparation puts the gems on the category 1153 timer.
+- A queued spell holds a rotation's move, from MythicSim's Discord (25 October 2026, Bae and
+  MuRRRkn on the Survival weave): a player who has pressed a shot or strike in the spell queue
+  window does not walk off before it fires. The reference starts the move at once, so a shot
+  queued at the end of the global cooldown fired from inside its 10.5 yard minimum range and a
+  Strider Kick queued as the weave stepped out fired from outside melee range, and both failed.
+  On the Survival light weave that cost a Strider Kick or a shot every few cycles, and 3% haste
+  lost 19 DPS because it moved the Auto Shot onto the global cooldown more often. Forever
+  preparation writes `move_waits_for_queued_cast`; a spell out of range where the player stands
+  does not hold the move.
+- A melee swing leaves the Auto Shot timer alone, from Forever's bug tracker: the beta restarts
+  the timer on every melee swing ("Ranged swing timer is reset by melee",
+  https://github.com/ClassicWoWCommunity/forever-bugs/issues/14), and a Forever developer
+  answered on 6 October 2026 "For Hunters, this is a Bug with Auto Shot"
+  (https://github.com/ClassicWoWCommunity/forever-bugs/issues/14#issuecomment-6025122239), so the
+  rule models the game as intended. The reference restarts the timer as if a shot had just fired
+  on every white main or off hand swing and every Raptor Strike, so a weaving Hunter's next shot
+  came a full shot after the last melee hit instead of when it was due: on the Survival weave
+  reference request 32.8 Auto Shots a fight, now 39.3. Forever preparation writes
+  `melee_keeps_auto_shot_timer`.
+- A move arrives when its time is up (`move_arrives_at_destination`, Forever preparation): a
+  rotation woken at the instant a move ends, before its end action runs, reads the destination.
+  The reference reads the walk rounded to the millisecond, 5.001 yards for a step in to 5, takes
+  the Hunter out of melee range with no move left to bring them back, and the rest of the
+  iteration has no swings or strikes: the Go golden of the Survival weave
+  (`survival-hunter-aspect-of-the-beast-over-hawk`) has iterations at 400 to 510 DPS from it, and
+  a held move makes it far more common.
+- A rotation with a move keeps looking through the global cooldown: in game moving needs no
+  global cooldown, only casting waits on it, so a player watching a swing timer starts a walk
+  when its condition turns true. The reference's idle rotation sleeps until the global cooldown
+  ends unless a swing or a shot wakes it, so a walk whose condition turned true under the global
+  cooldown started at its end. A rotation that looks under the global cooldown queues the spell
+  for its end, so it also goes on from a queued instant as it goes off (one that cast; a queued
+  spell that fails does not run it again): the reference runs no rotation then, and a step
+  out waiting on that spell started a global cooldown late. Forever preparation writes
+  `rotation_with_moves_looks_through_gcd`; it acts only on a rotation with a Move in its priority
+  list, a group or a schedule, so every other rotation waits as before.
+- The off hand's half swing wait counts from the start of the melee attack, from swing probe logs
+  on the Forever beta (16 to 17 October 2026, dual wield, 2.72 main hand and 2.33 off hand): an
+  Auto Shot turns the melee attack off, and a weave's `/startattack` turns it back on as the step
+  in begins. The off hand's first swing came exactly half its swing after the attack went on in
+  11 of 19 attack starts, and never half a swing after the Auto Shot turned it off (0 of 17,
+  always 0.06 to 0.15 seconds later). On six walks in longer than half the off hand swing, it
+  swung within 0.2 seconds of arriving, so the wait runs during the walk, and with the attack
+  left on for 21 seconds over five walks out and back in without a shot, both hands swung on
+  arrival every time. Forever preparation writes `off_hand_waits_from_attack_start`:
+  a walk from outside melee range to a destination inside it starts the attack as it begins, the
+  off hand swings no sooner than half its swing after that, and an attack still on adds no wait
+  when the Hunter steps back in. The reference adds the half swing on every arrival, so on a dual
+  wield weave that steps in after each Auto Shot and out after the main hand swing the off hand
+  almost never swung: 0.0 swings a fight on our weave request, now 28.3.
+- A critical white hit's rage, from Forever's combat logs of 9 October 2026 (counted in
+  wowsims/forever 7c28cfa73): two Warriors' two-hand crits gave exactly twice the swing's rage, 21
+  of 21 (16.2 to 32.4 over 13 crits, 14.8 to 29.7 over 8). The reference adds the rage of the
+  swing before a two-hander's factor, so a two-hand crit gave 1.77 times its swing: 27.86 rage
+  on the Arms production request's 15.75 swing, now 31.5. A one-hander's crit, either hand,
+  already gave twice its swing and does not move. A bear's crit follows the same rule (Forever's
+  development notes of 1 and 8 October raise the crit rage of warriors and bears alike), and
+  moves nothing either: a bear's paw takes no two-hander factor here (8.65 rage a 2.5 second
+  swing), so its crit already doubled. The prepared `rage_bar` effect carries
+  `crit_multiplies_swing`. Arms gains 0.6% to 1.3% (the production request 703.68 to 708.83 DPS
+  at 10,000 iterations); Fury and bears sim the same to the cent.
+- Multi-Shot's cast, from our Forever beta combat logs on Warcraft Logs (reports
+  Par9kghHbAVYptwm, TBqwNKxVW8H3narp and mJGyPgZAtr2T4YpX, quiver at 15% speed): all 121
+  Multi-Shots have a cast start, a median 0.45, 0.45 and 0.44 seconds before the shot, and 0.32
+  under Rapid Fire in the third. Its client row (2643) has no cast time, so the reference casts
+  it at once.
+  Forever preparation gives it a 0.5 second cast, which the ranged haste multiplier divides as it
+  does Aimed Shot's (0.5 / 1.15 is 0.435, and 0.5 / (1.15 x 1.4) is 0.31 under Rapid Fire); its
+  global cooldown and cooldown are unchanged, and like any cast it cannot start while moving.
+- Autocast looks past a cooldown the GCD holds back (`autocast_skips_unready_cooldowns`,
+  Forever preparation), as wowsims/forever does since 21 and 22 October 2026 (10b0e65f2,
+  fbf5d98e8). Autocast Other Cooldowns took the first ready major cooldown and then applied the
+  GCD rule to it alone (an explosive only while the GCD runs, any other only once it is ready),
+  so a cooldown waiting for the GCD held back an explosive sorted after it, and through a run of
+  hardcasts an explosive held back every cooldown behind it. Now each ready cooldown that fails
+  the rule is passed over, and an explosive whose cast fits in the shortest GCD also waits while
+  less of the GCD is left than its cast, so it never delays the next spell. The reference stops at
+  the first ready cooldown.
+- Idol of the Dream (220606) adds 2 seconds to Rip (Improved Rip, 446212, client 1.60.1.70532:
+  a flat duration modifier on Rip's class mask), so Rip ticks once more at the same period; ported
+  from wowsims/forever 8d879a401. The reference registers no effect for it.
+- Jewel of the Guard Captain (270225) and Cleansed Vilebranch Icon (270276) give 8 spell damage
+  and healing, tripled in Forest and Grassland areas (Wowhead Forever); the imported data had 32.
+- Water Shield gives mana (`water_shield`, Forever preparation), from the client (1.60.1.70532)
+  and MythicSim's Discord (26 October 2026, Maro): a critical spell of the shaman's, damage or
+  heal, spends one of three globes for 2% of maximum mana, one globe every 3.5 seconds at most,
+  and the cast has no cooldown since 70532 (it had 15 seconds). The reference registers the talent
+  but no build could cast it.
+- The racial pass of Forever's development notes of 26 October 2026 (Forever preparation; the
+  reference keeps the 16 October racials). Human Ruthless gives 1% crit (was 2%) and Human Spirit
+  10% Spirit (was 5%). Dwarf Earth Fury is gone and Artisan's Precision gives 1% hit with
+  attacks and spells. Tauren Endurance is 5% health only. Orc Savage is gone and Command gives
+  Hunter and Warlock pets 5% more damage. Skyborne Wind Blessed is 2% haste (was 3%). Read
+  Ley Line's Energized is 50% more regeneration for 15 seconds (70532 had 100% for 30), cannot
+  be cast while an Innervate is up, and an Innervate that lands removes it
+  (`read_ley_line.innervate_replaces`). Skysight's Elemental Blessing is 15% movement speed for
+  15 seconds (was 10% for 30). Attuned and Charged, which a Ley Line or an elemental convergence
+  grants before the pull and which double those two, are not assumed. Client 1.60.1.70532 still
+  has the old rows; the notes are the source until a client build carries the new ones. The
+  notes' additions of 27 October (post 8): Orc Blood Fury's cooldown is 2 minutes (was 3),
+  Troll Berserking lasts 15 seconds (was 10) and Touch of the Grave's internal cooldown is 15
+  seconds (was 25); Attuned and Charged end on entering a raid, so they stay unassumed.
+- The non-Mage rows of client 1.60.1.70630 that change a number (Forever preparation; the data is
+  1.60.1.70425 and the reference keeps its values). Hunter's Mark rank 4 (14325, SpellEffect
+  690991) gives every attacker 143 ranged Attack Power (was 71). The Spellstone's damage effects
+  (1233765, 1233768, 1233770, "Increase Shadow Dam") name the Shadow school alone (mask 32; was
+  Fire and Shadow, 36). Blood Craze (16488) carries the No Threat attribute (Attributes_1 0x400),
+  so its heal over time puts out no threat. The Mage Revelation buff (1248808, SpellEffect
+  1251976) also names bit 32768 of the second class mask word, which holds Arcane Barrage and
+  Arcane Wrath. Rows that need nothing: Bloodthrill's marker aura (1289681) now lasts 5 seconds,
+  the window the engine already opens (Overpower's 5 seconds, 1282733); Elemental Focus keeps its
+  10% (ProcChance 10 moved to the effect as 100 and base 10); Amplify Curse hands Bane of Agony's
+  50% to an aura on the target (a class mask of Agony's own, tooltip `$o1*($w2/100+1)`), which
+  the whole tick factor of patch 177 already is. Holy Fire rank 1 (54), Twilight Focus's class
+  mask, Fire Nova's line of sight bit and Dark Inspiration's aura type (80 to 137, still 15%
+  Spirit) already agree with the data, and the engine starts Elemental Mastery's cooldown at the
+  cast, as 70630 has it (the cooldown-on-event bit is gone). Lava Burst rank 3 and Windfury
+  Weapon rank 2 are not the ranks cast, Multi-Shot 1289053 is a mob's bolt barrage, Feral
+  Swiftness is movement speed, Gore Drinker is not modelled, and the Touch of the Grave
+  attribute clears and the Curse, Rogue and Power Word: Shield attribute bits are read by
+  nothing the engine computes.
+- Winter's Chill is "your next Cone of Cold" (`winters_chill`, Forever preparation), from client
+  1.60.1.70630 (talent 11180 and aura 12579): only Frostbolt, Frost Blast and a Fingers of Frost
+  empowered Ice Lance can apply it, each stack makes the Cone of Cold deal 5% more damage and
+  gain 7% of the mage's spell damage (12579 and 11180 effect 3, a flat share added before the
+  hit is worked out), and the Cone of Cold uses every stack up as its cast completes. The stacks
+  stay on the mage rather than the target (the client puts 12579 on the target), so rotations
+  that test the aura keep working, and an area Cone of Cold gives every target the bonus. The
+  reference stacks from any landed Frost damage and never consumes. The rest of the Mage rows
+  of that build (Ice Barrier and Frigid Power, Frost Warding's absorb, Frost Blast's 0.271
+  coefficient, Arcane Wrath's 6 second cooldown, Missile Barrage ignoring missiles and hearing
+  Frost Blast) were already in the imported data and the code through hotfix push 112753.
+- The rows of client 1.60.1.70707 (30 October 2026, which also carries the 28 October hotfix) that
+  change a number (Forever preparation; the data is 1.60.1.70425 and the reference keeps its
+  values). Trueshot Aura ranks 1 to 4 fall to 15, 22, 30 and 40 ranged Attack Power (rank 4, 20905,
+  SpellEffect 698474, was 75), below rank 5's (20906) 50, so the aura is rank 5. Improved Fireball
+  (11069, SpellEffect 688786) also shortens Arcane Wrath and Arcane Barrage (bit 32768 of the second
+  mask word). Efficiency (19416, SpellEffect 696992) also cheapens Flanking Strike and Strider Kick
+  (bit 2097152 of the third word). Every "Increased Hit Chance" row (15464 to 15468, 18066) gains a
+  spell hit effect beside its melee hit, which gear hit already is under Forever's rules; Black
+  Dragon Mail's two piece bonus (15464) now gives both. The Mage tree (TraitTree 1112) moves: Arcane
+  Focus (11222, TraitNode 105814) is removed, so the Arcane tree has 18 talents; Improved Channeling
+  (105813) takes its square and Arcane Resilience (105802) Improved Channeling's, and Missile
+  Barrage and Arcane Resilience swap TraitDefinitions 135332 and 135339, which puts Missile Barrage
+  in the second row. Improved Fire Blast (105797) moves from the Fire tree's first row to the third,
+  after Pyroblast. Forever preparation reads the talent string in that order (a 19 digit Arcane tree
+  is refused) and the reference in Go's. Critical Mass (11115) falls to 3 ranks (TraitNodeEntry
+  130513) and Incineration (18459) rises to 5 (130525); their curves (83083, 83095) keep 2% a rank.
+  A string with a talent above its ranks in this build is refused, since an old string read in the
+  new order can put five points in a two rank talent. Precision (29438, Elemental Precision until
+  this build; SpellEffect 704780) turns from a miss chance modifier on Fire and Frost spells into
+  spell hit chance (aura 55) for every school, Arcane included. Improved Fireball is renamed
+  Accelerant. Frost Blast's three SkillLineAbility rows (1326053 to 1326055) leave the Frost skill
+  line without reaching another skill line or the trait tables, while its spell rows and the talent
+  tooltips naming it stay; the engine keeps it until the data says whether a level 60 mage still
+  learns it. Rows that need nothing: Aspect of the Hawk ranks 1 to 5 fall to 15, 22, 30, 38 and 47
+  but the engine casts rank 7 (25296, unchanged 120); Missile Barrage's channel time effect and
+  Fengus' Ferocity's effects become dummy auras that keep their amounts (a server script), Lesser
+  Intellect (Elixir of Wisdom, 6 to 3) and Well Fed (1249521) are not consumables the engine offers,
+  Tauren Endurance's crit damage row names every school (the racial follows Blizzard's 16 October
+  notes, health only), and the Bane of Agony marker, Surefooted's new row id and the creature,
+  transmute and event rows are read by nothing the engine computes. Ice Lance's new 8 second
+  cooldown is on rank 1 (1312002) alone, not the rank cast at level 60.
+- Live server hotfix pushes 113531 and 113554, which reached client 1.60.1.70707 on 30 October
+  2026 through the DBCache rather than a client build, for every class but Paladin and Priest
+  (Forever preparation, `prepare::hotfix_113554`; the reference keeps the frozen rows). The rows
+  are wowsims/forever #769 and #770's, regenerated from Raidbots' `forever` DBCache.bin, and the
+  trees agree with Wowhead's Forever talent data. The Druid tree is read in the hotfix's order:
+  Berserk (417141), Improved Shifting Power (1322670) and Gift of the Earthmother (414673) are
+  gone, Furor and Heart of the Wild swap trees, Reflection and Subtlety swap, and the new
+  Lacerate (1328617), Predatory Discipline (1328613) and Bloom (1328621) are talents the pinned
+  proto has no field for (`prepare::talent_layout` reads them aside). Lacerate needs the talent;
+  with Predatory Discipline a landed Ferocious Bite keeps the energy left after its cost; Primal
+  Bite's level 60 rank is 1238070 (1238073 is gone, same 77 flat damage); Shifting Power's
+  cooldown is 8 seconds; Wild Growth takes a 3 second cast that Naturalist shortens; Naturalist's
+  damage and Genesis are 2% a rank. Bloom is modelled from its text alone (below).
+  Moonkin Aura and Leader of the Pack are both 3% of every kind of crit, and one counts (the
+  `RaidCrit` category, as #769 rules). Mage: Arcane Resilience has 3 ranks, Ice Lance's Frozen
+  bonus is 300% and every rank has an 8 second cooldown on Fire Blast's category 19, Winter's
+  Chill is 20% a stack, Arcane Blast's buff is 12% of Intellect, 100% more cost and 18 seconds,
+  Ice Barrier's Frost damage is 5% and Frigid Power's 15%, and Arctic Reach lengthens Ice Lance.
+  Hunter: Pathfinding and Improved Revive Pet swap squares in Beast Mastery, and Freezing Trap
+  shares Explosive and Immolation Trap's category 411. Warlock: Improved Drains leaves Wrack out
+  (its second effect raises Drain Mana, which the engine does not cast). Greater Blessing of
+  Salvation and Greater Blessing of Light are gone from the game and apply nothing. Rows that
+  need nothing: Boosted Critical Chance (1229519) and the Minor Speed and Speed boot enchants
+  (911, 8737) are not read by the engine, Summon Arcane Elemental's middle spell is not modelled,
+  Ferocious Bite's new rank 1 and the two low Lacerate ranks leave the level 60 ranks, and about
+  1,400 rows only gain Attributes_14 bit 64.
+- Blizzard's development notes of 2 November 2026 for Hunter and Druid (Forever preparation; the
+  reference keeps the frozen rows and Go's numbers). Hunter, from the live hotfix cache of 3
+  November (still client 1.60.1.70707, regenerated by wowsims/forever #824; the rows are in
+  `prepare::hotfix_113554`): every rank of Aimed Shot (rank 6 166 to 350), Arcane Shot (rank 8
+  217 to 280), Serpent Sting (rank 8 83 to 100 a tick) and Sniper Shot (rank 3 295 to 590), and
+  Aspect of the Hawk ranks 1 to 6 (rank 6, the rank without the Ahn'Qiraj 20 book, 55 to 110).
+  Trueshot Aura rank 5 gives 100 ranged Attack Power (was 50) and Barrage is 5/10/15% (was
+  3/7/10%). Arcane Shot takes 15% of ranged Attack Power (was 10%) and each Serpent Sting tick
+  5% (was 3.5%), the notes' numbers, which no row states. Lightning Reflexes is already 3% a
+  rank in the frozen data, and Pathfinding already sits on row 3. Druid, from the notes alone
+  (the client has no rows for them yet, as #823 finds): Shred, Claw and Ravage deal 200%, 140%
+  and 435% weapon damage (were 155%, 110% and 350%), Rend and Tear is 3% a rank (was 2%), and
+  Bear Form's threat bonus is 115% (was 50%). Rip, Rake, Ferocious Bite and Starfire are "about
+  25%" and "about 40%" higher in the notes; the live rows of 4 November state them (the bullet
+  after Riptide and Poised below). Not modelled: Pounce
+  (the engine does not cast it), and the end of the low rank talent proc penalty (the engine
+  casts level 60 ranks). Poised is in the last bullet of these notes.
+- The same notes for Warrior, Warlock and Shaman (Forever preparation, from the notes alone; the
+  rows are in `prepare::hotfix_113554`). Warrior: Defensive Stance's threat bonus 80% (was 30%),
+  Slam's cooldown 15 sec (was 18), Two-Handed Weapon Specialization 2/4/6% (was 1/2/3%),
+  Improved Slam's cooldown cut 2.5/5 sec (was 3 at either rank) and Defiance 7/13/20% (was
+  5/10/15%). Warlock: Wrack's spell damage coefficient doubled (0.143 to 0.286 a tick) and its
+  base damage a second growing 2.5 a level from level 40, so 86 at 60 (was 36 at every level),
+  and Shadow and Flame's Shadow and Fire bonus 4/8/12/16/20% (was 2/4/6/8/10%; its chance to keep
+  Immolate is unchanged). Shaman: Lightning Overload 10/20/30% (was 3/7/10%), Mental Dexterity
+  50/100/150% of Intellect (was 33/67/100%), Flurry 6/12/18/24/30% (was 5/10/15/20/25%),
+  Stormstrike at 150% weapon damage on a 6 sec cooldown (was 100% and 8 sec) and Maelstrom
+  Weapon at 20 procs a minute (was 10). Not yet taken, since the client has no rows or trees for
+  them: the Arms and Fury tree changes, pet health and spellstones (Lightning Bolt,
+  Chain Lightning, the shocks and Lava Burst are in the next bullet). `tools/dev_notes_check.py`
+  checks every number of these bullets against a live client spell store.
+- The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
+  preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
+  The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the
+  launch build encrypts included; each tooltip carries its row as `ppl<level>:<max level>:<base>:
+  <points per level x 100>`), which replaced the first pass's derivation of the notes' ratios.
+  Lightning Bolt: base 16, 30, 52, 73, 109, 148, 194, 240, 295 and 353 for ranks 1 to 10 (rank 10
+  was 196) and 0.1 to 2.1 a level (rank 10: 2.1, was 1.2), so 361 at level 60 (was 200). Chain
+  Lightning's primary target damage: base 215, 348, 428 and 510 (rank 4 was 123) and 1.4, 2.2, 2.7
+  and 3.3 a level, so 523 at level 60 (was 126). The shocks are Classic Era's: Earth Shock rank 7
+  531 (was 301), Flame Shock rank 6 292 and 80 a tick (was 166 and 44) and Frost Shock rank 4 506
+  base, 509 at level 60 (was 283 and 286). Chain Lightning's cast time is the notes' 2.5 sec
+  (was 2), which Wowhead's live tooltips of 6 November 2026 state on every rank, and its mana is
+  those tooltips' 245, 360, 425 and 495 (the notes' "approximately 225%" of the comparable
+  Lightning Bolt rank's, which the first pass read as 248, 304, 428 and 495, is replaced by the
+  live rows; the frozen rows say 145, 200, 250 and 315), with the coefficient 0.714 (was 0.571),
+  which Wowhead's spell pages state on all four ranks. Lightning Overload's copies deal half their
+  rank's base and level scaling, since the talent's text says "half damage" ("a second, similar
+  spell on the same target at no additional cost that causes half damage and no threat"), where
+  Wowhead's tooltips of the copy rows still state the old rows on every rank (rank 10 Lightning
+  Bolt 98, rank 4 Chain Lightning 62) while every primary row moved: the top ranks deal 180 and 261
+  at level 60, what they dealt before, and the lower ranks follow their new primaries. Lava Burst
+  is removed: its talent slot (position 13 of the Elemental tree,
+  so saved talent strings keep their positions) gives Call of Thunder, +5% critical strike chance
+  for Lightning Bolt, Chain Lightning and their Lightning Overload copies (Wowhead's talent text
+  names the two spells), and no Lava Burst spell is registered, so a rotation line naming it finds
+  no spell and is dropped, as an unknown spell is. Elemental Mastery's aura reads Lightning
+  Mastery (the name only). Chain Lightning applies its jump reduction to the second and third
+  target only: the primary hit is the full row (checked against a combat log, first target 1.19
+  times Lightning Bolt's with the same coefficient and gear); a report of it hitting for less
+  than Lightning Bolt compares the average of all three hits with Lightning Bolt's. Not modelled:
+  the Windfury animations, Totemic Call and Elemental Reach's cooldown. Riptide is in the last
+  bullet of these notes. `tools/dev_notes_check.py` lists each row.
+- The same notes for Rogue, the changes that do not depend on the new talent trees (Forever
+  preparation, from the notes alone; the rows are in `prepare::hotfix_113554`, the reference keeps
+  the frozen data). Instant Poison takes 1% of attack power (was 0.5%) and Deadly Poison 0.9% a
+  tick and stack (was 0.45%), Mutilate deals 90% weapon damage with each hand (was 75%; the flat
+  damage each hand adds is multiplied by the same share, which is how the notes' "additional amount
+  that was also increased" follows, since no row or note gives the amount on its own), Hemorrhage's
+  15% damage taken applies to the rogue's Garrote as well as Rupture, Flawless Execution takes 15
+  Energy off Eviscerate (was 10), Aggression is 5/10/15% on Sinister Strike and Eviscerate only
+  (was 2/4/6% on those and Backstab), and Efficient Strikes (Improved Sinister Strike) takes 3/5
+  Energy off Hemorrhage as well as Sinister Strike. Shank (learned at level 24; a level 60 rogue
+  has rank 2) and Poised are new baseline abilities: Shank costs 5 Energy on a 10 sec cooldown and
+  strikes with the off hand weapon for 50% weapon damage, generating 25 Energy, and exists only
+  while an off hand weapon is held; it cannot miss, so it rolls as each hand of Mutilate does
+  (blocked or critical, never missed, dodged or parried), is on the Global Cooldown and takes the
+  off hand's damage penalty like the other off hand strikes. Poised is up at the start of every
+  fight (out of combat at maximum Energy) and takes 10 Energy off the first Energy ability. The
+  client now states both (see the rework bullet below), so Shank is 1329549 and Poised's aura is
+  1328826. Already the engine's: Improved Eviscerate, renamed Coup de Grace, is 7/13/20% in the
+  client data, and Improved Sinister Strike is 3/5 Energy. Hemorrhage and Ghostly Strike "dealing
+  much more damage than intended with a Dagger" is a server side fault the engine does not share:
+  it reads the client's dagger effect (145% and 180%) in place of the plain share, never on top of
+  it, and the live store of 3 November still states those numbers. Death Mark is in the next bullet. `tools/dev_notes_check.py` checks the rows of the Rogue part too.
+- The Rogue rework of hotfix pushes 113351 (Poised) and 113483 (the trees), client 1.60.1.70755
+  with hotfixes to push 113583 (wowsims/forever #840's store; Forever preparation, the reference
+  keeps the frozen data and `fill_talents`' proto order). The three trees are read in the client's
+  own order (`classes::rogue::prepare`, through `prepare::talent_layout`: Assassination 17
+  talents, Combat 19, Subtlety 18), so a string written for the old trees that does not fit (a
+  talent above its ranks, a tree too long) is refused under `talents` with the talent named, and
+  one that happens to fit is read in the new order. Murder, Quietus, Cutthroat, Thousand Cuts and
+  Improved Distract are gone; Blood Splatter, Composure, Flash of Steel, Boot Knife, Death Mark
+  and Quick Getaway are new, and so are read into the layout's extras, with Relentless Strikes'
+  five ranks (its proto field is a bool). Rank counts and values: Lethality 10/20%, Seal Fate
+  33/66/100%, Opportunity 4/8/12/16/20% (Backstab, Garrote, Ambush and Mutilate), Dual Wield
+  Specialization 25/50%, Relentless Strikes 4% a Combo Point a rank for 25 Energy, Camouflage
+  and Setup three ranks (nothing the engine reads). Shank is Shank rank 2 (1329549; rank 1 is
+  1329283, level 24, 15 Energy), 5 Energy, a 10 sec cooldown, 50% off hand weapon damage and 25
+  Energy; a rotation that names 1329283 or the provisional 1399001 of #200 presses it. Poised's
+  aura is 1328826 (the passive is 1328825). Composure adds 5 or 10 to Poised's 10 (15 or 20
+  off the opener). Flash of Steel adds 3 a rank to Shank's Energy and takes 0.4 sec a rank off
+  its cooldown (the row's effect says 2.5 sec at the top; the trait curve and the calculator say
+  2.0, which is used). Boot Knife gives a landed Shank a 20% a rank chance to add two Combo
+  Points (1329285; Shank's tooltip says one, its rows and the talent text say two). Venom is no
+  finisher: a Shank puts up 1310703 for 6 sec (30% poison damage, 20% poison chance). Blood
+  Splatter lengthens Rupture by 6 sec and Garrote by 9 sec, as three more ticks each (the
+  spell row and its Wowhead tooltip read 4 and 6; the trait curve, Wowhead's calculator and
+  upstream read 6 and 9, which is used). Mutilate's flat damage by rank is 44, 63 and 88 (33,
+  48 and 67 before) beside the 90% weapon share. Ghostly Strike's damage is normalized (the
+  row's new normalized weapon damage effect), and a Ghostly Strike puts up 1329326 for 7 sec,
+  which lets the next Ambush or Garrote out of Stealth (what Cutthroat gave Ambush). Death
+  Mark (rank 4 is 1325758; ranks 1 to 3 are 1316709, 1325756 and 1325757, which press it) is a
+  finisher for 25 Energy and a Combo Point or more, a 10 sec cooldown and 20 yd range, from
+  its rows; its tooltip, which Wowhead's Forever data carries since the morning of 4 November,
+  states the rest: 12% a Combo Point of the damage the rogue deals the target for 6 sec is
+  stored (twice that for Garrote and Rupture), then dealt up to a cap of (156 + 245 a point +
+  0.04 attack power a point) times (1 + melee crit chance), and Coup de Grace's 7/13/20%
+  multiplies both the share and the cap. Approximate: the tooltip does not say which damage
+  counts or how the release rolls, so every hit and tick of the rogue's other spells counts (the
+  damage after armor), a miss stores nothing, the release is a hit that cannot miss or crit and
+  takes no armor or multiplier again, and a mark still up when the fight ends releases nothing.
+  Not modelled: Quick Getaway, and the stat parts of Camouflage and Setup.
+  `tools/dev_notes_check.py` checks every row and curve above.
+- Riptide and the Druid's Poised, the last numbers of the same notes the client does not state yet
+  (Forever preparation, the reference keeps the frozen rows; `prepare::hotfix_113554`). Riptide
+  costs what Wowhead's tooltips of 4 November 2026 state: 245, 300 and 230 mana for its three
+  ranks (385 before for rank 3, the notes' "about 40%" less; ranks 1 and 2 read their old costs
+  there), has a 12 sec cooldown (the notes; was 6 and Wowhead states 12 on all three) and "no
+  initial heal, only the heal over time": its heal effect is turned into an inert dummy so the
+  heal over time (89, 115 and 161 a tick, the rows Wowhead's buff tooltips state too, five ticks
+  over its 15 sec) and the 25% Chain Heal bonus on the holder keep their effects. Only the
+  Restoration shaman's healer sims read it. A rotation that casts Riptide on its cooldown keeps it
+  on its target (15 sec outlasts the 12 sec cooldown), so the preset needs no edit for the
+  cooldown, though each cast now heals only its ticks. Poised for Druids (learned at level 32;
+  "when you are not in combat and have your maximum Energy, you will gain Poised"; the next Energy
+  ability costs 10 less) is the Rogue's mechanic (`core::fight::poised`, shared by both classes):
+  a Cat Form druid starts the fight with the aura up at maximum Energy and the first Claw, Shred,
+  Ravage, Rake, Rip or Ferocious Bite that applies its effects spends it, so Ravage from Prowl
+  costs 50 (60 before). Its aura is spell 1328827 (the -10 Energy row of hotfix push 113578; the
+  level 32 passive that grants it is 1328829), which replaced the provisional id 1399003 the
+  notes needed before the client had a row. A druid that shifts into Cat Form during the fight, after the pull,
+  gets none. Warrior talent strings that put more points in a talent than it has ranks, or list
+  more talents than a tree has (42 of 509 benchmarked community builds: 35 with an 18 talent Fury
+  string, the proto's tree having 17, and seven with Improved Execute or Improved Bloodrage above
+  their two ranks) are refused under `talents` with the talent named (`prepare::talent_layout`,
+  the way the Mage, Hunter and Druid trees are), where the rank ladders used to panic with "rank 5
+  in a ladder of 2 ranks"; the Warrior's client order came with the next entry. `tools/dev_notes_check.py`
+  checks Riptide's cooldown and mana against a live store.
+- The Druid rows of the live client of 4 November 2026 (Forever preparation; the reference keeps
+  the frozen rows; `prepare::hotfix_113554`), read from Wowhead's Forever tooltips and spell pages,
+  which decode the launch rows the upstream stores still lack. They replace the 1.25 and 1.4
+  placeholders of the notes' "about 25%" and "about 40%". Rip rank 6 ticks 19 plus 31.9 a combo
+  point every 2 sec (was 15 plus 25.5; the tooltip's 305, 497, 688, 880 and 1071 over 12 sec and
+  the buff text "19 + (32 * Combo Points)"). Rake rank 4 hits for 76 and bleeds 42 every 3 sec
+  (was 61 and 34). Ferocious Bite rolls 102 spread over 76 (was 82 spread over 60), adds 181 a
+  combo point (was 147) and 3.3 a point of extra Energy (was 2.7; the notes left it alone, the
+  row did not), reproducing the tooltip's 245 to 321 at one combo point up to 969 to 1045 at five.
+  Starfire's base damage and damage per level on every rank are 113, 154, 201, 277, 372, 471 and
+  533 with 1.8, 2.1, 2.2, 2.5, 3.0, 3.2 and 3.4 a level (were 81, 110, 144, 198, 266, 337 and 381
+  with 1.3, 1.5, 1.6, 1.8, 2.2, 2.3 and 2.4), the row's spread unchanged: rank 7's tooltip reads
+  510 to 597 at its level 66 cap, 533 at level 60. Shred, Claw and Ravage read 200%, 140% and
+  435% in the rows already. No row or tooltip states the attack power shares of Rip, Rake and
+  Ferocious Bite (server side), so they kept the notes' 25% (1.25 times 1%, 5% and 3% a point);
+  Rip's and Rake's are now the measured shares in the last bullet of the departures, and Ferocious
+  Bite's alone keeps the 25%.
+  Rend and Tear stays 3/6/9/12/15%: the live tooltip's "20%" is the row's own base points (20 in
+  the frozen data too, beside a per rank curve of 2 to 10), the way Genesis reads "1%" and
+  Naturalist "100%". Bear Form's threat stays the notes' 115% (its tooltips state none), and
+  Moonfire, Wrath, Insect Swarm, Predatory Strikes, Naturalist and Genesis read as the engine has
+  them. Pounce rank 3 now reads 186 over 18 sec (was 150) and is not cast by the engine.
+  `tools/dev_notes_check.py` has the rows.
+- The rest of the tree independent lines of the same notes, for Paladin and Mage (Forever
+  preparation, from the notes alone: no row states them yet, so the reference keeps the frozen
+  data). Paladin: Vengeance stacks up to 5 times (was 3; the 1/2/3% a stack is unchanged, and
+  its new requirement of Seal of Command is a tree rule) and Two-Handed Weapon Specialization
+  raises Holy damage as well as Physical, by the same 2/4/6% while a two-hander is in the main
+  hand (a Holy heal is not damage and keeps its value; the threat cut came with push 113554).
+  Mage: each missile of Arcane Missiles that lands rolls for Arcane Concentration, with the
+  talent's chance and internal cooldown, and an Arcane Missiles cast that finds Missile Barrage
+  up beside a Clearcasting from before leaves the Clearcasting standing (the cast's free pass is
+  Missile Barrage's). The notes do not say whether the cast or each missile rolls; each missile
+  is this engine's reading. Judgement of Fury's 4 to 3 sec is its taunt, which the sim does not
+  model. Every other Druid, Hunter, Mage, Paladin, Priest and Warlock line of the notes is
+  already in the engine (pushes 113531 and 113554, clients 70630 and 70707, and the first pass
+  above) or does nothing in a sim. Not taken: Poised (the next Energy ability after
+  the pull costs 10 less, about 10 Energy once a fight); Pounce (the engine does not cast it);
+  Frost Blast's removal (a rotation may still cast it); Ignite from Flamestrike's ticks (the
+  notes do not say a tick can crit, and only area rotations cast it); Gore Drinker (not
+  modelled); and the end of the low rank proc penalty (the engine casts level 60 ranks and never
+  applied one).
+- The Warrior trees of the same notes, from the client's rows (the hotfix cache of 3 and 4
+  November, build 70755 up to push 113596: wowsims/forever #841's regenerated store, which states
+  the talent curves, and Wowhead's Forever talent calculator, which lists each tree's order and
+  ranks; `prepare::trees_20261104` and `prepare::talent_ranks`). Forever's rules read the client's
+  own order and the Go reference keeps the proto's. Arms keeps its order with Improved Tactical
+  Mastery at 3 ranks (5/10/15 Rage, the same top value) and Bloodthrill at 2 (10/20%). Fury has 18
+  talents, row then column: Booming Voice, Cruelty, Lingering Rage, Unbridled Wrath, Furious
+  Precision, Piercing Howl, Blood Craze, Enrage, Dual Wield Specialization, Reckless Swings,
+  Improved Execute, Improved Berserker Rage, Death Wish, Gore Drinker, Improved Intercept,
+  Improved Whirlwind, Flurry and Bloodthirst. Raging Blows leaves, and its Rage discount on Cleave
+  and Whirlwind with it (the engine never had Boundless Rage, Improved Cleave or Precision in
+  Fury, and Iron Will is Protection's third talent, as it already was). Bloodthirst now needs
+  Death Wish, a tree rule the engine does not check. Protection is unchanged. A string that does
+  not fit is refused with the talent named ("Improved Tactical Mastery has 3 ranks, the string
+  gives 5"; strings written for the old order that happen to fit are read in the new one, so an
+  app must re-encode its Warrior builds when it moves to this layout). Flurry has 3
+  ranks of 10/20/30% attack speed for 3 swings (the charge rules of the entry above are
+  unchanged). Improved Whirlwind (1310315, the id Raging Blows had): Whirlwind's cooldown 1/2 sec
+  shorter and 15/30% more damage to the closest enemy, which is read as the first target of each
+  strike, the cast target, for both hands (the `whirlwind` effect's `closest_bonus`; the threat
+  follows the damage), as upstream reads it. Reckless Swings (1329555): for 25% of base health,
+  a 15 sec cooldown and a 1 sec Global Cooldown, the next 4 melee swings within 8 sec give 5 Rage
+  (proc 1329554). The row's proc is each melee auto attack, so a landed white swing that dealt
+  damage gives the Rage and spends a charge a spell batch window later, and Heroic Strike and
+  Cleave do not count, as for Unbridled Wrath; upstream notes no one has checked in game which
+  swings spend the charges. A rotation casts it by its id (`castSpell 1329555`), class spell
+  `reckless_swings`. Spearing Strike deals 75% weapon damage and 150% against Giants and
+  Dragonkin (rows; was 40% and 120%). Furious Precision is unchanged (4/7/10% off hand hit).
+  Not simulated: Lingering Rage (the Rage decay out of combat) and Gore Drinker (healing). Not
+  taken: Booming Voice's new cut to Piercing Howl's cost (Piercing Howl has no class mask here and
+  no rotation casts it), and Defensive Stance's 80% and Defiance's 20% threat, which stay the
+  notes' values although the 4 November store and Wowhead's tooltips still state 30% and 15%
+  (`tools/dev_notes_check.py`).
+- The launch client's Shaman Enhancement tree, Holy Shield's fourth rank, the Orc racial Command
+  and the Mage's Clearcasting (the notes of 2 November 2026 and the live data of 4 November,
+  Forever preparation; the reference keeps its own order and rows). The Shaman reads talent
+  strings in the client's order (`prepare::talent_layout`, as the Druid, Hunter and Mage do), in
+  which Wowhead's talent calculator moves Improved Ghost Wolf from the second row's last square
+  to the fourth row's last, after Stormstrike, so the seven talents between it and its old place
+  shift one square earlier; Elemental (Call of Thunder in Lava Burst's square, Lightning Mastery
+  in Elemental Mastery's) and Restoration keep their positions. A string written in the old
+  order reads wrongly when it fits the new ranks, so the app has to re-encode its saved
+  Enhancement builds (the engine refuses only those that put more points in a talent than it has
+  ranks, such as three in Shamanistic Focus, naming it). Holy Shield has a fourth rank
+  (1239570, learned at 60, 240 mana, 221 damage and 30% block, the row build 70755 completes):
+  a rotation that names it casts it, and one that names rank 3 (20928, 195 mana and 153 damage
+  since push 113554) still casts rank 3. Command (20575) now has two effects on Wowhead's spell
+  page: all effects of the Tamed Pet Passive +5% (the Hunter's pet, kept as the 5% on its
+  damage) and "Modifies Damage/Healing Done" +5% on Firebolt and Lash of Pain alone, so an Orc
+  Warlock's Imp and Succubus gain 5% on those two spells, added to their other damage
+  modifiers, and its other demons nothing (it was 5% on every pet's damage; hotfix push 113702
+  undid this, see below). Clearcasting is
+  spent as the cast's effects apply rather than as it completes (wowsims/forever #831): an Arcane
+  Missiles cast Missile Barrage pays for leaves it standing, and the check at completion found
+  Missile Barrage already spent whenever it had been gained before the Clearcasting, which
+  was 23 of 68 such casts in sixty seeded fights on the Arcane board.
+- A damage bonus applied after the calculation is threat too (`threat_follows_damage_bonus`,
+  Forever preparation), from MythicSim's Discord (26 October 2026, Vrelk: a Shadow Priest with
+  no threat talents had less threat than damage). Improved Mind Flay's ramp, Ice Lance on a
+  frozen target, Soul Siphon on Drain Life and Wrack, Amplify Curse on Curse of Agony and
+  Incinerate on an Immolated target raise a hit's damage after its threat is worked out; the
+  reference keeps the threat of the damage before the bonus, so Mind Flay made about 0.82
+  threat per damage with no threat talents.
+- A precast lands on the pull (`prepull_casts_finish_on_pull`, Forever preparation), from
+  SimulationCraft, which executes its one harmful precombat action at 0:00 with its cast time
+  skipped (docs/prepull-damage.md). A cast begun before the pull that haste or an early press
+  would finish before 0:00 finishes on 0:00, ahead of the pull's first swings and rotation, as a
+  player times a precast to the pull. The reference, like wowsims, finishes it early and drops
+  its damage, which lands before 0:00: a Skyborne Balance Druid's 2% haste finished the -3.0 s
+  Starfire at -0.06 s and lost its 1,533 damage, and the Hunter turret board's Aimed Shot at
+  -2.5 s finished at -0.76 s for every race. Damage before 0:00 is still never counted.
+- A prepull item swap stays on (`prepull_swap_stays_in_hand`, Forever preparation). A rotation
+  that swaps to Swap1 before the pull (a Retribution Paladin's Manual Crowd Pummeler at -1 s)
+  has that weapon in its hand at the pull: its damage and speed feed the first swing and every
+  strike from 0:00, and the set stays on until the rotation swaps again, as the game never
+  swaps back by itself. The reference keeps the Main set's weapon swinging through the prepull
+  and registers a swap back to Main a nanosecond before the pull, so a prepull swap is undone
+  before the first swing. A swap after the pull is unchanged.
+- A channel is clipped by what the rotation would run with it ended (`channel_clip_walks_rotation`,
+  Forever preparation). A channel with an `interruptIf` ends early only when the first action the
+  rotation would then run is another spell, or a recast with `allowRecast` on. The look reads the
+  rotation as it would run once the channel is gone: a group reference counts as the first ready
+  action inside it, a running sequence as its current step, a sequence that is not running as
+  nothing, the channel's own dot aura as down, and a cast row goes through the major cooldown gate
+  as the rotation does. A Warlock's Wrack channelled from a Cooldowns group, or gated on its own
+  dot being down, is therefore held to its sixth tick when nothing else would go first. The
+  reference counts any ready group as another action and reads the aura as up, so it clipped that
+  Wrack at its second tick and recast it every two seconds. The ticks `Channeled Ticks` reads are
+  the ticks the dot has dealt since it was applied, in both rule sets: Missile Barrage's shorter
+  missile interval drops when the cast completes, and a total rebuilt from the live interval read
+  each missile as its number plus the ticks the buff had taken off.
+- The Paladin tree and Holy Binding of live server hotfix push 113554 (30 October 2026, applied
+  to client 1.60.1.70707 by DBCache, which wago.tools' tables do not carry), from upstream
+  wowsims/forever #772 and #773's regenerated rows and Wowhead's Forever talent data (Forever
+  preparation; the reference keeps the 70425 tree). The Paladin string reads in the client's order,
+  17 talents a tree (`src/classes/paladin/prepare/hotfix_113554.rs`), and a talent above its new
+  ranks or a longer tree is refused, so every 70707 string is. Twist of Light, Instrument of Law,
+  One-Handed Weapon Specialization, Improved Seal of Fury and Voice of Truth are gone. Unsealed
+  Wrath (1310735) stores the active seal in its Echo on each landed melee auto (15 sec, 3 stacks)
+  and a swing under a different seal spends every other Echo, each stack a roll of its seal.
+  Swift Judgement is a second Judgement on its own 60 sec cooldown. Shieldsworn takes 4 sec off
+  Holy Strike, whose landed hits fire the active Holy Shield without a charge and Shield
+  Specialization's mana without its cooldown. Conviction is 2/4/6% crit with every spell and
+  attack; Holy Power is 10-50% more crit healing; Two-Handed Weapon Specialization also cuts all
+  threat 7/14/20% with a two-hander; Champion of the Light is 5 ranks of 12% of Intellect and 0.2
+  sec off Hammer of Wrath; Righteous Fury adds 33% to all threat; Vindication gives the paladin no
+  attack power; Sacred Duty's Stamina becomes 5/10 sec off Forbearance; Holy Shield's ranks deal
+  and cost what the rank below did (Rank 3: 153 damage for 195 mana). Divine Precision 4/8%,
+  Improved Seals 3-15%, Reverence 15/30%, Spiritual Focus 14-70%, Redoubt 6-30%, Shield
+  Specialization 15/30% and 50/100%, Improved Righteous Fury 3/6/9%, Iron Creed 10-30% and
+  2-6%, Boundless Light 15/30% Holy Shock heal crit. Oath of Light is a castable spell (below), and
+  Boundless Light holds on a Holy Shock heal only while the Oath is not on the heal target;
+  Light's Vigil, now friendly only, refuses a rotation that reaches it, since its party
+  heal is not modelled yet; Shieldsworn's spell block, Stoicism and Turn Evil change nothing
+  the sim models. Holy Binding (1328569) takes Binding Heal's field: a healer Priest's Flash Heal
+  heals the priest for half as much, as a second jump, and Binding Heal's ranks leave the tree.
+  Shadow Word: Death's backlash (10% to 30% of maximum health) is self damage the sim does not
+  deal.
+- Oath of Light (1328548) and Bloom (1328621), the two healer talents of hotfix pushes 113554 and
+  113531, from the client text and the rows the pushes carry (wago.tools has neither, and
+  upstream wowsims/forever models only the Oath). Oath of Light is an instant 8% base mana cast
+  that swears a 5 minute Oath on the heal target, which is the player in the healer model and
+  stands for the tank; while it holds, each Holy Light heal that reaches the tank heals 400 more,
+  each Flash of Light 115 and each Holy Shock 229 (the rows' 6.67, 1.92 and 3.83 a level at
+  level 60), added to the heal's base amount before healing power. The sim heals "a player who
+  needs it", so a heal reaches the tank with the tank's share of the party's hits under
+  `prepare::party_damage` (5 in 9, `party_damage::tank_share`, carried as the effect's
+  `holder_share`); the rest reach players without the Oath, get no bonus and, for Holy Shock,
+  keep Boundless Light's crit, which the aura takes off the tank's. A rotation casts it on the
+  player (`castFriendlySpell` before the pull, `castSpell` in the list) and again before it ends.
+  Bloom heals the target of a Rejuvenation or Regrowth that ends by its duration for 100% of the
+  druid's Spirit. The client rows are two dummy effects (100 and 50) and no heal spell, so the
+  coefficient, crit and modifiers are not stated: the heal is the Spirit exactly, no healing
+  power, no multipliers, no crit, with the overhealing share of a heal at once, and shows as its
+  own action (1328621). A heal over time cast again while it runs keeps ticking on its first
+  player, so that cast blooms as the new one goes up; one Swiftmend consumes, or the fight cuts
+  short, blooms nothing. The dispel case (50% of Spirit) never happens in the sim.
+- Party damage for heals that follow it, an assumption until the logs hold them: Forever's level
+  30 beta logs have no Prayer of Mending or Chain Heal yet. A healer's party of five takes hits
+  at random, the tank about once a second and each of the other four about once every five
+  seconds. Prayer of Mending goes on the tank and heals only when the player holding it is hit,
+  then moves to another member with 30 seconds again (its buff row, 401877), so a cast recast
+  every ten seconds heals about three of its five charges. Chain Heal lands on the tank and jumps
+  only to members hit in the last four seconds, 2.72 players a cast on average. Holy Priest
+  healing falls about 13%, Restoration Shaman's about 0.5%. Recalibrate the rates once the logs
+  reach these heals. The reference heals every charge and jump at once. The prepared `heals`
+  effect carries `party`, and each such heal `smart` (`src/prepare/party_damage.rs`).
+- Burst healing, a MythicSim measure rather than a game mechanic: a healer sim reports, beside
+  its healing per second over the fight (sustained, which its mana spreads thin), the most it
+  heals in any ten seconds of each fight over ten seconds (burst), counted as healing per second
+  is: heals, ticks and shields on the healer, less overhealing. Ten seconds is a judgement: a few
+  casts and a heal over time's ticks, short enough that mana does not decide it. The fixtures'
+  bursts run 3 to 4.7 times their healing per second. The prepared player carries
+  `burst_window`, and the report's player `burstHps` (`src/prepare/burst_hps.rs`,
+  `src/core/fight/burst.rs`). The reference, like Go, reports none.
+- A healer's gear, from the client rows (1.60.1.70425): the reference counts many healing items
+  and set bonuses for nothing, as it registers neither them nor their sets, and Rust refused a
+  healer wearing a set it registers but whose listener Rust left unclaimed. In a healer sim,
+  Forever preparation (`src/prepare/healer_gear.rs`) reads the bonus rows (ItemSetSpell, through
+  `tools/forever_set_spells.py`) of every set the reference does not register: healing power,
+  spell damage, mana per 5 seconds, spell crit, stats, casting regeneration and spell mods, as
+  Vestments of Prophecy's Flash Heal and Prayer of Healing bonuses, Vestments of Faith's Renew
+  cost or the PvP sets' healing; procs and conditional bonuses are left out. It adds the healing
+  bonuses the reference leaves empty: Stormrage Raiment's Regrowth cast time and Rejuvenation
+  duration, The Earthfury's Mana Surge (a 25% chance after Healing Wave or Lesser Healing Wave to
+  regain 35% of its base cost) and Healing Wave jumping to two more players at 20% of the heal
+  before each, and The Ten Storms' 30% more Chain Heal past the first player. It wires the healing
+  idols and totems (Idol of Health, Idol of Longevity, Idol of Swiftness, Totem of Life, Totem of
+  Flowing Water, Tidal Totem, Totem of Urgency) and Hazza'rah's Charm of Healing and Wushoolay's
+  Charm of Nature, whose use gives their rows' cast time and cost mods for 15 seconds. And it
+  claims Sudden Insight (Vestments of the Devout and Magister's Regalia, 5 pieces: a cast's 5%
+  chance at 200 mana) and The Furious Storm (The Elements 5, The Five Thunders 4: a cast's 4%
+  chance at 65 spell power for 10 seconds), which the reference registers. Totem of Life's 80 is
+  added to Lesser Healing Wave's roll, as the reference adds Libram of Light's to Flash of Light.
+  More set and item bonuses that need the fight: Vestments of Faith's Armor of Faith (a Greater
+  Heal crit shields its player for 500) and Epiphany (a cast's 5% chance at 24 mana per 5
+  seconds for 30 seconds), Dreamwalker Raiment's Healing Touch crit returning 30% of its cost,
+  Vestments of Transcendence's rank 5 Renew on each Greater Heal, and Idol of Rejuvenation's 5%
+  on Regrowth's direct heal while a Rejuvenation of the druid's is up (read as "on a target
+  under your Rejuvenation", since heals land on whoever needs them), Idol of Synthesis (a second
+  off Swiftmend's cooldown for each heal over time up as it is cast), Garments of the Oracle (3:
+  a heal's 20% chance to heal the healer for 10% of it), Rotmender's Raiment (5: a heal's cast,
+  at most every 2 seconds, puts up Rotmending's 40 every 3 seconds for 15 seconds, counted at
+  once), The Earthshatterer (4: the party's Mana Spring 25% stronger; 8: Lightning Shield's 15
+  mana per 5 seconds, read as kept up) and Redemption Armor (4: Lay on Hands 12 minutes sooner).
+  On use, Blessed Prayer Beads heal for 648 and Enamored Water Spirit's totem restores 33 mana
+  every 2 seconds for 24 seconds; Wushoolay's Charm of Spirits, a Lightning Shield trinket, is
+  worn without effect. Bonuses that help only the heal's target (Dreamwalker's Rejuvenation
+  mana, Totemic Power, Holy Power, Totemic Power's armor) change nothing the healer heals, and
+  The Eye of Divinity has no effect in Forever (its tooltip is flavour text).
+  The healer trinkets on use: Talisman of Ascendance, which the reference registers, stacks
+  Ascendance on each landed heal; Zandalarian Hero Charm, which it does not, starts at twelve
+  stacks of 17 spell damage and 34 healing (its tooltip; the row is a dummy) and loses one each
+  spell cast; Scarab Brooch shields the player each direct heal lands on for 15% of the healing
+  it did, counted on the item; Natural Alignment Crystal gives heals and their ticks 20% and
+  spells 20% more cost. A stacking trinket whose stacks only melee or ranged hits move, as Badge
+  of the Swarmguard, is worn without effect. The prepared effects are `mana_on_cast`,
+  `spell_mod_aura_on_use`, `stacking_cd_on_use`, `shield_on_heal` and the heals' shapes; a sim
+  that is not a healer's keeps the reference's gear (`tests/healer_gear.rs`).
+- A healer's spells past its heals, from the client rows (1.60.1.70425): the reference has no
+  heal for them. A Discipline priest's Penance heals at once and once a second for two more,
+  each the bolt row's heal, and deals no damage. A Restoration druid channels Tranquility, its
+  periodic heal on the party of five every 2 seconds for 10 seconds, on a 5 minute cooldown.
+  Nature's Swiftness (the Druid's and the Shaman's) makes the next heal with a cast time instant,
+  and that cast spends it. Water Shield's three globes are each spent, at most once every 3.5
+  seconds, by a direct heal of the shaman's that crits, for 2% of the maximum mana (the 16
+  October 2026 beta notes); the globes taken spell hits spend are not modelled, since the healer
+  takes none. The prepared effects are `instant_cast_aura`, the shaman's `water_shield` and the
+  heals' channel shapes (`tests/healer_spells.rs`).
+- A healer Priest's talents that read a heal's target or its history, from the client rows and
+  tooltips: Divine Aegis (431622) turns each crit of a direct heal, Penance's bolts and Prayer of
+  Mending's charges into an absorb of 5%, 10% or 15% of the heal, counted as the absorb aura's
+  (431624) shielding; the share is taken before the overhealing share comes off and the absorb
+  is full, like Power Word: Shield's. A heal over time never shields. Renewed Hope (425280) gives
+  Lesser Heal, Heal, Greater Heal, Flash Heal and Penance 2% crit a point on a member of the
+  party with Weakened Soul (6788, 15 seconds) and cuts that debuff by 1 second a point: a heal
+  goes to a member at random in proportion to the party's hit rates (the assumption above), and
+  Power Word: Shield goes to the first member in the party's order without the debuff. Litany of
+  Light (1317006) returns 5% or 10% of a heal's base mana cost when the heal before it was a
+  different spell, not another rank of the same one. Desperate Prayer (19243) is a self heal at
+  no cost on a 10 minute cooldown that a rotation casts when it names it. The prepared effect is
+  `priest_heal_talents`, and a heal's `crit_absorb` (`tests/healer_spells.rs`).
+- Healer talents past the heals, from the client rows and Forever's tooltips: Riptide's third
+  effect makes a Chain Heal cast directly on its target heal 25% more. The sim has no
+  per-player auras (a heal lands on a player who needs it), so a Chain Heal's first player is
+  read as the Riptide holder while a Riptide of the shaman's is up, a healer swinging Chain Heal
+  at the player it Riptided and the party model's Chain Heal starting on the tank; the jumps
+  keep their falloff of the unboosted heal, and Riptide is not spent (its row states no
+  consumption). Genesis (1223081) is 2% a rank on the periodic healing of Rejuvenation,
+  Regrowth and Wild Growth, its first effect, and on Swiftmend, its second, which the
+  reference's Genesis (Rejuvenation and Regrowth alone) did not reach. The prepared effect is the
+  heal's `hot_bonus` with `first_target_only` (`tests/healer_talents.rs`).
+- Mana Tide Totem and Light's Vigil, the last two healer talents, from the client rows.
+  The Restoration shaman's own Mana Tide Totem (rank 4, 1325256; Forever's rules, the talent
+  taken) costs the row's 60 mana, stands 13 seconds on a 5 minute cooldown and gives its Mana
+  Tide row's (1325257) 290 mana every 3 seconds to its group; the sim models the shaman's own
+  mana, as MP5 the way Mana Spring Totem's ticks are (483.3 MP5 for 13 seconds, 1,257 mana
+  against four whole ticks' 1,160), the same MP5 as the raid's external Mana Tide Totem option,
+  which it stacks with. It stands in the water totem slot: its cast ends a Healing Stream Totem
+  and its heals over time, and a Healing Stream Totem cast ends it, so a rotation recasts neither
+  while the other stands. A cast takes no target. Light's Vigil on an ally (rank 3, 1311595 at
+  level 60; push 113554, the Holy Paladin healer sim) costs the row's 1,340 mana on a 1.5 second
+  cast with a 6 second cooldown and puts a 30 second vigil on the player, one at a time; the next
+  Holy Shock heal on the player spends it, triggers no cooldown and heals the player and the four
+  others of the party for 704 plus 0.143 of healing power, each with its own roll and crit (Holy
+  Power's crit healing reaches it and a group heal's overhealing share comes off; Healing Light
+  does not, as its mask omits the vigil, and Illumination does not, since the heal has no cost
+  to refund). The enemy strike and the refund are gone. Any other build's rotation that casts it is
+  refused as before. The prepared effects are `mana_tide_totem` and `lights_vigil_ally`
+  (`tests/healer_talents.rs`).
+- Chance on hit items with no stated rate, a MythicSim assumption: Blizzard states no rate for
+  them. Their client trigger rows read `ProcChance` 101, the server's "chance on hit" sentinel,
+  with no procs per minute, and the reference leaves them unregistered (its generator's "states
+  no rate" blocks, and rows it had no constructor for), so a sim wearing Seeping Willow,
+  Empyrean Demolisher or Felstriker ran as if the effect did not exist and said nothing. Forever
+  preparation registers them from those blocks and the client rows (`CHANCE_ON_HIT_ITEMS`,
+  `tools/rust_item_effects.py`) at the rate Classic servers give a `ProcChance` of 101: 1.8% per
+  landed hit for each second of the hitting weapon's speed, 1.08 procs a minute. A weapon procs on
+  its own hits, special attacks included; any other item on the wearer's landed melee and ranged
+  hits; spells never. A damage over time the proc puts on alone rolls the magic hit as it goes on
+  where it is magic and its ticks deal their amount, one around the wielder goes on every target,
+  and one a missile carries goes on as the hit lands, its flight not modelled.
+  `docs/forever-chance-on-hit.md` lists the items by kind and those left out with the reason
+  (crowd control, threat, mana, heals, debuffs only a tank feels). A wearer buff that changes
+  stats (Destiny's Strength, Quel'Serrar's Armor and Attack Power, Ragehammer's Attack Power) is
+  a stat aura, so its stats reach the runtime and a tank's swing rolls are read with it up
+  (`chance_on_hit_stat_auras`, `src/prepare/export_items.rs`). Quel'Serrar's Sanctuary (22850)
+  also grants 13 Defense (`A_MOD_SKILL` of skill line 95), which the effect parser leaves out;
+  it is added to the buff (`src/prepare/forever_items.rs`). A tank's swing rolls read it, and
+  the stat aura combinations carry the crit the player takes when one changes it, which the
+  runtime sets on a Goblin Sapper Charge's hit on its thrower. Its 36 melee Attack Power against
+  Dragonkin (aura 102, creature mask 2) is a `mob_type_bonus` with `melee_attack_power` while the
+  buff is up and every target is Dragonkin; ranged attacks do not read it.
+- Arcane Concentration at the Arcane Missiles channel start and on Flamestrike's ground ticks,
+  from Forever combat logs: Clearcasting came from 8.9% of 347 channel starts, and 45.3% of
+  5-missile channels gained it, against 46.9% expected with a roll at the start and 41.0%
+  without; and from 13 of 82 Flamestrike ticks, once a tick however many enemies stood in it.
+  Under Forever's rules the channel rolls once as it starts, after the cast has spent any
+  Clearcasting it found, so a start proc is a fresh one for the next cast, and each ground tick
+  rolls once after the first enemy it lands on. Both share the talent's 1 sec cooldown
+  (`tests/classes/mage/arcane_concentration.rs`). The reference rolls on neither.
+- The WoW: Forever hotfixes of 9 November 2026 (posted 10 November), read line by line. One
+  changes a number here: "Arcane Concentration's activation chance now correctly splits across
+  the cast and every bolt (was granting 10% on cast and per bolt)", which is the full chance at
+  the channel start and on each missile that the combat logs above showed. Under Forever's rules
+  the start of an Arcane Missiles channel and each of its missiles now roll an equal share of the
+  talent's chance, one over the start and the channel's missiles together (a sixth each on a
+  five missile channel), so a channel gains Clearcasting at about the talent's chance where
+  nearly half of them did. The notes give no shares; equal ones are assumed until logs after the
+  hotfix say otherwise. Every other spell's roll and the Flamestrike ground tick's keep the full
+  chance. The other class lines need nothing: Natural Instinct already reaches every Druid
+  ability, Lacerate and Pounce included; Incinerate is registered only with its Destruction
+  talent; Lightning Overload's Lightning Bolt copies already deal half their rank's damage, as
+  the talent says; a Flamestrike ground tick never spent Clearcasting here; and Gloves of Holy
+  Might's proc is modelled as its tooltip states.
+- A Hunter's pet swings at its owner's melee and attack speed, from Forever combat logs: the pet
+  swung every 1.965 s under its owner's 2% Wind Blessed, 1.40 s under Rapid Fire's 40% and 1.08 s
+  with its own Frenzy as well, so the two multiply, and the owner's ranged haste (ranged Quick
+  Shots) left it at 1.965 s. Each change reached the pet at its next 5.25 s stat heartbeat and
+  rescaled the swing under way. Under Forever's rules the owner's speed at the summon (Wind
+  Blessed, Battle Squawk's stacks) is in the pet's swing from the pull, and each later change of
+  the owner's melee or attack speed (Rapid Fire, Battle Squawk's expiry, Aspect of the Beast's
+  Quick Strikes, attack speed procs and trinkets) reaches the pet at its next heartbeat
+  (`tests/classes/hunter/pet_melee_speed.rs`). The reference's pet keeps its own speed.
+- Stat aura combinations up to 16 bits, where the reference refuses past 14: an Orc
+  Enhancement Shaman with Jom Gabbar takes 15 (the totems, the swap, the imbues and the potion
+  10, Blood Fury 1, Jom Gabbar's stacks 4). Each bit doubles the reset simulations: 15 bits
+  prepare in about 5 seconds (`src/prepare/stat_auras.rs`).
+- The Black Book (19337) as the Forever client states it: Blessing of the Black Book (23720)
+  lands on the demon that is out, every effect of its row on the pet, 100% more damage done in
+  every school (aura 79) and 100% more armor (aura 101) for 30 sec, and the item's use is on a 5
+  minute cooldown and its category's 30 seconds (client 70707 ItemEffect 102765). The pinned
+  reference registers Classic's book instead (200 spell damage, 325 attack power and 1600 armor
+  on each demon, a 3 minute cooldown, a warlock aura no effect describes), which the reference
+  rules keep and still refuse. Under Forever's rules the use waits for a demon out and doubles its
+  damage (`black_book`, `src/classes/warlock/prepare/items.rs`); the armor is read by nothing, as
+  nothing swings at the demon.
+- Forever's Engineering ammo, from the Wowhead Forever tooltips: Swiftfeather Arrow (274387) and
+  Swiftstrike Shot (274388), item level 65 and requiring level 60, each "Adds 24.5 damage per
+  second". The reference's ammo stops at Miniature Cannon Balls, so the request schema adds them
+  to `HunterOptions.Ammo` as `SwiftfeatherArrow` (13) and `SwiftstrikeShot` (14)
+  (`src/contracts/request/schema.rs`), leaving `data/proto-schema.json` as the pinned reference
+  wrote it. They are data, not a departure, so both rule sets add the 24.5.
+- Shadow Oil, from the client 1.60.1.70707 data: item 3824 (use spell 3594, level 24) puts
+  temporary enchantment 25 on a melee weapon, a proc effect at the 15% its `EffectPointsMin`
+  states, casting spell 350026, a Shadow Bolt of Shadow damage that rolls 52 plus 0.9 a level with
+  0.15 variance and takes 0.56 of spell power. It is Frost Oil's twin (item 3829, use spell 3595,
+  enchantment 26, 10% of Frostbolt 350025, the fork's patch 126): a flat chance on each landed hit
+  of the oiled hand, not procs per minute, with no proc manager, so `mhImbueId` and `ohImbueId`
+  take 3594 or 3824 as they take 3595 or 3829, the oil on the main hand's swap weapon follows the
+  item swap as Frost Oil does, and each oiled hand has its own listener (`Shadow Oil (main hand)`,
+  `Shadow Oil (off hand)`) with the bolt's row `ProcChance` as its chance. The Go reference has no
+  Shadow Oil and ignores the id, so both rule sets register it, as with the ammo above
+  (`src/prepare/proc_oil.rs`, `tests/classes/proc_oil.rs`).
+- Oil of Immolation, from the client 1.60.1.70707 data: item 8956 (level 31) uses spell 11350
+  "Fire Shield", a 15 second aura with a periodic trigger spell effect every 3 seconds that casts
+  spell 11351 on the user, a Fire school damage effect of 50 base points (a flat 50, no spell
+  power) on the enemies within 5 yards of the caster. The use has no cooldown and no global
+  cooldown, and its category (79, 3 seconds) is not the potion category (4), so it shares nothing
+  with the potions. Neither row is in the pinned game data, so `src/prepare/oil_of_immolation.rs`
+  restates them as literals. A request opts in with `consumables.oilOfImmolation: true`, a
+  Rust-only boolean of the consumables message (`FOREVER_FIELDS` in
+  `src/contracts/request/schema.rs`, field 1000; the Go reference refuses it as an unknown
+  field). The character uses the oil 0.5 s before the pull, so the shield is up at the pull, and
+  again each time the shield ends, all fight. Every 3 seconds from each use (the first tick 2.5 s
+  into the fight), the fifth on the moment the shield ends, spell 11351 deals its 50 as a magic
+  hit with a crit to every target, rolled for each target in turn, and shows in the actions as
+  spell 11351; the shield's uptime shows as aura 11350 ("Oil of Immolation"). The client rows
+  have no tick at the moment of the use (no `START_PERIODIC_AT_APPLY` on spell 11350), so a use
+  loses no tick. Using the oil while a swing timer is running stalls the auto attack for 0.5 s,
+  which is why players use it before the pull, where none is running (a report from Bae, a
+  Classic player on the project's Discord, not a client row: "0.5 sec swingtime stunt when using
+  it during swings"). Each use in combat therefore pushes the player's running melee swings, the
+  main hand and a dual wielder's off hand, back by 0.5 s (`swing_delay_ns` on the effect); a hand
+  that is not swinging (out of melee range, or before the pull) loses nothing and the ranged auto
+  is not delayed. Bae also said a prepot "loses 1 of the 5 ticks"; with the client's timing a use
+  at -0.5 s loses none, so the rules do not drop one. The fight models one distance between the player and the targets
+  (`distanceFromTarget`), so the tick reaches all of the targets or none: a character beyond 5
+  yards, such as a ranged character at range, takes none. Nothing changes without the field
+  (the prepared effect is `oil_of_immolation`, `src/core/fight/oil_of_immolation.rs`,
+  `tests/classes/oil_of_immolation.rs`).
+- A Shadow Priest's Dark Inspiration in the party, from wowsims/forever at ce4dd1a69
+  (`darkInspirationMeta`, `PartyBuffs.dark_inspiration`) and the client 70425 rows: the talent
+  (1326159, 5 ranks) has Mind Blast and a full Mind Flay channel raise the Spirit of the priest's
+  party by the buff row's 15% (1326168, `A_MOD_PERCENT_STAT`) priced by rank, round(15 * rank /
+  5)%: 3, 6, 9, 12 and 15. A request sets the priest's rank with `partyBuffs.darkInspiration`, a
+  Rust-only int32 of the party buffs (`FOREVER_FIELDS`, field 1001, as upstream's field 15 is
+  Grace of Air Totem in the pinned schema), held to 5. The party's copy is up all fight on the
+  player, never its pets, as upstream's is. Under Forever's rules a Shadow Priest's own copy bids
+  in the party copy's Spirit category and yields ties (upstream `NewSpellDataDarkInspirationAuraFor`, `YieldsTies`),
+  so the two never stack: the stronger holds the Spirit, the party's on a tie
+  (`src/prepare/buffs/dark_inspiration.rs`, `tests/classes/dark_inspiration.rs`). Nothing changes
+  without the field.
+- A Rogue's swap set of poisons, from a player request (Discord #feature-requests, 5 November
+  2026: Ambiwar's Deadly Poison on both hands until it has five stacks, then a second main hand
+  carrying Instant Poison). Under Forever's rules a Rogue's item swap is a copy of each swapped
+  weapon, the same item, random suffix and enchant, carrying a poison of its own: the request
+  names it with `consumables.mhImbueSwapId` (the reference's field) and
+  `consumables.ohImbueSwapId`, a Rust-only int32 of the consumables message (`FOREVER_FIELDS`,
+  field 1002). Each poison is registered once for both sets and its proc mask follows the set
+  worn: the export gives the reset's, the item swap's changes give the swap set's, and the
+  Rogue's runtime switches each poison's hands at the swap. The swap costs what every class's
+  item swap costs in the engine, Go `ItemSwap.SwapItems`: the global cooldown extends to at
+  least 1.5 seconds (`GCDDefault`) and both swings restart a full swing after it
+  (`StopMeleeUntil`), as Bae checked in game for a Warrior (Discord #warrior, 23 October 2026);
+  neither is checked for a Rogue in game yet. Another weapon, a stone or oil the sets differ in,
+  and the reference's rules, whose Rogue reads the request's poisons alone, are refused
+  (`src/classes/rogue/prepare/poisons.rs`, `tests/classes/rogue/item_swap.rs`). Nothing changes
+  without an item swap.
+- The Zul'Gurub crafted sets, from the client 1.60.1.70425 ItemSet and ItemSetSpell rows: Blood
+  Tiger Harness needs Leatherworking and The Darksoul Blacksmithing (RequiredSkill 165 and 164
+  at 300), as Bloodvine Garb needs Tailoring, and Bloodsoul Embrace and The Darksoul give their
+  bonus at 3 pieces, not the reference's 2 (`data/go-tables.json` carries the 3). They are data,
+  so both rule sets follow them; no Go golden wears enough pieces to reach either count
+  (`src/prepare/forever_item_sets.rs`).
+- Beaststalker Armor (Dungeon Set 1) on a class other than a Hunter: Forever does not lock the
+  set to its class (classMask 0), and its five piece bonus reads "Your normal ranged and melee
+  attacks have a chance of restoring 200 mana" (trigger row 450577, 5% on landed autoattacks).
+  The reference attaches the trigger to any wearer but its handler only in the Hunter package, so
+  on anyone else the listener did nothing and Rust refused it. Under Forever's rules it restores
+  the 200 mana to any wearer with a mana bar, a spell batch window after the hit, as the Hunter's
+  does (the prepared effect is `mana_proc`, `src/prepare/export_items.rs`); a Hunter keeps
+  `hunter_set_mana_proc`, and the reference rules still refuse it.
+- Fire totem reach, from the client 1.60.1.70755 rows and tooltips: a fire totem stands where
+  the shaman drops it, "at the feet of the caster", which the fight models as the shaman's
+  distance from the targets at the cast (one distance for every target, so a totem reaches all
+  of them or none). Magma Totem's pulse burns enemies within 8 yards of it (10581's area), Fire
+  Nova hits "enemies within 10 yd of your active Fire totem" (408428's area) and Searing Totem
+  attacks an enemy within 20 yards (10436's range). Out of reach the totem is still dropped and
+  the nova still cast, for their mana and global cooldown, and deal nothing; moving after the
+  drop does not move the totem. The reference hits every target from any distance, as upstream
+  wowsims does (`radius_yards` and `attack_range_yards` on the prepared effects,
+  `tests/forever_totems_20261104.rs`).
+- The shaman's own Windfury Totem beside the party's or a main hand Windfury Weapon: both totems
+  give the same party aura, 10612, which neither stacks (no cumulative aura) nor stacks for
+  different casters, and every rank of Windfury Weapon "disables any benefit you personally
+  receive from Windfury Totem" when applied to the main hand. Under Forever's rules the own
+  totem is cast (air slot, mana, global cooldown) and its trigger stays off while the party's
+  totem stands or the imbue is up; an item swap that takes the imbue off lets it back on at
+  once. The reference refuses the request, as before (`one_aura` on `windfury_totem_self`).
+- Windfury Totem's triggers and charges, from Forever combat logs. An ability rolls the totem
+  only when its client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off on the
+  next swing (`Attributes[0]` 0x4); main hand autos and extra swings always roll it. Unflagged
+  abilities never proc it: Bloodthirst 0 of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of
+  97, Holy Strike 0 of 78. Flagged ones proc it at the swing rate (Mortal Strike 29 of 150), and
+  Maul, which goes off on the next swing, on 27.2% of its landed hits. No off hand special rolls
+  it, a shield strike included. A landed hit rolls it without dealing damage (Sunder Armor
+  applications at 15%); a miss still does not. The proc grants every charge and the auto that
+  fired it spends none, so the next off hand auto keeps the attack power (46 of 47), and every
+  outcome of a later auto spends one (8 of 8 missed swings). The reference rolls it off every
+  main hand melee spell (and off hand specials without an off hand weapon), wants damage, takes
+  a charge off for the triggering auto and spends charges on landed autos only. The shaman's own
+  totem gives the same aura and follows the same rules (`trigger_spends_no_charge` and
+  `any_outcome_spends` on `windfury_totem` and `windfury_totem_self`, `trigger_without_damage`
+  on the latter, `tests/classes/warrior/windfury_totem.rs`).
+- Sword Specialization (Weaponmaster with a sword), from Forever combat logs with a two-hand
+  sword at 5/5: a roll off a Windfury Totem swing brings no extra swing (0 of 6), so the
+  totem's swing does not roll it (a queued Heroic Strike that replaces that swing still does);
+  Sweeping Strikes' hits never roll it (0 of 336 over two logs); and Whirlwind and Cleave roll
+  it once a cast on their first landed hit, not once a target (Whirlwind 7 procs on 100 casts
+  and 283 landed hits). Whirlwind's off hand strike keeps a roll of its own. The reference rolls
+  every one of those hits (`skips_windfury_totem_swing`, `once_a_cast_class_spells` and the
+  Sweeping Strikes hits in `excluded_class_spells` on `weaponmaster_sword`,
+  `tests/classes/warrior/sword_specialization.rs`).
+- Soul Siphon counts the named effects active at each tick. Its text since the class tuning of
+  11 November 2026: Drain Life, Drain Soul and Wrack deal "12% per each of your Corruption,
+  Siphon Life, and Bane of Agony effects active on the target, up to a maximum increase of 36%"
+  (before it "your other Affliction effects", which also counted Bane of Doom and the warlock's
+  own curse). The talent is a dummy aura, so the server counts, and Forever's damage over time
+  reads the caster's modifiers at each tick, so each Drain Life and Wrack tick counts which of
+  the three are up then. The reference counts every registered Affliction aura on the target,
+  active or not (Go `AfflictionCount`), which is the full 36% on every tick (`soul_siphon_live`
+  on `drain_life` and `wrack`, `tests/forever_soul_siphon_20261104.rs`).
+- The Warlock and Hunter class tuning live since 11 November 2026 (Forever preparation; Blizzard
+  announced it on 6 November without numbers, so the numbers are the live rows as Wowhead's
+  Forever pages had them that morning; `tests/forever_class_tuning_20261111.rs`). Wrack deals 60
+  a second at level 60 (25.2 at its level 40 growing 1.75 a level, 0.2002 of spell power a tick;
+  was 86 with 0.286) and no longer raises the damage of the warlock's other Shadow dots by 10%.
+  Instead, "While channeling, your Siphon Life, Corruption, and Bane of Agony effects on the
+  target deal their periodic damage 100% faster", a dummy effect of 100 with a server-side
+  script. **Provisional reading:** a dot under the channel ticks twice as often and lasts as
+  long, so it deals twice the ticks while the channel is on it (`dot_rate` on `wrack`,
+  `Fight::set_dot_tick_rate`); Bane of Agony's ramp ends with its own twelve ticks. The other
+  reading, a dot that runs out in half the time with the ticks it had (as Creeping Death and
+  Exsanguinate do in the modern client), costs Affliction about 14% on its best rotation, where
+  Blizzard's post says the change comes "without affecting Affliction Warlocks' total damage
+  output"; this one stays within a few percent. Combat logs of a dot under the channel settle it.
+  Summon Hawk
+  and Arcane Shot cost 11% of base mana at every rank (Summon Hawk rank 4's spell page; Arcane
+  Shot's pages still showed the old flat cost that morning, so its cost follows Wowhead's news
+  post). The Imp's Firebolt ranks 1 to 4 deal more (6 + 0.3, 11 + 0.4, 15 + 0.4 and 18 + 0.4 a
+  level; ranks 5 to 7 are unchanged). The reference keeps the frozen rows and its 10%.
+- Feral druid attack power shares, measured in game: a Tauren druid's combat log at levels 22 to 25
+  on client 1.60.1.70862 (7 November 2026), against client rows that state none of them. Rake's
+  hit takes 6.5% of attack power (0.0648 fitted) and each tick the same share (0.0652 fitted): at
+  221 attack power with Savage Fury 2/2 the hit read 45 on 26 of 26 hits and the tick 37 on 55 of
+  55, where 0.06875 gives a tick of 38, and a weapon damage buff moved neither, so neither has a
+  weapon term. Rip takes 0.0114 of attack power a tick for each combo point (up to four, the cap
+  kept), read at each tick and not snapshotted: 17 ticks at 3 and 4 combo points and 192 to 239
+  attack power fit floor(4 + 5.5 x points + k x attack power x points) for k from 0.0113 to
+  0.0115. Swipe takes 3% of attack power on each hit (0.0301 fitted on 457 rank 2 hits), the same
+  share on every rank. Rake and Rip were measured on rank 1 and Swipe on ranks 1 and 2; the other
+  ranks carry the share, unmeasured, and the engine reads one share for whichever rank it casts.
+  Swipe's rank 5 took 5% until now (a fit of the beta logs) and takes 3% too: the
+  Bear board's rotation never casts Swipe and does not move, a Bear with Swipe as a filler loses
+  3.3% (364.1 to 352.0 DPS), and the production Cat goes from 706.6 to 701.2 (-0.8%). Forever's rules take Rake 0.065 (was the
+  notes' 1.25 times the reference's 5%, 0.0625), Rip 0.0114 (was 0.0125, the notes' 1.25 times 1%)
+  and Swipe 0.03; the reference keeps 5%, 1% and 5% (`attack_power_share` and
+  `attack_power_share_per_combo_point` on `rake` and `rip`, `attack_power_coefficient` on `swipe`;
+  no new field). Ferocious Bite's 3% a combo point was not measured and keeps the notes' 25%. An
+  avoided Ferocious Bite (miss, dodge or parry) gets back 80% of its 35 base energy, as its row's
+  Discount Power On Miss attribute states, and keeps the extra energy and the combo points: five
+  avoided bites in the log cost 6.1 to 6.7 energy. Both rule sets already did, from the row's
+  attribute, so nothing changes there; the test pins it
+  (`tests/forever_feral_measured_20261107.rs`).
+- Eclipse banks its two charges only when a Wrath lands. Eclipse 408248 (client 1.60.1.70790)
+  has SpellAuraOptions ProcTypeMask_0 65536, a harmful spell's damage, so a Wrath that misses
+  triggers nothing, as Sildor (#druid) tested on the beta; the charges land with the Wrath, after
+  its travel. The reference banks them on every completed Wrath cast (`bank_on_landed_hit` on
+  `eclipse`, `tests/forever_eclipse_on_hit_20261105.rs`).
+- Low level weapons and armor the reference database lacks: about 400 rows of the live
+  client as of 6 November 2026 (wago.tools ItemSparse and Item, with Wowhead Forever tooltips for
+  armor, damage, speed and block), such as Worn Cloak (1733) or Crude Bastard Sword (1412), which a
+  leveling character wears. The reference refuses them as an unknown item. Forever's rules read
+  them from `data/forever-client-items.jsonl` for an id `data/items.jsonl` lacks; the pinned
+  import is untouched and the reference's rules still refuse them. Since 8 November 2026 the file
+  also holds the items the Forever client adds whose ItemSparse rows the client ships encrypted
+  (wago.tools cannot read them), from their Item row and Wowhead Forever tooltip alone, such as
+  Berserker Shackles (274600), and equip lines that are a plain stat (Defense, Attack Power,
+  spell power, hit, crit, mana per 5 sec, dodge, parry, block) read as `data/items.jsonl` holds
+  the same line of a Classic item. Since 10 November 2026 it holds the five pieces of Krol'dok
+  Battlegear, a Forever set the reference does not register: fewer pieces than its first bonus
+  needs are plain items, and an equipment that reaches a bonus is refused by name until the bonus
+  is applied (`CLIENT_SETS_NOT_PREPARED`, `tests/forever_client_items_sets_20261110.rs`). Items
+  with a use, chance on hit or other equip effect, a piece of any other set or a line the
+  generator does not read are left out and stay refused
+  (`tools/rust_client_items.py`, `tests/forever_client_items_20261106.rs`,
+  `tests/forever_client_items_20261108.rs`). The rerun of 9 November 2026 added the 71 items whose
+  tooltips Wowhead decoded since, 14 of them with a creature type attack power line written to
+  `data/forever-client-item-bonuses.jsonl` as the Ceremonial Mallet's is, such as Nama's
+  Cherished Necklace (279893); Wowhead's notes on where an item drops ("Dropped by", "Drop
+  Chance") are not item lines (`tests/forever_client_items_20261109.rs`). Since 10 November 2026
+  39 more items are taken whose other lines were unread: a line that changes nothing in a fight
+  (mount, travel and swim speed, a zone, falling, stealth detection, a profession, quest text, a
+  use or proc that only controls or dispels an enemy) is left out of the row, and expertise
+  ("Reduces chance to be Dodged or Parried by 1.0%": 10 ExpertiseRating), "+N Weapon Damage"
+  (PhysicalDamage), a weapon skill (`pseudo_stats`) and "+N to All Resistances" read as the
+  reference rows hold them. "Increases damage done to <creature type> by magical spells and
+  effects by up to N" is spell damage against that type in the bonus file, which the export turns
+  into a `mob_type_bonus` as Mark of the Champion's (`tests/forever_client_items_lines_20261110.rs`).
+- Items whose live row differs from the reference database: Forever's rules read
+  `data/forever-live-items.jsonl` before `data/items.jsonl`, and the reference's rules keep the
+  pinned rows. The first rows are the Alterac Valley reputation off hands and shield, which the
+  live game moved from item level 65 to 60 while the reference rows kept the item level 65 budget
+  (Wowhead's Forever tooltips and gear planner, 6 November 2026, sold by Thanthaldis Snowgleam
+  and Jekyll Flandring): Tome of Arcane Domination, Tome of Shadow Force and Tome of the Ice Lord
+  31 of their school (was 34), Tome of Fiery Arcana 37 Fire (was 40), Lei of the Lifegiver 37
+  healing and 12 damage (was 40 and 13), Therazane's Touch 29 (was 31) and The Immovable Object
+  66 block value, its 41 Block and 25 Block Value (was 71). A live row keeps its reference row's
+  name and kind (`src/data.rs`, `tests/forever_av_vendor_items_20261106.rs`).
+  The second batch (Wowhead's Forever tooltips of 7 November 2026) comes from reading the tooltip
+  of every item the reference rows state differently from Wowhead's gear planner or from the
+  client's item data, every item a reference, trinket board or race request wears, and every
+  armor bearing item whose reference row has no Armor (910 rows, 908 of which the live tooltip
+  gives an armor). It adds 1,004 rows: 931 state only an Armor the row lacked or had wrong, 31
+  change the weapon damage (a caster weapon rolls lower damage live, Witching Stave 40 - 61 not
+  55 - 83, Elemental Mage Staff 109 - 164 not 147 - 221, Mograine's Might 105 - 159 at 3.40 not
+  87 - 131 at 2.80, and the thrown knives roll a wider range around the same average), 20
+  change a shield's block value (the Premier shields and Evergreen Shield 44, was 58, Wormscale
+  Blocker 57, was 75, Blessed Qiraji Bulwark 70, was 88), 14 state a spell power the reference
+  scaled otherwise (Atiesh 150, 300 healing on the healing version, was 216 and 424, Spellshifter
+  Rod 40, was 54), and the rest fix a primary stat: Gemshale Pauldrons, Dragonclaw Ring,
+  Stonerender Gauntlets, Runemender's Seal and a few more. Two stat-bearing equip effects change
+  too: Mace of Unending Life gives 140 feral attack power (was 280), Hammer of Bestial Fury
+  carries none (its tooltip lists no effect; the reference row had 154), and Shard of the
+  Defiler's "Improves your chance to get a critical strike by 15.0%" and "Increases your attack
+  speed and casting speed by 15.0%" become 210 melee crit rating and 150 melee and spell haste
+  rating, which the reference row left to an effect the engine does not model. Items whose
+  tooltip lists a resistance, mana per 5 sec or spell piercing figure as a base plus an extra for
+  Forest and Grassland areas (Rune of Duty, the Volunteer's and Relentless Raider's seals)
+  already match: the row states the base and an area stat. Tooltips are missing for the hidden
+  stat items (`statsHidden` in the gear catalog) and those rows are left as they were
+  (`tests/forever_live_item_stats_20261106.rs`).
+  The third batch (Wowhead's Forever tooltips of 8 and 9 November 2026, every weapon and armor
+  row of `data/items.jsonl` without a live row: 10,909 asked, 10,307 revealed)
+  adds 421 rows with `tools/rust_live_items.py`, which keeps the reference row and changes only
+  what the tooltip states otherwise (its docstring has the rules). Most change a primary stat or
+  spell power the live game retuned: Tarnished Elven Ring 10 Agility and 10 Arcane Resistance
+  (was 15 Agility), Hand of Justice 12 Attack Power (was 20), Crimson Felt Hat 10 Intellect and
+  10 Spirit (was 8 and 8), Barbarous Blade 50 Attack Power (was 60), Skyshroud Leggings 11
+  Stamina, 12 Intellect and 30 spell power (was 8, 8 and 34), Second Wind 15 healing and 5
+  damage (was 22 healing), Blood-etched Blade 66 spell power at 26 - 49 (was 6 at 39 - 74); 55
+  change a weapon's damage and 6 its speed. Rerun `fetch` then `build` to pick up later reveals
+  (`tests/forever_live_item_stats_20261109.rs`). Tests that sim one request under both rules
+  and compare the rolls take the live items off first (`tests/support/live_items.rs`). The same
+  tooltips add seven client items (`tools/rust_client_items.py build`, 576 rows): Forever's own
+  copies of Choker of the Fire Lord, Quick Strike Ring, Heavy Dark Iron Ring, Band of Sulfuras,
+  Cauterizing Band and Ring of Spell Power (288926 to 288931) and of Hammer of Bestial Fury
+  (289292).
+  The fourth batch (Wowhead's Forever tooltips of 11 November 2026, all 11,920 reference weapon
+  and armor rows asked again; 318 still unrevealed) adds 181 rows for items revealed since 9
+  November, and no item revealed before had new stats. Three rules join the tool and also reach
+  existing live rows: weapon skill lines replace the row's weapon skill pseudo stats (Edgemaster's
+  Handguards +1 Axes, Swords and Daggers, was +7; Mugger's Belt, Distracting Dagger, Skilled
+  Fighting Blade and Expert Goldminer's Helmet +1); a tooltip that states only one kind of hit or
+  crit drops the row's other kind, since Forever's preparation adds an item's melee and spell hit
+  and crit together (23 rows, Tempest Talisman and Crown of the Ogre King among them, simmed 2%
+  crit for their 1%); and "Your spells pierce N Magical Resistance", Wowhead's new wording, is
+  spell penetration. The client items gain 61 rows for Forever items revealed since 9 November
+  (`tools/rust_client_items.py add`; 5,022 unrevealed client ids asked again, 73 revealed, 12 left
+  for hand modelling).
+- Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
+  Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
+  preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two
+  effects: SpellEffect 697942 adds 5 to all effect points (aura 107, misc 8) of the Tamed Pet
+  Passive (DND) (18727 to 18730, class set 5 mask 0x4000000), whose one effect is damage done
+  percent on all schools at 0, so the demon deals 5% more damage of every kind, melee included;
+  SpellEffect 697943 (aura 108, 5% damage on Firebolt and Lash of Pain, mask 0x3000) is rewritten
+  to 0 by hotfix push 113702, the fix for those two spells taking it on top of the first. An Orc
+  Warlock's four demons now deal 5% more of all their damage and Firebolt and Lash of Pain
+  nothing more; a gear guardian such as the Emerald Dragon Whelp gets nothing
+  (`tests/orc_command_20261106.rs`). The Hunter's pet keeps its 5%.
+- Warrior threat measurements at levels 20 to 24 (in game, 7 November 2026). The rage of an
+  avoided hit, Shield Specialization's on a block and Master of Defense's on a dodge or parry,
+  makes 5 threat a point in Battle and Defensive Stance alike and Defiance does not scale it, so
+  its energize resource is marked unscaled (`unscaled_threat` on the `rage_on_avoid` trigger),
+  where the reference takes the warrior's threat multiplier at the gain. Whether a threat buff
+  scales it is not measured. Cleave rank 1 adds 30 threat beyond its damage on one target (about
+  15 on each of two), times the stance, where the per level figure of the other ranks (1.53)
+  would give 30.6. Victory Rush's heal, which makes healing threat, is not modelled: Victorious
+  comes up on a kill and nothing in a fight dies, so the spell is never cast
+  (`tests/forever_warrior_threat_20261107.rs`).
+- Hamstring and Shield Bash threat, from the same measurements. Hamstring is 1.25 times its
+  damage (its crits for 8 make 10, where a flat +1 would make 9) and Shield Bash 1.5 times (crits
+  for 8, 8, 9, 10 and 11 read 12.0, 12.2, 13.5, 15.0 and 16.7), with nothing flat. The reference
+  adds 135 to every rank of Hamstring and gives Shield Bash its damage
+  (`tests/forever_warrior_threat_20261107.rs`).
+- Heroic Strike, Cleave and Slam add whole numbers of flat threat, from Forever combat logs on
+  client 1.60.1.70862 (8 November 2026). Heroic Strike ranks 1 to 4 add 17, 28, 40 and 60 (Rank
+  4 measured at 60.08 over 104 clean readings, Rank 3 at 39.99) and ranks 5 and up 2.5 a spell
+  level (80 to 150); Cleave rank 2 adds 46 and ranks 3 to 5 the 1.5 a spell level ranks 1 and 2
+  measure (60, 75 and 90); Slam adds 1.5 a spell level on every rank, rounded (Rank 1 at spell
+  level 20 adds 30, rank 2 45). The reference adds 2.54 a spell level for Heroic Strike, 1.53 for
+  Cleave and a flat 140 for every rank of Slam (`tests/classes/warrior/flat_threat.rs`).
+- Bloodrage's threat, from Forever combat logs: its instant 10 rage makes 50 threat in Battle
+  and Defensive Stance alike while its ticks take the stance, and rage gained before the pull
+  (a prepull Bloodrage's, which the protection presets cast 10 seconds out) makes none. The
+  reference scales all of it by the stance and books the prepull rage too
+  (`instant_threat_unscaled` on `bloodrage`, `no_threat_before_pull` on `rage_bar`,
+  `tests/classes/warrior/bloodrage.rs`).
+- A block takes off a whole number: the sheet's block value, floor(shield + Strength x 0.05 - 1),
+  so a 6 shield at 59 Strength blocks 7 (the same measurements). Preparation floors the block
+  value with an aura's multiplier applied, for the target's swing at a tank and for Shield Slam's
+  bonus; the reference takes off the fraction. Whether the game floors the shield or the product
+  when a multiplier applies is not measured (`src/prepare/enemy/tests.rs`,
+  `tests/forever_physical_damage_20261107.rs`).
+- A physical row that deals school damage takes the caster's flat physical damage bonus (from
+  gear) at the row's bonus coefficient column, never as spell power: Revenge and Hamstring state 1
+  and take all of it, Thunder Clap, Victory Rush and Shield Bash state 0 and take none, and Rend's
+  ticks, with no coefficient, take none (the same measurements). A weapon strike keeps taking the
+  bonus whole. Preparation carries the column as `physical_school_coefficient` on the spell, for
+  a spell that names no coefficient of its own; the reference gives every physical spell the
+  whole bonus (`tests/forever_physical_damage_20261107.rs`).
+- A physical hit that deals school damage rolls its base points a half Variance either side and
+  lands on a whole number, with attack power added on top unspread: Revenge rank 1 states 22 with
+  a Variance of 0.154 and lands on 20 to 24, the two ends rarer than the three between, and a
+  pet's Claw and Bite and Eviscerate roll the same way (the same measurements); the pet strikes
+  the exporter has as a literal range, a Cat's Claw 43 to 59, round the same. Every physical
+  school damage row of the client table has no per level gain, which would be added after the
+  rounding, so the row's average is its base points (`physical_rolls_are_whole`,
+  `src/prepare/physical_damage.rs`). The reference rolls the span without rounding
+  (`src/classes/warrior/spells/revenge.rs`).
+- Four item gaps found in real sims refused on 9 November 2026 (`tests/forever_item_gaps_20261109.rs`,
+  fixtures `forever-gaps/*mallet*`, `*defias*`, `*dualblade*` and `*sword-of-zeal*`):
+  - Ceremonial Mallet (279885), an item the client ships with an encrypted ItemSparse row, from
+    Wowhead's Forever tooltip: Two-Hand Mace, item level 42, 107 to 161 damage, speed 3.60, +15
+    Stamina, "Equip: +22 Attack Power" and "Equip: +33 Attack Power against Undead". The row holds
+    the plain stats, as the other Forever client items do; the line against Undead is a creature
+    type bonus no item row can state, so `tools/rust_client_items.py` writes it beside the row to
+    `data/forever-client-item-bonuses.jsonl`. Forever's preparation gives the item a permanent
+    aura (an item swap toggles it, as Mark of the Champion's), and the export describes a
+    `mob_type_bonus` of 33 melee attack power when every target is Undead. A target of another
+    type or of none, as MythicSim's requests carry, never takes it. Melee attack power only, as
+    the client's creature type auras (aura 102) are; whether the game also adds it to ranged
+    attack power is not measured. The reference refuses the item as unknown.
+  - Defias Leather's 4 piece, Devious Strike (client set spell 1292028 of ItemSetSpell 161, bleed
+    1292029), from the Forever tooltip "Grants your melee attacks a 5% chance when striking from
+    behind to hit a vital point, causing the target to Bleed for 68 to 83 Physical damage over
+    5 sec". The set already registered the listener; nothing claimed it, so the gate refused every
+    wearer. The export now describes it: a 5% chance on the wearer's landed white hits for a
+    bleed of 15 a second for 5 seconds on the unit hit (the row's 15 base points and 0.2
+    variance make 67.5 to 82.5 over five ticks, the tooltip's 68 to 83; the engine ticks the
+    average, 75 a proc), with no roll to land. The row states Periodic Can Crit, so ticks roll the
+    physical crit, and like every physical dot they take no armor: a periodic tick that can crit
+    skips armor as a plain one does (`calc_damage_internal`), where it was taking the target's
+    armor through a weapon or set proc's dot. The listener exists only when the wearer is behind
+    the target, which every request is unless it sets `inFrontOfTarget`. The set's other
+    bonuses are as before: two pieces give 5 Arcane Resistance, five give Increased Daggers +1,
+    and three give 15 attack power against humanoids, which a target of no type never takes (a
+    request that names a Humanoid target is still refused for the table's bonus stats). The
+    reference's set has no fourth piece bonus and its rules prepare none.
+  - Guardian's Dualblade (273046), "Equip: When damaged, has a chance to grant you 1080 armor for
+    12 sec (Proc chance: 33%, 1m cooldown)" (trigger 1293342, buff 1293345). Its trigger row
+    names every damage taken bit, so its callbacks are the hit taken and the periodic damage
+    taken, which the exporter's list of hit taken procs did not read. Nothing damages a player
+    who is not tanked, so the aura is inert there and the request runs, with no stat aura added
+    for a proc that cannot come up; a tank takes the target's swings, each landed hit rolls the
+    33% behind the item's minute of cooldown, and the 1080 armor is one of the stat aura
+    combinations the target's swings read. The periodic callback never fires, since nothing puts
+    a damage over time on the wearer. Under the reference's rules the exporter has no entry
+    and refuses the aura as before.
+  - A swap onto Sword of Zeal (6622) or Argent Avenger (13246): the helper that adds a weapon
+    proc for a custom aura (`AddWeaponProcAura`) registers no item swap callback in the reference,
+    so a swap that moves the weapon left the proc's trigger up or down as it was and the swap
+    preparation refused the item's effect. Forever's rules register the trigger with the item
+    (`register_item_proc`), as every other weapon proc's is, so it is up while the weapon is in
+    the hand. A weapon worn without a swap is unchanged. Of the 323 weapons with effects, these
+    two and Guardian's Dualblade were the swap weapons this refused beyond a swap's own
+    limits.
+  - A swap onto Dragon's Call (10847), from the 9 November 2026 follow-up: the weapon's Emerald
+    Dragon Whelp is a gear pet the reference builds only for a Dragon's Call in a hand at the
+    pull (`RegisterGearPetConstructor`), and the proc opted out without it, so a swap set holding
+    the weapon (the Manual Crowd Pummeler opener, an advanced weapon swap set) was refused. Under
+    Forever's rules the whelp is also built for a Dragon's Call in a hand of the swap set. It stays
+    disabled until a proc summons it, the weapon's proc trigger is switched with the weapon as
+    every weapon proc's is, and its proc chances follow the weapon in the hand (the rate is per
+    minute of the weapon's swing speed, so the set's weapon rolls it). The proc can therefore come
+    only while the weapon is equipped, and a whelp already out stays its 15 seconds after a swap
+    away, as any summoned guardian does. The client has no creature rows for the whelp and
+    Wowhead's Forever tooltip (10 November 2026) states no rate or duration ("a short period of
+    time"), so the 1 PPM, the 45 second category cooldown and the 15 second summon are those the
+    worn weapon already used. A Dragon's Call worn without a swap is unchanged, and the
+    reference's rules keep refusing the swap. Of the 1,774 main hand capable weapons the swap
+    survey ran (a Retribution Paladin, the weapon in the swap set against the same weapon worn),
+    184 have an effect that shows in a fight and each follows a swap now, 1,584 show none, and
+    the 6 the swap refuses are limits of the swap itself, not of a weapon proc: Dwarven Tree Chopper (2907),
+    Servomechanic Sledgehammer (4548) and Shard of the Defiler (17142) carry Expertise or cast
+    speed the stat auras hold fixed, Spire of the Stoneshaper (12532) and Headmaster's Charge
+    (13937) are on use weapons whose spell flags a swap changes (only the Pummeler's is followed),
+    and Runeblade of Baron Rivendare (13505) has a movement aura that displaces another. Six more
+    were refused before the creature type fix below. The two with expertise run since the
+    expertise follow-up below.
+  - Expertise in a swap set, from a Droptimizer run refused on 9 November 2026 (a level 37
+    Retribution Paladin on the Pummeler opener, Servomechanic Sledgehammer's set): the runtime
+    held expertise at the pull's value, so a swap set whose weapon carries expertise rating
+    (Servomechanic Sledgehammer 10, Dwarven Tree Chopper 6) was refused. Expertise is now one of
+    the stats the stat aura combinations carry when one changes it, and the target's dodge and
+    parry against the player read it live. This is not a departure: the reference reads the
+    unit's expertise live too, and a request whose combinations leave expertise alone carries
+    nothing new (`tests/swap_expertise_20261109.rs`).
+  - An item with an attack power bonus against a creature type (Ceremonial Mallet, Mugg's Jabber
+    and Crosser, Scarlet Malice, Katerina's Shanker, Beastslayer's Trident) in a swap set against
+    a target of another type: the bonus was described only when it applied, so the swap's toggling
+    of the item's aura was refused. With an item swap the effect is now described at zero.
+- Two Forever effect items that refused real sims on 9 November 2026, whose client spell rows are
+  partly encrypted (`tests/forever_effect_items_20261110.rs`, fixtures `forever-gaps/*serpentbane*`
+  and `*bigger-rock*`). `tools/rust_client_items.py` takes their rows with the use or chance on
+  hit line left out (`ENGINE_EFFECT`, the exact line, numbers included), and
+  `src/data/forever_client_spells.rs` restates the spell rows the pinned store lacks, read after
+  it: the readable client rows (wago.tools SpellEffect, SpellCategories and ItemEffect, 10
+  November 2026) and, for the encrypted ones, the Wowhead Forever tooltip. Fields neither states
+  stay zero (no range, no missile travel, no spell power or attack power share); the ticks may
+  crit, as 19 of the 20 Forever-added periodic damage rows in the pinned store state
+  (`src/prepare/forever_effect_items.rs`).
+  - Serpentbane Crown (274609), head, mail, item level 42, 213 armor, +16 Stamina, +8 Nature
+    Resistance. Its use (spell 1295039, ItemEffect 234016: 5 min cooldown, 10 sec on the shared
+    on-use category 1141) is a damage on-use item as Everlook Pathcarver's: a Fire hit of 100
+    (variance 0.23, the tooltip's 89 to 112) on the magic table, and five ticks of 45 every 2
+    sec (225 over 10 sec), both with no coefficient (client SpellEffect). School and duration
+    are the tooltip's. "Inflicts 2 times as much damage to Beast and Serpentine targets": against
+    a Beast target the hit and the ticks are doubled; a Serpentine target is no creature type a
+    request names.
+  - Bigger Rock on Bigger Stick (279480), two-hand mace, item level 47, 112 to 168, speed 3.40,
+    +14 Strength, and Rock on Stick (279852), its one-hand twin (57 to 107, speed 2.60, +4
+    Strength). "Chance on hit: Bash the target in the face, causing 14 (7) Physical damage every
+    2 sec for 20 sec." The client states no rate (ItemEffect trigger type 2), so it rolls the
+    rate the reference's chance on hit items without one roll here (1.8% per second of weapon
+    speed, `docs/forever-chance-on-hit.md`), on the weapon's own landed hits, and puts ten ticks
+    on the unit hit with no hit roll of its own. Melee defense and the bleed mechanic are the
+    client's (SpellCategories); the amount, period, duration and Physical school the tooltip's,
+    as the spell's SpellEffect row is encrypted. The ticks take no armor, as every physical
+    damage over time here.
+  The reference's rules still refuse the three items as unknown.
+- Dreadfrost Saber (274603), a Forever main hand sword that refused players' sims
+  (`tests/forever_dreadfrost_saber_20261110.rs`): item level 40, 46 to 86, speed 2.40, +8 Stamina,
+  "Equip: Adds 1 Frost damage to your melee attacks." `tools/rust_client_items.py` takes its row
+  with the equip line left out (`ENGINE_EFFECT`), and `src/data/forever_client_spells.rs` restates
+  its two spell rows, which the pinned store lacks. Neither is encrypted, so every field is the
+  client's (wago.tools `product=wowf`, 10 November 2026): the equip aura 1294939 (ItemEffect
+  234011) is a proc trigger aura with a chance of 100 on melee swings and melee abilities dealt
+  (SpellAuraOptions proc mask 20, Fiery Plate Gauntlets' own) by the main hand alone (the second
+  mask word's 32, as Iceblade Hacker's "Melee attacks with this weapon"), and it casts 1294940, a
+  Frost hit of 1 on the magic table with no variance and no coefficient (SpellEffect 1316648,
+  SpellCategories 188896). So it is a spell data damage proc, as Fiery Plate Gauntlets' is in the
+  reference (`src/prepare/forever_effect_items.rs`): every landed main hand melee hit that deals
+  damage casts the hit on the unit hit, with no roll, and the hit rolls the magic hit table as
+  the gauntlets' Fire Strike does. An off hand weapon's hits never cast it. The reference's rules
+  still refuse the item as unknown.
+- Totem of Rage (22395) and Maw of Min'loth (274608), which refused players' sims on 10 November
+  2026 (`tests/forever_totem_of_rage_maw_of_minloth_20261111.rs`). `tools/rust_client_items.py`
+  takes both rows with the equip line left out (`ENGINE_EFFECT`), and now writes a relic
+  (InventoryType 28: a libram, idol or totem) as the reference rows hold one, in the ranged slot.
+  Every field below is the client's (wago.tools `product=wowf`, 11 November 2026); none is
+  encrypted.
+  - Totem of Rage, item level 57: "Equip: Increases the damage of your Shock spells by 2%." Its
+    equip spell 27859 (ItemEffect 102980) is not in the pinned store. The live row has two
+    effects: a percent damage modifier of 2 (SpellEffect 704622, aura 108, misc 0) on class mask
+    0x90100000, the bits of Earth Shock, Flame Shock and Frost Shock, and the same of 2 on damage
+    over time (SpellEffect 1328150, misc 22) on Flame Shock's bit. So each shock's hit and Flame
+    Shock's ticks take 0.02 in the additive damage modifier, where the talents' percentages of
+    the same aura go (Concussion); beside Concussion and Call of Flame it is a little under 2% of
+    the spell's damage. Classic's flat 30 is not used.
+  - Maw of Min'loth, a shield, item level 42, 1287 Armor, 22 Block, +8 Stamina: "Equip: When
+    struck in melee combat, has a 10% chance of stealing 40 life from the target enemy. (Proc
+    chance: 10%, 3s cooldown)". `src/data/forever_client_spells.rs` restates its two rows: the
+    equip aura 1295064 (ItemEffect 234017; SpellAuraOptions 247408: chance 10, proc mask 40,
+    melee swings and abilities taken, and a 3000 ms proc recovery) casts 1295065, a Health Leech
+    of 40 from the attacker, Physical, on the melee table, with no variance and no coefficient
+    (SpellEffect 1316866, SpellCategories 184098). It is a spell data damage proc, as Skullflame
+    Shield's Drain Life (18815 casting 18817) is in the reference
+    (`src/prepare/forever_effect_items.rs`): only a character who tanks the target is struck, the
+    hit rolls the melee table, and the health the leech returns to the wearer is not modelled, as
+    Skullflame Shield's is not.
+  The reference's rules still refuse both items as unknown.
+- Gahz'ridian Detector (9978), a quest reward that refused a Feral Druid's Quick Sims on 10
+  November 2026 (`tests/forever_gahzridian_detector_20261111.rs`): item level 1, "Quest Item",
+  Unique, Head, "Equip: Nearby Gahz'ridian appears on the minimap." Its Item row is of the
+  client's quest class (12), not armor, so `tools/rust_client_items.py` names it
+  (`WORN_QUEST_ITEMS`) and writes an armor row with no armor type, and leaves the equip line out
+  of the row (`NO_FIGHT_EFFECT`): its equip spell Detect Gahz'ridian (11992, ItemEffect 98962) is
+  one resource tracking aura (SpellEffect 688737, aura 45; wago.tools `product=wowf`, client
+  1.60.1.70888, 11 November 2026). The row has no armor, no stats and no effect, so wearing it is
+  wearing nothing on the head, roll for roll. The reference's rules still refuse it as unknown.
+- Toofbreaker (286430), a Forever one-hand mace that refused a Combat Rogue's Quick Sims on 10
+  November 2026 (`tests/forever_toofbreaker_20261111.rs`): item level 45, 40 to 75, speed 1.90,
+  +7 Strength, +5 Stamina, "Chance on hit: Bash the target, causing 42 Physical damage. Deals 2
+  times as much damage if the target is facing you." `tools/rust_client_items.py` takes its row
+  with the chance on hit line left out (`ENGINE_EFFECT`), and `src/data/forever_client_spells.rs`
+  restates its spell row, which the pinned store lacks. It is not encrypted, so every field is
+  the client's (wago.tools `product=wowf`, client 1.60.1.70888, 11 November 2026): ItemEffect
+  238089 is a chance on hit (trigger type 2) of Toofbreak (1320269) with no rate and no cooldown,
+  and the spell is a School Damage of 42 on the target, Physical, on the melee table, with no
+  variance and no coefficient (SpellEffect 1354774, SpellMisc 866009, SpellCategories 189061),
+  beside a dummy effect with base points 2, the tooltip's "2 times" (SpellEffect 1354775).
+  - The rate is assumed. The client states none, so the bash rolls the rate the Rock on Stick
+    weapons and the reference's chance on hit items without one roll here (1.8% per second of
+    weapon speed, 3.42% a swing at 1.90, `docs/forever-chance-on-hit.md`), on the weapon's own
+    landed hits, in either hand.
+  - The hit rolls the melee table, may crit, and takes the target's armor, as a direct Physical
+    hit does (the Rock on Stick weapons' ticks take none).
+  - "Deals 2 times as much damage if the target is facing you": the bash's damage multiplier is
+    2 for a character the target faces for the fight, which is one in front of the target (the
+    request's `inFrontOfTarget`, the flag Backstab, Shred and Ambush read) or one a target swings
+    at, since a target faces its tank. A character behind the target deals the row's 42
+    (`forever_effect_items::FACING_DAMAGE_ITEMS`). With several targets the one flag stands for
+    all of them, as it does for Backstab.
+  The reference's rules still refuse the item as unknown.
+- Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
+  November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
+  (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
+  ItemDelay 3600 (was 3200) and stats Strength at 6956 and Stamina at 6521 of 10000 (was
+  Intellect at 5217 and Stamina at 6521). At the row's 23 points that is +16 Strength and +15
+  Stamina (was +12 Intellect and +15 Stamina), and at the unchanged item level 40
+  (ItemDamageTwoHand 35.7078 damage per second for a rare, damage variance 0.4) the slower swing
+  deals 102 to 154 (was 91 to 137 at 3.20, which the same sum gives).
+  `data/forever-live-items.jsonl` holds the row, written as `tools/rust_live_items.py` writes one
+  (the reference row with only those fields changed) but from the hotfix row: Wowhead's Forever
+  tooltip still showed the row from before the hotfix on 11 November 2026. The reference's rules
+  keep the pinned row.
+  - Its equip effect is unchanged by the hotfix and was not modelled before: "Equip: Increases
+    the damage dealt by your Stormstrike ability by 10%." Its equip spell Rage of Earth (1309422,
+    ItemEffect 236558) is not in the pinned store; the live row is one percent damage modifier
+    of 10 (SpellEffect 1338404, aura 108, misc 0) on class mask words 0, 16, 5120, 0, and
+    Stormstrike (17364) is the one row of the pinned store with any of those bits. So a Shaman's
+    two Stormstrike hits take 0.10 in the additive damage modifier, where Totem of Rage's
+    percentage of the same aura goes (`classes::shaman::prepare::items::rage_of_the_storm`).
+  - The modifier is a fixed one. A request whose item swap takes the mace off or puts it on
+    prepares without the effect, as every request did before, since the runtime does not follow
+    a swap that changes a spell's damage modifier. A character of another class holds the mace
+    as a plain weapon.
+- Fixes from character sheets, combat logs and the client 1.60.1.70862 rows of 6 to 9 November
+  2026 (Forever preparation; the reference keeps its own):
+  - Each Skyborne race has its own attribute offset from a Human of the same class, read from
+    level 1 naked character sheets of 6 November 2026 (Strength, Agility, Stamina, Intellect,
+    Spirit): High Order -3, +4, -1, +4, -3 and Windshaper -4, +3, 0, -1, +3, where the reference
+    table gives both -1, +1, -1, +1, 0. A High Order Mage has 4 more Intellect and 3 less Spirit
+    than a Human one. A levelling character's attributes are still its sheet's own
+    (`src/prepare/character.rs`, `base_stats_tests`).
+  - Attack power on gear raises ranged attack power by as much. The equip spells that read "+N
+    Attack Power" state auras 99 and 124 at the same value (Attack Power 22, 9332, the equip
+    spell of Counterattack Lodestone 18537), where about 555 item rows carry attack power alone,
+    so a Hunter lost up to 156 ranged attack power on its reference gear (Devilsaur Gauntlets
+    15063 and Leggings 15062, Cape of the Black Baron 13340, Arcanite Reaper 12784, Don Julio's
+    Band 19325). An item row with attack power and no ranged attack power now takes the same
+    ranged attack power; a row that states its own (the Lodestone's 22) keeps it, and the "of
+    Power" suffixes and enchants, which carry their own, are unchanged. Death's Embrace (2585)
+    stays melee: its spell 24153 is aura 99 alone. `tools/rust_client_items.py` writes both for
+    the line (`tests/forever_gear_attack_power_20261110.rs`).
+  - The Undermine Engineering trinkets take the cooldowns of their Wowhead Forever tooltips and
+    client rows: Adaptive Combat Assistant (272437) 5 minutes, Weakness Analyzer (272438) and
+    Serenity Field (272439) 6 minutes, where the reference rows give 90 seconds; the category
+    cooldown they share stays 15 or 20 seconds. `tools/rust_live_items.py` reads the "(N Min
+    Cooldown)" of a "Use:" line into the live row, which also gives the Assistant the tooltip's
+    1.1% expertise (11 rating, the reference row has 20), and the on use helpers read the live
+    row of an item as the equipped item does
+    (`tests/forever_engineering_trinket_cooldowns_20261110.rs`).
+  - Judgement of Wisdom pays only on landed hits. A level 41 log counted its mana on 164 of 336
+    landed melee swings, 59 of 116 direct spells and 44 of 102 ranged shots, the 50% chance,
+    against 1 of 52 misses, 3 of 401 dot ticks and none of 33 damage shield hits. The reference
+    rolls on every direct hit and lets a melee or ranged miss, dodge or parry pay; now a hit that
+    does not land rolls nothing (`landed_only` on the effect,
+    `tests/forever_judgement_of_wisdom_landed_20261110.rs`).
+  - A damage shield takes none of the target's flat school damage bonus. Levels 1 to 19 logs
+    (client 1.60.1.70790) show 9 rank 1 Retribution Aura hits on beasts under the paladin's own
+    rank 2 Judgement of the Crusader, all 5 or 6, the flat 5 at a Dwarf's 5% against beasts,
+    where the reference adds the judgement's Holy bonus times the shield's 0.06 coefficient.
+    The shields of `new_damage_shield` (Retribution Aura and Thorns) carry
+    `SpellFlagIgnoreTargetSchoolBonus`, which skips the target's school bonus and keeps the
+    wearer's spell power share (`tests/forever_damage_shield_school_bonus_20261110.rs`).
+

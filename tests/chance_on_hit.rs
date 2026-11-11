@@ -1,4 +1,4 @@
-//! Forever's chance on hit items (README, Rust-only mechanics): the item effects the Go reference
+//! Forever's chance on hit items (docs/mechanics.md): the item effects the Go reference
 //! leaves unregistered for want of a stated rate or a constructor, which Forever's rules register
 //! from `CHANCE_ON_HIT_ITEMS` at 1.8% per second of the hitting weapon's speed. Each test wears
 //! the item on one of fixtures/forever-gaps' requests, checks what the export carries, and that

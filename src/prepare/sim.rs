@@ -447,7 +447,7 @@ pub(crate) struct Sim {
 
 /// Which rules preparation follows where Rust departs from the Go reference on purpose: Forever's
 /// own, which production prepares with, or the reference's, which the Go goldens and exporter
-/// comparisons check. The departures are listed in the README's Rust-only mechanics.
+/// comparisons check. The departures are listed in docs/mechanics.md.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Rules {
     /// Forever as its developers state it.
