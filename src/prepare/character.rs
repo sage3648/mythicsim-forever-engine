@@ -661,7 +661,7 @@ impl Sim {
     /// category 30, which no Forever item has: Forever's client (1.60.1.70532, ItemEffect)
     /// puts every mana gem in spell category 1153, with the healthstones, Demonic and Dark Rune
     /// and Thistle Tea, so under Forever rules the gems share the timer of the conjured items
-    /// consumes register (README, Rust-only mechanics).
+    /// consumes register (docs/mechanics.md).
     pub(crate) fn get_conjured_cd(&mut self, unit: UnitId) -> TimerId {
         match self.rules {
             Rules::Forever => self.category_timer(unit, CONJURED_CATEGORY),

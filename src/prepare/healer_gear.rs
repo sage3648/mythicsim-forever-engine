@@ -1,4 +1,4 @@
-//! MythicSim's healer sims under Forever's rules (README, Rust-only mechanics): the healing gear
+//! MythicSim's healer sims under Forever's rules (docs/mechanics.md): the healing gear
 //! the Go reference leaves out, which counts for nothing there.
 //!
 //! - **Set bonuses the reference does not register.** The client's own bonus rows

@@ -1,4 +1,4 @@
-//! Forever's rules for a physical row that deals school damage (README, Rust-only mechanics):
+//! Forever's rules for a physical row that deals school damage (docs/mechanics.md):
 //! the client rows with a `SCHOOL_DAMAGE` effect on the Physical school, as Revenge, Hamstring,
 //! Thunder Clap, Eviscerate and a pet's Claw are, against a weapon strike, whose weapon effects
 //! take the caster's flat physical damage bonus whole and roll with the weapon.

@@ -61,7 +61,7 @@ A class's own raid and party buffs (`add_raid_buffs`, `add_party_buffs`: Arcane 
 
 ## A Warlock's demons
 
-Until 9 Nov a demon was the level 60 one at every level: Firebolt rank 7 and Lash of Pain rank 6 (Go literals the engine data has no rows for), and the level 60 Strength, Agility and melee weapon, so a level 10 Succubus did what a level 47 one did. Under Forever's rules a levelling demon now (`classes/warlock/prepare/pets.rs`, README, Rust-only mechanics):
+Until 9 Nov a demon was the level 60 one at every level: Firebolt rank 7 and Lash of Pain rank 6 (Go literals the engine data has no rows for), and the level 60 Strength, Agility and melee weapon, so a level 10 Succubus did what a level 47 one did. Under Forever's rules a levelling demon now (`classes/warlock/prepare/pets.rs`, docs/mechanics.md):
 
 - casts the rank of Firebolt (ranks 1 to 7, 3110 to 11763) and Lash of Pain (ranks 1 to 6, 7814 to 11780, from level 20) its Warlock's level teaches, each from the client's row (base, points per level to the rank's cap, variance, coefficient, cost; `FIREBOLT_RANKS`, `LASH_OF_PAIN_RANKS`), with the rank's cost as the mana it keeps before casting. A rank the spellbook lists wins, but the addon exports the Warlock's spellbook, not the demon's, so today every rank counts as trained. A Succubus below 20 knows no Lash;
 - swings its level 60 weapon and has its level 60 Strength and Agility times the client's creature auto attack dps at the level over level 60's (`ExpectedStat`, `levels::creature_dps_share`), so its whole own swing follows the creature row;

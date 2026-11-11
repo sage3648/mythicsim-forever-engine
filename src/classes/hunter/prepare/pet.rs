@@ -265,8 +265,7 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     // Apparently pets and warriors have an AP penalty.
     base_stats[Stat::AttackPower] = -20.0;
     if forever {
-        // The creature's own attack power, with nothing from Strength (README, Rust-only
-        // mechanics).
+        // The creature's own attack power, with nothing from Strength (docs/mechanics.md).
         base_stats[Stat::Strength] = 0.0;
         base_stats[Stat::AttackPower] = tamed_pet_attack_power();
     }

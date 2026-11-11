@@ -11,15 +11,15 @@ use serde::Deserialize;
 const SCHEMA: &str = include_str!("../../../data/proto-schema.json");
 
 /// Enum values Forever has that the pinned reference schema lacks, each added unless the schema
-/// already holds its name or number (README, Rust-only mechanics): Forever's Engineering ammo,
+/// already holds its name or number (docs/mechanics.md): Forever's Engineering ammo,
 /// Swiftfeather Arrow (274387) and Swiftstrike Shot (274388).
 const FOREVER_ENUM_VALUES: [(&str, &str, i32); 2] = [
     ("proto.HunterOptions.Ammo", "SwiftfeatherArrow", 13),
     ("proto.HunterOptions.Ammo", "SwiftstrikeShot", 14),
 ];
 
-/// Message fields Forever has that the pinned reference schema lacks (README, Rust-only
-/// mechanics), each added unless the message already has a field of that name or number. They
+/// Message fields Forever has that the pinned reference schema lacks (docs/mechanics.md),
+/// each added unless the message already has a field of that name or number. They
 /// number from 1000, clear of anything the reference or an upstream merge will add: the
 /// reference refuses them as unknown fields, so a request that sets one is a Rust-only request.
 ///
