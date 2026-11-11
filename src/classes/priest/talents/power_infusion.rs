@@ -3,7 +3,7 @@
 //! the aura multiplies, the damage of the schools its mask names and the healing the priest
 //! deals, belongs to every copy of it and is the fight's (`core/fight/power_infusion.rs`).
 
-use crate::core::fight::{AuraRef, Fight};
+use crate::core::fight::{raid::Gift, AuraRef, Fight};
 
 use super::super::agent::PriestAgent;
 
@@ -19,8 +19,11 @@ pub(crate) fn bind(fight: &mut Fight<PriestAgent>, aura: &str) -> Result<PowerIn
 }
 
 impl PowerInfusion {
-    /// The cast's `ApplyEffects`.
+    /// The cast's `ApplyEffects`, on another member when a raid assigns it one.
     pub(crate) fn apply(&self, fight: &mut Fight<PriestAgent>) {
-        fight.activate_aura(self.aura);
+        let duration = fight.aura(self.aura).duration;
+        if !fight.give(Gift::PowerInfusion, duration) {
+            fight.activate_aura(self.aura);
+        }
     }
 }

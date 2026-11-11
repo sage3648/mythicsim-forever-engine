@@ -303,7 +303,7 @@ pub(crate) fn raid_armor_category(
     effects: &[Value],
     unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
-    if !env.raid_live.any() {
+    if !env.raid_live.armor() {
         return None;
     }
     let target = env.encounter.targets[0];

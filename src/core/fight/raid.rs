@@ -1,7 +1,7 @@
 //! A fight as one member of a raid: the raid runner steps every member's fight on one clock
 //! (see `engine::raid`), so each iteration runs the members to the same timeline.
 
-use super::{Agent, Fight, FightReport, Run};
+use super::{Agent, AuraRef, Fight, FightReport, Run, Side};
 
 /// A member's fight, whatever its class agent.
 pub(crate) trait RaidMember {
@@ -32,6 +32,12 @@ pub(crate) trait RaidMember {
     fn drain_shared(&mut self, out: &mut Vec<SharedState>);
     /// Take on other members' shared aura states at `time`.
     fn apply_shared(&mut self, time: i64, states: &[SharedState]);
+    /// Bind what the member's casts give other members and the gifts it takes.
+    fn bind_gifts(&mut self, giving: &[(Gift, usize)], taking: &[Gift]) -> Result<(), String>;
+    /// The gifts the member's casts sent since the last call.
+    fn drain_gifts(&mut self, out: &mut Vec<SentGift>);
+    /// Take another member's gift at `time`. Returns whether it landed.
+    fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool;
 }
 
 impl<A: Agent> RaidMember for Fight<A> {
@@ -45,6 +51,7 @@ impl<A: Agent> RaidMember for Fight<A> {
 
     fn begin_iteration(&mut self, iteration: u32) {
         Fight::begin_iteration(self, iteration);
+        self.reset_gifts();
     }
 
     fn duration(&self) -> i64 {
@@ -90,6 +97,18 @@ impl<A: Agent> RaidMember for Fight<A> {
 
     fn apply_shared(&mut self, time: i64, states: &[SharedState]) {
         Fight::apply_shared(self, time, states);
+    }
+
+    fn bind_gifts(&mut self, giving: &[(Gift, usize)], taking: &[Gift]) -> Result<(), String> {
+        Fight::bind_gifts(self, giving, taking)
+    }
+
+    fn drain_gifts(&mut self, out: &mut Vec<SentGift>) {
+        Fight::drain_gifts(self, out);
+    }
+
+    fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool {
+        Fight::take_gift(self, time, sent)
     }
 }
 
@@ -392,5 +411,161 @@ impl<A: Agent> Fight<A> {
                 self.multiply_target_school_damage_taken(aura.side, school, factor);
             }
         }
+    }
+}
+
+/// A player aura one member's cast puts on another: the raid's assignments.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Gift {
+    Innervate,
+    PowerInfusion,
+}
+
+impl Gift {
+    /// The aura a member that takes the gift has for it (`prepare::env::RaidLive`).
+    pub(crate) fn aura_label(self) -> &'static str {
+        match self {
+            Gift::Innervate => "Innervates (External)",
+            Gift::PowerInfusion => "Power Infusions (External)",
+        }
+    }
+}
+
+/// A gift a member's cast sent: to which member, by its position among the raid's fights, and
+/// when its aura ends.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct SentGift {
+    pub(crate) gift: Gift,
+    pub(crate) to: usize,
+    pub(crate) expires: i64,
+}
+
+/// The gifts a member gives and takes.
+#[derive(Debug, Default)]
+pub(crate) struct Gifts {
+    /// Each gift the member's casts give another member, that member's position, and when the
+    /// last one sent ends.
+    giving: Vec<(Gift, usize, i64)>,
+    /// The aura each gift the member takes lands on.
+    taking: Vec<(Gift, AuraRef)>,
+    /// What the member's casts sent since the runner last looked.
+    sent: Vec<SentGift>,
+}
+
+impl<A: Agent> Fight<A> {
+    /// Bind what this member's casts give other members, by their positions, and the aura each
+    /// gift it takes lands on.
+    pub(crate) fn bind_gifts(
+        &mut self,
+        giving: &[(Gift, usize)],
+        taking: &[Gift],
+    ) -> Result<(), String> {
+        if giving.is_empty() && taking.is_empty() {
+            return Ok(());
+        }
+        let taking = taking
+            .iter()
+            .map(|&gift| Ok((gift, self.player_aura(gift.aura_label())?)))
+            .collect::<Result<_, String>>()?;
+        self.gifts = Some(Box::new(Gifts {
+            giving: giving
+                .iter()
+                .map(|&(gift, to)| (gift, to, i64::MIN))
+                .collect(),
+            taking,
+            sent: Vec::new(),
+        }));
+        Ok(())
+    }
+
+    /// The iteration's reset: nothing the member gave is up.
+    pub(crate) fn reset_gifts(&mut self) {
+        if let Some(gifts) = self.gifts.as_deref_mut() {
+            for entry in &mut gifts.giving {
+                entry.2 = i64::MIN;
+            }
+            gifts.sent.clear();
+        }
+    }
+
+    /// Whether the member's cast of `gift` goes to another member. When it does, the cast's aura
+    /// is that member's from now for `duration`, and not this member's own.
+    pub(crate) fn give(&mut self, gift: Gift, duration: i64) -> bool {
+        let expires = self.now + duration;
+        let Some(gifts) = self.gifts.as_deref_mut() else {
+            return false;
+        };
+        let Some(entry) = gifts.giving.iter_mut().find(|entry| entry.0 == gift) else {
+            return false;
+        };
+        entry.2 = expires;
+        gifts.sent.push(SentGift {
+            gift,
+            to: entry.1,
+            expires,
+        });
+        true
+    }
+
+    /// Whether the last `gift` this member gave is still up, when its casts go to another member.
+    /// Go's cast condition reads the target's auras, which this fight knows only from its own
+    /// casts.
+    pub(crate) fn given_up(&self, gift: Gift) -> Option<bool> {
+        let gifts = self.gifts.as_deref()?;
+        gifts
+            .giving
+            .iter()
+            .find(|entry| entry.0 == gift)
+            .map(|entry| entry.2 > self.now)
+    }
+
+    /// What the member's casts sent since the last call.
+    pub(crate) fn drain_gifts(&mut self, out: &mut Vec<SentGift>) {
+        if let Some(gifts) = self.gifts.as_deref_mut() {
+            out.append(&mut gifts.sent);
+        }
+    }
+
+    /// Take another member's gift at `time`, which no event of this fight precedes. It lands
+    /// unless another aura with its tag is up, as Go's cast condition reads the target's auras,
+    /// for the rest of the caster's duration. Returns whether it landed.
+    pub(crate) fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool {
+        let Some(aura) = self.gifts.as_deref().and_then(|gifts| {
+            gifts
+                .taking
+                .iter()
+                .find(|(gift, _)| *gift == sent.gift)
+                .map(|&(_, aura)| aura)
+        }) else {
+            return false;
+        };
+        if time > self.now {
+            self.advance_to(time);
+        }
+        let remaining = sent.expires - self.now;
+        if remaining <= 0 {
+            return false;
+        }
+        if let Some(tag) = self.aura(aura).tag.as_deref() {
+            let blocked = self.trackers[Side::Player.index()]
+                .auras
+                .iter()
+                .enumerate()
+                .any(|(index, other)| {
+                    index != aura.index && other.active && other.tag.as_deref() == Some(tag)
+                });
+            if blocked {
+                return false;
+            }
+        }
+        let own = self.aura(aura).duration;
+        self.aura_mut(aura).duration = remaining;
+        if self.aura(aura).active {
+            self.refresh_aura(aura);
+        } else {
+            self.activate_aura(aura);
+        }
+        self.aura_mut(aura).duration = own;
+        self.aura(aura).active
     }
 }

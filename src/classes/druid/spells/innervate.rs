@@ -5,7 +5,7 @@
 
 use crate::{
     contracts::prepared_v2::ActionId,
-    core::fight::{Agent, AuraRef, Fight},
+    core::fight::{raid::Gift, Agent, AuraRef, Fight},
 };
 
 /// Go `buffs.InnervatesCategory`: the tag of every copy of the Innervate aura.
@@ -34,9 +34,13 @@ pub(crate) fn bind<A: Agent>(
 }
 
 impl Innervate {
-    /// Go `ExtraCastCondition`: no Innervate on the druid, its own or an external one.
+    /// Go `ExtraCastCondition`: no Innervate on the target, the druid itself unless a raid
+    /// assigns it another member, whose Innervate the druid knows from its own casts.
     pub(crate) fn can_cast<A: Agent>(&self, fight: &Fight<A>) -> bool {
-        !fight.player_has_active_aura_with_tag(INNERVATES_CATEGORY)
+        match fight.given_up(Gift::Innervate) {
+            Some(up) => !up,
+            None => !fight.player_has_active_aura_with_tag(INNERVATES_CATEGORY),
+        }
     }
 
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {

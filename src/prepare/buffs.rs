@@ -452,6 +452,7 @@ pub(crate) fn apply_buff_effects(
     } else {
         apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)?;
     }
+    drivers::drive_assigned(env, unit, individual)?;
     // After the generated party buffs, where wowsims/forever applies it.
     dark_inspiration::apply_party_dark_inspiration(env, unit, party_buffs)
 }

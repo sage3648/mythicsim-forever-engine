@@ -1902,6 +1902,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) duration_override: Option<i64>,
     /// The target auras a raid shares with this fight's member, when it is one.
     pub(crate) share: Option<Box<raid::Share>>,
+    /// The player auras this fight's member gives other members or takes from them.
+    pub(crate) gifts: Option<Box<raid::Gifts>>,
     external_expose: Option<ExternalExpose>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
@@ -4248,6 +4250,7 @@ impl<A: Agent> Fight<A> {
             sunder: None,
             duration_override: None,
             share: None,
+            gifts: None,
             external_expose: None,
             aura_logs,
             stat_combos,
