@@ -22,6 +22,10 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   attack power as attack power takes N for both, and a row that holds attack power alone keeps
   it alone, since Forever's preparation gives an item's attack power to ranged as well
   (src/prepare/items.rs);
+- Forever adds an item's melee and spell hit (and crit) together and gives the sum to both
+  (src/prepare/items.rs unify_gear_hit_and_crit), so a tooltip that states one kind ("Improves your
+  chance to get a critical strike by 1.0%") drops the row's other kind (Classic's spell crit):
+  keeping both sims 2% where the item gives 1% (Tempest Talisman, Ban'thok Sash);
 - hit and crit within one rating point of the tooltip's percentage are the same, and a rating
   the row carries as a percent pseudo stat (Eye of the Beast's 1% spell crit) is not added again;
 - the weapon skill lines ("Increased Daggers +1") replace the row's weapon skill pseudo stats,
@@ -236,6 +240,22 @@ def skill_change(row, live):
     return pseudo
 
 
+# Hit and crit stat pairs Forever's preparation adds together: melee index, spell index.
+UNIFIED_PAIRS = ((MELEE_HIT, 12), (MELEE_CRIT, 13))
+
+
+def unified_change(row, live):
+    """{stat: None} for each hit or crit stat the row holds whose twin the tooltip states alone."""
+    base = {int(k): v for k, v in (row["scaling_options"]["0"].get("stats") or {}).items() if v}
+    effects = effect_stats(row)
+    out = {}
+    for melee, spell in UNIFIED_PAIRS:
+        for stated, other in ((melee, spell), (spell, melee)):
+            if live["stats"].get(stated) and not live["stats"].get(other) and other in base and other not in effects:
+                out[other] = None
+    return out
+
+
 def effect_stats(row):
     """The stats the row's item effects and area stats carry, by index."""
     out = {}
@@ -284,6 +304,7 @@ def changes(row, live):
             if index < len(pseudo) and abs(pseudo[index] * per_percent - new) <= 1:
                 continue
         stats[stat] = new
+    stats.update(unified_change(row, live))
     out = {}
     if stats:
         out["stats"] = stats
@@ -363,6 +384,8 @@ def build(cache, report=None):
                 change["cooldown_ms"] = cooldown
             if (pseudo := skill_change(live[item_id], stated)) is not None:
                 change["pseudo_stats"] = pseudo
+            if unified := unified_change(live[item_id], stated):
+                change["stats"] = unified
             if change:
                 added[item_id] = (row["name"], change)
                 live[item_id] = live_row(live[item_id], change)

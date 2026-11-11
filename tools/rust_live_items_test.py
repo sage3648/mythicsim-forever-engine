@@ -121,6 +121,27 @@ class ChangesTest(unittest.TestCase):
         self.assertEqual(new["stats"], {3: 26, 15: 8})
         self.assertEqual(live.changes(row({3: 26, 15: 8}), new), {})
 
+    def test_a_tooltip_stating_one_kind_of_crit_drops_the_other(self):
+        # Tempest Talisman: Classic's 1% spell crit, Forever's 1% crit; Forever adds them together.
+        stated = live.read_tooltip(
+            tooltip("Item Level 60", "Equip: Improves your chance to get a critical strike by 1.0%.")
+        )
+        self.assertEqual(live.changes(row({13: 14}), stated), {"stats": {21: 14, 13: None}})
+        self.assertEqual(live.changes(row({13: 14, 21: 14}), stated), {"stats": {13: None}})
+        # Ban'thok Sash: spell hit becomes hit.
+        stated = live.read_tooltip(tooltip("Item Level 60", "Equip: Improves your chance to hit by 1.0%."))
+        self.assertEqual(live.changes(row({12: 10}), stated), {"stats": {20: 10, 12: None}})
+
+    def test_both_kinds_stated_keep_both(self):
+        stated = live.read_tooltip(
+            tooltip(
+                "Item Level 60",
+                "Equip: Improves your chance to hit by 1.0%.",
+                "Equip: Improves your chance to hit with spells by 1.0%.",
+            )
+        )
+        self.assertEqual(live.changes(row({12: 10, 20: 10}), stated), {})
+
     def test_weapon_skills_follow_the_tooltip(self):
         # Edgemaster's Handguards: +7 Axes, Swords and Daggers in the reference row, +1 each live.
         pseudo = [0] * 42
