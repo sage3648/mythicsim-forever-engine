@@ -245,6 +245,108 @@ def sparse(inventory, level, delay=0):
     }
 
 
+# Wowhead Forever tooltips of 12 November 2026.
+HEART_OF_THE_PRIMEVAL = {
+    "name": "Heart of the Primeval",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Heart of the Primeval</b><!--nend--><!--nd'
+        'start--><!--ndend--><span class="q"><br>Item Level <!--ilvl-->40</span><!--bo--><br>'
+        'Binds when picked up<br>Unique-Equipped<!--ue--><!--ue--><table width="100%"><tr><td'
+        '>Trinket</td><th><!--scstart4:-4--><span class="q1"></span><!--scend--></th></tr></t'
+        'able><!--rf--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--'
+        '>+18 Frost Resistance<!--e--><!--ps--></td></tr></table><table><tr><td>Requires Leve'
+        'l <!--rlvl-->35<br><!--rr--><!--useText:0:2--><span id="useText2" class="q2">Use: <!'
+        '--useEffect:0:2--><a href="/forever/spell=1295233/heart-of-the-primeval" class="q2">'
+        'Increases damage and healing done by magical spells and effects by up to 19 for 30 s'
+        'ec.</a> (6 Min Cooldown)<!--useEffect:2--></span><!--useText:2--><!--itemEffects:1--'
+        '><br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice">Sell Price: <span cla'
+        'ss="moneysilver">54</span> <span class="moneycopper">44</span></div><div class="whtt'
+        '-extra whtt-droppedby">Dropped by: Primeval Elemental</div><div class="whtt-extra wh'
+        'tt-dropchance">Drop Chance: 41.83%</div></td></tr></table>'
+    ),
+}
+
+ZEALOT_PLATE = {
+    "name": "Zealot Plate",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Zealot Plate</b><!--nend--><!--ndstart--><'
+        '!--ndend--><span class="q"><br>Item Level <!--ilvl-->48</span><!--bo--><br>Binds whe'
+        'n picked up<!--ue--><!--ue--><table width="100%"><tr><td>Chest</td><th><!--scstart4:'
+        '4--><span class="q1">Plate</span><!--scend--></th></tr></table><!--rf--><span><!--am'
+        'r-->509 Armor</span><br><span><!--stat4-->+13 Strength</span><!--ebstats--><!--egsta'
+        'ts--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Durability 135 '
+        '/ 135</td></tr></table><table><tr><td>Requires Level <!--rlvl-->43<br><!--rr--><!--u'
+        'seText:0:1--><span id="useText1" class="q2">Equip: <!--useEffect:0:1--><a href="/for'
+        'ever/spell=1294668/proc-self-energize-88" class="q2">When struck in combat, has a ch'
+        'ance to energize you for 66 to 110 mana. This effect cannot occur more than once eve'
+        'ry 15 sec. (15s cooldown)</a><!--useEffect:1--></span><!--useText:1--><!--itemEffect'
+        's:1--><br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice">Sell Price: <spa'
+        'n class="moneygold">1</span> <span class="moneysilver">78</span> <span class="moneyc'
+        'opper">34</span></div><div class="whtt-extra whtt-droppedby">Dropped by: Hydromancer'
+        ' Velratha</div><div class="whtt-extra whtt-dropchance">Drop Chance: 31.79%</div></td'
+        '></tr></table>'
+    ),
+}
+
+GIRDLE_OF_EXTRACTED_ANSWERS = {
+    "name": "Girdle of Extracted Answers",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Girdle of Extracted Answers</b><!--nend-->'
+        '<!--ndstart--><!--ndend--><span class="q"><br>Item Level <!--ilvl-->53</span><!--bo-'
+        '-><br>Binds when picked up<!--ue--><!--ue--><table width="100%"><tr><td>Waist</td><t'
+        'h><!--scstart4:4--><span class="q1">Plate</span><!--scend--></th></tr></table><!--rf'
+        '--><span><!--amr-->313 Armor</span><br><span><!--stat4-->+12 Strength</span><br><spa'
+        'n><!--stat7-->+15 Stamina</span><!--ebstats--><!--egstats--><!--eistats--><!--nameDe'
+        'scStats--><!--rs--><!--e--><!--ps--></td></tr></table><table><tr><td>Requires Level '
+        '<!--rlvl-->48<br><!--rr--><!--useText:0:1--><span id="useText1" class="q2">Equip: <!'
+        '--useEffect:0:1--><a href="/forever/spell=1308777/shield-spike" class="q2">Deals 20 '
+        'to 30 Physical damage every time you block.</a><!--useEffect:1--></span><!--useText:'
+        '1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice'
+        '">Sell Price: <span class="moneygold">1</span> <span class="moneysilver">13</span> <'
+        'span class="moneycopper">34</span></div><div class="whtt-extra whtt-droppedby">Dropp'
+        'ed by: The Questioner</div><div class="whtt-extra whtt-dropchance">Drop Chance: 27.2'
+        '7%</div></td></tr></table>'
+    ),
+}
+
+DEFIAS_ENFORCERS_MASK = {
+    "name": "Defias Enforcer's Mask",
+    "quality": 3,
+    "tooltip": (
+        '<table><tr><td><!--nstart--><b class="q3">Defias Enforcer\'s Mask</b><!--nend--><!--n'
+        'dstart--><!--ndend--><span class="q"><br>Item Level <!--ilvl-->53</span><!--bo--><br'
+        '>Binds when equipped<!--ue--><!--ue--><table width="100%"><tr><td>Head</td><th><!--s'
+        'cstart4:2--><span class="q1">Leather</span><!--scend--></th></tr></table><!--rf--><s'
+        'pan><!--amr-->124 Armor</span><br><span><!--stat7-->+20 Stamina</span><!--ebstats-->'
+        '<!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--></td></tr>'
+        '</table><table><tr><td>Requires Level <!--rlvl-->48<br><!--rr--><span class="q2">Equ'
+        'ip: Reduces chance to be Dodged or Parried by 1.0%.</span><br><span class="q2">Equip'
+        ': +<!--rtg38-->30 Attack Power.</span><!--itemEffects:1--><br /><br /><span class="q'
+        '"><a href="/forever/item-set=2136/defias-enforcers-garb" class="q">Defias Enforcer\'s'
+        ' Garb</a> (0/5)</span><div class="q0 indent"><span><!--si287019--><a href="/forever/'
+        'item=287019/defias-enforcers-mask">Defias Enforcer\'s Mask</a></span><br /><span><!--'
+        'si276741--><a href="/forever/item=276741/defias-enforcers-shoulderpads">Defias Enfor'
+        'cer\'s Shoulderpads</a></span><br /><span><!--si287020--><a href="/forever/item=28702'
+        '0/defias-enforcers-chest">Defias Enforcer\'s Chest</a></span><br /><span><!--si276746'
+        '--><a href="/forever/item=276746/defias-enforcers-legguards">Defias Enforcer\'s Leggu'
+        'ards</a></span><br /><span><!--si287021--><a href="/forever/item=287021/defias-enfor'
+        'cers-prowlers">Defias Enforcer\'s Prowlers</a></span></div><br /><span class="q0"><sp'
+        'an>(2) Set : <a href="/forever/spell=1324673/increased-fire-resist-10">+10 Fire Resi'
+        'stance.</a></span><br /><span>(3) Set : <a href="/forever/spell=1324674/increased-st'
+        'amina-10">+15 Stamina.</a></span><br /><span>(4) Set : <a href="/forever/spell=13246'
+        '75/increased-1h-sword">Increased Swords +1.</a></span><br /><span>(5) Set : <a href='
+        '"/forever/spell=1324684/defias-juggernaut">Melee attacks have a chance to increase y'
+        'our Critical Strike chance by 2% for 20 sec. This effect is doubled in swamps.</a></'
+        'span></span><br><!--pvpEquip--><!--pvpEquip--><div class="whtt-sellprice">Sell Price'
+        ': <span class="moneygold">1</span> <span class="moneysilver">24</span> <span class="'
+        'moneycopper">99</span></div></td></tr></table><!--i?287019:1:60:48-->'
+    ),
+}
+
+
 def item(class_id, subclass):
     return {"ClassID": str(class_id), "SubclassID": str(subclass)}
 
@@ -508,6 +610,49 @@ class ParseTests(unittest.TestCase):
             '{"2":8,"27":22,"30":1287},"ilvl":42}}}',
         )
 
+    def test_a_struck_effect_the_engine_refuses_is_left_out_of_the_row(self):
+        # Zealot Plate's mana when struck and Girdle of Extracted Answers' damage on block: the
+        # rows are the plain stats, and the engine refuses the character the effect can reach.
+        plate = tool.row_for(274651, None, {**item(4, 4), "InventoryType": "5"}, ZEALOT_PLATE)
+        self.assertEqual(
+            tool.dump_row(plate),
+            '{"id":274651,"name":"Zealot Plate","type":"ItemTypeChest","armor_type":'
+            '"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":13,"30":509},"ilvl":48}}}',
+        )
+        girdle = tool.row_for(
+            276742, None, {**item(4, 4), "InventoryType": "6"}, GIRDLE_OF_EXTRACTED_ANSWERS
+        )
+        self.assertEqual(
+            tool.dump_row(girdle),
+            '{"id":276742,"name":"Girdle of Extracted Answers","type":"ItemTypeWaist",'
+            '"armor_type":"ArmorTypePlate","scaling_options":{"0":{"stats":{"0":12,"2":15,'
+            '"30":313},"ilvl":53}}}',
+        )
+
+    def test_a_stat_use_is_the_rows_item_effect(self):
+        # As the reference rows hold a stat trinket's use (Talisman of Ephemeral Power 18820).
+        heart = tool.row_for(274615, None, {**item(4, 0), "InventoryType": "12"}, HEART_OF_THE_PRIMEVAL)
+        self.assertEqual(
+            tool.dump_row(heart),
+            '{"id":274615,"name":"Heart of the Primeval","type":"ItemTypeTrinket",'
+            '"scaling_options":{"0":{"stats":{"37":18},"ilvl":40}},"item_effects":[{"buff_id":'
+            '1295233,"buff_name":"Heart of the Primeval (1295233)","effect_duration_ms":30000,'
+            '"scaling_options":{"0":{"stats":{"4":19,"5":19}}},"on_use":{"cooldown_ms":360000,'
+            '"category_id":1141,"category_cooldown_ms":30000}}],"unique":true}',
+        )
+        # The same line on another item is not that item's listed use.
+        with self.assertRaisesRegex(tool.Unreadable, "listed for another item"):
+            tool.row_for(274616, None, {**item(4, 0), "InventoryType": "12"}, HEART_OF_THE_PRIMEVAL)
+
+    def test_a_piece_of_the_second_client_set_reads_its_stats_and_set(self):
+        mask = tool.row_for(287019, None, {**item(4, 2), "InventoryType": "1"}, DEFIAS_ENFORCERS_MASK)
+        self.assertEqual(
+            tool.dump_row(mask),
+            '{"id":287019,"name":"Defias Enforcer\'s Mask","type":"ItemTypeHead","armor_type":'
+            '"ArmorTypeLeather","set_name":"Defias Enforcer\'s Garb","set_id":2136,'
+            '"scaling_options":{"0":{"stats":{"2":20,"17":30,"18":30,"24":10,"30":124},"ilvl":53}}}',
+        )
+
     def test_a_modelled_line_with_other_numbers_leaves_the_item_out(self):
         # The engine states the use's numbers, so a tooltip that changes them waits for it.
         for response, old, new in [
@@ -518,6 +663,10 @@ class ParseTests(unittest.TestCase):
             (TOTEM_OF_RAGE, "by 2%", "by 3%"),
             (MAW_OF_MINLOTH, "stealing 40 life", "stealing 50 life"),
             (MAW_OF_MINLOTH, "3s cooldown", "5s cooldown"),
+            (ZEALOT_PLATE, "66 to 110 mana", "70 to 120 mana"),
+            (GIRDLE_OF_EXTRACTED_ANSWERS, "20 to 30 Physical", "25 to 35 Physical"),
+            (HEART_OF_THE_PRIMEVAL, "by up to 19 for", "by up to 25 for"),
+            (HEART_OF_THE_PRIMEVAL, "(6 Min Cooldown)", "(2 Min Cooldown)"),
         ]:
             changed = {**response, "tooltip": response["tooltip"].replace(old, new)}
             self.assertNotEqual(changed["tooltip"], response["tooltip"])
@@ -590,7 +739,7 @@ class CommittedFileTests(unittest.TestCase):
             "(2) Set : +100 Armor.", "(3) Set : Increased Defense +5.",
         ]  # fmt: skip
         self.assertEqual(tool.without_client_set(lines), (lines[:5], "Krol'dok Battlegear"))
-        other = [line.replace("Krol'dok Battlegear", "Defias Enforcer's Garb") for line in lines]
+        other = [line.replace("Krol'dok Battlegear", "Garb of No Listed Set") for line in lines]
         self.assertEqual(tool.without_client_set(other), (other, None))
         # A block that does not close the tooltip with its bonus lines is not read.
         self.assertEqual(tool.without_client_set(lines + ["Use: Something."])[1], None)
@@ -599,7 +748,10 @@ class CommittedFileTests(unittest.TestCase):
         for item_id in (275005, 275006, 287012, 287013, 287014):
             self.assertEqual(rows[item_id]["set_name"], "Krol'dok Battlegear")
             self.assertEqual(rows[item_id]["set_id"], tool.CLIENT_SETS["Krol'dok Battlegear"])
-        self.assertEqual(sum("set_name" in row for row in rows.values()), 5)
+        for item_id in (276741, 276746, 287019, 287020, 287021):
+            self.assertEqual(rows[item_id]["set_name"], "Defias Enforcer's Garb")
+            self.assertEqual(rows[item_id]["set_id"], tool.CLIENT_SETS["Defias Enforcer's Garb"])
+        self.assertEqual(sum("set_name" in row for row in rows.values()), 10)
 
     def test_a_real_item_with_a_development_name_is_taken(self):
         self.assertTrue(tool.JUNK_NAME.search("Old Leather Jacket"))
@@ -633,6 +785,8 @@ class CommittedFileTests(unittest.TestCase):
         with open(tool.OUT) as rows:
             ids = {json.loads(line)["id"] for line in rows}
         self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852, 286430}, ids)
+        # The stat use and the two struck effects of 12 November 2026.
+        self.assertLessEqual({274615, 274651, 276742}, ids)
 
     def test_the_worn_quest_item_is_committed(self):
         with open(tool.OUT) as rows:

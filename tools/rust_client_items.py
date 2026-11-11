@@ -23,14 +23,19 @@ the same line of a Classic item. A line that changes nothing in a fight (mount s
 profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
 row. So is a use, chance on hit or equip line the engine models by hand (ENGINE_EFFECT:
 Serpentbane Crown's use, the two Rock on Stick weapons' bash, Toofbreaker's bash, Dreadfrost
-Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when struck). A relic (a libram, idol or
+Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when struck), and
+an equip line that acts only when the wearer is struck, which the engine refuses on the
+character it can reach (Zealot Plate's mana, Girdle of Extracted Answers' damage on block). A use
+that is a stat buff (ON_USE_STATS: Heart of the Primeval) is written into the row as its item
+effect, as the reference rows hold a stat trinket's. A relic (a libram, idol or
 totem) is written in the ranged slot, as the reference rows hold one (RELIC_TYPE). An
 item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or any line
 this tool does not read, is left out and listed.
 
 A piece of a set in CLIENT_SETS is taken with its set_name and set_id, as a reference row carries
-them; its tooltip's set block (the piece names and bonus lines) is not part of the row, and
-preparation refuses an equipment that reaches one of those bonuses. An id in REAL_ITEMS is taken
+them; its tooltip's set block (the piece names and bonus lines) is not part of the row.
+Preparation applies the bonuses that are plain stats and refuses an equipment that reaches one of
+the others (src/prepare/forever_client_sets.rs). An id in REAL_ITEMS is taken
 although its name reads as development data.
 
 Most of the items the Forever client adds (ids from about 270000) have an Item row but no
@@ -107,9 +112,9 @@ WORN_QUEST_ITEMS = {9978}
 # The sets of the Forever client that this tool takes pieces of, by the name the tooltip gives,
 # with the ItemSet ID of the tooltip's item-set link. The reference database registers none of
 # them. A piece's row carries set_name and set_id as a reference row does, and preparation
-# refuses an equipment that reaches one of the set's bonuses (src/prepare/item_sets.rs,
-# CLIENT_SETS_NOT_PREPARED), so a set here needs its row there.
-CLIENT_SETS = {"Krol'dok Battlegear": 2135}
+# applies or refuses each of the set's bonuses (src/prepare/forever_client_sets.rs,
+# CLIENT_ITEM_SETS), so a set here needs its entry there.
+CLIENT_SETS = {"Krol'dok Battlegear": 2135, "Defias Enforcer's Garb": 2136}
 
 ITEM_TYPE = {
     1: "ItemTypeHead",
@@ -458,8 +463,36 @@ ENGINE_EFFECT = [
         # Maw of Min'loth 274608.
         "Equip: When struck in melee combat, has a 10% chance of stealing 40 life from the target "
         "enemy. (Proc chance: 10%, 3s cooldown)",
+        # Zealot Plate 274651 and Girdle of Extracted Answers 276742: effects that act only when
+        # the wearer is struck, which the engine does not apply yet and refuses on the character
+        # they can reach (forever_effect_items.rs, STRUCK_EFFECTS_NOT_PREPARED).
+        "Equip: When struck in combat, has a chance to energize you for 66 to 110 mana. This "
+        "effect cannot occur more than once every 15 sec. (15s cooldown)",
+        "Equip: Deals 20 to 30 Physical damage every time you block.",
     ]
 ]
+# A use that is a stat buff, by item: the exact use line of the tooltip and the item effect the row
+# carries for it, in the shape the reference rows hold a stat trinket's (Talisman of Ephemeral
+# Power 18820). The buff, its stats and duration and the cooldowns are the client's rows; the
+# engine registers the use from the row (forever_effect_items.rs, ON_USE_STAT_ITEMS). A tooltip
+# whose line changes leaves the item out until both follow.
+ON_USE_STATS = {
+    # Heart of the Primeval: ItemEffect 234049 uses spell 1295233 with no cooldowns of its own, so
+    # the spell's stand (SpellCooldowns 99612: 360000 ms, and 30000 ms on category 1141).
+    # SpellEffect 1317148 and 1348726: 19 damage and 19 healing; SpellMisc 842632: 30 sec.
+    274615: (
+        "Use: Increases damage and healing done by magical spells and effects by up to 19 for "
+        "30 sec. (6 Min Cooldown)",
+        {
+            "buff_id": 1295233,
+            "buff_name": "Heart of the Primeval (1295233)",
+            "effect_duration_ms": 30000,
+            "scaling_options": {"0": {"stats": {"4": 19, "5": 19}}},
+            "on_use": {"cooldown_ms": 360000, "category_id": 1141, "category_cooldown_ms": 30000},
+        },
+    ),
+}
+ON_USE_STAT_LINES = {line: item_id for item_id, (line, _) in ON_USE_STATS.items()}
 # A clause that doubles an equip line in a city or stronghold, where no fight is (Black Horn
 # Necklace 279863): the line reads as its base amount.
 CITY_CLAUSE = re.compile(r" This effect is doubled in Strongholds and Cities\.$")
@@ -605,6 +638,9 @@ def parse_tooltip(response):
             raise Unreadable("a set piece")
         elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT + ENGINE_EFFECT):
             equip_lines += 1
+        elif line in ON_USE_STAT_LINES:
+            equip_lines += 1
+            out.setdefault("on_use_stats", []).append(ON_USE_STAT_LINES[line])
         elif match := SKILL_LINE.fullmatch(line):
             equip_lines += 1
             pseudo = out.setdefault("pseudo", {})
@@ -734,6 +770,11 @@ def row_for(item_id, sparse, item, response):
         option["stats"] = {str(key): stats[key] for key in sorted(stats)}
     option["ilvl"] = parsed["ilvl"]
     row["scaling_options"] = {"0": option}
+    if parsed.get("on_use_stats"):
+        # The use line is the listed item's own, not one another item happens to share.
+        if parsed["on_use_stats"] != [item_id]:
+            raise Unreadable("a stat use line listed for another item")
+        row["item_effects"] = [ON_USE_STATS[item_id][1]]
     if parsed.get("unique"):
         row["unique"] = True
     if parsed.get("pseudo"):
@@ -839,7 +880,8 @@ def add(tables, cache, ids):
 
 ROW_KEYS = {
     "id", "name", "type", "armor_type", "weapon_type", "hand_type", "ranged_weapon_type",
-    "weapon_speed", "set_name", "set_id", "scaling_options", "unique", "pseudo_stats", "class_allowlist",
+    "weapon_speed", "set_name", "set_id", "scaling_options", "item_effects", "unique", "pseudo_stats",
+    "class_allowlist",
 }  # fmt: skip
 
 

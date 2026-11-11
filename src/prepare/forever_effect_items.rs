@@ -23,6 +23,15 @@
 //!   is in the reference: its equip aura (1295064) hears the melee hits the wearer takes and, 10%
 //!   of the time and at most once in 3 sec, casts a Physical leech of 40 (1295065) on the
 //!   attacker. Only a character who tanks the target is struck.
+//! - Heart of the Primeval (274615) is a stat on-use trinket (`NewSimpleStatActive`), as Talisman
+//!   of Ephemeral Power is in the reference: its client row carries the use as an item effect
+//!   (19 spell damage and healing for 30 sec, on the use spell's own cooldowns), which the shared
+//!   constructor reads (`ON_USE_STAT_ITEMS`).
+//!
+//! Two more items carry an equip effect that acts only when the wearer is struck, which nothing
+//! here applies yet (`STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate (274651) and Girdle of Extracted
+//! Answers (276742). Each is a plain item on a character the effect cannot reach, and refuses a
+//! character it can.
 
 use crate::contracts::prepared_v2::ActionId;
 
@@ -35,6 +44,7 @@ use super::shared_items::{
 };
 use super::sim::{Cooldown, MILLISECOND};
 use super::spelldata::{must_find, Spell};
+use super::Refusal;
 
 /// A use that deals its spell row's damage to the target, on the item's own cooldowns.
 pub(crate) struct OnUseDamageItem {
@@ -236,4 +246,104 @@ pub(crate) fn apply_on_use_damage(env: &mut Environment, use_: &OnUseDamageItem)
             timings: Vec::new(),
         },
     );
+}
+
+/// The stat on-use items: the client row's item effect holds the use (its buff, stats, duration
+/// and cooldowns), and `shared_on_use`'s `SimpleStatActive` registers it as it does a reference
+/// trinket's.
+///
+/// Heart of the Primeval (274615): "Use: Increases damage and healing done by magical spells and
+/// effects by up to 19 for 30 sec. (6 Min Cooldown)" (Wowhead's Forever tooltip, 12 November
+/// 2026). The client's rows (wago.tools `product=wowf`, 12 November 2026): ItemEffect 234049 is a
+/// use (trigger type 0) of Heart of the Primeval (1295233) with no cooldowns of its own (-1), so
+/// the spell's stand: SpellCooldowns 99612 has a recovery of 360000 ms and a category recovery of
+/// 30000 ms on SpellCategories 184157's category 1141, the one the reference's stat trinkets
+/// share. SpellEffect 1317148 is a damage done aura (13) of 19 on every magic school (mask 126)
+/// and 1348726 a healing done aura (135) of 19; SpellMisc 842632 has DurationIndex 9, 30 sec.
+pub(crate) const ON_USE_STAT_ITEMS: &[i32] = &[274615];
+
+/// Whether the item is one of the stat on-use items.
+pub(crate) fn on_use_stat_item(item: i32) -> bool {
+    ON_USE_STAT_ITEMS.contains(&item)
+}
+
+/// Who an equip effect that acts when the wearer is struck can reach.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum StruckEffectReach {
+    /// A character a target attacks who has a mana bar: the effect restores mana.
+    TankWithMana,
+    /// A character a target attacks who holds a shield: the effect acts on a block.
+    TankWithShield,
+}
+
+/// An equip effect that acts only when the wearer is struck and that nothing here applies yet.
+pub(crate) struct StruckEffectNotPrepared {
+    pub(crate) item_id: i32,
+    /// The effect, as the refusal names it.
+    pub(crate) effect: &'static str,
+    pub(crate) reach: StruckEffectReach,
+}
+
+/// The items whose equip effect acts only when the wearer is struck. A character the effect
+/// cannot reach wears the item as a plain one, exactly; one it can reach is refused, since the
+/// effect would change that fight.
+///
+/// Zealot Plate (274651): "Equip: When struck in combat, has a chance to energize you for 66 to
+/// 110 mana. This effect cannot occur more than once every 15 sec. (15s cooldown)" (Wowhead's
+/// Forever tooltip, 12 November 2026). ItemEffect 233963 is an equip (trigger type 1) of Proc Self
+/// Energize 88 (1294668): SpellAuraOptions 246043 has ProcChance 100, ProcTypeMask 40 (melee
+/// swings and melee abilities taken) and a proc recovery of 15000 ms, and SpellEffect 1316157
+/// casts Zealotry (1294666), whose SpellEffect 1316155 is an Energize (30) of 88 with a variance
+/// of 0.5 (66 to 110) on mana. A character no target attacks is never struck, and one with no
+/// mana bar gains nothing.
+///
+/// Girdle of Extracted Answers (276742): "Equip: Deals 20 to 30 Physical damage every time you
+/// block." (Wowhead's Forever tooltip, 12 November 2026). ItemEffect 236443 is an equip of Shield
+/// Spike (1308777): SpellEffect 1337499 is a damage on proc aura (43) of 25 with a variance of
+/// 0.4 (20 to 30), SpellAuraOptions 247236 has ProcChance 100 and ProcTypeMask 40, and
+/// SpellCooldowns 100881 a recovery of 5000 ms. Only a character a target attacks who holds a
+/// shield blocks.
+pub(crate) const STRUCK_EFFECTS_NOT_PREPARED: [StruckEffectNotPrepared; 2] = [
+    StruckEffectNotPrepared {
+        item_id: 274651,
+        effect: "mana when struck",
+        reach: StruckEffectReach::TankWithMana,
+    },
+    StruckEffectNotPrepared {
+        item_id: 276742,
+        effect: "damage on block",
+        reach: StruckEffectReach::TankWithShield,
+    },
+];
+
+/// Refuses a worn item of [`STRUCK_EFFECTS_NOT_PREPARED`] on a character its effect can reach.
+/// `holds_shield` is whether any worn or swapped in item is a shield.
+pub(crate) fn struck_effect_not_prepared(
+    env: &Environment,
+    item: i32,
+    holds_shield: bool,
+) -> Result<(), Refusal> {
+    let Some(struck) = STRUCK_EFFECTS_NOT_PREPARED
+        .iter()
+        .find(|struck| struck.item_id == item)
+    else {
+        return Ok(());
+    };
+    if !env.tanking() {
+        return Ok(());
+    }
+    let reached = match struck.reach {
+        StruckEffectReach::TankWithMana => env.sim.unit(env.player).mana_bar.enabled,
+        StruckEffectReach::TankWithShield => holds_shield,
+    };
+    if !reached {
+        return Ok(());
+    }
+    Err(Refusal::new(
+        "item_effect",
+        format!(
+            "item {item} has an effect not prepared yet ({} on a character the target attacks)",
+            struck.effect
+        ),
+    ))
 }

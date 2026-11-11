@@ -5,9 +5,9 @@
 //!   Agility, +2 Stamina) that the import left out for its name, which reads as development data.
 //! - Krol'dok Battlegear, the five plate pieces of a Forever set the reference does not register:
 //!   Chest 275005, Helmet 275006, Gauntlets 287012, Legplates 287013, Pauldrons 287014. A single
-//!   piece is a plain item. Its bonuses ((2) +100 Armor, (3) Increased Defense +5, (4) a heal on
-//!   block, (5) Stamina when taking damage) are not applied yet, so an equipment that reaches one
-//!   is refused and names the bonus.
+//!   piece is a plain item. Of its bonuses the (2) +100 Armor and (3) Increased Defense +5 are
+//!   applied since 12 November 2026; the (4) heal on block and (5) Stamina when taking damage
+//!   are not, so an equipment that reaches one of those is refused and names the bonus.
 
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared,
@@ -114,14 +114,14 @@ fn one_kroldok_piece_is_a_plain_item() {
     );
 }
 
+/// Since 12 November 2026 the set's (2) +100 Armor and (3) Increased Defense +5 are applied
+/// (`tests/forever_client_items_20261112.rs`); the (4) heal on block and the (5) Stamina when
+/// taking damage still refuse by name.
 #[test]
-fn a_kroldok_set_bonus_is_refused_by_name() {
+fn a_kroldok_set_bonus_that_is_not_prepared_is_refused_by_name() {
     let two = warrior(&[(CHEST, KROLDOK_CHEST), (LEGS, KROLDOK_LEGPLATES)]);
-    let reason = refusal(&two, Rules::Forever);
-    assert!(
-        reason.contains("set bonus Krol'dok Battlegear 2P is not prepared yet (item 287013)"),
-        "{reason}"
-    );
+    run(&two);
+    assert!(prepare(&two).to_string().contains("Krol'dok Battlegear 2P"));
     let five = warrior(&[
         (HEAD, KROLDOK_HELMET),
         (SHOULDER, KROLDOK_PAULDRONS),
@@ -130,7 +130,10 @@ fn a_kroldok_set_bonus_is_refused_by_name() {
         (LEGS, KROLDOK_LEGPLATES),
     ]);
     let reason = refusal(&five, Rules::Forever);
-    assert!(reason.contains("Krol'dok Battlegear 2P"), "{reason}");
+    assert!(
+        reason.contains("set bonus Krol'dok Battlegear 4P is not prepared yet (item 287012)"),
+        "{reason}"
+    );
 }
 
 #[test]

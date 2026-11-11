@@ -268,7 +268,10 @@ pub(crate) fn only_on_use_effect(item: i32) -> Option<Message> {
     if item == 0 {
         return None;
     }
-    let db_item = items::database_item(item)?;
+    // An id the reference database lacks is a live client item's, which only Forever's rules
+    // equip (Heart of the Primeval, `forever_effect_items::ON_USE_STAT_ITEMS`).
+    let db_item = items::database_item(item)
+        .or_else(|| items::database_item_under(item, super::sim::Rules::Forever))?;
     let mut on_use: Option<Message> = None;
     for effect in db_item.item_effects {
         if !effect.has("on_use") {
