@@ -983,7 +983,12 @@ the Go goldens and exporter uses. The departures:
   item swap costs in the engine, Go `ItemSwap.SwapItems`: the global cooldown extends to at
   least 1.5 seconds (`GCDDefault`) and both swings restart a full swing after it
   (`StopMeleeUntil`), as Bae checked in game for a Warrior (Discord #warrior, 23 October 2026);
-  neither is checked for a Rogue in game yet. Another weapon, a stone or oil the sets differ in,
+  neither is checked for a Rogue in game yet. A rotation swaps sets once a timestep, as it
+  changes target once a timestep: a swap takes no time of its own, so lines to Main and to Swap1
+  whose conditions both hold swapped back and forth in one moment until the rotation's loop
+  guard panicked (the shape that reproduces five failed Quick Sims of 10 November 2026). The
+  second swap now waits for the rotation's next look, after the first one's global cooldown
+  (`tests/item_swap_rotation_loop_20261112.rs`). Another weapon, a stone or oil the sets differ in,
   and the reference's rules, whose Rogue reads the request's poisons alone, are refused
   (`src/classes/rogue/prepare/poisons.rs`, `tests/classes/rogue/item_swap.rs`). Nothing changes
   without an item swap.
