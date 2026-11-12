@@ -254,7 +254,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `stormstrike` | sim/shaman/stormstrike.go | The target debuff's caster damage multiplier and the weapons that strike |
 | `elemental_devastation` | sim/shaman/talents_elemental.go | The melee crit a spell crit grants, whether a spell flagged Proc can trigger it, which the client rank does not allow, and the class spells that never do: Fire Nova (community #789) |
 | `flurry` | sim/shaman/talents_enhancement.go | Melee speed, charges and the charge cooldown, a Go literal, and whether a spell flagged Proc can trigger it, which the client rank does not allow |
-| `improved_stormstrike` | sim/shaman/talents_enhancement.go | Proc chance and the casting spirit regeneration rate it adds without refreshing rates, as Go does |
+| `improved_stormstrike` | sim/shaman/talents_enhancement.go | Proc chance and the casting spirit regeneration rate it adds without refreshing rates, as Go does; the reset aura, which finishes Stormstrike's cooldown on a dodge or parry of a target's swing |
 | `maelstrom_weapon` | sim/shaman/talents_enhancement.go | Per stack cast time and cost, and the proc manager's chance per spell |
 | `rage_of_the_farseer` | sim/shaman/talents_enhancement.go | The cooldown and its melee speed |
 | `elemental_mastery` | sim/shaman/talents_elemental.go | The major cooldown's aura, the cast time it takes off Lightning Bolt and Lava Burst and the cooldown it takes off Chain Lightning (client 70425) |
@@ -267,7 +267,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `frost_shock` | sim/shaman/shocks.go | Damage roll on the highest rank; a binary hit |
 | `magma_totem` | sim/shaman/fire_totems.go | The pulse's fixed base and the totem's lifetime, with Trial by Fire's (client 70425); each pulse calculates periodic area damage on every target before dealing any. Under Forever's rules `radius_yards` (8, 10581's area): a totem dropped farther from the targets than that burns nothing |
 | `flametongue_totem` | sim/shaman/fire_totems.go | The totem aura, its trigger and the spells it hears, the attack spell and its base, and whether a party Flametongue Totem shares the benefit |
-| `lightning_shield` | sim/shaman/shields.go | The cast, its aura and charges |
+| `lightning_shield` | sim/shaman/shields.go; the client rows (Forever preparation only) | The cast, its aura and charges; under Forever's rules `orb`: the orb spell, its base damage, the 3.5 sec internal cooldown and whether it can crit |
 | `water_shield` | client 1.60.1.70532 (Forever preparation only) | The cast, its aura and three globes, the 3.5 sec internal cooldown, 2% of maximum mana per globe in the 408511 row, and the spells whose critical hits spend one |
 | `grace_of_air_totem`, `mana_spring_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura and the totem's lifetime; since the 16 October 2026 beta notes no air totem slot joins it to the party's totems |
 | `windfury_totem_self` | sim/shaman/totems.go | The totem aura, its lifetime and refresh period, the tracking and dummy auras, the trigger's chance and spells, the attack power charges with their log lines, the spenders, the extra main hand attack, and whether the party's Windfury Totem or a main hand Windfury Weapon contests it. Under Forever's rules `one_aura`: the two totems are one aura (10612) and the imbue turns off either, so a contested totem's trigger stays off where the reference's export is refused |

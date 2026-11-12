@@ -20,6 +20,7 @@ use super::{
         chain_lightning::{self, ChainLightning},
         earth_shock, fire_nova, flame_shock, lava_burst,
         lightning_bolt::{self, Overload},
+        lightning_shield::LightningShieldOrb,
         magma_totem,
         rockbiter_threat::RockbiterThreat,
         searing_totem::{self, SearingTotem},
@@ -61,6 +62,8 @@ pub(crate) enum ShamanSpell {
     FrostShock,
     MagmaTotem,
     LightningShield,
+    /// Lightning Shield's orb, under Forever's rules (`lightning_shield`).
+    LightningShieldOrb,
     WaterShield,
     GraceOfAirTotem,
     ManaSpringTotem,
@@ -95,6 +98,8 @@ pub(crate) enum ShamanAura {
     ElementalDevastation,
     ImprovedStormstrikeTrigger,
     ImprovedStormstrike,
+    /// The reset of Stormstrike's cooldown on a dodge or parry of a target's swing.
+    ImprovedStormstrikeReset,
     MaelstromWeaponTrigger,
     MaelstromWeapon,
     /// Stormstrike's debuff on the target.
@@ -119,6 +124,8 @@ pub(crate) enum ShamanAura {
     RockbiterThreat,
     /// Water Shield's globes, which the shaman's critical spells spend.
     WaterShield,
+    /// Lightning Shield's charges, which a target's landed swing spends under Forever's rules.
+    LightningShield,
 }
 
 /// Shaman state that Go keeps in the `Shaman` struct and its closures.
@@ -175,6 +182,10 @@ pub(crate) struct ShamanAgent {
     magma_radius: f64,
     /// Lightning Shield's aura and charges.
     lightning_shield: Option<(AuraRef, i32)>,
+    /// Lightning Shield's orb, under Forever's rules.
+    lightning_shield_orb: Option<LightningShieldOrb>,
+    /// When Lightning Shield's next orb can go.
+    lightning_shield_ready: i64,
     water_shield: Option<WaterShield>,
     /// When Water Shield's next globe can go.
     water_shield_ready: i64,
@@ -336,6 +347,13 @@ impl ShamanAgent {
                 {
                     return Some(ShamanSpell::FlametongueTotemAttack);
                 }
+                Effect::LightningShield { orb: Some(orb), .. }
+                    if spell.class_spell.as_deref() == Some("lightning_shield")
+                        && orb.spell_id == id.spell_id
+                        && id.tag == 0 =>
+                {
+                    return Some(ShamanSpell::LightningShieldOrb);
+                }
                 // Go registers Lightning Shield's cast without a class mask.
                 Effect::LightningShield { spell_id, .. }
                     if spell.class_spell.is_none() && *spell_id == id.spell_id && id.tag == 0 =>
@@ -482,10 +500,14 @@ impl ShamanAgent {
                     (aura.clone(), ShamanAura::ElementalDevastation),
                 ],
                 Effect::ImprovedStormstrike {
-                    trigger_aura, aura, ..
+                    trigger_aura,
+                    aura,
+                    reset_aura,
+                    ..
                 } => vec![
                     (trigger_aura.clone(), ShamanAura::ImprovedStormstrikeTrigger),
                     (aura.clone(), ShamanAura::ImprovedStormstrike),
+                    (reset_aura.clone(), ShamanAura::ImprovedStormstrikeReset),
                 ],
                 Effect::MaelstromWeapon {
                     trigger_aura, aura, ..
@@ -514,6 +536,9 @@ impl ShamanAgent {
                 Effect::WaterShield { aura, .. } => {
                     vec![(aura.clone(), ShamanAura::WaterShield)]
                 }
+                Effect::LightningShield {
+                    aura, orb: Some(_), ..
+                } => vec![(aura.clone(), ShamanAura::LightningShield)],
                 Effect::FlametongueWeapon { hands } => hands
                     .iter()
                     .enumerate()
@@ -863,8 +888,23 @@ impl ShamanAgent {
                     fight.agent.magma = Some((*pulse_damage, *duration_ns));
                     fight.agent.magma_radius = *radius_yards;
                 }
-                Effect::LightningShield { aura, charges, .. } => {
-                    fight.agent.lightning_shield = Some((fight.player_aura(aura)?, *charges));
+                Effect::LightningShield {
+                    aura, charges, orb, ..
+                } => {
+                    let aura = fight.player_aura(aura)?;
+                    fight.agent.lightning_shield = Some((aura, *charges));
+                    if let Some(orb) = orb {
+                        let spell = find(&fight, orb.spell_id, 0).ok_or_else(|| {
+                            format!("Lightning Shield orb {} is not registered", orb.spell_id)
+                        })?;
+                        fight.agent.lightning_shield_orb = Some(LightningShieldOrb {
+                            aura,
+                            spell,
+                            base_damage: orb.base_damage,
+                            can_crit: orb.can_crit,
+                            icd: orb.icd_ns,
+                        });
+                    }
                 }
                 Effect::WaterShield {
                     aura,
@@ -1031,14 +1071,15 @@ impl ShamanAgent {
                 Effect::ImprovedStormstrike {
                     trigger_aura,
                     aura,
+                    reset_aura,
                     proc_chance,
                     spirit_regen_rate_casting,
-                    ..
                 } => {
                     fight.agent.improved_stormstrike = Some(improved_stormstrike::bind(
                         &mut fight,
                         trigger_aura,
                         aura,
+                        reset_aura,
                         *proc_chance,
                         *spirit_regen_rate_casting,
                     )?);
@@ -1361,6 +1402,13 @@ impl Agent for ShamanAgent {
                     .expect("Water Shield is bound");
                 state.cast(fight);
             }
+            ShamanSpell::LightningShieldOrb => {
+                let orb = fight
+                    .agent
+                    .lightning_shield_orb
+                    .expect("Lightning Shield's orb is bound");
+                orb.hit(fight, target);
+            }
             ShamanSpell::GraceOfAirTotem => {
                 let totem = fight
                     .agent
@@ -1475,6 +1523,7 @@ impl Agent for ShamanAgent {
         fight.agent.totems = Expirations::default();
         fight.agent.flurry_icd = crate::core::time::STARTING_CD_TIME;
         fight.agent.water_shield_ready = crate::core::time::STARTING_CD_TIME;
+        fight.agent.lightning_shield_ready = crate::core::time::STARTING_CD_TIME;
     }
 
     /// Stormstrike needs a weapon.
@@ -1615,6 +1664,32 @@ impl Agent for ShamanAgent {
     ) {
         if kind == ShamanAura::WaterShield {
             Self::water_shield_result(fight, spell, result);
+        }
+    }
+
+    fn on_enemy_hit_taken(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: ShamanAura,
+        result: &SpellResult,
+    ) {
+        match kind {
+            ShamanAura::LightningShield => {
+                let orb = fight
+                    .agent
+                    .lightning_shield_orb
+                    .expect("Lightning Shield's orb is bound");
+                let ready = fight.agent.lightning_shield_ready;
+                if let Some(next) = orb.on_hit_taken(fight, result, ready) {
+                    fight.agent.lightning_shield_ready = next;
+                }
+            }
+            ShamanAura::ImprovedStormstrikeReset => fight
+                .agent
+                .improved_stormstrike
+                .expect("Improved Stormstrike is bound")
+                .on_enemy_hit_taken(fight, result),
+            _ => {}
         }
     }
 

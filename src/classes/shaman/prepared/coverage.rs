@@ -99,6 +99,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "earth_shock" => Some("earth_shock"),
         "frost_shock" => Some("frost_shock"),
         "stormstrike_cast" | "stormstrike_damage" => Some("stormstrike"),
+        // Lightning Shield's orb, cast when a target's swing spends a charge (Forever's rules).
+        "lightning_shield" => Some("lightning_shield"),
         // Strength of Earth, Grace of Air and Mana Spring among the basic totems; `limits` rejects
         // the others.
         "basic_totem" => Some("strength_of_earth_totem"),
@@ -132,7 +134,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             .iter()
             .map(|hand| ("player", hand.trigger_aura.as_str()))
             .collect(),
-        // The reset hears only hits the player takes, which never happen in scope.
+        // The reset hears the dodges and parries of a target's swings at the shaman.
         Effect::ImprovedStormstrike {
             trigger_aura,
             aura,

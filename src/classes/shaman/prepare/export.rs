@@ -432,13 +432,26 @@ impl Shaman {
         effects.push(magma_totem);
         // registerLightningShieldSpell: the cast puts up every charge. Its trigger hears only
         // the shield self proc, which needs a proc rate the exporter rejects, so the orb never
-        // fires.
+        // fires. Under Forever's rules the client's proc does: a melee hit the shaman takes
+        // spends a charge and the orb strikes the attacker, one every internal cooldown
+        // (ProcFlags 139944, 100%, 3.5 sec on every rank). Only a target that tanks the
+        // shaman ever strikes it.
         if let Some(aura) = sim.get_aura(player, "Lightning Shield") {
             let row = data.lightning_shield.highest();
-            effects.push(json!({
+            let mut effect = json!({
                 "kind": "lightning_shield", "spell_id": row.id, "aura": sim.aura(aura).label,
                 "charges": i32::from(row.proc_charges),
-            }));
+            });
+            if sim.rules == crate::prepare::sim::Rules::Forever {
+                let orb = super::spell_data::lightning_shield_orb();
+                effect["orb"] = json!({
+                    "spell_id": orb.id,
+                    "base_damage": orb.damage_effect().average(character_level()),
+                    "icd_ns": nanos(row.icd()),
+                    "can_crit": !orb.cannot_crit(),
+                });
+            }
+            effects.push(effect);
         }
         // registerWaterShieldSpell (talent): the cast puts up every globe; the shaman's own
         // critical spells spend one for mana (Forever's rules only: Go never casts it). The hit

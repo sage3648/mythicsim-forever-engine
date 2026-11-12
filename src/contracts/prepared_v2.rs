@@ -1384,6 +1384,20 @@ pub struct RangedState {
     pub defender_bonus_ranged_attack_power: f64,
 }
 
+/// Lightning Shield's orb under Forever's rules, from the client rows: every rank's proc flags
+/// (139944) hear the melee hits the shaman takes, at 100% with a 3.5 sec internal cooldown, and
+/// the orb (26364 and on) strikes the attacker for its damage. Every orb rank carries the
+/// client's cannot-crit attribute.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct LightningShieldOrb {
+    pub spell_id: i32,
+    pub base_damage: f64,
+    pub icd_ns: i64,
+    #[serde(default)]
+    pub can_crit: bool,
+}
+
 /// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
 /// `ApplyEffects`, `CalcDamage` and `outcomeEnemyMeleeWhite`, with every value resolved as Go
 /// computes it at reset.
@@ -4124,12 +4138,15 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "is_zero_f64")]
         radius_yards: f64,
     },
-    /// Lightning Shield: the cast puts up every charge; without a shield proc rate the orbs
-    /// never fire.
+    /// Lightning Shield: the cast puts up every charge. The reference's orbs never fire; under
+    /// Forever's rules `orb` makes a target's landed swing at the shaman spend a charge and
+    /// strike the target, one orb per internal cooldown.
     LightningShield {
         spell_id: i32,
         aura: String,
         charges: i32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        orb: Option<LightningShieldOrb>,
     },
     /// Water Shield (client 1.60.1.70532): the cast puts up every globe; a critical hit of a
     /// trigger spell, damage or heal, spends one and restores a share of maximum mana, one globe
