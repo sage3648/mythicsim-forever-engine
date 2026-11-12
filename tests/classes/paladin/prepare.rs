@@ -191,20 +191,78 @@ fn a_paladin_without_its_options_is_refused() {
     assert_eq!(refusal_code(&value), "class_option");
 }
 
-/// A set bonus Rust does not describe is refused: the Justice Battlegear 4-piece adds attack
-/// power against Undead to the attack tables, which the exporter reports as unrepresented.
-#[test]
-fn the_justice_battlegear_four_piece_is_refused() {
-    let mut value = request_value("retribution");
-    // The talents read in push 113554's tree, which Forever's rules prepare.
-    crate::paladin_113554::forever_request(&mut value);
+/// The Justice Battlegear's four pieces: Justice Leggings, Gauntlets, Spaulders and Greaves.
+fn with_justice_battlegear(value: &mut Value) {
     let items = value["raid"]["parties"][0]["players"][0]["equipment"]["items"]
         .as_array_mut()
         .unwrap();
     for (slot, id) in [(2, 273910), (6, 273909), (8, 273908), (9, 273911)] {
         items[slot] = serde_json::json!({ "id": id });
     }
-    assert_eq!(refusal_code(&value), "item_set");
+}
+
+fn mob_type_bonuses(prepared: &Value) -> Vec<Value> {
+    prepared["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|effect| {
+            effect["kind"] == "mob_type_bonus" && effect["aura"] == "Justice Battlegear 4P"
+        })
+        .cloned()
+        .collect()
+}
+
+/// The Justice Battlegear 4-piece bonus, +36 Attack Power against Undead (spell 1301084, a melee
+/// attack power versus a creature type aura), holds against an Undead target and is inert against
+/// any other: prepared and run, not refused.
+#[test]
+fn the_justice_battlegear_four_piece_is_attack_power_against_undead() {
+    let prepare = |mob_type: Option<&str>| {
+        let mut value = request_value("retribution");
+        // The talents read in push 113554's tree, which Forever's rules prepare.
+        crate::paladin_113554::forever_request(&mut value);
+        with_justice_battlegear(&mut value);
+        if let Some(mob_type) = mob_type {
+            value["encounter"]["targets"][0]["mobType"] = serde_json::json!(mob_type);
+        }
+        let prepared = forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x")
+            .expect("the four piece bonus is prepared");
+        let typed: forever_engine::contracts::prepared_v2::PreparedV2 =
+            serde_json::from_value(prepared.clone()).unwrap();
+        forever_engine::check_prepared(&typed).unwrap_or_else(|err| panic!("{err:?}"));
+        forever_engine::simulate_prepared(&typed).unwrap();
+        prepared
+    };
+    let undead = mob_type_bonuses(&prepare(Some("MobTypeUndead")));
+    assert_eq!(undead.len(), 1, "{undead:?}");
+    assert_eq!(undead[0]["melee_attack_power"], 36.0);
+    assert_eq!(undead[0]["ranged_attack_power"], 0.0);
+    for other in [Some("MobTypeDemon"), None] {
+        assert!(mob_type_bonuses(&prepare(other)).is_empty());
+    }
+}
+
+/// The reference's rules still describe none of it: the four piece bonus adds attack power against
+/// Undead to the attack tables, which the exporter reports as unrepresented, so a request that
+/// reaches it is refused there.
+#[test]
+fn the_reference_rules_still_refuse_the_justice_battlegear_four_piece() {
+    let mut value = request_value("retribution");
+    with_justice_battlegear(&mut value);
+    match forever_engine::prepare_json_with(
+        &serde_json::to_vec(&value).unwrap(),
+        "x",
+        forever_engine::Rules::GoReference,
+    ) {
+        Err(forever_engine::PrepareError::Refused(refusal)) => {
+            assert!(
+                refusal.reason.contains("Justice Battlegear 4P"),
+                "{refusal}"
+            )
+        }
+        other => panic!("expected a refusal, got {other:?}"),
+    }
 }
 
 /// A Paladin tanking the target is prepared with the target's swing at it; the fixture
