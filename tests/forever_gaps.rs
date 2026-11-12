@@ -698,8 +698,9 @@ fn hammer_of_the_righteous_cleaves() {
     // Ahn'Qiraj 20 books, which Forever's rules leave out. 971 since the 9 November live rows of
     // Plate of the Shaman King and Eye of Orgrimmar. 978 since Windfury Totem's Forever rules
     // (Holy Strike no longer rolls it, the triggering swing keeps its charges). 968 since
-    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss.
-    assert_eq!(casts, 968.0);
+    // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss. 967 since
+    // judgements are ranged attacks (hotfixes of 11 November 2026) and melee procs skip them.
+    assert_eq!(casts, 967.0);
     assert!(damage > 0.0);
 }
 
@@ -722,12 +723,14 @@ fn seal_of_justice_judges_justice() {
     // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
     // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
     // 3258 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
-    assert_eq!(action(&player, 20164, 0).0, 3258.0);
+    // 3256 since judgements are ranged attacks (hotfixes of 11 November 2026).
+    assert_eq!(action(&player, 20164, 0).0, 3256.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
     // Wisdom pays only on landed hits. 748 since the 11 November live rows of Truestrike
-    // Shoulders and Battleborn Armbraces.
-    assert_eq!(action(&player, 20184, 0).0, 748.0);
+    // Shoulders and Battleborn Armbraces. 749 since judgements are ranged attacks (hotfixes of
+    // 11 November 2026).
+    assert_eq!(action(&player, 20184, 0).0, 749.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing

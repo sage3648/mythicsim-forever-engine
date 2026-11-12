@@ -39,6 +39,13 @@ pub(crate) fn on_spell_hit_dealt(
     if state.flags.proc || !state.white_hit || result.outcome & OUTCOME_LANDED == 0 {
         return;
     }
+    // Blizzard's WoW Forever hotfixes of 11 November 2026: "Unsealed Fury no longer generates
+    // echoes from Windfury Totem attacks." The totem's extra swing is a main hand auto like any
+    // other, so it is told apart by its spell: it neither stores the active seal nor spends the
+    // other Echoes.
+    if is_windfury_totem_swing(fight, spell) {
+        return;
+    }
     let Some(active) = seals::active_seal(fight) else {
         return;
     };
@@ -88,4 +95,12 @@ fn replay(fight: &mut Fight<PaladinAgent>, seal: usize, result: &SpellResult) {
             unreachable!("Seal of the Crusader, Light and Wisdom leave no Echo")
         }
     }
+}
+
+/// Whether a spell is the party Windfury Totem's extra main hand attack.
+fn is_windfury_totem_swing(fight: &Fight<PaladinAgent>, spell: SpellId) -> bool {
+    fight
+        .windfury
+        .as_ref()
+        .is_some_and(|windfury| windfury.extra == Some(spell))
 }
