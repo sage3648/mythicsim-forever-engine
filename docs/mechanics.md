@@ -1512,6 +1512,39 @@ the Go goldens and exporter uses. The departures:
     274297 (SpellEffect 1347318), and no client row states what the whelp deals, so the item
     stays refused as unknown.
   The reference's rules still refuse every one of these items as unknown.
+- Items that refused players' Quick Sims on 12 November 2026
+  (`tests/forever_client_items_20261113.rs`), from Wowhead's Forever tooltips and the client rows
+  wago.tools serves (`product=wowf`, client 1.60.1.70888) on 13 November 2026. None of their spell
+  rows is encrypted, so `src/data/forever_client_spells.rs` restates every field from the client:
+  - Pyromancer's Baton (286650), one-hand mace, item level 40, 46 to 86, speed 2.40: "Chance on
+    hit: Burns the target for 30 Fire damage every 3 sec for 9 sec." ItemEffect 238191 is a chance
+    on hit (trigger type 2) of Ablaze (1320925) with no rate and no cooldown. The spell is a
+    Periodic Damage aura of 30 every 3000 ms (SpellEffect 1355874), Fire, 9 sec, ticks that may
+    crit (SpellMisc 866630), magic defense (SpellCategories 189172), with no coefficient: the
+    shape of Flaming Incinerator's Incinerator. It rolls the assumed chance on hit rate (1.8% per
+    second of weapon speed, 4.32% a swing at 2.40, `docs/forever-chance-on-hit.md`) on the
+    weapon's own landed hits and puts three ticks on the unit hit, rolling the magic hit as it
+    goes on.
+  - Sword of Dismemberment (287005), two-hand sword, item level 42, 110 to 166, speed 3.70:
+    "Chance on hit: Dismember the target, inflicting 335 to 1005 Physical damage." ItemEffect
+    238815 is a chance on hit of Dismember (1324687) with no rate and no cooldown, a School Damage
+    of 670 with a variance of 1 (SpellEffect 1361623), Physical, melee defense (SpellCategories
+    189951), no coefficient. It rolls the assumed rate (6.66% a swing at 3.70) and the hit rolls
+    the melee table, may crit and takes armor, as Toofbreaker's does.
+  - Farraki Kris (274647), main hand dagger, item level 47, 23 to 44, speed 1.60, 54 spell damage
+    and healing, 2 spell penetration: "Equip: Chance on harmful spell cast to afflict the target
+    with a draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)". ItemEffect
+    233957 is an equip of Blood Sacrifice (1294644): SpellAuraOptions 246039 has ProcChance 100
+    beside the tooltip's "Chance", ProcTypeMask 65536 (harmful spells) and a 100 ms proc recovery,
+    casting 1294645, a Periodic Leech of 19 every 2 sec for 6 sec, Shadow. A chance of 100 beside
+    a clause that says the effect only sometimes happens is no rate, as for Krol'dok Battlegear's
+    four piece, and the assumed chance on hit rate is per weapon hit, not per spell (the
+    reference's Galgann's Firehammer and Spire of Hakkar stay unregistered for the same reason).
+    So the effect is not prepared: a character with no mana bar casts no harmful spell and wears
+    the kris as a plain dagger; one with a mana bar is refused with "item 274647 has an effect not
+    prepared yet (a chance on harmful spell cast whose rate the client does not state on a
+    character with a mana bar)" (`forever_effect_items::SPELL_CAST_EFFECTS_NOT_PREPARED`).
+  The reference's rules still refuse all three as unknown.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
