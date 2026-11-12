@@ -15,6 +15,10 @@
 //!   same way: a Physical hit of 42 on the unit hit, on the melee table. "Deals 2 times as much
 //!   damage if the target is facing you": the hit is doubled for a character in front of the
 //!   target or one the target swings at (`FACING_DAMAGE_ITEMS`).
+//! - Pyromancer's Baton (286650) and Sword of Dismemberment (287005) are chance on hit weapons
+//!   with no stated rate too, registered the same way: Ablaze, a Fire damage over time of 30
+//!   every 3 sec for 9 sec on the unit hit, which rolls the magic hit as it goes on, as Flaming
+//!   Incinerator's does; and Dismember, a Physical hit of 335 to 1005 on the melee table.
 //! - Dreadfrost Saber (274603) is a spell data damage proc (`NewSpellDataDamageProc`), as Fiery
 //!   Plate Gauntlets' "Adds 4 fire damage to your weapon attack" is in the reference: its equip
 //!   aura (1294939) hears the wearer's landed main hand melee hits and casts a Frost hit of 1
@@ -118,6 +122,34 @@ pub(crate) const CHANCE_ON_HIT_ITEMS: &[Registration] = &[
         &[ItemVariant {
             item_id: 286430,
             item_name: "Toofbreaker",
+        }],
+    ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1320925,
+            is_weapon_proc: true,
+            trigger_spell_id: 1320925,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 286650,
+            item_name: "Pyromancer's Baton",
+        }],
+    ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1324687,
+            is_weapon_proc: true,
+            trigger_spell_id: 1324687,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 287005,
+            item_name: "Sword of Dismemberment",
         }],
     ),
 ];
@@ -344,6 +376,58 @@ pub(crate) fn struck_effect_not_prepared(
         format!(
             "item {item} has an effect not prepared yet ({} on a character the target attacks)",
             struck.effect
+        ),
+    ))
+}
+
+/// An equip effect that acts on the wearer's harmful spell casts at a chance the client does not
+/// state, and that nothing here applies yet.
+pub(crate) struct SpellCastEffectNotPrepared {
+    pub(crate) item_id: i32,
+    /// The effect, as the refusal names it.
+    pub(crate) effect: &'static str,
+}
+
+/// The items whose equip effect acts on the wearer's harmful spell casts at a chance the client
+/// does not state. The reference's items of this shape (Galgann's Firehammer, Spire of Hakkar,
+/// Depleted Eye of Influence) stay unregistered for the same want of a rate
+/// (`docs/forever-chance-on-hit.md`), and the assumed chance on hit rate is a rate per weapon hit,
+/// which a spell cast is not. A character with no mana bar (a Warrior, a Rogue) casts no harmful
+/// spell and wears the item as a plain one, exactly; one with a mana bar is refused, since the
+/// effect would change that fight.
+///
+/// Farraki Kris (274647): "Equip: Chance on harmful spell cast to afflict the target with a
+/// draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)" (Wowhead's Forever
+/// tooltip, 13 November 2026). ItemEffect 233957 is an equip (trigger type 1) of Blood Sacrifice
+/// (1294644): SpellAuraOptions 246039 has ProcChance 100 beside the tooltip's "Chance", ProcTypeMask
+/// 65536 (harmful spells dealt) and a proc recovery of 100 ms, and SpellEffect 1316123 casts Blood
+/// Sacrifice (1294645), whose SpellEffect 1316124 is a Periodic Leech (53) of 19 every 2000 ms,
+/// Shadow (SchoolMask 32), for SpellMisc 842035's DurationIndex 32, 6 sec. A chance of 100 beside a
+/// trigger clause that says the effect only sometimes happens is no rate
+/// (`spelldata::proc_chance_source::PPM`), as Krol'dok Battlegear's four piece and Defias
+/// Enforcer's Garb's five piece are not (`forever_client_sets`).
+pub(crate) const SPELL_CAST_EFFECTS_NOT_PREPARED: [SpellCastEffectNotPrepared; 1] =
+    [SpellCastEffectNotPrepared {
+        item_id: 274647,
+        effect: "a chance on harmful spell cast whose rate the client does not state",
+    }];
+
+/// Refuses a worn item of [`SPELL_CAST_EFFECTS_NOT_PREPARED`] on a character with a mana bar.
+pub(crate) fn spell_cast_effect_not_prepared(env: &Environment, item: i32) -> Result<(), Refusal> {
+    let Some(cast) = SPELL_CAST_EFFECTS_NOT_PREPARED
+        .iter()
+        .find(|cast| cast.item_id == item)
+    else {
+        return Ok(());
+    };
+    if !env.sim.unit(env.player).mana_bar.enabled {
+        return Ok(());
+    }
+    Err(Refusal::new(
+        "item_effect",
+        format!(
+            "item {item} has an effect not prepared yet ({} on a character with a mana bar)",
+            cast.effect
         ),
     ))
 }

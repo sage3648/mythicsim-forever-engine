@@ -787,6 +787,8 @@ class CommittedFileTests(unittest.TestCase):
         self.assertLessEqual({22395, 274603, 274608, 274609, 279480, 279852, 286430}, ids)
         # The stat use and the two struck effects of 12 November 2026.
         self.assertLessEqual({274615, 274651, 276742}, ids)
+        # The two chance on hit weapons and the spell cast effect of 13 November 2026.
+        self.assertLessEqual({274647, 286650, 287005}, ids)
 
     def test_the_worn_quest_item_is_committed(self):
         with open(tool.OUT) as rows:
