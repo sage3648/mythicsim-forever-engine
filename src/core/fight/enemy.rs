@@ -294,6 +294,7 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(attacker, &line);
         }
+        self.tank_hit(result.damage);
         self.on_enemy_hit_taken(&result);
     }
 

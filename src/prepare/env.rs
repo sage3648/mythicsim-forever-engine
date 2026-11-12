@@ -32,6 +32,45 @@ pub(crate) struct Encounter {
     pub no_hit_suppression: bool,
 }
 
+/// What a raid member's fight takes from the other members' casts (`engine::raid`). The raid's
+/// target debuffs a member casts are registered on the target but up only while a member keeps
+/// them up. The target's major armor category is exported so that a member's stacks set its
+/// armor, and the categories of the others so that the fight applies their changes as they come
+/// and go. An Innervate or Power Infusion a member is assigned is registered on the player, with
+/// no assumed cooldown to cast it: it is up only when the assigned caster's cast lands.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) struct RaidLive {
+    pub(crate) sunder_armor: bool,
+    pub(crate) expose_armor: bool,
+    pub(crate) faerie_fire: bool,
+    pub(crate) curse_of_elements: bool,
+    pub(crate) curse_of_recklessness: bool,
+    pub(crate) innervate: bool,
+    pub(crate) power_infusion: bool,
+}
+
+impl RaidLive {
+    /// Whether a member casts a major armor debuff.
+    pub(crate) fn armor(self) -> bool {
+        self.sunder_armor || self.expose_armor
+    }
+
+    /// The labels of the raid's copies whose changes the fight applies as they come and go.
+    pub(crate) fn applied_labels(self) -> impl Iterator<Item = &'static str> {
+        [
+            (self.faerie_fire, "Faerie Fire (External)"),
+            (self.curse_of_elements, "Curse of the Elements (External)"),
+            (
+                self.curse_of_recklessness,
+                "Curse of Recklessness (External)",
+            ),
+        ]
+        .into_iter()
+        .filter(|(live, _)| *live)
+        .map(|(_, label)| label)
+    }
+}
+
 /// A prepared simulation: the arena, its one player and the class agent.
 #[derive(Clone)]
 pub(crate) struct Environment {
@@ -55,6 +94,9 @@ pub(crate) struct Environment {
     pub factory: AgentFactory,
     /// The rules it was prepared with, for a separate simulation of the same request.
     pub rules: Rules,
+    /// The raid debuffs a member of the player's raid casts, which only that member's casts
+    /// keep up (`engine::raid`).
+    pub raid_live: RaidLive,
     /// Every attacker's table against every defender, by unit index.
     pub attack_tables: Vec<Vec<AttackTable>>,
     /// The party buffs the drivers read: the request's with what the agent adds.
@@ -155,6 +197,17 @@ impl Environment {
         factory: AgentFactory,
         rules: Rules,
     ) -> Result<Environment, Refusal> {
+        Environment::with_options(request, factory, rules, RaidLive::default())
+    }
+
+    /// [`Environment::with_rules`] for a member of a raid, whose raid debuffs in `raid_live`
+    /// are on the target only while a member casts them.
+    pub(crate) fn with_options(
+        request: &Message,
+        factory: AgentFactory,
+        rules: Rules,
+        raid_live: RaidLive,
+    ) -> Result<Environment, Refusal> {
         let mut sim = Sim::new();
         sim.rules = rules;
         let raid = request
@@ -223,6 +276,7 @@ impl Environment {
             external_activations: Vec::new(),
             factory,
             rules,
+            raid_live,
             healer_gear: super::healer_gear::HealerGear::default(),
         };
         if let Some(debuffs) = raid.message("debuffs") {
@@ -267,7 +321,7 @@ impl Environment {
     pub(crate) fn fresh(&self) -> Environment {
         self.pristine
             .get_or_init(|| {
-                Environment::with_rules(&self.request, self.factory, self.rules)
+                Environment::with_options(&self.request, self.factory, self.rules, self.raid_live)
                     .expect("the request prepared once already")
             })
             .clone()

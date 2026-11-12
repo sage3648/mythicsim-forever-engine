@@ -745,8 +745,11 @@ impl<A: Agent> Fight<A> {
             attack.previous_swing = attack.swing_at;
             attack.swing_at = now + attack.cur_swing_duration;
             attack.natural_ready_at = attack.swing_at;
-            // The target's own reaction runs no rotation in scope.
-            self.enemy_swing(side);
+            // The target's own reaction runs no rotation in scope. A raid's target held by another
+            // member's tank keeps its timer and swings at that tank.
+            if self.enemy_swings_now(side) {
+                self.enemy_swing(side);
+            }
             return self.autos.enemy_attack(side).swing_at;
         }
         let mut spell = self

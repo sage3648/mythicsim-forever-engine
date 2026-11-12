@@ -257,8 +257,11 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
             Effect::NaturalReaction { outcome, .. } if outcome != &["Dodge"] => {
                 reasons.push(format!("Natural Reaction procs on {outcome:?}"));
             }
-            Effect::FaerieFire { refresh, .. }
-                if refresh.as_slice() != ["own"] && refresh.as_slice() != ["never"] =>
+            // In a raid, the fight applies the armor of whatever holds the category.
+            Effect::FaerieFire { refresh, aura, .. }
+                if refresh.as_slice() != ["own"]
+                    && refresh.as_slice() != ["never"]
+                    && !raid_applies(prepared, aura) =>
             {
                 reasons.push(format!(
                     "Faerie Fire's armor reduction reads {refresh:?}, which is not modeled"
@@ -268,6 +271,14 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// Whether a raid debuff category carries the aura's changes (`Effect::RaidDebuffCategory`).
+fn raid_applies(prepared: &PreparedV2, aura: &str) -> bool {
+    prepared.effects.iter().any(|effect| {
+        matches!(effect, Effect::RaidDebuffCategory { members, .. }
+            if members.iter().any(|member| member.aura == aura))
+    })
 }
 
 /// The spells that reach a target past the first in Go and not yet in Rust: none. Swipe on up

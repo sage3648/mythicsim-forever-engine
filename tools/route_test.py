@@ -357,5 +357,79 @@ class BatchTest(BundleTest):
         self.assertEqual(json.loads(done.stdout)["status"], "fallback")
 
 
+# A stand-in for `forever-engine raid`, which reads its behavior from raid-mode.json beside it.
+FAKE_RAID = """#!/usr/bin/env python3
+import json, sys
+from pathlib import Path
+mode = json.loads((Path(__file__).parent / "raid-mode.json").read_text())
+args = dict(zip(sys.argv[2::2], sys.argv[3::2]))
+assert sys.argv[1] == "raid" and "--rotation-stats" in sys.argv
+raid = json.loads(Path(args["--request"]).read_text())
+(Path(__file__).parent / "raid-seed.log").write_text(raid["request"]["simOptions"]["randomSeed"])
+(Path(__file__).parent / "raid-input.log").write_text(json.dumps(raid))
+if mode.get("refusals"):
+    print(json.dumps({"supported": False, "refusals": mode["refusals"]}))
+    sys.exit(3)
+if mode.get("fail"):
+    sys.exit("broken")
+Path(args["--outfile"]).write_text(json.dumps(mode["report"]))
+"""
+
+RAID_REPORT = {"identity": {"engine": "forever-engine"}, "request_sha256": "cd",
+               "result": {"iterationsDone": 10, "raidMetrics": {"dps": {"avg": 900.0}, "parties": []}},
+               "mythicsim": {"raidSchema": 1, "members": [{"raidIndex": 0}, {"raidIndex": 5}]}}
+
+
+class RaidRouteTest(BundleTest):
+    def decide(self, seed=7, raid_input=None, **mode):
+        mode.setdefault("report", RAID_REPORT)
+        engine = self.bundle / "bin" / route.ENGINE
+        engine.write_text(FAKE_RAID)
+        (self.bundle / "bin" / "raid-mode.json").write_text(json.dumps(mode))
+        raid = self.root / "raid.json"
+        raid.write_text(json.dumps(raid_input or {"schema": 1, "request": {"simOptions": {"iterations": 10}}}))
+        return route.route_raid(raid, self.output, self.bundle, 30, seed)
+
+    def test_a_raid_writes_its_result_and_member_summary(self):
+        decision = self.decide()
+        self.assertEqual(decision["status"], "rust")
+        self.assertEqual(decision["members"], 2)
+        self.assertEqual(json.loads(Path(decision["result"]).read_text()), RAID_REPORT["result"])
+        self.assertEqual(json.loads(Path(decision["summary"]).read_text()), RAID_REPORT["mythicsim"])
+        self.assertEqual((self.bundle / "bin" / "raid-seed.log").read_text(), "7")
+
+    def test_tank_inputs_reach_the_engine_and_its_summary_comes_back_whole(self):
+        # The engine validates a raid; the tool passes every field through and keeps the summary.
+        raid_input = {"schema": 1, "request": {"simOptions": {"iterations": 10}},
+                      "assignments": {"tankHealers": [{"from": 2, "to": 0}]}, "tankSwapSeconds": 30}
+        summary = dict(RAID_REPORT["mythicsim"],
+                       tankHealing=[{"from": 2, "to": 0, "effective": 1.0, "overheal": 0.5, "share": 0.5}],
+                       targetAuras=[{"raidIndex": 0, "auras": []}])
+        decision = self.decide(raid_input=raid_input, report=dict(RAID_REPORT, mythicsim=summary))
+        self.assertEqual(decision["status"], "rust")
+        sent = json.loads((self.bundle / "bin" / "raid-input.log").read_text())
+        self.assertEqual(sent["assignments"], raid_input["assignments"])
+        self.assertEqual(sent["tankSwapSeconds"], 30)
+        self.assertEqual(json.loads(Path(decision["summary"]).read_text()), summary)
+
+    def test_a_refused_member_is_a_fallback_naming_it(self):
+        refusals = [{"member": 5, "name": "Ann", "stage": "check", "code": "unknown_spell", "reason": "x"}]
+        decision = self.decide(refusals=refusals)
+        self.assertEqual(decision["status"], "fallback")
+        self.assertEqual(decision["refusals"], refusals)
+        self.assertEqual(decision["codes"], ["unknown_spell"])
+        self.assertFalse((self.output / "result.json").exists())
+
+    def test_a_failed_raid_is_a_fault(self):
+        decision = self.decide(fail=True)
+        self.assertEqual(decision["status"], "fault")
+        self.assertEqual(decision["stage"], "rust")
+        self.assertFalse((self.output / "result.json").exists())
+
+    def test_a_report_without_members_is_a_fault(self):
+        decision = self.decide(report={"result": RAID_REPORT["result"]})
+        self.assertEqual(decision["status"], "fault")
+
+
 if __name__ == "__main__":
     unittest.main()

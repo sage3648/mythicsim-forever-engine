@@ -8,6 +8,7 @@ pub(crate) mod flametongue;
 pub(crate) mod generated;
 pub(crate) mod paladin;
 pub(crate) mod pet_buffs;
+mod raid_debuffs;
 pub(crate) mod support;
 mod windfury_effect;
 
@@ -27,9 +28,10 @@ use super::Refusal;
 pub(crate) use effects::{
     aura_should_refresh_effects, battle_shout_effect, exclusive_refresh,
     external_expose_armor_effect, judgement_of_light_effects, judgement_of_wisdom_effects,
-    sunder_armor_effect,
+    raid_armor_category, sunder_armor_effect,
 };
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs, GIFT_OF_ARTHAS};
+pub(crate) use raid_debuffs::{raid_applies, raid_debuff_categories};
 pub(crate) use windfury_effect::{windfury_totem_effect, windfury_trigger_spells};
 
 /// Which constructor a generated buff uses.
@@ -450,6 +452,7 @@ pub(crate) fn apply_buff_effects(
     } else {
         apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)?;
     }
+    drivers::drive_assigned(env, unit, individual)?;
     // After the generated party buffs, where wowsims/forever applies it.
     dark_inspiration::apply_party_dark_inspiration(env, unit, party_buffs)
 }

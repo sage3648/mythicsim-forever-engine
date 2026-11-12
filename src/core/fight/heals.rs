@@ -239,6 +239,16 @@ impl HealBook {
             for jump in 0..targets {
                 fight.heal_crit_bonus = if jump == 0 { first_crit } else { 0.0 };
                 let base = fight.effect_roll(average, variance);
+                // The first player of a single-target heal or a chain heal is the tank; a
+                // party heal's players and a mending heal keep the solo model.
+                fight.heal_on_tank(
+                    jump == 0
+                        && match heal.smart {
+                            Some(SmartHeal::Mending { .. }) => false,
+                            Some(SmartHeal::Chain) => true,
+                            None => heal.targets == 1,
+                        },
+                );
                 let past_first = if jump > 0 {
                     heal.past_first_multiplier
                 } else {
@@ -252,6 +262,7 @@ impl HealBook {
                     self.bonus_healing_taken,
                     share * past_first,
                 );
+                fight.heal_on_tank(false);
                 fight.heal_crit_bonus = 0.0;
                 if let (Some(absorb), true) = (heal.crit_shield, result.outcome == OUTCOME_CRIT) {
                     fight.deal_shield(heal.spell, absorb);
@@ -454,8 +465,12 @@ impl HealBook {
             .heals
             .iter()
             .find(|heal| heal.dot == Some(dot) && heal.direct.is_some());
+        // A heal over time on one player ticks on the tank; a party heal over time does not.
+        let on_tank = self.tick_players(dot) == 1;
         for _ in 0..self.tick_players(dot) {
+            fight.heal_on_tank(on_tank);
             let (crit, landed) = fight.deal_heal_tick(spell, snapshot, healing, can_crit);
+            fight.heal_on_tank(false);
             if let (true, Some(heal)) = (crit, channel) {
                 Self::shield_crit(fight, heal, landed, true);
             }
@@ -504,6 +519,7 @@ impl HealBook {
         let healing = self.healing(fight, caster);
         let state = &fight.spells[spell];
         let own = state.damage_multiplier * state.damage_multiplier_additive;
+        fight.heal_on_tank(true);
         fight.calc_and_deal_healing_with(
             spell,
             Side::Player,
@@ -513,6 +529,7 @@ impl HealBook {
             1.0,
             Some(own),
         );
+        fight.heal_on_tank(false);
     }
 
     /// The first heal over time up on the player among `ranks`, with what the rest of its ticks
@@ -593,6 +610,10 @@ impl<A: Agent> Fight<A> {
     /// What a heal of `spell` that landed `landed` healing was before the share real healers
     /// overheal was taken off: the heal the spell computed.
     pub(crate) fn heal_before_overheal(&self, spell: SpellId, landed: f64) -> f64 {
+        // A heal on an assigned tank was capped by its missing health, not by the overheal share.
+        if let Some(gross) = self.tank_heal_gross() {
+            return gross;
+        }
         landed / (1.0 - self.spells[spell].overheal)
     }
 

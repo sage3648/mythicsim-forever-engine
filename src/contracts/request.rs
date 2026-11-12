@@ -12,7 +12,7 @@
 
 mod json;
 mod schema;
-mod sha256;
+pub(crate) mod sha256;
 mod wire;
 
 use std::collections::BTreeMap;

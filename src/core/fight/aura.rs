@@ -550,6 +550,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Aura.Refresh`.
     pub(crate) fn refresh_aura(&mut self, aura: AuraRef) {
         self.changed(super::reads::AURAS);
+        self.mark_shared(aura);
         let now = self.now;
         let tracker = &mut self.trackers[aura.side.index()];
         let state = &mut tracker.auras[aura.index];
@@ -648,6 +649,7 @@ impl<A: Agent> Fight<A> {
         if !self.aura(aura).active {
             return;
         }
+        self.mark_shared(aura);
         // Go closes the exclusive effects' uptime before it clears the expiry.
         self.close_exclusive_uptime(aura);
         let now = self.now;
@@ -737,6 +739,7 @@ impl<A: Agent> Fight<A> {
             let line = format!("{} stacks: {old} --> {new}", action_string(&id));
             self.unit_log(aura.side, &line);
         }
+        self.mark_shared(aura);
         {
             // Go `APLValueAuraNumStacks`'s stack change handler: the stacks before a change a
             // reaction time after the last one are the ones a reaction-time read falls back to.

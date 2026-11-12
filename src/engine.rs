@@ -3,6 +3,7 @@
 
 pub(crate) mod coverage;
 pub(crate) mod prepared;
+pub(crate) mod raid;
 mod validation;
 
 use std::collections::BinaryHeap;

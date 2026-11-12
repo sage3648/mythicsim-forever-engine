@@ -8,6 +8,7 @@ use crate::{
     core::fight::{
         heals::HealBook,
         poised::{self, Poised},
+        raid::Gift,
         Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult,
     },
 };
@@ -1190,7 +1191,11 @@ impl Agent for DruidAgent {
             DruidSpell::InsectSwarm => insect_swarm::apply(fight, spell, target),
             DruidSpell::Innervate => {
                 let aura = Self::innervate(fight).aura;
-                fight.activate_aura(aura);
+                // A raid's assignment sends it to another member instead.
+                let duration = fight.aura(aura).duration;
+                if !fight.give(Gift::Innervate, duration) {
+                    fight.activate_aura(aura);
+                }
             }
             DruidSpell::CatForm => Self::cat_form(fight).apply(fight),
             DruidSpell::BearForm => {

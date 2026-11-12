@@ -243,6 +243,14 @@ impl<A: Agent> Fight<A> {
         found
     }
 
+    pub(crate) fn category(&self, tracking: bool, category: usize) -> &Category {
+        if tracking {
+            &self.exclusive_tracking[category]
+        } else {
+            &self.exclusive[category]
+        }
+    }
+
     fn category_mut(&mut self, tracking: bool, category: usize) -> &mut Category {
         if tracking {
             &mut self.exclusive_tracking[category]
@@ -286,6 +294,9 @@ impl<A: Agent> Fight<A> {
                 let bonus = self.exclusive[category].members[new].priority;
                 self.multiply_movement_speed(1.0 + bonus);
             }
+        }
+        if !self.raid_debuffs.is_empty() {
+            self.raid_debuff_holder_change(tracking, category, old, new);
         }
         if tracking {
             let holder = |state: &Category, member: Option<usize>| {

@@ -150,6 +150,8 @@ impl Heals {
             }
         }
         fight.spells[spell].bonus_crit_percent += unsworn_crit;
+        // A heal on the paladin's own player is the one an assigned tank takes in a raid.
+        fight.heal_on_tank(target == Side::Player);
         fight.calc_and_deal_healing(
             spell,
             target,
@@ -157,6 +159,7 @@ impl Heals {
             unit.healing,
             unit.bonus_healing_taken,
         );
+        fight.heal_on_tank(false);
         fight.spells[spell].bonus_crit_percent -= unsworn_crit;
         // Light's Vigil on an ally: a Holy Shock heal on the player spends it and heals the party.
         if rank.kind == HealKind::HolyShockHeal && target == Side::Player {
