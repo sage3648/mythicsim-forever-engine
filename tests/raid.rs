@@ -1041,3 +1041,178 @@ fn a_second_tank_needs_a_swap_time_in_range() {
         }
     }
 }
+
+/// A healer from the healer fixtures: a player with its heals and no tank of its own.
+fn healer(name: &str) -> Value {
+    let path = format!(
+        "{}/fixtures/healers/{name}.request.json",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let request: Value =
+        serde_json::from_slice(&std::fs::read(path).expect("fixture")).expect("fixture json");
+    request["raid"]["parties"][0]["players"][0].clone()
+}
+
+/// The first tank of the reference raid with healers beside it, the boss's swing weakened to
+/// 1000 damage so a healer or two can cover it, and each healer assigned to the tank when
+/// `assigned` says so (healers after the tank, at raid indexes 1, 2, ...).
+fn healed_tank(healers: &[&str], assigned: &[bool], iterations: u32) -> Value {
+    let mut players = vec![reference_player(0, 0)];
+    players.extend(healers.iter().map(|name| healer(name)));
+    let mut input = tank_raid(players, &[0], &[(0, None)], iterations);
+    input["request"]["encounter"]["targets"][0]["minBaseDamage"] = json!(1000);
+    let list: Vec<Value> = assigned
+        .iter()
+        .enumerate()
+        .filter(|(_, assigned)| **assigned)
+        .map(|(index, _)| json!({ "from": index + 1, "to": 0 }))
+        .collect();
+    if !list.is_empty() {
+        input["assignments"] = json!({ "tankHealers": list });
+    }
+    input
+}
+
+fn tank_healing(report: &Value) -> Vec<Value> {
+    report["mythicsim"]["tankHealing"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+}
+
+fn effective(report: &Value, from: u64) -> f64 {
+    tank_healing(report)
+        .iter()
+        .find(|entry| entry["from"] == from)
+        .unwrap_or_else(|| panic!("no tank healing from {from}"))["effective"]
+        .as_f64()
+        .unwrap()
+}
+
+#[test]
+fn an_assigned_healer_heals_what_the_tank_takes_and_no_more() {
+    for name in [
+        "holy-priest",
+        "restoration-druid",
+        "restoration-shaman",
+        "holy-paladin",
+    ] {
+        let report = run(&healed_tank(&[name], &[true], 100));
+        let taken = dtps(&report, "protection-warrior");
+        let entry = &tank_healing(&report)[0];
+        assert_eq!(
+            (entry["from"].as_u64(), entry["to"].as_u64()),
+            (Some(1), Some(0))
+        );
+        let (landed, overheal, share) = (
+            entry["effective"].as_f64().unwrap(),
+            entry["overheal"].as_f64().unwrap(),
+            entry["share"].as_f64().unwrap(),
+        );
+        assert!(
+            landed > 0.0 && landed <= taken,
+            "{name}: {landed} against {taken} taken"
+        );
+        // The weak boss leaves heals over: the healer casts without reading the tank's health.
+        assert!(overheal > 0.0, "{name} overheals nothing");
+        assert!(
+            (share - landed / taken).abs() < 0.01 * share,
+            "{name}: share {share}"
+        );
+        // The healer's own healing includes what landed on the tank.
+        let own = member(&report, healer(name)["name"].as_str().unwrap());
+        assert!(
+            own["hps"]["avg"].as_f64().unwrap() >= landed - 1e-6,
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn healers_on_one_tank_share_what_it_takes() {
+    let both = run(&healed_tank(
+        &["holy-priest", "restoration-druid"],
+        &[true, true],
+        100,
+    ));
+    let taken = dtps(&both, "protection-warrior");
+    let (first, second) = (effective(&both, 1), effective(&both, 2));
+    assert!(
+        first + second <= taken,
+        "{first} and {second} against {taken} taken"
+    );
+    // The second healer, behind the first in raid order, alone would have healed more: the first
+    // leaves less of the tank's health missing for it.
+    let alone = run(&healed_tank(&["restoration-druid"], &[true], 100));
+    let alone = effective(&alone, 1);
+    assert!(
+        second < 0.95 * alone,
+        "{second} beside another healer, {alone} alone"
+    );
+    // With a healer on each, the tank survives more fights than with one healer or none.
+    let none = run(&healed_tank(
+        &["holy-priest", "restoration-druid"],
+        &[false, false],
+        100,
+    ));
+    let death = |report: &Value| {
+        member(report, "protection-warrior")["chanceOfDeath"]
+            .as_f64()
+            .unwrap_or(0.0)
+    };
+    assert_eq!(death(&none), 1.0);
+    assert!(death(&both) < 0.5, "chance of death {}", death(&both));
+    assert!(tank_healing(&none).is_empty());
+}
+
+#[test]
+fn an_unassigned_healer_heals_as_without_assignments() {
+    // The priest has no assignment: it heals as in a raid with none, bit for bit, whatever the
+    // druid does to the tank.
+    let assigned = run(&healed_tank(
+        &["holy-priest", "restoration-druid"],
+        &[false, true],
+        60,
+    ));
+    let bare = run(&healed_tank(
+        &["holy-priest", "restoration-druid"],
+        &[false, false],
+        60,
+    ));
+    assert_eq!(
+        member(&assigned, "holy-priest"),
+        member(&bare, "holy-priest")
+    );
+    assert_ne!(
+        member(&assigned, "restoration-druid"),
+        member(&bare, "restoration-druid")
+    );
+    assert_eq!(tank_healing(&assigned).len(), 1);
+}
+
+#[test]
+fn a_tank_healing_assignment_names_a_healer_and_a_tank() {
+    let refused = |mut input: Value, list: Value| {
+        input["assignments"] = json!({ "tankHealers": list });
+        match simulate_raid(&serde_json::to_vec(&input).unwrap(), Rules::Forever, false) {
+            Err(RaidError::Invalid(reason)) => reason,
+            other => panic!("{:?}", other.map(|_| ())),
+        }
+    };
+    let input = healed_tank(&["holy-priest"], &[false], 20);
+    assert!(refused(input.clone(), json!([{ "from": 0, "to": 1 }])).contains("no heals"));
+    assert!(refused(input.clone(), json!([{ "from": 1, "to": 1 }])).contains("itself"));
+    assert!(refused(input.clone(), json!([{ "from": 1, "to": 9 }])).contains("no member"));
+    assert!(refused(
+        input.clone(),
+        json!([{ "from": 1, "to": 0 }, { "from": 1, "to": 0 }])
+    )
+    .contains("two members"));
+    // A healer on a member no target swings at: both are named.
+    let untanked = healed_tank(&["holy-priest", "restoration-druid"], &[false, false], 20);
+    let reason = refused(untanked, json!([{ "from": 1, "to": 2 }]));
+    assert!(
+        reason.contains("holy-priest") && reason.contains("restoration-druid"),
+        "{reason}"
+    );
+}

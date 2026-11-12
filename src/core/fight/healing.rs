@@ -450,6 +450,13 @@ impl<A: Agent> Fight<A> {
         target: usize,
         amount: f64,
     ) -> (f64, f64) {
+        // An assigned healer's heal on its tank heals the tank's missing health and no more.
+        if self.tank_role.is_some() {
+            if let Some((landed, overhealing)) = self.tank_heal(amount) {
+                self.spells[spell].metrics[target].total_overhealing += overhealing;
+                return (landed, overhealing);
+            }
+        }
         let fraction = self.spells[spell].overheal;
         if fraction == 0.0 {
             return (amount, 0.0);

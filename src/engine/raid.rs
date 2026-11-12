@@ -18,10 +18,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 
 use crate::{
-    contracts::prepared_v2::PreparedV2,
+    contracts::prepared_v2::{Effect, PreparedV2},
     core::fight::{
         metrics::Distribution,
-        raid::{Gift, RaidMember, SentGift, SharedDebuff, SharedState, Swing},
+        raid::{
+            Gift, RaidMember, SentGift, SharedDebuff, SharedLedger, SharedState, Swing, TankLedger,
+        },
         Run,
     },
     prepare::{PrepareError, Rules},
@@ -61,6 +63,9 @@ pub struct Assignments {
     pub innervate: Vec<Assignment>,
     #[serde(default)]
     pub power_infusion: Vec<Assignment>,
+    /// Healers whose single-target heals land on a tank's real damage taken.
+    #[serde(default)]
+    pub tank_healers: Vec<Assignment>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -91,6 +96,8 @@ pub struct Member {
     /// The raid's target each of the member's target copies stands for, when the member's fight
     /// lists them in another order than the raid's (`assign_tanks`); none is the raid's order.
     pub(crate) target_order: Option<Vec<usize>>,
+    /// The raid index of the tank the member, a healer, heals (`assignments.tankHealers`).
+    pub(crate) heals_tank: Option<usize>,
 }
 
 /// Why a raid did not run.
@@ -264,6 +271,7 @@ pub fn split(input: &RaidInput) -> Result<Vec<Member>, RaidError> {
                 gives: Vec::new(),
                 swings: None,
                 target_order: None,
+                heals_tank: None,
             });
         }
     }
@@ -602,6 +610,37 @@ fn assign(members: &mut [Member], assignments: &Assignments) -> Result<(), RaidE
             members[caster].gives.push((gift, assignment.to));
         }
     }
+    let list = &assignments.tank_healers;
+    for (index, assignment) in list.iter().enumerate() {
+        let find = |raid_index: usize, what: &str| {
+            members
+                .iter()
+                .position(|member| member.raid_index == raid_index)
+                .ok_or_else(|| {
+                    invalid(format!(
+                        "tankHealers {what} raid index {raid_index}, no member"
+                    ))
+                })
+        };
+        let healer = find(assignment.from, "from")?;
+        let tank = find(assignment.to, "to")?;
+        if healer == tank {
+            return Err(invalid(format!(
+                "tankHealers from {} on itself",
+                members[healer].name
+            )));
+        }
+        if list[..index]
+            .iter()
+            .any(|other| other.from == assignment.from)
+        {
+            return Err(invalid(format!(
+                "tankHealers from {} on two members",
+                members[healer].name
+            )));
+        }
+        members[healer].heals_tank = Some(assignment.to);
+    }
     Ok(())
 }
 
@@ -798,8 +837,22 @@ pub struct RaidReport {
     pub cast_debuffs: Vec<Vec<usize>>,
     /// What each assignment's caster cast on its target.
     pub assignments: Vec<AssignmentReport>,
+    /// What each healer `assignments.tankHealers` names healed its tank, in the healers' raid order.
+    pub tank_healing: Vec<TankHealingReport>,
     pub iterations: u32,
     pub elapsed_ns: u64,
+}
+
+/// What a healer assigned to a tank healed, per second over the iterations.
+pub struct TankHealingReport {
+    pub from: usize,
+    pub to: usize,
+    /// Healing that landed on the tank: its missing health at most, per second.
+    pub effective: f64,
+    /// Healing past the tank's missing health, per second.
+    pub overheal: f64,
+    /// The tank's damage taken per second the healer's effective healing covered.
+    pub share: f64,
 }
 
 /// An assignment's casts over every iteration: how many the caster cast, and how many landed on
@@ -838,6 +891,52 @@ fn requeue(
     }
 }
 
+/// What the healers assigned to tanks healed, summed over the iterations as per second values.
+#[derive(Default)]
+struct TankHealingTotals {
+    from: usize,
+    to: usize,
+    /// The tank's position among the fights and the healer's slot among its healers.
+    tank: usize,
+    slot: usize,
+    effective: f64,
+    overheal: f64,
+    /// The tank's damage taken per second, which the healer's effective healing is a share of.
+    damage: f64,
+}
+
+/// A healer that `assignments.tankHealers` names has heals, and heals a member some target swings
+/// at, or the raid does not run.
+fn check_tank_healers(members: &[PreparedMember]) -> Result<(), RaidError> {
+    for healer in members {
+        let Some(to) = healer.member.heals_tank else {
+            continue;
+        };
+        let tank = members
+            .iter()
+            .find(|member| member.member.raid_index == to)
+            .expect("an assignment names members");
+        let heals = healer
+            .prepared
+            .effects
+            .iter()
+            .any(|effect| matches!(effect, Effect::Heals { .. } | Effect::PaladinHeals { .. }));
+        if !heals {
+            return Err(invalid(format!(
+                "tankHealers from {} ({}), who has no heals",
+                healer.member.name, healer.member.class
+            )));
+        }
+        if tank.prepared.enemy.is_none() {
+            return Err(invalid(format!(
+                "tankHealers from {} to {}, who no target swings at",
+                healer.member.name, tank.member.name
+            )));
+        }
+    }
+    Ok(())
+}
+
 /// Simulate prepared members together.
 pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidReport, RaidError> {
     let started = crate::core::stopwatch::Stopwatch::start();
@@ -849,6 +948,7 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
     {
         return Err(invalid("members with different iteration counts"));
     }
+    check_tank_healers(&members)?;
     let mut fights: Vec<Box<dyn RaidMember>> = members
         .iter()
         .map(|member| crate::classes::raid_member(&member.prepared).map_err(invalid))
@@ -909,6 +1009,44 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
             landed: 0,
         }));
     }
+    // Each tank with healers assigned keeps one ledger of its missing health, which its fight
+    // and its healers' fights share.
+    let mut ledgers: Vec<Option<SharedLedger>> = vec![None; members.len()];
+    let mut healer_of: Vec<Option<usize>> = vec![None; members.len()];
+    let mut totals: Vec<TankHealingTotals> = Vec::new();
+    for tank in 0..members.len() {
+        let healers: Vec<usize> = (0..members.len())
+            .filter(|&healer| {
+                members[healer].member.heals_tank == Some(members[tank].member.raid_index)
+            })
+            .collect();
+        if healers.is_empty() {
+            continue;
+        }
+        let ledger = TankLedger::new(healers.len());
+        fights[tank].bind_tank_ledger(SharedLedger::clone(&ledger));
+        for (slot, &healer) in healers.iter().enumerate() {
+            fights[healer].bind_tank_healing(SharedLedger::clone(&ledger), slot);
+            healer_of[healer] = Some(tank);
+        }
+        ledgers[tank] = Some(ledger);
+    }
+    // The report lists them in the healers' raid order.
+    for (healer, member) in members.iter().enumerate() {
+        if let Some(tank) = healer_of[healer] {
+            let slot = (0..healer)
+                .filter(|&other| healer_of[other] == Some(tank))
+                .count();
+            totals.push(TankHealingTotals {
+                from: member.member.raid_index,
+                to: members[tank].member.raid_index,
+                tank,
+                slot,
+                ..TankHealingTotals::default()
+            });
+        }
+    }
+    let mut pending: Vec<(i64, f64)> = Vec::new();
     // The targets each tank holds, by position.
     for (fight, member) in fights.iter_mut().zip(&members) {
         if let Some(swings) = &member.member.swings {
@@ -960,6 +1098,9 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
     // not collect an entry per nudge, each of which would chase its next event.
     let mut queued = vec![NOT_QUEUED; fights.len()];
     for iteration in 0..iterations {
+        for ledger in ledgers.iter().flatten() {
+            ledger.borrow_mut().reset();
+        }
         fights[0].set_duration_override(None);
         fights[0].begin_iteration(iteration);
         let duration = fights[0].duration();
@@ -1039,6 +1180,31 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
                 entry.casts += 1;
                 entry.landed += u64::from(landed);
             }
+            // So does healing an assigned healer landed on its tank, which the tank's health and
+            // death tracking take at that moment.
+            if let Some(tank) = healer_of[index] {
+                pending.clear();
+                if let Some(ledger) = &ledgers[tank] {
+                    ledger.borrow_mut().take_pending(&mut pending);
+                }
+                if active[tank] && !pending.is_empty() {
+                    for &(time, amount) in &pending {
+                        fights[tank].take_heal(time, amount);
+                    }
+                    requeue(&mut due, &mut queued, fights[tank].next_time(), tank);
+                }
+            }
+        }
+        let seconds = duration as f64 / crate::core::time::NS_PER_SECOND as f64;
+        for entry in &mut totals {
+            if let Some(ledger) = &ledgers[entry.tank] {
+                let ledger = ledger.borrow();
+                let (taken, healers) = ledger.iteration();
+                let (landed, overhealed) = healers[entry.slot];
+                entry.effective += landed / seconds;
+                entry.overheal += overhealed / seconds;
+                entry.damage += taken / seconds;
+            }
         }
         let mut damage = 0.0;
         let mut healing = 0.0;
@@ -1070,6 +1236,21 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         }
     }
     let elapsed_ns = started.elapsed_ns();
+    let per_iteration = f64::from(iterations.max(1));
+    let tank_healing = totals
+        .iter()
+        .map(|entry| TankHealingReport {
+            from: entry.from,
+            to: entry.to,
+            effective: entry.effective / per_iteration,
+            overheal: entry.overheal / per_iteration,
+            share: if entry.damage > 0.0 {
+                entry.effective / entry.damage
+            } else {
+                0.0
+            },
+        })
+        .collect();
     let mut reports = Vec::with_capacity(fights.len());
     for ((mut fight, run), member) in fights.into_iter().zip(runs).zip(members) {
         let fight_report = fight.finish(run, elapsed_ns);
@@ -1093,6 +1274,7 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         casters,
         cast_debuffs: Vec::new(),
         assignments,
+        tank_healing,
         iterations,
         elapsed_ns,
     })
@@ -1171,7 +1353,7 @@ impl RaidReport {
                 })
             })
             .collect();
-        Ok(json!({
+        let mut report = json!({
             "engine": first.engine,
             "schema_version": first.schema_version,
             "source_revision": first.source_revision,
@@ -1213,7 +1395,24 @@ impl RaidReport {
                     }))
                     .collect::<Vec<_>>(),
             },
-        }))
+        });
+        // Only a raid that assigns healers to tanks has a tank healing report.
+        if !self.tank_healing.is_empty() {
+            report["mythicsim"]["tankHealing"] = self
+                .tank_healing
+                .iter()
+                .map(|healing| {
+                    json!({
+                        "from": healing.from,
+                        "to": healing.to,
+                        "effective": healing.effective,
+                        "overheal": healing.overheal,
+                        "share": healing.share,
+                    })
+                })
+                .collect();
+        }
+        Ok(report)
     }
 }
 

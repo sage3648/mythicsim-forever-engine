@@ -1,6 +1,8 @@
 //! A fight as one member of a raid: the raid runner steps every member's fight on one clock
 //! (see `engine::raid`), so each iteration runs the members to the same timeline.
 
+use std::{cell::RefCell, rc::Rc};
+
 use super::{Agent, AuraRef, Fight, FightReport, Run, Side};
 
 /// A member's fight, whatever its class agent.
@@ -40,6 +42,12 @@ pub(crate) trait RaidMember {
     fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool;
     /// Bind which of the targets swing at the member, by position among the copies, and when.
     fn bind_swings(&mut self, swings: &[Swing]) -> Result<(), String>;
+    /// Report every hit that lands on the member's player to a tank's ledger.
+    fn bind_tank_ledger(&mut self, ledger: SharedLedger);
+    /// Land the member's single-target heals on a tank, as healer number `slot` of its ledger.
+    fn bind_tank_healing(&mut self, ledger: SharedLedger, slot: usize);
+    /// Take healing other members' heals landed on the member at `time`.
+    fn take_heal(&mut self, time: i64, amount: f64);
 }
 
 impl<A: Agent> RaidMember for Fight<A> {
@@ -115,6 +123,18 @@ impl<A: Agent> RaidMember for Fight<A> {
 
     fn bind_swings(&mut self, swings: &[Swing]) -> Result<(), String> {
         Fight::bind_swings(self, swings)
+    }
+
+    fn bind_tank_ledger(&mut self, ledger: SharedLedger) {
+        self.tank_role.get_or_insert_with(Default::default).ledger = Some(ledger);
+    }
+
+    fn bind_tank_healing(&mut self, ledger: SharedLedger, slot: usize) {
+        self.tank_role.get_or_insert_with(Default::default).healing = Some((ledger, slot));
+    }
+
+    fn take_heal(&mut self, time: i64, amount: f64) {
+        Fight::take_heal(self, time, amount);
     }
 }
 
@@ -601,11 +621,22 @@ impl Swing {
     }
 }
 
-/// What the raid decided about the targets of a member that tanks: which copies swing at it.
+/// What the raid decided about a member as a tank and as a healer of a tank.
 #[derive(Debug, Default)]
 pub(crate) struct TankRole {
-    /// Each target copy's swings at the member, by position.
+    /// Each target copy's swings at the member, by position; none for every copy.
     swings: Vec<Swing>,
+    /// Where the member, a tank that has healers assigned, reports each hit it takes.
+    pub(crate) ledger: Option<SharedLedger>,
+    /// The ledger of the tank the member, a healer, is assigned to, and the member's number
+    /// among that tank's healers.
+    pub(crate) healing: Option<(SharedLedger, usize)>,
+    /// Whether the heal being dealt lands on the assigned tank (`Fight::heal_on_tank`).
+    on_tank: bool,
+    /// What the last heal on the tank computed, before the tank's missing health capped it.
+    gross: Option<f64>,
+    /// The health metrics of the healing other members landed on this member.
+    received: Option<usize>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -620,9 +651,7 @@ impl<A: Agent> Fight<A> {
                 self.enemies.len()
             ));
         }
-        self.tank_role = Some(Box::new(TankRole {
-            swings: swings.to_vec(),
-        }));
+        self.tank_role.get_or_insert_with(Default::default).swings = swings.to_vec();
         Ok(())
     }
 
@@ -636,5 +665,141 @@ impl<A: Agent> Fight<A> {
         role.swings
             .get(position)
             .is_none_or(|swing| swing.at(self.now))
+    }
+
+    /// A hit the player took: its damage after avoidance, armor, blocks and absorbs goes to the
+    /// ledger of the healers assigned to it, if it has one.
+    #[inline]
+    pub(crate) fn tank_hit(&mut self, damage: f64) {
+        if damage <= 0.0 {
+            return;
+        }
+        let Some(ledger) = self
+            .tank_role
+            .as_deref()
+            .and_then(|role| role.ledger.as_ref())
+        else {
+            return;
+        };
+        ledger.borrow_mut().hit(damage, self.player_max_health());
+    }
+
+    /// Mark the heals dealt from here on as landing on the assigned tank, or not. A member that
+    /// is not an assigned healer is unaffected.
+    #[inline]
+    pub(crate) fn heal_on_tank(&mut self, on: bool) {
+        if let Some(role) = self.tank_role.as_deref_mut() {
+            role.on_tank = on && role.healing.is_some();
+        }
+    }
+
+    /// A heal of `amount` on the player, as the healer's own fight computed it, when it lands on
+    /// the assigned tank: what heals is the tank's missing health at most, and the rest is
+    /// overhealing, in place of the share real healers overheal. Answers what heals and what
+    /// overheals, or nothing when the heal does not land on a tank.
+    #[inline]
+    pub(crate) fn tank_heal(&mut self, amount: f64) -> Option<(f64, f64)> {
+        let role = self.tank_role.as_deref_mut()?;
+        role.gross = None;
+        if !role.on_tank {
+            return None;
+        }
+        let (ledger, slot) = role.healing.as_ref()?;
+        let landed = ledger.borrow_mut().heal(*slot, self.now, amount);
+        role.gross = Some(amount);
+        Some(landed)
+    }
+
+    /// What a heal on the tank computed, before its overhealing came off.
+    pub(crate) fn tank_heal_gross(&self) -> Option<f64> {
+        self.tank_role.as_deref().and_then(|role| role.gross)
+    }
+
+    /// Healing other members landed on this member's player at `time`, which no event of this
+    /// fight precedes. The player's health gains it as it gains any heal, so its death tracking
+    /// reads it.
+    pub(crate) fn take_heal(&mut self, time: i64, amount: f64) {
+        if time > self.now {
+            self.advance_to(time);
+        }
+        let metrics = match self.tank_role.as_deref().and_then(|role| role.received) {
+            Some(metrics) => metrics,
+            None => {
+                let metrics = self.new_health_metrics(crate::contracts::prepared_v2::ActionId {
+                    other_id: "OtherActionHealingModel".into(),
+                    ..Default::default()
+                });
+                self.tank_role.get_or_insert_with(Default::default).received = Some(metrics);
+                metrics
+            }
+        };
+        self.gain_health(amount, metrics);
+    }
+}
+
+/// A tank's missing health, which its fight and the healers assigned to it share: the runner
+/// creates one per tank with healers and hands it to their fights.
+#[derive(Debug, Default)]
+pub(crate) struct TankLedger {
+    /// Maximum health less current health, from the iteration's hits and the healing that landed.
+    missing: f64,
+    /// The iteration's damage taken.
+    damage: f64,
+    /// Each assigned healer's healing that landed and healing that overhealed this iteration.
+    healers: Vec<(f64, f64)>,
+    /// Healing that landed and the tank's fight has not taken yet, with its time.
+    pending: Vec<(i64, f64)>,
+}
+
+pub(crate) type SharedLedger = Rc<RefCell<TankLedger>>;
+
+impl TankLedger {
+    pub(crate) fn new(healers: usize) -> SharedLedger {
+        Rc::new(RefCell::new(TankLedger {
+            healers: vec![(0.0, 0.0); healers],
+            ..TankLedger::default()
+        }))
+    }
+
+    /// An iteration starts: the tank is at full health and nothing has landed.
+    pub(crate) fn reset(&mut self) {
+        self.missing = 0.0;
+        self.damage = 0.0;
+        self.healers
+            .iter_mut()
+            .for_each(|entry| *entry = (0.0, 0.0));
+        self.pending.clear();
+    }
+
+    /// The tank took `damage`; its health cannot be missing more than `max_health`.
+    fn hit(&mut self, damage: f64, max_health: f64) {
+        self.damage += damage;
+        self.missing = (self.missing + damage).min(max_health);
+    }
+
+    /// Healer `slot`'s heal of `amount` at `time`: the missing health it fills lands, the rest
+    /// overheals. What landed leaves the missing health at once, so the next heal at this moment,
+    /// from any healer, sees what is left.
+    fn heal(&mut self, slot: usize, time: i64, amount: f64) -> (f64, f64) {
+        let landed = amount.min(self.missing).max(0.0);
+        let overhealing = amount.max(0.0) - landed;
+        self.missing -= landed;
+        let entry = &mut self.healers[slot];
+        entry.0 += landed;
+        entry.1 += overhealing;
+        if landed > 0.0 {
+            self.pending.push((time, landed));
+        }
+        (landed, overhealing)
+    }
+
+    /// Move the healing the tank's fight has not taken to `out`.
+    pub(crate) fn take_pending(&mut self, out: &mut Vec<(i64, f64)>) {
+        out.append(&mut self.pending);
+    }
+
+    /// The iteration's damage taken and each healer's healing that landed and overhealed.
+    pub(crate) fn iteration(&self) -> (f64, &[(f64, f64)]) {
+        (self.damage, &self.healers)
     }
 }

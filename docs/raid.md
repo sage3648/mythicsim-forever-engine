@@ -13,7 +13,8 @@ pinned fork (`sim/core/raid.go`, `RaidSimRequest`), but no MythicSim surface eve
   "request": { "raid": { "parties": [ { "players": [], "buffs": {} } ], "buffs": {}, "debuffs": {},
                          "tanks": [] },
                "encounter": {}, "simOptions": { "iterations": 1000, "randomSeed": "42" } },
-  "assignments": { "innervate": [ { "from": 3, "to": 7 } ], "powerInfusion": [] },
+  "assignments": { "innervate": [ { "from": 3, "to": 7 } ], "powerInfusion": [],
+                   "tankHealers": [ { "from": 12, "to": 0 } ] },
   "tankSwapSeconds": 30
 }
 ```
@@ -158,38 +159,73 @@ for a raid index with no player holds the target for its windows and nobody take
   swings in the first iteration's log fall in the tank's own 30 second windows, and a raid with
   one tank and a swap time, or with targets that name no second tank, is identical to the same raid
   without it.
+- An assigned healer's effective healing on a tank never exceeds the tank's damage taken per second,
+  two healers on one tank together do not either, and the second in raid order heals less than it
+  would alone. With a weakened boss, healers on a tank bring its chance of death down; with none it
+  dies in every iteration. An unassigned healer beside an assigned one heals exactly as in a raid
+  without assignments.
 - In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor, the feral
   druid's Faerie Fire and the three warlocks' Curse of the Elements are live, and no warlock
   recasts its curse every global cooldown.
 
-## Healers and the tank's damage (design, not implemented)
+## Healers and the tank's damage
 
-A healer in a raid heals under MythicSim's healer model, as alone: every heal lands on a player
-who needs it, less the share real healers overheal (`prepare::overheal`, measured on live
-reports), and Prayer of Mending and Chain Heal follow the assumed party hit rates
-(`prepare::party_damage`). The tank's fight already takes the targets' real swings
-(`core::fight::enemy`) and tracks its health, so a raid could heal that damage instead:
+Without an assignment a healer in a raid heals under MythicSim's healer model, as alone: every
+heal lands on a player who needs it, less the share real healers overheal (`prepare::overheal`,
+measured on live reports), and Prayer of Mending and Chain Heal follow the assumed party hit
+rates (`prepare::party_damage`). A tank's fight already takes the targets' real swings
+(`core::fight::enemy`), so a healer can be assigned to a tank and heal that damage instead:
 
-1. **Damage out.** The tank's fight sends each landed swing (its time and the damage after
-   avoidance, armor and blocks) through the cross-fight channel, as `Fight::give` sends a
-   cast. The runner keeps each tank's missing health, capped at its maximum.
-2. **Healing in.** A healer assigned to a tank (an assignment list beside `innervate`, or the
-   raid's `tanks`) mirrors that tank's missing health. A heal on the tank counts up to it and
-   overheals the rest, in place of the overheal share (`Fight::landed_healing`); the runner
-   takes the heal off the tank's missing health and hands the new value to every other healer
-   of that tank at once, ties in raid order, as shared debuffs are.
-3. **Hits drive the heals that follow damage.** Prayer of Mending on the tank moves when the
-   tank is hit, from the tank's swings instead of a drawn wait.
-4. **What stays assumed.** Nothing else in a raid takes damage: the encounter has no raid
-   damage. Heals on the other members, party heals and Chain Heal's jumps keep the assumed
-   rates and overheal shares, and a healer with no tank keeps today's model.
+```json
+"assignments": { "tankHealers": [ { "from": 12, "to": 0 } ] }
+```
 
-It is not implemented here. It changes every raid healer's HPS through the core healing path
-(`core::fight::healing`, `core::fight::heals`) and each class's Prayer of Mending, and a tank's
-swing damage alone would make a raid's healers overheal far more than the live reports the
-overheal table measures, where raids take more than the tank's damage. It needs a measurement
-of healing done against a tank's damage taken in Forever logs before it can replace the model.
-No Go golden is affected either way: Go has no raid sim surface.
+`from` is a healer's raid index (a member whose class has heals: priest, druid, shaman or
+paladin) and `to` a member some target swings at. Each healer is assigned at most once, to
+another member, and a tank may have several healers. Anything else refuses the raid, naming both
+members. A healer with no assignment, and every sim that is not a raid, is unchanged bit for bit.
+
+How it runs:
+
+1. **Damage out.** The tank's fight reports each hit that lands, with its damage after
+   avoidance, armor, blocks and absorbs (the damage its death tracking removes), to the tank's
+   ledger, which the runner creates when the tank has a healer and hands to the fights. The
+   ledger holds the tank's missing health from 0 to its maximum health. The tank starts each
+   iteration at full health. The tank's own healing (a potion, a heal proc) does not enter the
+   ledger, so a tank that heals itself leaves the healers a little more to heal than it had.
+2. **Healing in.** An assigned healer's heal that lands on the tank counts as effective healing
+   up to the tank's missing health at that moment, and the rest is overhealing, in place of the
+   overheal share of the solo model. What lands leaves the missing health at once, so a second
+   healer heals what the first left, in the order the runner steps the fights (earliest event
+   first, ties in raid order). The healer's own result counts only what landed.
+3. **Which heals.** The ones the healer model puts on one player: single-target direct heals,
+   the first player of a Chain Heal (the party model puts it on the tank), Swiftmend's heal, a
+   paladin's Holy Light, Flash of Light and Holy Shock on its own player, and the ticks of a
+   heal over time on one player. These keep the solo model: Prayer of Healing and other party
+   heals and their ticks, Wild Growth, the later jumps of Chain Heal, Prayer of Mending, a
+   Lifebloom bloom, shields and Lay on Hands. A Divine Aegis shield takes its share of the heal
+   as the spell computed it, before the missing health cut it.
+4. **The tank's death.** What landed is handed to the tank's fight at that moment as healing
+   (`OtherActionHealingModel`), so its health and `chanceOfDeath` count it. Without healers a tank
+   with no way to heal itself dies in every long fight.
+5. **Report.** `mythicsim.tankHealing`, one entry per assignment in the healers' raid order, and
+   only when the raid assigns healers:
+
+```json
+"tankHealing": [ { "from": 12, "to": 0, "effective": 251.4, "overheal": 3.8, "share": 0.366 } ]
+```
+
+`effective` and `overheal` are healing per second, as the mean over the iterations of each
+iteration's total over its length; `share` is that effective healing over the tank's damage taken
+per second (the same sums), so it is at most 1, and the shares of the healers of one tank add up
+to at most 1.
+
+This is a model, with no calibration against logs yet. A healer casts as the solo model decides,
+without reading the tank's health, so against a weak boss most of its heals overheal, and against a
+strong one all of them land. Nothing in the encounter takes damage but the tanks, so the party and
+raid damage the solo model assumes is not here. The overheal measurement of the live reports is
+of raids that take more than a tank's damage, and it is not what these numbers are.
+Nothing here changes the Go side, which has no raid surface.
 
 ## Cost
 
