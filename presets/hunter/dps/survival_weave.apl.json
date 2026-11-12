@@ -132,6 +132,28 @@
     },
     {
       "action": {
+        "castSpell": {
+          "spellId": {
+            "spellId": 1293527
+          }
+        },
+        "condition": {
+          "cmp": {
+            "lhs": {
+              "numberTargets": {}
+            },
+            "op": "OpLt",
+            "rhs": {
+              "const": {
+                "val": "2"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "action": {
         "condition": {
           "and": {
             "vals": [
