@@ -1,8 +1,9 @@
-//! Flurry (12319, buff 12966): a landed melee crit, other than Whirlwind's off hand strike,
-//! grants melee speed for a number of charges. Under Forever's rules every white swing spends
-//! one whatever its outcome (hit, glance, miss, dodge or parry), and a Heroic Strike or Cleave
-//! spends one only when it misses. Go's `registerFlurry`, which `--go-rules` keeps, spends one
-//! on each landed white hit, Heroic Strike and Cleave included.
+//! Flurry (12319, buff 12966): a landed melee crit grants melee speed for a number of charges.
+//! Under Forever's rules every white swing spends one whatever its outcome (hit, glance, miss,
+//! dodge or parry), a Heroic Strike or Cleave spends one only when it misses, and a crit of
+//! Whirlwind's off hand strike starts it as any other strike's does. Go's `registerFlurry`,
+//! which `--go-rules` keeps, spends one on each landed white hit, Heroic Strike and Cleave
+//! included, and never starts it from Whirlwind's off hand strike.
 //!
 //! Evidence: three level 30 Forever logs on build 1.60.1.70450 with Flurry 1/5
 //! (magey/forever-warrior discussion 30, counted in wowsims/forever PR 745). With Flurry up,
@@ -10,6 +11,8 @@
 //! 25/25, 24/24 and 23/23; missed Heroic Strikes 9/9, 4/4 and 10/10; landed Heroic Strikes
 //! 0/109 and 0/74 (and 3/82, each sharing its moment with a white swing), dodged or parried
 //! ones 0/38. The logs hold one Cleave, so Cleave following Heroic Strike is an assumption.
+//! Combat logs of client 1.60.1.70888 hold 97 Whirlwinds of eight warriors: 16 of the 18 whose
+//! off hand strike alone crit started Flurry.
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult, OUTCOME_MISS};
 
@@ -20,6 +23,9 @@ pub(crate) struct Flurry {
     pub(crate) charges: i32,
     /// Forever's rules (below); without them, as in Go, a landed white hit spends a charge.
     pub(crate) every_swing_spends: bool,
+    /// Forever's rules: a crit of Whirlwind's off hand strike starts Flurry. Without them, as
+    /// in Go, that strike never does.
+    pub(crate) whirlwind_off_hand_starts: bool,
 }
 
 /// The trigger's OnSpellHitDealt, which acts at once.
@@ -34,7 +40,7 @@ pub(crate) fn on_hit<A: Agent>(
         return;
     }
     let class_spell = state.class_spell.as_deref();
-    if class_spell == Some("whirlwind_off_hand") {
+    if class_spell == Some("whirlwind_off_hand") && !params.whirlwind_off_hand_starts {
         return;
     }
     if result.crit() {

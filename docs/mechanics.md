@@ -114,7 +114,11 @@ the Go goldens and exporter uses. The departures:
   moment with a white swing, dodged or parried ones 0 of 38). Cleave follows Heroic Strike, an
   assumption, as the logs hold one Cleave. The reference spends a charge on each landed white
   hit, Heroic Strike and Cleave included, and never on a miss. The prepared `warrior_flurry`
-  effect carries `every_swing_spends`.
+  effect carries `every_swing_spends`. A crit of Whirlwind's off hand strike starts Flurry as any
+  other strike's does: in combat logs of client 1.60.1.70888, 16 of the 18 Whirlwinds (of 97
+  casts by eight warriors) whose off hand strike alone crit started it. The reference leaves
+  that strike out; the effect carries `whirlwind_off_hand_starts`
+  (`tests/forever_rules_20261113.rs`).
 - Casting regeneration auras, from the client's mana regeneration interrupt aura (type 134),
   which acts as it is applied: Resourcefulness, Rapid Recuperation and Improved Stormstrike let
   more spirit regeneration continue while casting from the moment they are up. The reference
@@ -410,9 +414,14 @@ the Go goldens and exporter uses. The departures:
     the buff up, where 29 of 30 Whirlwinds spent one). Its share of attack power is 0.07,
     measured on ranks 1 and 4 (rank 4 reads floor(0.99 * (55 + 0.07 * attack power))); ranks 2,
     3, 5 and 6 carry it, unmeasured. The reference's literal is 0.0255.
-  - Shield Slam and Shield Bash are main hand specials: the main hand weapon's proc fired on 54
-    of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks. Their
-    rows still require the shield, and Windfury Totem still never rolls on them. Shield Slam adds
+  - Shield Slam and Shield Bash are main hand specials: Dreadfrost Saber's equip effect fired on
+    54 of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks.
+    Their rows still require the shield, and Windfury Totem still never rolls on them. Weapon
+    procs (a chance on hit or a weapon enchant) do not hear them either: in combat logs of client
+    1.60.1.70888 the Fiery Blaze enchant (36) fired on 0 of 617 Shield Slams and 0 of 78 Shield
+    Bashes, and Rock on Stick's chance on hit on 0 of 157 shield strikes. Both carry Suppress
+    Weapon Procs under Forever's rules; equip effects, Ironfoe's Fury of Forgewright and Hand of
+    Justice among them, still hear them (`tests/forever_rules_20261113.rs`). Shield Slam adds
     twice the block value (at a block value of 28 the mean hit sits about 28 above one block
     value's worth, 481 against 453). Its flat threat is 178 on rank 1 (177.7 measured at levels
     40 to 42); ranks 2 to 4 are not measured and carry rank 1's 4.45 a spell level as whole

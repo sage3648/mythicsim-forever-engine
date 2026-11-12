@@ -415,9 +415,11 @@ impl Warrior {
                 "aura": "Flurry",
                 "melee_speed_multiplier": trees::flurry(sim.rules).multiplier_at(talent("flurry")),
                 "charges": i32::from(buff.proc_charges)});
-            // Forever's logs: misses, dodges and parries spend a charge too (flurry.rs).
+            // Forever's logs: misses, dodges and parries spend a charge too, and a crit of
+            // Whirlwind's off hand strike starts it (flurry.rs).
             if sim.rules == Rules::Forever {
                 flurry["every_swing_spends"] = json!(true);
+                flurry["whirlwind_off_hand_starts"] = json!(true);
             }
             effects.push(flurry);
         }

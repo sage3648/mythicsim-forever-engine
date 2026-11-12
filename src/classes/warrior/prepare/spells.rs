@@ -117,16 +117,31 @@ pub(super) fn shield_slam_threat(rules: Rules, rank: &crate::prepare::spelldata:
 
 /// The hand Shield Slam and Shield Bash strike with. Their rows require the shield and name no
 /// hand, and the Go reference gives them the off hand's special mask. Under Forever's rules
-/// they are main hand specials: the main hand weapon's chance on hit and enchant hear them and
-/// the main hand weapon skill sets their miss and parry. In a protection warrior's combat log
-/// of client 1.60.1.70862 the main hand weapon's proc fired on 54 of 80 isolated Shield Slams
-/// and 7 of 8 Shield Bashes, against none on 74 Shield Block and 9 Battle Shout casts. Windfury
-/// Totem still never rolls on them: their rows carry neither the main hand nor the next swing
-/// bit.
+/// they are main hand specials: the main hand weapon skill sets their miss and parry, and an
+/// equip effect of the main hand weapon hears them. In a protection warrior's combat log of
+/// client 1.60.1.70862 Dreadfrost Saber's equip effect fired on 54 of 80 isolated Shield Slams
+/// and 7 of 8 Shield Bashes, against none on 74 Shield Block and 9 Battle Shout casts. Weapon
+/// procs do not hear them ([`shield_strike_flags`]), and Windfury Totem still never rolls on
+/// them: their rows carry neither the main hand nor the next swing bit.
 pub(super) fn shield_strike_proc_mask(rules: Rules) -> ProcMask {
     match rules {
         Rules::Forever => ProcMask::MELEE_MH_SPECIAL,
         Rules::GoReference => ProcMask::MELEE_OH_SPECIAL,
+    }
+}
+
+/// The flags of Shield Slam and Shield Bash. Under Forever's rules neither triggers a weapon
+/// proc (a chance on hit or a weapon enchant): in combat logs of client 1.60.1.70888 the Fiery
+/// Blaze enchant (36) fired on 0 of 617 Shield Slams and 0 of 78 Shield Bashes, and Rock on
+/// Stick's chance on hit on 0 of 157 shield strikes. Equip effects still hear them, as
+/// Dreadfrost Saber's does ([`shield_strike_proc_mask`]), and so do Ironfoe's Fury of
+/// Forgewright and Hand of Justice, equip auras no log covers. The Go reference lets the weapon
+/// procs hear them.
+pub(super) fn shield_strike_flags(rules: Rules) -> SpellFlag {
+    let flags = SpellFlag::MELEE_METRICS | SpellFlag::APL;
+    match rules {
+        Rules::Forever => flags | SpellFlag::SUPPRESS_WEAPON_PROCS,
+        Rules::GoReference => flags,
     }
 }
 
@@ -952,7 +967,7 @@ impl Warrior {
                 spell_school: school::PHYSICAL,
                 defense_type: DefenseType::Melee,
                 proc_mask: shield_strike_proc_mask(sim.rules),
-                flags: SpellFlag::MELEE_METRICS | SpellFlag::APL,
+                flags: shield_strike_flags(sim.rules),
                 max_range: MELEE_RANGE,
                 cost: rage_cost_with_refund(rank),
                 cast: cast_config(rank.gcd(), true, cd),
