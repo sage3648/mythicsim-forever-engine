@@ -1157,6 +1157,7 @@ impl WarriorAgent {
                     melee_speed_multiplier,
                     charges,
                     every_swing_spends,
+                    whirlwind_off_hand_starts,
                     ..
                 } => {
                     fight.agent.flurry = Some(Flurry {
@@ -1164,6 +1165,7 @@ impl WarriorAgent {
                         melee_speed_multiplier: *melee_speed_multiplier,
                         charges: *charges,
                         every_swing_spends: *every_swing_spends,
+                        whirlwind_off_hand_starts: *whirlwind_off_hand_starts,
                     })
                 }
                 Effect::AngerManagement {
