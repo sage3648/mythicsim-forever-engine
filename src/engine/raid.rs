@@ -626,6 +626,22 @@ impl AssignmentReport {
     }
 }
 
+/// `queued` value of a fight with no live entry in the due heap.
+const NOT_QUEUED: i64 = i64::MIN;
+
+/// Move a fight's live entry in the due heap to `next`; the old entry is dropped when popped.
+fn requeue(
+    due: &mut BinaryHeap<Reverse<(i64, usize)>>,
+    queued: &mut [i64],
+    next: i64,
+    index: usize,
+) {
+    if queued[index] != next {
+        queued[index] = next;
+        due.push(Reverse((next, index)));
+    }
+}
+
 /// Simulate prepared members together.
 pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidReport, RaidError> {
     let started = crate::core::stopwatch::Stopwatch::start();
@@ -718,6 +734,10 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
     let mut runs: Vec<Run> = (0..fights.len()).map(|_| Run::default()).collect();
     let mut active = vec![true; fights.len()];
     let mut due = BinaryHeap::new();
+    // The time of each running fight's one live entry in `due`. A fight's earlier entries are
+    // dropped when popped rather than queued again, so a fight that others keep nudging does
+    // not collect an entry per nudge, each of which would chase its next event.
+    let mut queued = vec![NOT_QUEUED; fights.len()];
     for iteration in 0..iterations {
         fights[0].set_duration_override(None);
         fights[0].begin_iteration(iteration);
@@ -734,21 +754,25 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
         due.clear();
         for (index, fight) in fights.iter_mut().enumerate() {
             active[index] = true;
-            due.push(Reverse((fight.next_time(), index)));
+            let next = fight.next_time();
+            queued[index] = next;
+            due.push(Reverse((next, index)));
         }
-        // Always the earliest event of any fight, ties in raid order. An entry is stale when its
-        // fight's next event moved since it was pushed.
+        // Always the earliest event of any fight, ties in raid order. An entry is stale when it is
+        // not its fight's live one, or when the fight's next event moved since it was pushed.
         while let Some(Reverse((time, index))) = due.pop() {
-            if !active[index] {
+            if !active[index] || queued[index] != time {
                 continue;
             }
             let next = fights[index].next_time();
             if next != time {
+                queued[index] = next;
                 due.push(Reverse((next, index)));
                 continue;
             }
             if fights[index].step() {
                 let next = fights[index].next_time();
+                queued[index] = next;
                 due.push(Reverse((next, index)));
             } else {
                 active[index] = false;
@@ -761,7 +785,7 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
                 for other in 0..fights.len() {
                     if other != index && active[other] {
                         fights[other].apply_shared(now, &states);
-                        due.push(Reverse((fights[other].next_time(), other)));
+                        requeue(&mut due, &mut queued, fights[other].next_time(), other);
                     }
                 }
             }
@@ -772,7 +796,7 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
                 let now = fights[index].now();
                 let landed = active[sent.to] && fights[sent.to].take_gift(now, sent);
                 if active[sent.to] {
-                    due.push(Reverse((fights[sent.to].next_time(), sent.to)));
+                    requeue(&mut due, &mut queued, fights[sent.to].next_time(), sent.to);
                 }
                 let from = members[index].member.raid_index;
                 let to = members[sent.to].member.raid_index;
