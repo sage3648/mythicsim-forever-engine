@@ -366,6 +366,7 @@ args = dict(zip(sys.argv[2::2], sys.argv[3::2]))
 assert sys.argv[1] == "raid" and "--rotation-stats" in sys.argv
 raid = json.loads(Path(args["--request"]).read_text())
 (Path(__file__).parent / "raid-seed.log").write_text(raid["request"]["simOptions"]["randomSeed"])
+(Path(__file__).parent / "raid-input.log").write_text(json.dumps(raid))
 if mode.get("refusals"):
     print(json.dumps({"supported": False, "refusals": mode["refusals"]}))
     sys.exit(3)
@@ -380,13 +381,13 @@ RAID_REPORT = {"identity": {"engine": "forever-engine"}, "request_sha256": "cd",
 
 
 class RaidRouteTest(BundleTest):
-    def decide(self, seed=7, **mode):
+    def decide(self, seed=7, raid_input=None, **mode):
         mode.setdefault("report", RAID_REPORT)
         engine = self.bundle / "bin" / route.ENGINE
         engine.write_text(FAKE_RAID)
         (self.bundle / "bin" / "raid-mode.json").write_text(json.dumps(mode))
         raid = self.root / "raid.json"
-        raid.write_text(json.dumps({"schema": 1, "request": {"simOptions": {"iterations": 10}}}))
+        raid.write_text(json.dumps(raid_input or {"schema": 1, "request": {"simOptions": {"iterations": 10}}}))
         return route.route_raid(raid, self.output, self.bundle, 30, seed)
 
     def test_a_raid_writes_its_result_and_member_summary(self):
@@ -396,6 +397,20 @@ class RaidRouteTest(BundleTest):
         self.assertEqual(json.loads(Path(decision["result"]).read_text()), RAID_REPORT["result"])
         self.assertEqual(json.loads(Path(decision["summary"]).read_text()), RAID_REPORT["mythicsim"])
         self.assertEqual((self.bundle / "bin" / "raid-seed.log").read_text(), "7")
+
+    def test_tank_inputs_reach_the_engine_and_its_summary_comes_back_whole(self):
+        # The engine validates a raid; the tool passes every field through and keeps the summary.
+        raid_input = {"schema": 1, "request": {"simOptions": {"iterations": 10}},
+                      "assignments": {"tankHealers": [{"from": 2, "to": 0}]}, "tankSwapSeconds": 30}
+        summary = dict(RAID_REPORT["mythicsim"],
+                       tankHealing=[{"from": 2, "to": 0, "effective": 1.0, "overheal": 0.5, "share": 0.5}],
+                       targetAuras=[{"raidIndex": 0, "auras": []}])
+        decision = self.decide(raid_input=raid_input, report=dict(RAID_REPORT, mythicsim=summary))
+        self.assertEqual(decision["status"], "rust")
+        sent = json.loads((self.bundle / "bin" / "raid-input.log").read_text())
+        self.assertEqual(sent["assignments"], raid_input["assignments"])
+        self.assertEqual(sent["tankSwapSeconds"], 30)
+        self.assertEqual(json.loads(Path(decision["summary"]).read_text()), summary)
 
     def test_a_refused_member_is_a_fallback_naming_it(self):
         refusals = [{"member": 5, "name": "Ann", "stage": "check", "code": "unknown_spell", "reason": "x"}]

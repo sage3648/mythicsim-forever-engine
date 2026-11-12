@@ -85,8 +85,23 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
    and each party's DPS and HPS over each iteration's totals. Its `logs` are every member's
    first iteration, in raid order. The `mythicsim` block lists each member's raid index, party,
    slot, name, class, DPS, HPS and fight length, each shared debuff with the members who can
-   cast it and whether it was live, and each assignment with its caster's casts over every
-   iteration, how many landed, and `cast: false` when the caster never cast it.
+   cast it and whether it was live, each assignment with its caster's casts over every
+   iteration, how many landed, and `cast: false` when the caster never cast it, and
+   `targetAuras`: each member's own view of its target.
+
+`result.encounterMetrics` is the first member's: the other members' are dropped from the result.
+`mythicsim.targetAuras` keeps what each member saw on its first target, so the application can
+show which member kept which debuff up:
+
+```json
+"targetAuras": [ { "raidIndex": 0, "auras": [ { "id": { "spellId": 11717, "tag": -1 },
+                   "uptimeSecondsAvg": 119.99, "procsAvg": 1.0 } ] } ]
+```
+
+`auras` is the member's `encounterMetrics.targets[0].auras` exactly as its result reports them,
+with the same fields as a unit's auras, an empty list when the target had none. The first
+member's list is `result.encounterMetrics.targets[0].auras` itself. A tank that holds another
+target than the first has it first (see "Tanks"), so its `targets[0]` is the target it holds.
 
 ## Tanks
 
@@ -164,6 +179,8 @@ for a raid index with no player holds the target for its windows and nobody take
   would alone. With a weakened boss, healers on a tank bring its chance of death down; with none it
   dies in every iteration. An unassigned healer beside an assigned one heals exactly as in a raid
   without assignments.
+- Each member has its own `targetAuras` entry, in raid order, the first member's equal to
+  `result.encounterMetrics.targets[0].auras`.
 - In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor, the feral
   druid's Faerie Fire and the three warlocks' Curse of the Elements are live, and no warlock
   recasts its curse every global cooldown.
@@ -230,4 +247,9 @@ Nothing here changes the Go side, which has no raid surface.
 ## Cost
 
 About one Quick Sim per member, on one thread: 25 members at 1000 iterations take about 11 s
-and 40 members about 17 s on an M-series core.
+and 40 members about 17 s on an M-series core. The 20 reference build raid takes about 9 s at
+1000 iterations, with or without two of its tanks swapping a boss every 30 seconds; tank
+inputs add no work to a member's fight beyond a check on each boss swing, and healers assigned to
+a tank add a ledger update for each hit it takes and each heal they land. `fixtures/raid/two-tanks-two-healers.json` (four members, two
+swapping tanks, two assigned healers) takes about 1 s at 1000 iterations, as it does with no
+swap and no assignments.

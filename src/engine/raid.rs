@@ -1396,6 +1396,21 @@ impl RaidReport {
                     .collect::<Vec<_>>(),
             },
         });
+        // Result.encounterMetrics is the first member's view; each member's own target auras
+        // show which of them kept which debuff up, as that member's result reports them.
+        report["mythicsim"]["targetAuras"] = self
+            .members
+            .iter()
+            .map(|member| {
+                let auras = member
+                    .report
+                    .result
+                    .pointer("/encounterMetrics/targets/0/auras")
+                    .cloned()
+                    .unwrap_or_else(|| json!([]));
+                json!({ "raidIndex": member.member.raid_index, "auras": auras })
+            })
+            .collect();
         // Only a raid that assigns healers to tanks has a tank healing report.
         if !self.tank_healing.is_empty() {
             report["mythicsim"]["tankHealing"] = self

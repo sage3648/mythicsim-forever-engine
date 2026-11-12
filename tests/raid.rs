@@ -1216,3 +1216,62 @@ fn a_tank_healing_assignment_names_a_healer_and_a_tank() {
         "{reason}"
     );
 }
+
+#[test]
+fn each_members_target_auras_are_in_the_summary() {
+    let report = run(&reference_raid());
+    let listed = report["mythicsim"]["targetAuras"].as_array().unwrap();
+    assert_eq!(listed.len(), 20);
+    let indexes: Vec<u64> = listed
+        .iter()
+        .map(|entry| entry["raidIndex"].as_u64().unwrap())
+        .collect();
+    assert_eq!(indexes, (0..20).collect::<Vec<u64>>());
+    // The first member's list is the result's own encounter metrics, untouched.
+    assert_eq!(
+        listed[0]["auras"],
+        report["result"]["encounterMetrics"]["targets"][0]["auras"]
+    );
+    let uptime = |entry: &Value, spell: i64| {
+        entry["auras"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|aura| aura["id"]["spellId"] == json!(spell))
+            .map_or(0.0, |aura| aura["uptimeSecondsAvg"].as_f64().unwrap())
+    };
+    // The feral druid's Faerie Fire and a warlock's Curse of the Elements are on every member's
+    // target in about the length of the fight, which the raid shares; Sunder Armor's ranks are
+    // the warriors'. A member sees the debuffs its own copy of the target carried.
+    for entry in listed {
+        assert!(uptime(entry, 1311680) > 60.0, "{}", entry["raidIndex"]);
+    }
+    // The members' lists are each member's own: not one list copied.
+    assert!(listed
+        .iter()
+        .any(|entry| entry["auras"] != listed[0]["auras"]));
+}
+
+#[test]
+fn the_two_tanks_two_healers_fixture_runs_with_swaps_and_assigned_healers() {
+    let path = format!(
+        "{}/fixtures/raid/two-tanks-two-healers.json",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let input: Value = serde_json::from_slice(&std::fs::read(path).expect("fixture")).unwrap();
+    let report = run(&input);
+    assert_eq!(tanking(&report), [true, true, false, false]);
+    let healing = tank_healing(&report);
+    assert_eq!(healing.len(), 2);
+    for (entry, (from, to)) in healing.iter().zip([(2, 0), (3, 1)]) {
+        assert_eq!(
+            (entry["from"].as_u64(), entry["to"].as_u64()),
+            (Some(from), Some(to))
+        );
+        assert!(entry["effective"].as_f64().unwrap() > 0.0, "{entry}");
+    }
+    // Each tank takes about half of the boss's swings, so a healer's share of it is a real one.
+    for name in ["protection-warrior", "fury-protection-warrior"] {
+        assert!(dtps(&report, name) > 0.0, "{name}");
+    }
+}
