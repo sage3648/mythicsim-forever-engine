@@ -31,6 +31,8 @@ use super::prepared::{refusals, validate, PreparedReport};
 
 /// The raid input's schema.
 pub const RAID_SCHEMA: u32 = 1;
+/// The shortest and longest `tankSwapSeconds`.
+pub const TANK_SWAP_RANGE: std::ops::RangeInclusive<f64> = 5.0..=600.0;
 /// Go's raid: eight parties of five.
 pub const MAX_PARTIES: usize = 8;
 pub const PARTY_SIZE: usize = 5;
@@ -46,6 +48,9 @@ pub struct RaidInput {
     pub request: Value,
     #[serde(default)]
     pub assignments: Assignments,
+    /// How long a target held by two tanks stays on each before it swaps, in seconds.
+    #[serde(default)]
+    pub tank_swap_seconds: Option<f64>,
 }
 
 /// External cooldowns members give each other, by raid index.
@@ -265,7 +270,7 @@ pub fn split(input: &RaidInput) -> Result<Vec<Member>, RaidError> {
     if members.is_empty() {
         return Err(invalid("a raid without players"));
     }
-    assign_tanks(&mut members, request, &tanks)?;
+    assign_tanks(&mut members, request, &tanks, input.tank_swap_seconds)?;
     share_debuffs(&mut members);
     assign(&mut members, &input.assignments)?;
     Ok(members)
@@ -288,7 +293,17 @@ fn assign_tanks(
     members: &mut [Member],
     request: &Map<String, Value>,
     tanks: &[Value],
+    swap_seconds: Option<f64>,
 ) -> Result<(), RaidError> {
+    if let Some(seconds) = swap_seconds {
+        if !TANK_SWAP_RANGE.contains(&seconds) {
+            return Err(invalid(format!(
+                "tankSwapSeconds {seconds}, from {} to {}",
+                TANK_SWAP_RANGE.start(),
+                TANK_SWAP_RANGE.end()
+            )));
+        }
+    }
     let Some(targets) = request
         .get("encounter")
         .and_then(|encounter| encounter.get("targets"))
@@ -314,24 +329,88 @@ fn assign_tanks(
     let same = holders
         .iter()
         .all(|other| other.first == holders[0].first && other.second == holders[0].second);
-    // A second tank is a swap, which needs a time, so it keeps its refusal until it has one.
-    if same || holders.iter().any(|target| target.second.is_some()) {
-        return Ok(());
-    }
     let raid_index = |entry: usize| {
         tanks[entry]
             .get("index")
             .and_then(Value::as_u64)
             .unwrap_or(0) as usize
     };
+    let swapping = holders.iter().any(|target| target.second.is_some());
+    if same && !swapping {
+        return Ok(());
+    }
+    let window = match (swapping, swap_seconds) {
+        // A second tank is a swap, which needs a time.
+        (true, None) => return Err(swap_time_refused(members, &holders, &raid_index)),
+        (_, seconds) => seconds.map(|seconds| (seconds * 1e9).round() as i64),
+    };
+    assign_held(members, tanks, &holders, window, &raid_index)
+}
+
+/// The refusal of a target with a second tank when the raid gives no swap time, which names the
+/// members that tank it, as a Quick Sim refuses a target with a secondary target.
+fn swap_time_refused(
+    members: &[Member],
+    holders: &[Holders],
+    raid_index: &dyn Fn(usize) -> usize,
+) -> RaidError {
+    let mut involved: Vec<&Member> = members
+        .iter()
+        .filter(|member| {
+            holders.iter().any(|target| {
+                [target.first, target.second]
+                    .into_iter()
+                    .flatten()
+                    .any(|entry| raid_index(entry) == member.raid_index)
+            })
+        })
+        .collect();
+    if involved.is_empty() {
+        involved.push(&members[0]);
+    }
+    RaidError::Refused(
+        involved
+            .into_iter()
+            .map(|member| MemberRefusal {
+                member: member.raid_index,
+                name: member.name.clone(),
+                stage: "check",
+                code: "unrepresented".into(),
+                reason: "a target with a secondary target needs a swap time: give tankSwapSeconds \
+                         (5 to 600) in the raid input"
+                    .into(),
+            })
+            .collect(),
+    )
+}
+
+/// Who holds each target at each moment, as each member's fight reads it (`assign_tanks`).
+fn assign_held(
+    members: &mut [Member],
+    tanks: &[Value],
+    holders: &[Holders],
+    window: Option<i64>,
+    raid_index: &dyn Fn(usize) -> usize,
+) -> Result<(), RaidError> {
     for member in members.iter_mut() {
         let swings: Vec<Swing> = holders
             .iter()
             .map(|target| {
-                if target.first.map(raid_index) == Some(member.raid_index) {
-                    Swing::Always
-                } else {
-                    Swing::Never
+                let (first, second) = (target.first.map(raid_index), target.second.map(raid_index));
+                let mine = Some(member.raid_index);
+                match window {
+                    // Two tanks, one raid member: it holds the target throughout.
+                    Some(window) if target.second.is_some() && first != second => {
+                        if first == mine {
+                            Swing::Alternate { window, odd: false }
+                        } else if second == mine {
+                            Swing::Alternate { window, odd: true }
+                        } else {
+                            Swing::Never
+                        }
+                    }
+                    _ if first == mine => Swing::Always,
+                    _ => Swing::Never,
                 }
             })
             .collect();
@@ -372,7 +451,7 @@ fn assign_tanks(
             member.target_order = Some(order.clone());
         }
         let swings: Vec<Swing> = order.iter().map(|&target| swings[target]).collect();
-        if swings.contains(&Swing::Never) && named {
+        if named && swings.iter().any(|swing| *swing != Swing::Always) {
             member.swings = Some(swings);
         }
     }

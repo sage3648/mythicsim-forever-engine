@@ -884,3 +884,160 @@ fn each_target_swings_only_at_its_own_tank() {
     assert_eq!(dtps(&both, "fury-protection-warrior"), 0.0);
     assert_eq!(tanking(&both), [true, false, false]);
 }
+
+/// The raid with a fixed fight length, so a swap lands at the same moments every iteration.
+fn fixed_length(mut input: Value, swap_seconds: Option<f64>) -> Value {
+    input["request"]["encounter"]["durationVariation"] = json!(0);
+    if let Some(seconds) = swap_seconds {
+        input["tankSwapSeconds"] = json!(seconds);
+    }
+    input
+}
+
+/// The times of each member's boss swings in the first iteration, by member in raid order. The
+/// raid's log is every member's in turn, each starting again at the pull.
+fn swing_times(report: &Value) -> Vec<Vec<f64>> {
+    let mut members: Vec<Vec<f64>> = Vec::new();
+    let mut last = f64::MAX;
+    for line in report["result"]["logs"].as_str().unwrap().lines() {
+        let Some((time, rest)) = line[1..].split_once("] [") else {
+            continue;
+        };
+        let time: f64 = time.parse().unwrap();
+        if time < last - 50.0 {
+            members.push(Vec::new());
+        }
+        last = time;
+        if rest.starts_with("Target ") && rest.contains("Casting {OtherID: 3, Tag: 1}") {
+            members.last_mut().unwrap().push(time);
+        }
+    }
+    members
+}
+
+#[test]
+fn a_target_swaps_between_two_tanks_on_a_timer() {
+    let (first, second) = (reference_player(0, 0), reference_player(0, 1));
+    let alone = |player: &Value, name: &str| {
+        let input = fixed_length(
+            tank_raid(vec![player.clone()], &[0], &[(0, None)], 300),
+            None,
+        );
+        dtps(&run(&input), name)
+    };
+    let (first_alone, second_alone) = (
+        alone(&first, "protection-warrior"),
+        alone(&second, "fury-protection-warrior"),
+    );
+    let mut input = fixed_length(
+        tank_raid(vec![first, second], &[0, 1], &[(0, Some(1))], 300),
+        Some(30.0),
+    );
+    let swapped = run(&input);
+    // Each tank holds the boss for half of the 120 second fight and takes about half of what it
+    // takes tanking it alone. The tolerance is 8% of that: a swing at a window's edge goes to one
+    // tank or the other, which is a swing in sixty, and the fight to fight noise is a few percent
+    // when only half the swings land.
+    for (name, alone) in [
+        ("protection-warrior", first_alone),
+        ("fury-protection-warrior", second_alone),
+    ] {
+        let share = dtps(&swapped, name) / alone;
+        assert!(
+            (share - 0.5).abs() < 0.04,
+            "{name} takes {share} of its damage alone"
+        );
+    }
+    assert_eq!(tanking(&swapped), [true, true]);
+
+    // The first iteration's swings alternate at the 30 second marks: the first tank's fall in
+    // the windows from 0 to 30 and 60 to 90, the second's in the others, and each lands about
+    // every other swing of the boss's two seconds.
+    input["request"]["simOptions"]["iterations"] = json!(2);
+    input["request"]["simOptions"]["debugFirstIteration"] = json!(true);
+    let logged = run(&input);
+    let swings = swing_times(&logged);
+    assert_eq!(swings.len(), 2);
+    for (tank, times) in swings.iter().enumerate() {
+        assert!(
+            times.len() >= 20 && times.len() <= 40,
+            "{} swings",
+            times.len()
+        );
+        for time in times {
+            let window = (time / 30.0).floor() as usize;
+            assert_eq!(window % 2, tank, "tank {tank} is hit at {time}");
+        }
+        // Both of the tank's windows see swings.
+        for window in (tank..4).step_by(2) {
+            let in_window = times
+                .iter()
+                .filter(|time| (**time / 30.0).floor() as usize == window)
+                .count();
+            assert!(
+                in_window >= 8,
+                "tank {tank} window {window}: {in_window} swings"
+            );
+        }
+    }
+}
+
+#[test]
+fn a_swap_time_changes_nothing_without_a_second_tank() {
+    let (first, second) = (reference_player(0, 0), reference_player(0, 1));
+    let hunter = reference_player(1, 4);
+    // The report's digest is of the input bytes, and its timing of the run.
+    let strip = |mut report: Value| {
+        report.as_object_mut().unwrap().remove("elapsed_ns");
+        report.as_object_mut().unwrap().remove("request_sha256");
+        report
+    };
+    // One tank; a second tank entry that is the first; one target each for two tanks.
+    for (players, tanks, targets) in [
+        (
+            vec![first.clone(), hunter.clone()],
+            vec![0],
+            vec![(0, None)],
+        ),
+        (
+            vec![first.clone(), hunter.clone()],
+            vec![0],
+            vec![(0, Some(0))],
+        ),
+        (
+            vec![first.clone(), second.clone()],
+            vec![0, 1],
+            vec![(0, None), (1, None)],
+        ),
+    ] {
+        let without = tank_raid(players, &tanks, &targets, 20);
+        let mut with = without.clone();
+        with["tankSwapSeconds"] = json!(45);
+        assert_eq!(strip(run(&without)), strip(run(&with)), "{targets:?}");
+    }
+}
+
+#[test]
+fn a_second_tank_needs_a_swap_time_in_range() {
+    let (first, second) = (reference_player(0, 0), reference_player(0, 1));
+    let input = tank_raid(vec![first, second], &[0, 1], &[(0, Some(1))], 20);
+    match simulate_raid(&serde_json::to_vec(&input).unwrap(), Rules::Forever, false) {
+        Err(RaidError::Refused(refusals)) => {
+            assert_eq!(refusals.len(), 2);
+            assert!(
+                refusals[0].reason.contains("tankSwapSeconds"),
+                "{}",
+                refusals[0].reason
+            );
+        }
+        other => panic!("{:?}", other.map(|_| ())),
+    }
+    for seconds in [4.0, 601.0] {
+        let mut input = input.clone();
+        input["tankSwapSeconds"] = json!(seconds);
+        match simulate_raid(&serde_json::to_vec(&input).unwrap(), Rules::Forever, false) {
+            Err(RaidError::Invalid(reason)) => assert!(reason.contains("tankSwapSeconds")),
+            other => panic!("{:?}", other.map(|_| ())),
+        }
+    }
+}

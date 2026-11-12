@@ -584,12 +584,20 @@ pub(crate) enum Swing {
     Never,
     /// The member's player holds the target for the whole fight.
     Always,
+    /// The member's player and another tank swap the target on a timer: the first tank holds it
+    /// from the pull for `window` nanoseconds, the second for the next `window`, and so on. The
+    /// swing that comes due at a time lands on whoever holds the target then.
+    Alternate { window: i64, odd: bool },
 }
 
 impl Swing {
     /// Whether the target's swing that comes due at `time` lands on the member.
-    fn at(self, _time: i64) -> bool {
-        matches!(self, Swing::Always)
+    fn at(self, time: i64) -> bool {
+        match self {
+            Swing::Never => false,
+            Swing::Always => true,
+            Swing::Alternate { window, odd } => (time.div_euclid(window) & 1 == 1) == odd,
+        }
     }
 }
 

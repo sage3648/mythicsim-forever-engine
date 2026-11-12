@@ -13,7 +13,8 @@ pinned fork (`sim/core/raid.go`, `RaidSimRequest`), but no MythicSim surface eve
   "request": { "raid": { "parties": [ { "players": [], "buffs": {} } ], "buffs": {}, "debuffs": {},
                          "tanks": [] },
                "encounter": {}, "simOptions": { "iterations": 1000, "randomSeed": "42" } },
-  "assignments": { "innervate": [ { "from": 3, "to": 7 } ], "powerInfusion": [] }
+  "assignments": { "innervate": [ { "from": 3, "to": 7 } ], "powerInfusion": [] },
+  "tankSwapSeconds": 30
 }
 ```
 
@@ -108,9 +109,27 @@ that all swing at the one player. A raid with several tanks gives each target to
 - A raid whose targets all name the same tank, or the same first tank, is left exactly as its
   request says, as before.
 
-Limits: a target's `secondTankIndex` that names another tank than `tankIndex` is still refused,
-and each tank's fight times the boss's swings on its own: its own opening offset, slows and parry
-haste. Two tanks' copies of one boss are not one timer.
+### Tank swaps
+
+`tankSwapSeconds` (5 to 600, beside `assignments`) swaps a target between two tanks on a timer. A
+target with both a `tankIndex` and a `secondTankIndex` naming another tank (and, if the same
+raid member is behind both entries, nothing to swap) swings at the first tank for the first
+`tankSwapSeconds` from the pull, then at the second for the next, and so on. A target with no
+second tank ignores the swap time, and a raid with one tank and a swap time is identical to the
+same raid without it. A target with a second tank and no `tankSwapSeconds` is refused, naming
+the tanks, with a message that says to give a swap time. There is no threat: the swap is a taunt
+rotation on a timer, and nothing makes a tank lose the target.
+
+Each tank's fight keeps the target's swing timer running on the raid clock, as for any copy it
+does not hold, and the swing that comes due at a moment lands on whoever holds the target then.
+A swing is whole, never split across the edge, and a tank that takes the target at the edge gets
+the next swing its own timer has due, so a tank may take one swing more or fewer than half and
+the average is half. The swap does not carry swing timers over between the two fights: each has
+its own opening offset, slows and parry haste. Rage from damage taken, block, avoidance procs and
+what the tank's rotation reads follow from the swings that land, as for any hit.
+
+Limits: a second tank of a different raid member needs both tanks in the raid; a tank list entry
+for a raid index with no player holds the target for its windows and nobody takes the swings.
 
 ## Properties the tests hold
 
@@ -134,6 +153,11 @@ haste. Two tanks' copies of one boss are not one timer.
 - With two bosses and two tanks, one each, each tank takes about what it takes alone tanking one
   boss (within 5% at 300 iterations; the run to run noise is about 2%), not double. With both bosses
   on one tank, it takes about twice that and the other takes nothing and is not a tank.
+- One target and two tanks swapping every 30 seconds in a 120 second fight: each tank takes about
+  half of what it takes tanking the boss alone (within 4 points of half at 300 iterations), the
+  swings in the first iteration's log fall in the tank's own 30 second windows, and a raid with
+  one tank and a swap time, or with targets that name no second tank, is identical to the same raid
+  without it.
 - In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor, the feral
   druid's Faerie Fire and the three warlocks' Curse of the Elements are live, and no warlock
   recasts its curse every global cooldown.
