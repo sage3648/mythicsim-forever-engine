@@ -36,9 +36,14 @@ reference row). The rules, per stat of the row's base stats (scaling_options "0"
   with one item effect on use, when the tooltip has one such line (Adaptive Combat Assistant,
   272437: 5 minutes where the reference row says 90 seconds). The shared category cooldown
   stays the row's.
+- the classes follow the tooltip's "Classes: Priest, Mage, Warlock" line, and a tooltip without
+  that line lifts the row's class allowlist: Forever lifted Plaguerot Sprig's Mage only
+  restriction (10766, a Warlock refused on 12 November 2026), and the reference's lists for
+  quest rewards such as Woestave (20082, Priest) were never a restriction of the item. A
+  tooltip that names classes the row lacks adds them (Bonescythe Armor, Rogue).
 
-Existing live rows keep their stats, damage and speed as they are; only their on use cooldown
-and weapon skills follow a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
+Existing live rows keep their stats, damage and speed as they are; only their on use cooldown,
+weapon skills and classes follow a tooltip the cache holds. So a row written from a hotfix push the tooltip does not show
 yet stays: Rage of the Storm (280604) is the ItemSparse row of hotfix push 113886 (docs/mechanics.md). An item with a "+N" line this tool cannot read is left out
 and listed.
 
@@ -94,6 +99,7 @@ ALL_RESISTANCES = re.compile(r"^\+(\d+) (?:to )?All Resistances\.?$")
 # "(1 Hour Cooldown)".
 USE_COOLDOWN = re.compile(r"^Use:.*\((\d+) (Sec|Min|Hour|Hours) Cooldown\)$")
 COOLDOWN_UNIT_MS = {"Sec": 1000, "Min": 60_000, "Hour": 3_600_000, "Hours": 3_600_000}
+CLASSES_LINE = re.compile(r"^Classes: (.+)$")
 SET_BONUS = re.compile(r"^\(\d+\) Set ?:")
 
 
@@ -160,7 +166,7 @@ def read_tooltip(response):
     if response.get("missing") or response.get("error") or "tooltip" not in response:
         return None
     lines, _ = client.tooltip_lines(response["tooltip"])
-    out = {"stats": {}, "text": " ".join(lines), "use_cooldowns": [], "skills": {}}
+    out = {"stats": {}, "text": " ".join(lines), "use_cooldowns": [], "skills": {}, "classes": []}
 
     def add(stat, value):
         out["stats"][stat] = out["stats"].get(stat, 0) + value
@@ -208,7 +214,17 @@ def read_tooltip(response):
                 add(stat, value)
         elif match := USE_COOLDOWN.match(line):
             out["use_cooldowns"].append(int(match.group(1)) * COOLDOWN_UNIT_MS[match.group(2)])
+        elif match := CLASSES_LINE.match(line):
+            out["classes"] = ["Class" + name.strip().replace(" ", "") for name in match.group(1).split(",")]
     return out
+
+
+def class_change(row, live):
+    """The classes the tooltip states when they differ from the row's allowlist, else None; an
+    empty list lifts the row's allowlist."""
+    held = row.get("class_allowlist") or []
+    stated = live.get("classes", [])
+    return None if sorted(held) == sorted(stated) else list(stated)
 
 
 def on_use_effect(row):
@@ -320,6 +336,9 @@ def changes(row, live):
     pseudo = skill_change(row, live)
     if pseudo is not None:
         out["pseudo_stats"] = pseudo
+    classes = class_change(row, live)
+    if classes is not None:
+        out["class_allowlist"] = classes
     if out and live.get("ilvl") and live["ilvl"] != option.get("ilvl"):
         out["ilvl"] = live["ilvl"]
     return out
@@ -352,6 +371,11 @@ def live_row(row, change):
             row["pseudo_stats"] = change["pseudo_stats"]
         else:
             row.pop("pseudo_stats", None)
+    if "class_allowlist" in change:
+        if change["class_allowlist"]:
+            row["class_allowlist"] = change["class_allowlist"]
+        else:
+            row.pop("class_allowlist", None)
     order = ["rand_prop_points", "weapon_damage_min", "weapon_damage_max", "stats", "ilvl"]
     row["scaling_options"]["0"] = {
         **{k: option[k] for k in order if k in option},
@@ -372,7 +396,7 @@ def build(cache, report=None):
         if not path.exists():
             continue
         if item_id in live:
-            # A live row keeps what it has but its on use cooldown and weapon skills.
+            # A live row keeps what it has but its on use cooldown, weapon skills and classes.
             try:
                 stated = read_tooltip(json.loads(path.read_text()))
             except client.Unreadable:
@@ -386,6 +410,8 @@ def build(cache, report=None):
                 change["pseudo_stats"] = pseudo
             if unified := unified_change(live[item_id], stated):
                 change["stats"] = unified
+            if (classes := class_change(live[item_id], stated)) is not None:
+                change["class_allowlist"] = classes
             if change:
                 added[item_id] = (row["name"], change)
                 live[item_id] = live_row(live[item_id], change)
