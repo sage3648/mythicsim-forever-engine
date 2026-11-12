@@ -1904,6 +1904,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) share: Option<Box<raid::Share>>,
     /// The player auras this fight's member gives other members or takes from them.
     pub(crate) gifts: Option<Box<raid::Gifts>>,
+    /// Which targets swing at this fight's player, when the raid's targets have different tanks.
+    pub(crate) tank_role: Option<Box<raid::TankRole>>,
     external_expose: Option<ExternalExpose>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
@@ -4251,6 +4253,7 @@ impl<A: Agent> Fight<A> {
             duration_override: None,
             share: None,
             gifts: None,
+            tank_role: None,
             external_expose: None,
             aura_logs,
             stat_combos,

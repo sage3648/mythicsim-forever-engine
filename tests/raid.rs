@@ -790,3 +790,97 @@ fn an_assignment_names_one_other_member_per_caster() {
             .contains("two members")
     );
 }
+
+/// The reference raid's boss as `targets` copies, one tank list entry per raid index in `tanks`,
+/// and the given players in one party. A target is its `tankIndex` and optional `secondTankIndex`.
+fn tank_raid(
+    players: Vec<Value>,
+    tanks: &[usize],
+    targets: &[(i64, Option<i64>)],
+    iterations: u32,
+) -> Value {
+    let mut input = reference_raid();
+    let buffs = input["request"]["raid"]["parties"][1]["buffs"].clone();
+    input["request"]["raid"]["parties"] = json!([{ "players": players, "buffs": buffs }]);
+    input["request"]["raid"]["tanks"] = tanks
+        .iter()
+        .map(|index| json!({ "type": "Player", "index": index }))
+        .collect();
+    let boss = input["request"]["encounter"]["targets"][0].clone();
+    input["request"]["encounter"]["targets"] = targets
+        .iter()
+        .map(|&(first, second)| {
+            let mut target = boss.clone();
+            target["tankIndex"] = json!(first);
+            if let Some(second) = second {
+                target["secondTankIndex"] = json!(second);
+            }
+            target
+        })
+        .collect();
+    input["request"]["simOptions"] = json!({ "iterations": iterations, "randomSeed": "42" });
+    input
+}
+
+/// A member's damage taken per second; a member nothing swings at has none.
+fn dtps(report: &Value, name: &str) -> f64 {
+    member(report, name)["dtps"]["avg"].as_f64().unwrap_or(0.0)
+}
+
+fn tanking(report: &Value) -> Vec<bool> {
+    report["mythicsim"]["members"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|member| member["tanking"].as_bool().unwrap())
+        .collect()
+}
+
+#[test]
+fn each_target_swings_only_at_its_own_tank() {
+    let (first, second) = (reference_player(0, 0), reference_player(0, 1));
+    let hunter = reference_player(1, 4);
+    let alone = |player: &Value| run(&tank_raid(vec![player.clone()], &[0], &[(0, None)], 300));
+    let (first_alone, second_alone) = (
+        dtps(&alone(&first), "protection-warrior"),
+        dtps(&alone(&second), "fury-protection-warrior"),
+    );
+
+    // Two targets, two tanks, one each: each tank takes what it takes tanking one target alone.
+    // The tolerance is 5%: a tank's damage taken per second varies about 7% from fight to fight
+    // and two runs with other seeds agree within about 2% at 300 iterations, so 5% is a wide
+    // margin for the noise and still far from the +100% of a second boss swinging at the tank.
+    let split = run(&tank_raid(
+        vec![first.clone(), second.clone(), hunter.clone()],
+        &[0, 1],
+        &[(0, None), (1, None)],
+        300,
+    ));
+    let (first_split, second_split) = (
+        dtps(&split, "protection-warrior"),
+        dtps(&split, "fury-protection-warrior"),
+    );
+    assert!(
+        (first_split / first_alone - 1.0).abs() < 0.05,
+        "{first_split} against {first_alone} alone"
+    );
+    assert!(
+        (second_split / second_alone - 1.0).abs() < 0.05,
+        "{second_split} against {second_alone} alone"
+    );
+    assert_eq!(tanking(&split), [true, true, false]);
+    // The hunter is hit by nothing.
+    assert_eq!(dtps(&split, "hunter"), 0.0);
+
+    // Both targets on the first tank: it takes two swings, the second tank none and is no tank.
+    let both = run(&tank_raid(
+        vec![first, second, hunter],
+        &[0, 1],
+        &[(0, None), (0, None)],
+        300,
+    ));
+    let doubled = dtps(&both, "protection-warrior") / first_alone;
+    assert!((doubled - 2.0).abs() < 0.2, "{doubled} swings' worth");
+    assert_eq!(dtps(&both, "fury-protection-warrior"), 0.0);
+    assert_eq!(tanking(&both), [true, false, false]);
+}

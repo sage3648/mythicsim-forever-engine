@@ -20,7 +20,7 @@ pinned fork (`sim/core/raid.go`, `RaidSimRequest`), but no MythicSim surface eve
 `request` is a `RaidSimRequest` with several players. A raid index is Go's: `5 * party + slot`.
 The application composes the buffs: each party's buffs are what its members bring, the raid's
 buffs and debuffs what any member brings. `raid.tanks` and the targets' `tankIndex` work as in
-Go. An assignment names a druid's Innervate or a priest's Power Infusion and the member it goes
+Go, and a raid can have several tanks, one per target (see "Tanks" below). An assignment names a druid's Innervate or a priest's Power Infusion and the member it goes
 to: each caster casts on one other member, and the target loses its own request's assumed
 Innervates or Power Infusions. `simOptions.randomSeed` is required.
 
@@ -86,6 +86,32 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
    cast it and whether it was live, and each assignment with its caster's casts over every
    iteration, how many landed, and `cast: false` when the caster never cast it.
 
+## Tanks
+
+Each member fights as a single-player Quick Sim, whose targets are identical copies of the boss
+that all swing at the one player. A raid with several tanks gives each target to one of them:
+`raid.tanks` lists the tanks (`{ "type": "Player", "index": raidIndex }`) and each target's
+`tankIndex` names its tank's position in that list. A raid with two bosses, two tanks and a
+`tankIndex` of 0 and 1 on them runs like this:
+
+- A tank's fight has every target copy, but only the copies its tank list entry names swing at
+  it. The other copies keep their swing timers on the raid clock and skip the swing that comes
+  due: no roll, no damage, no metric. A tank's damage taken per second is therefore what it takes
+  tanking those targets alone.
+- A member that no target names is not hit and `mythicsim.members[].tanking` is false for it. So is
+  a hunter in the same party. (A Protection Warrior no target names is refused, as alone: its
+  rotation reads the block value of a tanked target.)
+- The tank fights the first target it holds: that copy goes first in its own fight, so its attacks
+  and the parry haste of the boss's swing are on the boss that swings at it. The runner renames
+  the targets of a shared debuff between members whose fights list them in another order. In
+  `result.encounterMetrics` (the first member's view) the targets are in that member's order.
+- A raid whose targets all name the same tank, or the same first tank, is left exactly as its
+  request says, as before.
+
+Limits: a target's `secondTankIndex` that names another tank than `tankIndex` is still refused,
+and each tank's fight times the boss's swings on its own: its own opening offset, slows and parry
+haste. Two tanks' copies of one boss are not one timer.
+
 ## Properties the tests hold
 
 - A raid of one is its Quick Sim, bit for bit.
@@ -105,6 +131,9 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
 - An assigned Innervate and Power Infusion land on the target exactly when the caster casts
   them, never on the caster, and replace the target's assumed ones; a caster whose rotation
   never casts the spell leaves the target as with no assignment.
+- With two bosses and two tanks, one each, each tank takes about what it takes alone tanking one
+  boss (within 5% at 300 iterations; the run to run noise is about 2%), not double. With both bosses
+  on one tank, it takes about twice that and the other takes nothing and is not a tank.
 - In the 20 reference build raid (`fixtures/raid`), the four warriors' Sunder Armor, the feral
   druid's Faerie Fire and the three warlocks' Curse of the Elements are live, and no warlock
   recasts its curse every global cooldown.

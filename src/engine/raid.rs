@@ -21,7 +21,7 @@ use crate::{
     contracts::prepared_v2::PreparedV2,
     core::fight::{
         metrics::Distribution,
-        raid::{Gift, RaidMember, SentGift, SharedDebuff},
+        raid::{Gift, RaidMember, SentGift, SharedDebuff, SharedState, Swing},
         Run,
     },
     prepare::{PrepareError, Rules},
@@ -80,6 +80,12 @@ pub struct Member {
     pub(crate) raid_live: crate::prepare::env::RaidLive,
     /// What the member's casts give another member: the gift and that member's raid index.
     pub(crate) gives: Vec<(Gift, usize)>,
+    /// Which target copies swing at the member, when the raid's targets have different tanks
+    /// (`assign_tanks`); none leaves every copy as its request says.
+    pub(crate) swings: Option<Vec<Swing>>,
+    /// The raid's target each of the member's target copies stands for, when the member's fight
+    /// lists them in another order than the raid's (`assign_tanks`); none is the raid's order.
+    pub(crate) target_order: Option<Vec<usize>>,
 }
 
 /// Why a raid did not run.
@@ -251,15 +257,126 @@ pub fn split(input: &RaidInput) -> Result<Vec<Member>, RaidError> {
                 request: Value::Object(own),
                 raid_live: Default::default(),
                 gives: Vec::new(),
+                swings: None,
+                target_order: None,
             });
         }
     }
     if members.is_empty() {
         return Err(invalid("a raid without players"));
     }
+    assign_tanks(&mut members, request, &tanks)?;
     share_debuffs(&mut members);
     assign(&mut members, &input.assignments)?;
     Ok(members)
+}
+
+/// One target's tanks, as its `tankIndex` and `secondTankIndex` name them.
+struct Holders {
+    /// The tank list entry of the first tank, when it names one.
+    first: Option<usize>,
+    /// The entry of a second tank, when the target names one other than the first.
+    second: Option<usize>,
+}
+
+/// One tank per target. A member's fight is a single-player Quick Sim whose targets are identical
+/// copies, so a raid whose targets have different tanks is split by member instead: the member's
+/// copies all take it as their tank, as the member's own fight reads its request, and the copies
+/// that another member holds are told not to swing at it (`Swing::Never`). A member no target
+/// names is untanked. A raid whose targets all have the same tank is left as its request says.
+fn assign_tanks(
+    members: &mut [Member],
+    request: &Map<String, Value>,
+    tanks: &[Value],
+) -> Result<(), RaidError> {
+    let Some(targets) = request
+        .get("encounter")
+        .and_then(|encounter| encounter.get("targets"))
+        .and_then(Value::as_array)
+    else {
+        return Ok(());
+    };
+    let entry = |value: Option<&Value>| {
+        value
+            .and_then(Value::as_i64)
+            .and_then(|index| usize::try_from(index).ok())
+            .filter(|&index| index < tanks.len())
+    };
+    let holders: Vec<Holders> = targets
+        .iter()
+        .map(|target| {
+            let first = entry(Some(target.get("tankIndex").unwrap_or(&json!(0))));
+            let second =
+                entry(target.get("secondTankIndex")).filter(|&second| Some(second) != first);
+            Holders { first, second }
+        })
+        .collect();
+    let same = holders
+        .iter()
+        .all(|other| other.first == holders[0].first && other.second == holders[0].second);
+    // A second tank is a swap, which needs a time, so it keeps its refusal until it has one.
+    if same || holders.iter().any(|target| target.second.is_some()) {
+        return Ok(());
+    }
+    let raid_index = |entry: usize| {
+        tanks[entry]
+            .get("index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0) as usize
+    };
+    for member in members.iter_mut() {
+        let swings: Vec<Swing> = holders
+            .iter()
+            .map(|target| {
+                if target.first.map(raid_index) == Some(member.raid_index) {
+                    Swing::Always
+                } else {
+                    Swing::Never
+                }
+            })
+            .collect();
+        // The member fights the first target it holds, as a tank does: its own attacks, and the
+        // parry haste of the target's swing, are on the copy that swings at it. The copies are
+        // identical, so the held ones go first and the others keep their order.
+        let mut order: Vec<usize> = (0..swings.len())
+            .filter(|&target| swings[target] != Swing::Never)
+            .collect();
+        let named = !order.is_empty();
+        order.extend((0..swings.len()).filter(|&target| swings[target] == Swing::Never));
+        let own_entry = (0..tanks.len())
+            .find(|&entry| raid_index(entry) == member.raid_index)
+            .map_or(-1, |entry| entry as i64);
+        let copies = member.request["encounter"]["targets"]
+            .as_array()
+            .expect("a member's request holds the targets")
+            .clone();
+        let mut reordered = Vec::with_capacity(copies.len());
+        for &target in &order {
+            let mut copy = copies[target].clone();
+            let fields = copy
+                .as_object_mut()
+                .ok_or_else(|| invalid("a target is not an object"))?;
+            fields.insert(
+                "tankIndex".into(),
+                json!(if named { own_entry } else { -1 }),
+            );
+            fields.insert("secondTankIndex".into(), json!(-1));
+            reordered.push(copy);
+        }
+        member.request["encounter"]["targets"] = Value::Array(reordered);
+        if order
+            .iter()
+            .enumerate()
+            .any(|(local, &target)| local != target)
+        {
+            member.target_order = Some(order.clone());
+        }
+        let swings: Vec<Swing> = order.iter().map(|&target| swings[target]).collect();
+        if swings.contains(&Swing::Never) && named {
+            member.swings = Some(swings);
+        }
+    }
+    Ok(())
 }
 
 /// A debuff a member's rotation casts is on the target in every member's fight, and only while
@@ -713,6 +830,31 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
             landed: 0,
         }));
     }
+    // The targets each tank holds, by position.
+    for (fight, member) in fights.iter_mut().zip(&members) {
+        if let Some(swings) = &member.member.swings {
+            fight
+                .bind_swings(swings)
+                .map_err(|err| invalid(format!("member {}: {err}", member.member.raid_index)))?;
+        }
+    }
+    // The raid's target each member's target position stands for.
+    let orders: Vec<Option<&[usize]>> = members
+        .iter()
+        .map(|member| member.member.target_order.as_deref())
+        .collect();
+    let raid_target = |member: usize, local: u8| {
+        orders[member].map_or(local, |order| order[usize::from(local)] as u8)
+    };
+    let local_target = |member: usize, raid: u8| {
+        orders[member].map_or(raid, |order| {
+            order
+                .iter()
+                .position(|&target| target == usize::from(raid))
+                .expect("every target is listed") as u8
+        })
+    };
+    let mut translated = Vec::new();
     let mut gifts: Vec<SentGift> = Vec::new();
     let mut states = Vec::new();
     let party_count = members
@@ -784,7 +926,18 @@ pub fn run(members: Vec<PreparedMember>, rotation_stats: bool) -> Result<RaidRep
                 let now = fights[index].now();
                 for other in 0..fights.len() {
                     if other != index && active[other] {
-                        fights[other].apply_shared(now, &states);
+                        // The members that list the targets in another order name them by
+                        // their own positions.
+                        if orders[index].is_none() && orders[other].is_none() {
+                            fights[other].apply_shared(now, &states);
+                        } else {
+                            translated.clear();
+                            translated.extend(states.iter().map(|state| SharedState {
+                                target: local_target(other, raid_target(index, state.target)),
+                                ..*state
+                            }));
+                            fights[other].apply_shared(now, &translated);
+                        }
                         requeue(&mut due, &mut queued, fights[other].next_time(), other);
                     }
                 }

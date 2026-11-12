@@ -38,6 +38,8 @@ pub(crate) trait RaidMember {
     fn drain_gifts(&mut self, out: &mut Vec<SentGift>);
     /// Take another member's gift at `time`. Returns whether it landed.
     fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool;
+    /// Bind which of the targets swing at the member, by position among the copies, and when.
+    fn bind_swings(&mut self, swings: &[Swing]) -> Result<(), String>;
 }
 
 impl<A: Agent> RaidMember for Fight<A> {
@@ -109,6 +111,10 @@ impl<A: Agent> RaidMember for Fight<A> {
 
     fn take_gift(&mut self, time: i64, sent: &SentGift) -> bool {
         Fight::take_gift(self, time, sent)
+    }
+
+    fn bind_swings(&mut self, swings: &[Swing]) -> Result<(), String> {
+        Fight::bind_swings(self, swings)
     }
 }
 
@@ -567,5 +573,60 @@ impl<A: Agent> Fight<A> {
         }
         self.aura_mut(aura).duration = own;
         self.aura(aura).active
+    }
+}
+
+/// Whether a target copy swings at the member's player, which the raid decides when its targets
+/// have different tanks.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Swing {
+    /// Another member's tank holds the target: its swings never reach this fight.
+    Never,
+    /// The member's player holds the target for the whole fight.
+    Always,
+}
+
+impl Swing {
+    /// Whether the target's swing that comes due at `time` lands on the member.
+    fn at(self, _time: i64) -> bool {
+        matches!(self, Swing::Always)
+    }
+}
+
+/// What the raid decided about the targets of a member that tanks: which copies swing at it.
+#[derive(Debug, Default)]
+pub(crate) struct TankRole {
+    /// Each target copy's swings at the member, by position.
+    swings: Vec<Swing>,
+}
+
+impl<A: Agent> Fight<A> {
+    /// Bind which target copies swing at this member. The copies keep their swing timers, which
+    /// run on the raid's clock whoever holds the target, so a copy that does not swing at the
+    /// member only skips the swing that comes due: no roll, no damage, no metric.
+    pub(crate) fn bind_swings(&mut self, swings: &[Swing]) -> Result<(), String> {
+        if swings.len() != self.enemies.len() {
+            return Err(format!(
+                "{} target swings for {} targets, or a member that no target swings at",
+                swings.len(),
+                self.enemies.len()
+            ));
+        }
+        self.tank_role = Some(Box::new(TankRole {
+            swings: swings.to_vec(),
+        }));
+        Ok(())
+    }
+
+    /// Whether the swing of `target` that comes due now lands on the player.
+    #[inline]
+    pub(crate) fn enemy_swings_now(&self, target: Side) -> bool {
+        let Some(role) = self.tank_role.as_deref() else {
+            return true;
+        };
+        let position = target.target_position().expect("the unit is a target");
+        role.swings
+            .get(position)
+            .is_none_or(|swing| swing.at(self.now))
     }
 }
