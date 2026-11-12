@@ -11,8 +11,9 @@ use serde_json::{json, Value};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
+use crate::prepare::client_set_effects::BEAST;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::ItemSet;
+use crate::prepare::item_sets::{ClientItemSet, ItemSet};
 use crate::prepare::items::slot;
 use crate::prepare::sim::{
     AuraConfig, AuraId, BuildPhase, Cooldown, Sim, SpellId, UnitId, NEVER_EXPIRES, SECOND,
@@ -580,4 +581,82 @@ impl Hunter {
         json!({"kind": "renatakis_charm", "item_id": sim.spell(spell).action_id.item_id,
             "shots": shots})
     }
+}
+
+/// Wildstalker Armor (ItemSet 2101: Legguards 273900, Gauntlets 273901, Spaulders 273902, Greaves
+/// 273903), the Hunter's Tier 1 of the Forever client, which the reference does not register. The
+/// bonuses are the ItemSetSpell spells of `data/spells.jsonl` (client 1.60.1.70425), beside the
+/// line the Wowhead Forever tooltips gave them on 13 November 2026.
+///
+/// - (2) "Increases your attack speed and casting speed by 1%." Spell 1300945: a melee and ranged
+///   haste aura (342) and a casting speed aura (65) of 1. The sim's attack speed multiplier is
+///   the melee and the ranged one together (`total_ranged_haste_multiplier` multiplies it in
+///   beside the ranged speed multiplier), so Auto Shot and the ranged haste read the 1%.
+/// - (3) "Reduces the cooldown of your Frost Trap and Freezing Trap abilities by 3 sec." Spell
+///   1301012: a cooldown mod (107, misc 11) of -3000 ms on mask 67371008 of family 9's third
+///   word, which is Freezing Trap (1499, 14310, 14311) and Frost Trap (13809). Applied to
+///   Freezing Trap, the one of the two this engine registers; its cooldown is the one the three
+///   traps share under Forever's rules (`hotfix_113554`).
+/// - (4) "+36 Attack Power against Beasts." Spell 1301078: melee attack power versus a creature
+///   type (102, mask 1) of 36. It is melee only, as the aura is, so ranged attacks never read it.
+/// - (5) "Reduces the cooldown of your Aimed Shot and Multi-Shot abilities by 1 sec." Spell
+///   1301252: a cooldown mod (107, misc 11) of -1000 ms on mask 131072 of family 9, which in the
+///   client data is Aimed Shot's (19434 to 20902) alone: Multi-Shot (2643) carries 4096. The
+///   tooltip names both and the beta puts both on one 6 sec cooldown, so both are applied, as
+///   the tooltip states them.
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
+    set: ItemSet {
+        id: 2101,
+        name: "Wildstalker Armor",
+        alternative_name: "",
+        bonuses: &[
+            (2, wildstalker_armor_2),
+            (3, wildstalker_armor_3),
+            (4, wildstalker_armor_4),
+            (5, wildstalker_armor_5),
+        ],
+        required_profession: "",
+    },
+    not_prepared: &[],
+}];
+
+/// Tier 1 Hunter: increases your attack speed and casting speed by 1%.
+fn wildstalker_armor_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_haste(aura);
+    env.sim.expose_to_apl(aura, 1300945);
+}
+
+/// Tier 1 Hunter: reduces the cooldown of your Frost Trap and Freezing Trap abilities by 3 sec.
+fn wildstalker_armor_3(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            time_value: -3 * SECOND,
+            ..mod_config(SpellModType::CooldownFlat, masks::FREEZING_TRAP)
+        },
+    );
+    sim.expose_to_apl(aura, 1301012);
+}
+
+/// Tier 1 Hunter: +36 Attack Power against Beasts.
+fn wildstalker_armor_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_attack_power(aura, BEAST, 36.0);
+    env.sim.expose_to_apl(aura, 1301078);
+}
+
+/// Tier 1 Hunter: reduces the cooldown of your Aimed Shot and Multi-Shot abilities by 1 sec.
+fn wildstalker_armor_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            time_value: -SECOND,
+            ..mod_config(
+                SpellModType::CooldownFlat,
+                masks::AIMED_SHOT | masks::MULTI_SHOT,
+            )
+        },
+    );
+    sim.expose_to_apl(aura, 1301252);
 }

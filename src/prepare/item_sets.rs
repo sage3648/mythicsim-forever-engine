@@ -114,10 +114,11 @@ fn set_bonuses(
     Ok(active)
 }
 
-/// A set of the Forever client whose pieces `data/forever-client-items.jsonl` holds
-/// (`tools/rust_client_items.py`, `CLIENT_SETS`). The reference registers none of them, so
-/// [`set_bonuses`] passes their pieces by; the sets and what their rows state are in
-/// `forever_client_sets`.
+/// A set of the Forever client that the reference does not register: the crafted sets whose
+/// pieces `data/forever-client-items.jsonl` holds (`tools/rust_client_items.py`, `CLIENT_SETS`) and
+/// the Tier 1 class sets whose pieces `data/items.jsonl` holds. [`set_bonuses`] passes their
+/// pieces by. The shared sets and what their rows state are in `forever_client_sets`; each
+/// class's are beside its `ITEM_SETS` and come through `crate::classes::client_item_sets`.
 pub(crate) struct ClientItemSet {
     /// The set and the bonuses that are applied.
     pub set: ItemSet,
@@ -126,16 +127,34 @@ pub(crate) struct ClientItemSet {
     pub not_prepared: &'static [i32],
 }
 
+/// Every client set: the shared ones in `forever_client_sets`, then each class's through
+/// `crate::classes::client_item_sets`, as [`implemented_sets`] gathers the reference's.
+pub(crate) fn client_sets() -> Vec<&'static ClientItemSet> {
+    let mut sets: Vec<&'static ClientItemSet> = super::forever_client_sets::CLIENT_ITEM_SETS
+        .iter()
+        .collect();
+    sets.extend(crate::classes::client_item_sets());
+    sets
+}
+
+/// Whether a client set owns the bonuses of the set the items name, which then leave nothing to
+/// a generic reading of the client's bonus rows (`healer_gear`).
+pub(crate) fn is_client_set(set_id: i32, set_name: &str) -> bool {
+    client_sets()
+        .iter()
+        .any(|client| client.set.id == set_id || client.set.name == set_name)
+}
+
 /// The bonuses of the client's sets that the equipped items reach, in the order the items reach
 /// them, or the refusal of a bonus that is not prepared yet. A set the reference registers is
 /// left to [`set_bonuses`]. Fewer pieces than the first bonus needs are plain items.
 fn client_set_bonuses(
     go_sets: &[ItemSetRow],
-    client_sets: &'static [ClientItemSet],
+    client_sets: &[&'static ClientItemSet],
     items: &[(i32, &str, i32)],
 ) -> Result<Vec<SetBonus>, Refusal> {
     let mut active = Vec::new();
-    for client in client_sets {
+    for &client in client_sets {
         let set = &client.set;
         if find_set(go_sets, set.id, set.name).is_some() {
             continue;
@@ -167,28 +186,40 @@ fn client_set_bonuses(
     Ok(active)
 }
 
+#[cfg(test)]
+thread_local! {
+    /// Set pieces a test counts beyond the equipment: an item goes to the slot its type names, so
+    /// no request can wear a fifth piece of a four piece crafted set, and the bonuses at five
+    /// pieces would never be reached.
+    pub(crate) static EXTRA_PIECES: std::cell::RefCell<Vec<(i32, String, i32)>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
 /// Go `applyItemSetBonusEffects`. Item swapping is refused before this runs, so only the
 /// equipped bonuses exist.
 pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), Refusal> {
     let unit = env.player;
-    let equipped: Vec<(i32, String, i32)> = env
+    #[allow(unused_mut)]
+    let mut equipped: Vec<(i32, String, i32)> = env
         .sim
         .character(unit)
         .equipment
         .iter()
         .map(|item| (item.set_id, item.set_name.clone(), item.id))
         .collect();
+    #[cfg(test)]
+    equipped.extend(EXTRA_PIECES.with(|pieces| pieces.borrow().clone()));
     let items: Vec<(i32, &str, i32)> = equipped
         .iter()
         .map(|(id, name, item)| (*id, name.as_str(), *item))
         .collect();
-    // The client's sets exist under Forever's rules alone, whose item rows are the only ones
-    // that name them.
-    let client = client_set_bonuses(
-        &tables().item_sets,
-        super::forever_client_sets::CLIENT_ITEM_SETS,
-        &items,
-    )?;
+    // The client's sets exist under Forever's rules alone: the reference registers none of
+    // them, so under its rules their items count for nothing, as they do in Go.
+    let client = if env.rules == super::sim::Rules::Forever {
+        client_set_bonuses(&tables().item_sets, &client_sets(), &items)?
+    } else {
+        Vec::new()
+    };
     let mut bonuses = set_bonuses(&tables().item_sets, &implemented_sets(), &items)?;
     bonuses.extend(client);
     for bonus in bonuses {
@@ -324,14 +355,19 @@ mod tests {
         not_prepared: &[4],
     }];
 
+    fn client() -> Vec<&'static ClientItemSet> {
+        CLIENT.iter().collect()
+    }
+
     #[test]
     fn a_client_set_applies_its_prepared_bonuses_and_refuses_the_others() {
         let one = [(21, "Delta", 1), (0, "", 2)];
-        assert!(client_set_bonuses(&[], CLIENT, &one)
+        let client = client();
+        assert!(client_set_bonuses(&[], &client, &one)
             .expect("no bonus yet")
             .is_empty());
         let three = [(21, "Delta", 1), (21, "Delta", 2), (0, "Delta", 3)];
-        let active = client_set_bonuses(&[], CLIENT, &three).expect("prepared");
+        let active = client_set_bonuses(&[], &client, &three).expect("prepared");
         let reached: Vec<(&str, i32)> = active.iter().map(|b| (b.set.name, b.pieces)).collect();
         assert_eq!(reached, [("Delta", 2), ("Delta", 3)]);
         let four = [
@@ -340,7 +376,7 @@ mod tests {
             (21, "Delta", 3),
             (21, "Delta", 4),
         ];
-        let refusal = match client_set_bonuses(&[], CLIENT, &four) {
+        let refusal = match client_set_bonuses(&[], &client, &four) {
             Err(refusal) => refusal,
             Ok(_) => panic!("a bonus that is not prepared must refuse"),
         };
@@ -354,7 +390,7 @@ mod tests {
     fn a_client_set_the_reference_registers_is_left_to_it() {
         let go = [set(21, "Delta", "", &[2])];
         let two = [(21, "Delta", 1), (21, "Delta", 2)];
-        assert!(client_set_bonuses(&go, CLIENT, &two)
+        assert!(client_set_bonuses(&go, &client(), &two)
             .expect("left to the reference")
             .is_empty());
     }

@@ -1,14 +1,17 @@
 //! Go `sim/paladin/item_sets.go`: the Paladin's item sets, Go's `core.NewItemSet` calls.
 //!
-//! The Justice Battlegear 4-piece bonus is left out: it adds attack power against Undead to the
-//! attack tables, which the exporter reports as unrepresented, so a request that reaches it is
-//! refused.
+//! The Justice Battlegear 4-piece bonus (+36 Attack Power against Undead) is a Forever client
+//! bonus the reference never registered. Under Forever's rules it is described like an item's
+//! creature type bonus (`client_set_effects`): applied when every target is Undead, inert against
+//! any other. Under the reference's rules the exporter still reports it as unrepresented, so a
+//! request that reaches it is refused there.
 
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
 use crate::prepare::character::constants::{
     DEFENSE_RATING_PER_DEFENSE_LEVEL, PHYSICAL_CRIT_RATING_PER_CRIT_PERCENT,
     SPELL_CRIT_RATING_PER_CRIT_PERCENT,
 };
+use crate::prepare::client_set_effects::UNDEAD;
 use crate::prepare::env::Environment;
 use crate::prepare::item_sets::ItemSet;
 use crate::prepare::sim::{AuraId, MILLISECOND, SECOND};
@@ -23,7 +26,11 @@ pub(crate) static ITEM_SETS: &[ItemSet] = &[
         id: 2106,
         name: "Justice Battlegear",
         alternative_name: "",
-        bonuses: &[(2, justice_battlegear_2), (5, justice_battlegear_5)],
+        bonuses: &[
+            (2, justice_battlegear_2),
+            (4, justice_battlegear_4),
+            (5, justice_battlegear_5),
+        ],
         required_profession: "",
     },
     ItemSet {
@@ -101,6 +108,16 @@ fn justice_battlegear_2(env: &mut Environment, aura: AuraId) {
     sim.attach_multiply_attack_speed(aura, 1.01);
     sim.attach_multiply_cast_speed(aura, 1.01);
     sim.expose_to_apl(aura, 1300951);
+}
+
+/// Tier 1 Retribution: +36 Attack Power against Undead. Spell 1301084: melee attack power versus
+/// a creature type (102, mask 32) of 36, which ranged attacks do not read. The row's family is 7
+/// (the Druid's) and its tooltip reads "Requires Druid", though the spell is named Tier 1 Paladin
+/// Retribution and the pieces are Paladin plate; the effect has no class mask, so the family
+/// changes nothing here.
+fn justice_battlegear_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_attack_power(aura, UNDEAD, 36.0);
+    env.sim.expose_to_apl(aura, 1301084);
 }
 
 /// Tier 1 Retribution: reduces the cooldown on your Judgement spell by 0.5 sec.

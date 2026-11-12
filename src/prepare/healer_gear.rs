@@ -170,12 +170,17 @@ fn equipped_sets(sim: &Sim, unit: UnitId) -> Vec<(i32, String, i32)> {
     sets
 }
 
-/// The client's bonus rows of each set the reference does not register.
+/// The client's bonus rows of each set the reference does not register and no client set owns.
 fn apply_client_set_bonuses(env: &mut Environment) {
     let unit = env.player;
     let go = &tables().item_sets;
     for (set_id, name, pieces) in equipped_sets(&env.sim, unit) {
-        if set_id == 0 || super::item_sets::find_set(go, set_id, &name).is_some() {
+        // A set a client set owns (`item_sets::client_sets`) applies through it, so reading its
+        // rows here would apply each bonus a second time.
+        if set_id == 0
+            || super::item_sets::find_set(go, set_id, &name).is_some()
+            || super::item_sets::is_client_set(set_id, &name)
+        {
             continue;
         }
         let label = set_name(set_id).unwrap_or(&name).to_string();

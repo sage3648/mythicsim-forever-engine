@@ -90,6 +90,21 @@ pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     sets
 }
 
+/// The sets of the Forever client that a class implements and the reference does not register
+/// (`crate::prepare::item_sets::ClientItemSet`).
+pub(crate) fn client_item_sets() -> Vec<&'static crate::prepare::item_sets::ClientItemSet> {
+    let mut sets = Vec::new();
+    sets.extend(mage::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(rogue::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(warlock::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(hunter::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(druid::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(warrior::prepare::items::sets::CLIENT_ITEM_SETS);
+    sets.extend(priest::prepare::items::CLIENT_ITEM_SETS);
+    sets.extend(shaman::prepare::items::CLIENT_ITEM_SETS);
+    sets
+}
+
 /// The item effects of a class package that a character of any class wears, since Go registers
 /// them against the item and they read nothing of their own class's agent: the idols, librams and
 /// totems that add a spell mod by class mask. The effects that read the agent (Wolfshead Helm,

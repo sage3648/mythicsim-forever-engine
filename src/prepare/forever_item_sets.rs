@@ -22,7 +22,7 @@ use super::spelldata::must_find;
 use super::stats::{Stat, Stats};
 
 /// Go `setHitPercent`.
-fn set_hit_percent(pct: f64) -> Stats {
+pub(super) fn set_hit_percent(pct: f64) -> Stats {
     Stats::from_pairs(&[
         (Stat::PhysicalHitPercent, pct),
         (Stat::SpellHitPercent, pct),

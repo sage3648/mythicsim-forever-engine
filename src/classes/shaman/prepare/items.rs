@@ -7,9 +7,10 @@ use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
+use crate::prepare::client_set_effects::ELEMENTAL;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::ItemSet;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Rules, Sim, UnitId, SECOND};
+use crate::prepare::item_sets::{ClientItemSet, ItemSet};
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Rules, Sim, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::must_find;
@@ -455,6 +456,142 @@ fn wushoolays_charm_of_spirits(sim: &mut Sim, unit: UnitId) {
             timings: Vec::new(),
         },
     );
+}
+
+/// The Spiritcaller's Rage (Enhancement, ItemSet 2110: Leggings 273932, Grips 273933, Spaulders
+/// 273934, Treads 273935) and The Spiritcaller's Storm (Elemental, ItemSet 2111: Kilt 276538,
+/// Gloves 276539, Mantle 276540, Boots 276541), the Shaman's damage Tier 1 of the Forever client,
+/// which the reference does not register. The bonuses are the ItemSetSpell spells of
+/// `data/spells.jsonl` (client 1.60.1.70425), beside the line the Wowhead Forever tooltips gave
+/// them on 13 November 2026.
+///
+/// The Spiritcaller's Rage:
+///
+/// - (2) "Increases your attack speed and casting speed by 1%." Spell 1300957: a melee and ranged
+///   haste aura (342) and a casting speed aura (65) of 1.
+/// - (3) "Increases the radius of effect of your beneficial Air and Earth totems by 10 yds."
+///   Spell 1301051: a radius mod (107, misc 6) of 10 on mask [0, 0, 0, 150994944] of family 11,
+///   which is Stoneskin, Strength of Earth, Tremor Totem, Grounding Totem, Grace of Air, Nature
+///   Resistance and Windwall. Applied with no effect: the engine places no one at a distance from
+///   a totem (`shaman/prepare/totems.rs` holds no radius), so a party aura reaches the party
+///   whatever its radius.
+/// - (4) "+36 Attack Power against Elementals." Spell 1301090: melee attack power versus a
+///   creature type (102, mask 8) of 36.
+/// - (5) "Reduces the cooldown of your Stormstrike ability by 0.5 sec." Spell 1301709: a cooldown
+///   mod (107, misc 11) of -500 ms on mask [0, 16] of family 11, which is Stormstrike (17364, an
+///   8 sec cooldown).
+///
+/// The Spiritcaller's Storm:
+///
+/// - (2) "Improves your chance to hit by 1.0%." Spell 1300959: a melee and a spell hit aura of 1.
+/// - (3) "Reduces the cooldown of your Earthbind Totem spell by 2 sec." Spell 1301053: a cooldown
+///   mod (107, misc 11) of -2000 ms on Earthbind Totem (2484). Applied with no effect: nothing
+///   registers Earthbind Totem (a slow, which no rotation casts).
+/// - (4) "Increases damage done by your spells and effects by up to 21 when fighting Elementals."
+///   Spell 1301092: spell damage versus a creature type (59, mask 8) of 21.
+/// - (5) "Reduces the cooldown of your Lava Burst spell by 1 sec." Spell 1301711: a cooldown mod
+///   (107, misc 11) of -1000 ms on mask [0, 4096] of family 11, which is Lava Burst (408490 to
+///   1326047, a 10 sec cooldown in the rows). Applied on Lava Burst's mask, which moves nothing
+///   under Forever's rules: the notes of 2 November 2026 remove Lava Burst there and no spell is
+///   registered (`register_lava_burst_spell`), though this tooltip still names it.
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
+    ClientItemSet {
+        set: ItemSet {
+            id: 2110,
+            name: "The Spiritcaller's Rage",
+            alternative_name: "",
+            bonuses: &[
+                (2, spiritcallers_rage_2),
+                (3, spiritcallers_rage_3),
+                (4, spiritcallers_rage_4),
+                (5, spiritcallers_rage_5),
+            ],
+            required_profession: "",
+        },
+        not_prepared: &[],
+    },
+    ClientItemSet {
+        set: ItemSet {
+            id: 2111,
+            name: "The Spiritcaller's Storm",
+            alternative_name: "",
+            bonuses: &[
+                (2, spiritcallers_storm_2),
+                (3, spiritcallers_storm_3),
+                (4, spiritcallers_storm_4),
+                (5, spiritcallers_storm_5),
+            ],
+            required_profession: "",
+        },
+        not_prepared: &[],
+    },
+];
+
+/// Tier 1 Enhancement: increases your attack speed and casting speed by 1%.
+fn spiritcallers_rage_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_haste(aura);
+    env.sim.expose_to_apl(aura, 1300957);
+}
+
+/// Tier 1 Enhancement: increases the radius of effect of your beneficial Air and Earth totems by
+/// 10 yds. The engine models no totem radius, so the bonus is the status aura alone.
+fn spiritcallers_rage_3(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301051);
+}
+
+/// Tier 1 Enhancement: +36 Attack Power against Elementals.
+fn spiritcallers_rage_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_attack_power(aura, ELEMENTAL, 36.0);
+    env.sim.expose_to_apl(aura, 1301090);
+}
+
+/// Tier 1 Enhancement: reduces the cooldown of your Stormstrike ability by 0.5 sec.
+fn spiritcallers_rage_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            class_mask: masks::STORMSTRIKE_CAST,
+            kind: SpellModType::CooldownFlat,
+            time_value: -500 * MILLISECOND,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.expose_to_apl(aura, 1301709);
+}
+
+/// Tier 1 Elemental: improves your chance to hit by 1.0%.
+fn spiritcallers_storm_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_hit(aura);
+    env.sim.expose_to_apl(aura, 1300959);
+}
+
+/// Tier 1 Elemental: reduces the cooldown of your Earthbind Totem spell by 2 sec. Earthbind Totem
+/// is not a spell this engine registers, so the bonus is the status aura alone.
+fn spiritcallers_storm_3(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301053);
+}
+
+/// Tier 1 Elemental: increases damage done by your spells and effects by up to 21 when fighting
+/// Elementals.
+fn spiritcallers_storm_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_spell_damage(aura, ELEMENTAL, 21.0);
+    env.sim.expose_to_apl(aura, 1301092);
+}
+
+/// Tier 1 Elemental: reduces the cooldown of your Lava Burst spell by 1 sec.
+fn spiritcallers_storm_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            class_mask: masks::LAVA_BURST,
+            kind: SpellModType::CooldownFlat,
+            time_value: -SECOND,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.expose_to_apl(aura, 1301711);
 }
 
 #[cfg(test)]

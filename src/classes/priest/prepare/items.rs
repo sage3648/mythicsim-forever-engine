@@ -7,8 +7,9 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
+use crate::prepare::client_set_effects::UNDEAD;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::ItemSet;
+use crate::prepare::item_sets::{ClientItemSet, ItemSet};
 use crate::prepare::sim::{AuraConfig, AuraId, EventCallbacks, SECOND};
 use crate::prepare::spell::ProcMask;
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -186,4 +187,57 @@ fn absolution_regalia_4(env: &mut Environment, aura: AuraId) {
             ..SpellModConfig::default()
         },
     );
+}
+
+/// Raiments of Conviction (ItemSet 2105: Pants 273920, Gloves 273921, Mantle 273922, Treads
+/// 273923), the Shadow Priest's Tier 1 of the Forever client, which the reference does not
+/// register. The bonuses are the ItemSetSpell spells of `data/spells.jsonl` (client
+/// 1.60.1.70425), beside the line the Wowhead Forever tooltips gave them on 13 November 2026.
+///
+/// - (2) "Improves your chance to hit by 1.0%." Spell 1300955: a melee and a spell hit aura of 1.
+/// - (3) "Increases the duration of your Shackle Undead spell by 10 sec." Spell 1301045: a
+///   duration mod (107, misc 1) of +10000 ms on Shackle Undead (9484, 9485, 10955). Applied with
+///   no effect: nothing registers Shackle Undead for a Priest here (a crowd control spell, which
+///   no rotation casts).
+/// - (4) "Increases damage done by your spells and effects by up to 21 when fighting Undead."
+///   Spell 1301087: spell damage versus a creature type (59, mask 32) of 21.
+/// - (5) "Reduces the cooldown of your Devouring Plague spell by 60 sec." Spell 1301706: a
+///   cooldown mod (107, misc 11) of -60000 ms on mask [0, 0, 0, 16] of family 6, which is
+///   Devouring Plague (2944 to 19278). Not prepared: the 16 October 2026 beta notes cut the
+///   cooldown to 24 sec and the row states 60 sec (`register_devouring_plague_spell`), and the
+///   bonus was written against the 60 sec one. A flat 60 sec off 24 sec leaves a negative
+///   cooldown here, and whether the game clamps it to none, or the notes changed this bonus
+///   with the cooldown, is not stated anywhere.
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
+    set: ItemSet {
+        id: 2105,
+        name: "Raiments of Conviction",
+        alternative_name: "",
+        bonuses: &[
+            (2, raiments_of_conviction_2),
+            (3, raiments_of_conviction_3),
+            (4, raiments_of_conviction_4),
+        ],
+        required_profession: "",
+    },
+    not_prepared: &[5],
+}];
+
+/// Tier 1 Shadow: improves your chance to hit by 1.0%.
+fn raiments_of_conviction_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_hit(aura);
+    env.sim.expose_to_apl(aura, 1300955);
+}
+
+/// Tier 1 Shadow: increases the duration of your Shackle Undead spell by 10 sec. Shackle Undead
+/// is not a spell this engine registers, so the bonus is the status aura alone.
+fn raiments_of_conviction_3(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301045);
+}
+
+/// Tier 1 Shadow: increases damage done by your spells and effects by up to 21 when fighting
+/// Undead.
+fn raiments_of_conviction_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_spell_damage(aura, UNDEAD, 21.0);
+    env.sim.expose_to_apl(aura, 1301087);
 }

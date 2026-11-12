@@ -9,10 +9,11 @@ use serde_json::{json, Value};
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
+use crate::prepare::client_set_effects::HUMANOID;
 use crate::prepare::common_effects::SPELL_BATCH_WINDOW;
 use crate::prepare::consumable_effects::proc_trigger_spells;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::ItemSet;
+use crate::prepare::item_sets::{ClientItemSet, ItemSet};
 use crate::prepare::sim::{AuraConfig, AuraId, BuildPhase, Cooldown, Sim, UnitId, SECOND};
 use crate::prepare::spell::{
     school, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
@@ -553,4 +554,78 @@ pub(super) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool 
         },
     );
     true
+}
+
+/// Grimstitch Armor (ItemSet 2099: Pants 273928, Gloves 273929, Spaulders 273930, Boots 273931),
+/// the Rogue's Tier 1 of the Forever client, which the reference does not register. The bonuses
+/// are the ItemSetSpell spells of `data/spells.jsonl` (client 1.60.1.70425), beside the line the
+/// Wowhead Forever tooltips gave them on 13 November 2026.
+///
+/// - (2) "Improves your chance to hit by 1.0%." Spell 1300956: a melee and a spell hit aura of 1.
+/// - (3) "Reduces the cooldown of your Kidney Shot ability by 3 sec." Spell 1301047: a cooldown
+///   mod (107, misc 11) of -3000 ms on mask 2097152 of family 8, which is Kidney Shot (408 and
+///   8643) alone.
+/// - (4) "+36 Attack Power against Humanoids." Spell 1301088: melee attack power versus a creature
+///   type (102, mask 64) of 36.
+/// - (5) "Reduces the cost of your Envenom and Eviscerate abilities by 5 Energy." Spell 1301708:
+///   a cost mod (107, misc 14) of -5 on mask [131072, 8] of family 8. In the client data that
+///   mask is Eviscerate's alone (2098 to 6762): Envenom (399968) is a row with no class flags,
+///   no cost and no effect, and nothing here registers it, so the tooltip's Envenom has no cost
+///   to lower.
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
+    set: ItemSet {
+        id: 2099,
+        name: "Grimstitch Armor",
+        alternative_name: "",
+        bonuses: &[
+            (2, grimstitch_armor_2),
+            (3, grimstitch_armor_3),
+            (4, grimstitch_armor_4),
+            (5, grimstitch_armor_5),
+        ],
+        required_profession: "",
+    },
+    not_prepared: &[],
+}];
+
+/// Tier 1 Rogue: improves your chance to hit by 1.0%.
+fn grimstitch_armor_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_hit(aura);
+    env.sim.expose_to_apl(aura, 1300956);
+}
+
+/// Tier 1 Rogue: reduces the cooldown of your Kidney Shot ability by 3 sec.
+fn grimstitch_armor_3(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            class_mask: masks::KIDNEY_SHOT,
+            kind: SpellModType::CooldownFlat,
+            time_value: -3 * SECOND,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.expose_to_apl(aura, 1301047);
+}
+
+/// Tier 1 Rogue: +36 Attack Power against Humanoids.
+fn grimstitch_armor_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_attack_power(aura, HUMANOID, 36.0);
+    env.sim.expose_to_apl(aura, 1301088);
+}
+
+/// Tier 1 Rogue: reduces the cost of your Envenom and Eviscerate abilities by 5 Energy.
+fn grimstitch_armor_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            class_mask: masks::EVISCERATE,
+            kind: SpellModType::PowerCostFlat,
+            int_value: -5,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.expose_to_apl(aura, 1301708);
 }

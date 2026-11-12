@@ -443,6 +443,8 @@ pub(crate) struct Sim {
     /// Each item or enchant speed aura (Go `registerSpeedAura`) and the melee, ranged and cast
     /// speed multipliers it applies while up.
     pub speed_auras: Vec<(AuraId, [f64; 3])>,
+    /// The set bonuses that add attack power or spell damage against a creature type.
+    pub versus_bonuses: Vec<super::client_set_effects::VersusBonus>,
 }
 
 /// Which rules preparation follows where Rust departs from the Go reference on purpose: Forever's
@@ -487,6 +489,7 @@ impl Sim {
             time_slots: Vec::new(),
             rules: Rules::Forever,
             speed_auras: Vec::new(),
+            versus_bonuses: Vec::new(),
         }
     }
 
