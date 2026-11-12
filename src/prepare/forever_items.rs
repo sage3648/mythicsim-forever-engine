@@ -82,6 +82,11 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
             shared_items::apply(env, ProcKind::Damage, &cfg);
             return Ok(true);
         }
+        if let Some(amount) = super::forever_effect_items::feral_combat_skill(item) {
+            let unit = env.player;
+            env.sim.add_feral_combat_skill(unit, amount);
+            return Ok(true);
+        }
         if let Some(bonus) = versus_attack_power(item) {
             versus_attack_power_item(env, item, &bonus);
             return Ok(true);
@@ -102,6 +107,7 @@ fn apply_chance_on_hit_item(env: &mut Environment, item: i32) -> bool {
                 chance_on_hit_defense(env, &cfg);
             }
             super::forever_effect_items::apply_facing_damage(env, item);
+            super::forever_effect_items::apply_creature_type_damage(env, item);
             return true;
         }
     }

@@ -1545,6 +1545,36 @@ the Go goldens and exporter uses. The departures:
     prepared yet (a chance on harmful spell cast whose rate the client does not state on a
     character with a mana bar)" (`forever_effect_items::SPELL_CAST_EFFECTS_NOT_PREPARED`).
   The reference's rules still refuse all three as unknown.
+- Three more items that refused players' Quick Sims on 12 November 2026
+  (`tests/forever_client_items_20261113b.rs`), from the same sources on 13 November 2026:
+  - Lightcrest Hammer (276419), one-hand mace, item level 60, 66 to 123, speed 2.40: "Chance on
+    hit: Smites a target for 105 Holy damage. Deals 2 times as much damage to Undead." ItemEffect
+    234878 is a chance on hit of Smite (1299631) with no rate and no cooldown, restated in
+    `src/data/forever_client_spells.rs`: a School Damage of 105 (SpellEffect 1323965), Holy, magic
+    defense (SpellMisc 846916, SpellCategories 185137), spell level 30 (SpellLevels 152461), no
+    coefficient, and a Dummy of 2 (SpellEffect 1323966), the doubling against Undead. It rolls the
+    assumed chance on hit rate (4.32% a swing at 2.40) and the hit rolls the magic hit and crit.
+    Against Undead the hit's damage multiplier is 2 when every target is Undead, as Serpentbane
+    Crown's use is against Beasts (`forever_effect_items::CREATURE_TYPE_DAMAGE_ITEMS`).
+  - Spiderchitin Wrap (280016), leather chest, item level 63: 176 Armor, +18 Strength, +24
+    Stamina, "Equip: Increases Feral Combat +1." ItemEffect 238248 is an equip of Increased Feral
+    Combat (1320726), a skill aura (30) of 1 on skill line 3014 (SpellEffect 1355535). SkillLine
+    3014 is "Feral Combat" in the Weapon Skills category, and SkillRaceClassInfo 2554 gives it to
+    Druids alone (granted by the Feral Combat spell 1306742, a weapon proficiency). It is read as
+    the skill a Druid's forms attack with: a Druid's main hand attacks take the Feral Combat skill
+    above base, where the reference keeps none for a Druid (`Unit::feral_combat_skill`,
+    `forever_effect_items::FERAL_COMBAT_SKILL_ITEMS`). With no such item the skill is 0 and the
+    attack table is the one before. Anyone else has no Feral Combat line and wears the wrap as a
+    plain chest. Oilskin Leggings (9414) carries the same equip spell in the reference database,
+    which registers no effect for it; it is left as it was.
+  - Fingerbreaker Stamp (276743), trinket, item level 53: "Equip: Increased Defense +6." (6
+    Defense rating) and "Equip: Increases Strength by 38 while affected by a Bleed." ItemEffect
+    237304 is an equip of Fingerbreaker Stamp (1314784), a periodic dummy aura (226) of 38 every
+    1000 ms (SpellEffect 1346731) that the server reads. The wearer is never bleeding in a fight
+    here: a target only swings (a target with an AI is refused), and nothing the wearer's side
+    casts bleeds the wearer. So the Strength never applies and the stamp is worn with its Defense
+    alone, exactly, as a struck effect is on a character no target attacks.
+  The reference's rules still refuse all three as unknown.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:

@@ -333,6 +333,9 @@ pub(crate) struct Unit {
     pub weapon_skill: [f64; super::weapon_skill::HANDS],
     /// Go `Unit.weaponSkillBonus`: skill from auras such as set bonuses, by skill line.
     pub weapon_skill_bonus: [f64; super::weapon_skill::NUM_WEAPON_SKILLS],
+    /// Under Forever's rules: the Feral Combat skill above base (skill line 3014), which a
+    /// Druid's forms attack with (weapon_skill.rs).
+    pub feral_combat_skill: f64,
     /// Go `Unit.onWeaponSkillChange`, which a character sets as its effects apply: a skill
     /// bonus recomputes the hands.
     pub on_weapon_skill_change: bool,
@@ -397,6 +400,7 @@ impl Unit {
             pet: None,
             weapon_skill: [0.0; super::weapon_skill::HANDS],
             weapon_skill_bonus: [0.0; super::weapon_skill::NUM_WEAPON_SKILLS],
+            feral_combat_skill: 0.0,
             on_weapon_skill_change: false,
         }
     }

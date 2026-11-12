@@ -25,6 +25,9 @@
 //! (1324687): every field of theirs is the client's, read from wago.tools `product=wowf` on 13
 //! November 2026 (the tables of build 1.60.1.70888).
 //!
+//! Nor is Lightcrest Hammer's Smite (1299631): every field of it is the client's, read from
+//! wago.tools `product=wowf` on 13 November 2026 (the tables of build 1.60.1.70888).
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -107,7 +110,62 @@ pub(crate) fn rows() -> Vec<Spell> {
         toofbreak(),
         ablaze(),
         dismember(),
+        smite(),
     ]
+}
+
+/// Lightcrest Hammer's chance on hit (ItemEffect 234878, trigger type 2, no rate and no cooldown
+/// stated): "Smites a target for 105 Holy damage. Deals 2 times as much damage to Undead." The
+/// row is its own trigger, a Holy hit on the magic table.
+fn smite() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 846916: Attributes_15 8192 and nothing else.
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_299_631,
+        name: "Smite".to_string(),
+        // SpellMisc 846916: SchoolMask 2, Holy.
+        school: 2,
+        attr,
+        // SpellLevels 152461: SpellLevel 30.
+        spell_level: 30,
+        // SpellMisc 846916: RangeIndex 6, SpellRange's 100 yards.
+        max_range: 100.0,
+        // SpellCategories 185137: magic.
+        defense_type: 1,
+        effects: vec![
+            // SpellEffect 1323965: School Damage (2) of 105 to the target (6), with no variance
+            // and no spell power or attack power coefficient.
+            Effect {
+                id: 1_323_965,
+                spell_id: 1_299_631,
+                index: 0,
+                effect_type: 2,
+                base_points: 105.0,
+                spell_level: 30,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                target: [6, 0],
+                ..Effect::default()
+            },
+            // SpellEffect 1323966: a Dummy (3) with base points 2 on the target (6): the "2 times
+            // as much damage" to Undead, which the server applies and preparation restates
+            // (`forever_effect_items::CREATURE_TYPE_DAMAGE_ITEMS`).
+            Effect {
+                id: 1_323_966,
+                spell_id: 1_299_631,
+                index: 1,
+                effect_type: 3,
+                base_points: 2.0,
+                spell_level: 30,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                target: [6, 0],
+                ..Effect::default()
+            },
+        ],
+        ..Spell::default()
+    }
 }
 
 /// Pyromancer's Baton's chance on hit (ItemEffect 238191, trigger type 2, no rate and no cooldown
