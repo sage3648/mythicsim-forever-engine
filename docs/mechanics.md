@@ -1221,6 +1221,15 @@ the Go goldens and exporter uses. The departures:
   spell penetration. The client items gain 61 rows for Forever items revealed since 9 November
   (`tools/rust_client_items.py add`; 5,022 unrevealed client ids asked again, 73 revealed, 12 left
   for hand modelling).
+  Classes follow the tooltip too (the same tooltips of 12 November 2026): its "Classes: Priest,
+  Mage, Warlock" line is the row's class allowlist, and a tooltip without that line lifts it.
+  22 reference rows lose a list the live items do not carry: Plaguerot Sprig (Mage only in the
+  reference and in Classic, ilvl 42 and level 37 in Forever with no class line), Eye of the Beast
+  and 20 quest rewards such as Woestave, Circle of Hope, Soul Harvester and Moonshadow Stave,
+  which Classic itself gives every class. 11 gain the tooltip's class: the seven Bonescythe Armor
+  pieces (Rogue) and the four Atiesh, Greatstaff of the Guardian (Mage, Warlock, Priest, Druid).
+  An allowlist decides whether the item's effects reach the wearer
+  (`src/prepare/item_effects.rs`, `src/prepare/healer_gear.rs`).
 - Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
   Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
   preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two

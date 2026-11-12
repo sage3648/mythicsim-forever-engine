@@ -184,6 +184,35 @@ class ChangesTest(unittest.TestCase):
         self.assertEqual(change["pseudo_stats"][30], 1)
         self.assertEqual(sum(change["pseudo_stats"]), 1)
 
+    def test_reads_the_classes_line(self):
+        stated = live.read_tooltip(tooltip("Item Level 52", "Classes: Priest, Mage, Warlock"))
+        self.assertEqual(stated["classes"], ["ClassPriest", "ClassMage", "ClassWarlock"])
+        self.assertEqual(live.read_tooltip(tooltip("Item Level 52"))["classes"], [])
+
+    def test_a_tooltip_without_classes_lifts_the_allowlist(self):
+        # Plaguerot Sprig: Mage only in the reference row, no Classes line on the Forever tooltip.
+        reference = row({}, class_allowlist=["ClassMage"])
+        stated = live.read_tooltip(tooltip("Item Level 60"))
+        change = live.changes(reference, stated)
+        self.assertEqual(change, {"class_allowlist": []})
+        out = live.live_row(reference, change)
+        self.assertNotIn("class_allowlist", out)
+        self.assertEqual(reference["class_allowlist"], ["ClassMage"])
+
+    def test_the_classes_line_sets_the_allowlist(self):
+        # Bonescythe Armor: no allowlist in the reference row, Rogue on the Forever tooltip.
+        stated = live.read_tooltip(tooltip("Item Level 60", "Classes: Rogue"))
+        change = live.changes(row({}), stated)
+        self.assertEqual(change, {"class_allowlist": ["ClassRogue"]})
+        self.assertEqual(live.live_row(row({}), change)["class_allowlist"], ["ClassRogue"])
+        stated = live.read_tooltip(tooltip("Item Level 60", "Classes: Mage, Priest"))
+        change = live.changes(row({}, class_allowlist=["ClassPriest", "ClassMage", "ClassWarlock"]), stated)
+        self.assertEqual(change, {"class_allowlist": ["ClassMage", "ClassPriest"]})
+
+    def test_the_same_classes_in_any_order_change_nothing(self):
+        stated = live.read_tooltip(tooltip("Item Level 60", "Classes: Mage, Priest"))
+        self.assertEqual(live.changes(row({}, class_allowlist=["ClassPriest", "ClassMage"]), stated), {})
+
     def test_live_row_keeps_the_reference_row_but_the_change(self):
         reference = row({1: 15, 2: 4}, unique=True)
         out = live.live_row(reference, {"stats": {1: 10, 35: 10, 2: None}, "ilvl": 61})
