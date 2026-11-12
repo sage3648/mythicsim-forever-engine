@@ -438,6 +438,23 @@ the Go goldens and exporter uses. The departures:
   - Restoration: "Nature's Swiftness now also makes Wild Growth instant." The talent's cast time
     mod reaches Wild Growth beside Healing Touch and Regrowth; its row still names the two, which
     the reference keeps (`tests/hotfix_20261110.rs`).
+- Hotfix push 113718 (`tests/hotfix_113718.rs`, Forever preparation, the reference keeps the frozen
+  rows): Wild Growth's periodic heal takes 0.066 of spell power a tick at every rank (was 0.033,
+  `WILD_GROWTH_TICK_COEFFICIENTS_113718`). The push is in the client's hotfix file, not in any patch
+  note; the rows read from that file at push 114015 carry it.
+- The Paladin hotfixes of 11 November 2026 (`tests/hotfix_20261111.rs`):
+  - "Judgement changed to now be considered a Ranged Attack. This means it no longer counts as a
+    Melee attack for the purposes of item and effect procs and uses the Paladin's Ranged Hit
+    chance." Under Forever's rules every seal's judgement takes a ranged special's proc mask
+    (`judgement_proc_mask`; Go's main hand special in the reference). Melee procs (weapon
+    enchants and oils, Dragonbreath Chili, Vindication, Seal of Light and Wisdom, the judgement
+    refresh) no longer hear it; its roll adds ranged hit and crit and reads the ranged weapon
+    skill, so a weapon skill racial no longer reaches it. Its table is unchanged: no dodge, parry
+    or block.
+  - Retribution: "Unsealed Fury no longer generates echoes from Windfury Totem attacks." The
+    client names the talent Unsealed Wrath (1310735). The totem's extra main hand attack neither
+    stores the active seal nor spends the other Echoes; every other landed auto still does. The
+    talent exists only under Forever's rules.
 - The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
   preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
   The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the
