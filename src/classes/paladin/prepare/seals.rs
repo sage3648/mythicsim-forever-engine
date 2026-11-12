@@ -10,7 +10,7 @@ use crate::prepare::buffs::paladin::{
 };
 use crate::prepare::dbcenums;
 use crate::prepare::levels::character_level;
-use crate::prepare::sim::{AuraConfig, AuraId, Sim, UnitId, SECOND};
+use crate::prepare::sim::{AuraConfig, AuraId, Rules, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::Spell as Row;
@@ -65,6 +65,21 @@ pub(super) fn seal_label(name: &str, label: &str, rank: &Row) -> String {
         return format!("{name}{label}");
     }
     format!("{name}{label} Rank {}", rank.rank_number())
+}
+
+/// The proc mask of every seal's judgement. Go gives them a main hand special's. Blizzard's WoW
+/// Forever hotfixes of 11 November 2026: "Judgement changed to now be considered a Ranged
+/// Attack. This means it no longer counts as a Melee attack for the purposes of item and effect
+/// procs and uses the Paladin's Ranged Hit chance." So under Forever's rules a judgement is a
+/// ranged special: melee procs (weapon enchants, Vindication, Seal of Light and Wisdom, the
+/// judgement refresh) no longer hear it, and its roll adds ranged hit and crit and reads the
+/// ranged weapon skill in place of the main hand's. Its table is unchanged: no dodge, parry or
+/// block.
+pub(super) fn judgement_proc_mask(sim: &Sim) -> ProcMask {
+    match sim.rules {
+        Rules::Forever => ProcMask::RANGED_SPECIAL,
+        Rules::GoReference => ProcMask::MELEE_MH_SPECIAL,
+    }
 }
 
 /// The fields every judgement spell of a seal shares: Melee in SpellCategories, so it rolls on
@@ -170,7 +185,7 @@ impl Paladin {
                 judge_rank,
                 masks::JUDGEMENT_OF_RIGHTEOUSNESS,
                 SpellFlag::MELEE_METRICS | SpellFlag::BINARY,
-                ProcMask::MELEE_MH_SPECIAL,
+                judgement_proc_mask(sim),
             )
         };
         sim.register_spell(unit, judgement);
@@ -237,7 +252,7 @@ impl Paladin {
                 judge_rank,
                 masks::JUDGEMENT_OF_COMMAND,
                 SpellFlag::MELEE_METRICS,
-                ProcMask::MELEE_MH_SPECIAL,
+                judgement_proc_mask(sim),
             )
         };
         sim.register_spell(unit, judgement);
@@ -311,7 +326,7 @@ impl Paladin {
                 spell_school: school::HOLY,
                 defense_type: DefenseType::Melee,
                 // Go `debuffJudgementProcMask` and `debuffJudgementFlags` (MythicSim patch 169).
-                proc_mask: ProcMask::MELEE_MH_SPECIAL,
+                proc_mask: judgement_proc_mask(sim),
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::PROC,
                 class_spell_mask: masks::JUDGEMENT_OF_LIGHT,
                 damage_multiplier: 1.0,
@@ -390,7 +405,7 @@ impl Paladin {
                 spell_school: school::HOLY,
                 defense_type: DefenseType::Melee,
                 // Go `debuffJudgementProcMask` and `debuffJudgementFlags` (MythicSim patch 169).
-                proc_mask: ProcMask::MELEE_MH_SPECIAL,
+                proc_mask: judgement_proc_mask(sim),
                 flags: SpellFlag::MELEE_METRICS | SpellFlag::PROC,
                 class_spell_mask: masks::JUDGEMENT_OF_WISDOM,
                 damage_multiplier: 1.0,
@@ -463,7 +478,7 @@ impl Paladin {
                     masks::JUDGEMENT_OF_JUSTICE,
                     // Go `debuffJudgementFlags` and `debuffJudgementProcMask` (MythicSim patch 169).
                     SpellFlag::MELEE_METRICS | SpellFlag::PROC,
-                    ProcMask::MELEE_MH_SPECIAL,
+                    judgement_proc_mask(sim),
                 )
             },
         );
@@ -511,7 +526,7 @@ impl Paladin {
                     masks::JUDGEMENT_OF_THE_CRUSADER,
                     // Go `debuffJudgementFlags` and `debuffJudgementProcMask` (MythicSim patch 169).
                     SpellFlag::MELEE_METRICS | SpellFlag::PROC,
-                    ProcMask::MELEE_MH_SPECIAL,
+                    judgement_proc_mask(sim),
                 )
             },
         );
@@ -566,7 +581,7 @@ impl Paladin {
                 judgement_rank,
                 masks::JUDGEMENT_OF_FURY,
                 SpellFlag::MELEE_METRICS | SpellFlag::BINARY,
-                ProcMask::MELEE_MH_SPECIAL,
+                judgement_proc_mask(sim),
             )
         };
         sim.register_spell(unit, judgement);
