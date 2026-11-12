@@ -107,9 +107,13 @@ impl Sim {
     }
 
     /// Go `Character.updateWeaponSkills`: the skill each hand attacks with. Druids fight with
-    /// paws in their forms and keep none.
+    /// paws in their forms and keep no weapon's skill. Under Forever's rules a Druid's forms
+    /// attack with the Feral Combat skill line (3014), so the main hand takes its skill above base
+    /// (`Unit::feral_combat_skill`, from Spiderchitin Wrap): none without such an item, as before.
     pub(crate) fn update_weapon_skills(&mut self, unit: UnitId) {
         if self.character(unit).class == "ClassDruid" {
+            let feral = self.unit(unit).feral_combat_skill;
+            self.unit_mut(unit).weapon_skill = [feral, 0.0, 0.0];
             return;
         }
         for (hand, slot) in [
@@ -127,6 +131,15 @@ impl Sim {
     /// of a character once its effects apply (`onWeaponSkillChange`).
     pub(crate) fn add_weapon_skill(&mut self, unit: UnitId, skill: WeaponSkill, amount: f64) {
         self.unit_mut(unit).weapon_skill_bonus[skill as usize] += amount;
+        if self.unit(unit).on_weapon_skill_change {
+            self.update_weapon_skills(unit);
+        }
+    }
+
+    /// Under Forever's rules: raises the Feral Combat skill, and recomputes the hands of a
+    /// character once its effects apply.
+    pub(crate) fn add_feral_combat_skill(&mut self, unit: UnitId, amount: f64) {
+        self.unit_mut(unit).feral_combat_skill += amount;
         if self.unit(unit).on_weapon_skill_change {
             self.update_weapon_skills(unit);
         }

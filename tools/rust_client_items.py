@@ -477,6 +477,15 @@ ENGINE_EFFECT = [
         # (forever_effect_items.rs, SPELL_CAST_EFFECTS_NOT_PREPARED).
         "Equip: Chance on harmful spell cast to afflict the target with a draining ritual, "
         "leeching 19 health every 2 sec for 6 sec. (100ms cooldown)",
+        # Lightcrest Hammer 276419.
+        "Chance on hit: Smites a target for 105 Holy damage. Deals 2 times as much damage to "
+        "Undead.",
+        # Spiderchitin Wrap 280016: the Feral Combat skill a Druid's forms attack with
+        # (forever_effect_items.rs, FERAL_COMBAT_SKILL_ITEMS).
+        "Equip: Increases Feral Combat +1.",
+        # Fingerbreaker Stamp 276743: Strength while the wearer bleeds, which nothing in a fight
+        # here causes, so the item is worn with its other lines (forever_effect_items.rs).
+        "Equip: Increases Strength by 38 while affected by a Bleed.",
     ]
 ]
 # A use that is a stat buff, by item: the exact use line of the tooltip and the item effect the row
