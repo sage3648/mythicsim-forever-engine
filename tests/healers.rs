@@ -196,11 +196,11 @@ fn restoration_druid_heals_as_its_rows_state() {
         "restoration-druid",
         &result,
         &[
-            // Wild Growth rank 3 (1238215): 97 + 0.033 x 344 = 108.352 a tick, then 1.10 x 1.10
-            // (Gift of Nature, and Genesis 5/5 at 2% a rank, whose first effect names Wild
-            // Growth), on each of five players, 131.106, of which a group heal's 24.58% is
-            // overhealing.
-            "{SpellID: 1238215} tick Hit for 98.880 healing, 32.226 overhealing.",
+            // Wild Growth rank 3 (1238215): 97 + 0.066 x 344 = 119.704 a tick (0.066 since hotfix
+            // push 113718, tests/hotfix_113718.rs), then 1.10 x 1.10 (Gift of Nature, and Genesis
+            // 5/5 at 2% a rank, whose first effect names Wild Growth), on each of five players,
+            // 144.842, of which a group heal's 24.58% is overhealing.
+            "{SpellID: 1238215} tick Hit for 109.240 healing, 35.602 overhealing.",
             // Rejuvenation rank 10 (9841; rank 11, 25299, is an Ahn'Qiraj 20 book rank that
             // Forever's rules leave out): 161 + 0.2 x 344 = 229.8 a tick, then 1.10 x 1.15 x 1.10
             // (Genesis 5/5 at 2% a rank since hotfix push 113531), 319.767, of which

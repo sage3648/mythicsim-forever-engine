@@ -438,6 +438,10 @@ the Go goldens and exporter uses. The departures:
   - Restoration: "Nature's Swiftness now also makes Wild Growth instant." The talent's cast time
     mod reaches Wild Growth beside Healing Touch and Regrowth; its row still names the two, which
     the reference keeps (`tests/hotfix_20261110.rs`).
+- Hotfix push 113718 (`tests/hotfix_113718.rs`, Forever preparation, the reference keeps the frozen
+  rows): Wild Growth's periodic heal takes 0.066 of spell power a tick at every rank (was 0.033,
+  `WILD_GROWTH_TICK_COEFFICIENTS_113718`). The push is in the client's hotfix file, not in any patch
+  note; the rows read from that file at push 114015 carry it.
 - The Paladin hotfixes of 11 November 2026 (`tests/hotfix_20261111.rs`):
   - "Judgement changed to now be considered a Ranged Attack. This means it no longer counts as a
     Melee attack for the purposes of item and effect procs and uses the Paladin's Ranged Hit

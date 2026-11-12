@@ -55,6 +55,16 @@ pub(crate) const WRACK_DOT_RATE_20261111: f64 = 2.0;
 /// tuning (Wowhead's Forever spell page for Summon Hawk rank 4 and its news post).
 pub(crate) const HUNTER_SHOT_BASE_MANA_PERCENT_20261111: f64 = 11.0;
 
+/// Wild Growth's periodic heal, every rank, since hotfix push 113718: spell power coefficient
+/// 0.066 a tick (was 0.033). The push reached the client's hotfix file, not the patch notes; the
+/// rows read from that file (push 114015) carry it on the three periodic heal effects.
+/// (spell, SpellEffect, coefficient).
+pub(crate) const WILD_GROWTH_TICK_COEFFICIENTS_113718: [(i32, i32, f64); 3] = [
+    (408120, 1072065, 0.066),
+    (1238214, 1235327, 0.066),
+    (1238215, 1235329, 0.066),
+];
+
 /// Mage cooldown category 19, Fire Blast's, which Ice Lance joins (push 113531).
 pub(crate) const FIRE_BLAST_CATEGORY: i16 = 19;
 
@@ -450,6 +460,9 @@ fn build() -> HashMap<i32, &'static Spell> {
     // Wild Growth, every rank: instant to a 3 sec cast.
     for id in [408120, 1238214, 1238215] {
         patch(id, &|row| row.cast_time_ms = 3000);
+    }
+    for (spell, id, coefficient) in WILD_GROWTH_TICK_COEFFICIENTS_113718 {
+        patch(spell, &|row| effect(row, id).sp_coef = coefficient);
     }
     // Naturalist: the cast time effect (695065) covers Healing Touch and Wild Growth, the second mask
     // word 33554432 to 67108864. Its damage curve doubles (spell_data in the druid's preparation).
