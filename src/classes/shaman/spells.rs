@@ -6,6 +6,7 @@ pub(crate) mod fire_nova;
 pub(crate) mod flame_shock;
 pub(crate) mod lava_burst;
 pub(crate) mod lightning_bolt;
+pub(crate) mod lightning_shield;
 pub(crate) mod magma_totem;
 pub(crate) mod rockbiter_threat;
 pub(crate) mod searing_totem;

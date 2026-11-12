@@ -246,6 +246,14 @@ the Go goldens and exporter uses. The departures:
   heal, spends one of three globes for 2% of maximum mana, one globe every 3.5 seconds at most,
   and the cast has no cooldown since 70532 (it had 15 seconds). The reference registers the talent
   but no build could cast it.
+- Lightning Shield strikes back at a target that tanks the shaman (`lightning_shield.orb`, Forever
+  preparation), from the client rows: every rank hears the melee hits the caster takes (ProcFlags
+  139944) at 100% with 3 charges and a 3.5 second internal cooldown, so a landed swing spends a
+  charge and the rank's orb hits the attacker; the orbs cannot crit. The reference's trigger hears
+  only the shield self proc, so its orbs never fire. Improved Stormstrike's reset runs too: a dodge
+  or parry of the target's swing rolls the talent's chance and finishes Stormstrike's cooldown, as
+  the reference's handler does. Both let MythicSim's "Boss attacks you" sim an Enhancement Shaman in
+  front of the boss (Redfall, 12 November 2026).
 - The racial pass of Forever's development notes of 26 October 2026 (Forever preparation; the
   reference keeps the 16 October racials). Human Ruthless gives 1% crit (was 2%) and Human Spirit
   10% Spirit (was 5%). Dwarf Earth Fury is gone and Artisan's Precision gives 1% hit with

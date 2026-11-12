@@ -1641,6 +1641,10 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "warrior_enrage",
     "blood_craze",
     "riposte",
+    // Lightning Shield's orb under Forever's rules; the reference's never fires on a swing.
+    "lightning_shield",
+    // The reset of Stormstrike's cooldown on a dodge or parry.
+    "improved_stormstrike",
     "spell_data_damage_proc",
     "spell_data_absorb_proc",
     "force_reactive_disk",
