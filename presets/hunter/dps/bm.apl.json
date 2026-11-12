@@ -86,6 +86,74 @@
     },
     {
       "action": {
+        "condition": {
+          "and": {
+            "vals": [
+              {
+                "spellIsKnown": {
+                  "spellId": {
+                    "spellId": 1293527
+                  }
+                }
+              },
+              {
+                "cmp": {
+                  "op": "OpLt",
+                  "lhs": {
+                    "numberTargets": {}
+                  },
+                  "rhs": {
+                    "const": {
+                      "val": "3"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "sequence": {
+          "name": "hawks",
+          "actions": [
+            {
+              "castSpell": {
+                "spellId": {
+                  "spellId": 1293527
+                }
+              }
+            },
+            {
+              "castSpell": {
+                "spellId": {
+                  "spellId": 1293527
+                }
+              }
+            },
+            {
+              "castSpell": {
+                "spellId": {
+                  "spellId": 14287
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "action": {
+        "condition": {
+          "sequenceIsComplete": {
+            "sequenceName": "hawks"
+          }
+        },
+        "resetSequence": {
+          "sequenceName": "hawks"
+        }
+      }
+    },
+    {
+      "action": {
         "castSpell": {
           "spellId": {
             "spellId": 20904
