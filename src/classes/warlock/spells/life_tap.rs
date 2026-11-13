@@ -1,6 +1,7 @@
 //! Life Tap (11689), from Go sim/warlock/lifetap.go: (base + Spirit) times one plus Improved
 //! Life Tap, spent as health and gained as mana. No damage modifier touches either side.
-//! Demonic Energies gives the summoned demon a share of the restore.
+//! Demonheart Raiment's 5 piece bonus raises the mana alone. Demonic Energies gives the summoned
+//! demon a share of the mana gained.
 
 use crate::{
     contracts::prepared_v2::ActionId,
@@ -11,6 +12,8 @@ use crate::{
 pub(crate) struct LifeTap {
     base_amount: f64,
     mana_multiplier: f64,
+    /// The set bonus's added share of the mana, which leaves the health spent alone.
+    mana_bonus: f64,
     /// The prepared Spirit, which a stat aura can change.
     spirit: f64,
     metrics: usize,
@@ -25,6 +28,7 @@ pub(crate) fn bind<A: Agent>(
     spell_id: i32,
     base_amount: f64,
     mana_multiplier: f64,
+    mana_bonus: f64,
     spirit: f64,
     pet_mana_share: f64,
     demon: Option<Side>,
@@ -46,6 +50,7 @@ pub(crate) fn bind<A: Agent>(
     LifeTap {
         base_amount,
         mana_multiplier,
+        mana_bonus,
         spirit,
         metrics,
         pet,
@@ -54,11 +59,12 @@ pub(crate) fn bind<A: Agent>(
 
 impl LifeTap {
     pub(crate) fn apply<A: Agent>(&self, fight: &mut Fight<A>) {
-        let restore = (self.base_amount + fight.player_spirit(self.spirit)) * self.mana_multiplier;
-        fight.remove_health(restore);
-        fight.add_mana(restore, self.metrics);
+        let health = (self.base_amount + fight.player_spirit(self.spirit)) * self.mana_multiplier;
+        let mana = health * (1.0 + self.mana_bonus);
+        fight.remove_health(health);
+        fight.add_mana(mana, self.metrics);
         if let Some((share, metrics)) = self.pet {
-            fight.add_mana(restore * share, metrics);
+            fight.add_mana(mana * share, metrics);
         }
     }
 }

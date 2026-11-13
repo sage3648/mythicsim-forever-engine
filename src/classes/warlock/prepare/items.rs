@@ -8,8 +8,9 @@ use std::rc::Rc;
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
+use crate::prepare::client_set_effects::DEMON;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::ItemSet;
+use crate::prepare::item_sets::{ClientItemSet, ItemSet};
 use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Rules, Sim, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::{school, CastConfig, DefenseType, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -445,6 +446,73 @@ pub(crate) fn hazzarahs_charm_of_destruction(sim: &mut Sim, unit: UnitId) {
             timings: Vec::new(),
         },
     );
+}
+
+/// Demonheart Raiment (ItemSet 2100: Leggings 273940, Gloves 273941, Spaulders 273942, Boots
+/// 273943), the Warlock's Tier 1 of the Forever client, which the reference does not register.
+/// The bonuses are the ItemSetSpell spells of `data/spells.jsonl` (client 1.60.1.70425), beside
+/// the line the Wowhead Forever tooltips gave them on 13 November 2026.
+///
+/// - (2) "Improves your chance to hit by 1.0%." Spell 1300966: a melee and a spell hit aura of 1.
+/// - (3) "Reduces the cast time of your Banish spell by 1.5 sec." Spell 1301068: a cast time mod
+///   (107, misc 10) of -1500 ms on Banish (710, 18647). Applied with no effect: nothing registers
+///   Banish for a Warlock here (a crowd control spell, which no rotation casts).
+/// - (4) "Increases damage done by your spells and effects by up to 21 when fighting Demons."
+///   Spell 1301094: spell damage versus a creature type (59, mask 4) of 21.
+/// - (5) "Your Life Tap generates 20% more Mana at no additional Health cost." Spell 1301715: a
+///   dummy aura (4) of 20, which a server script reads. The health spent stays
+///   `(base + Spirit) * (1 + Improved Life Tap)`, and the mana gained is that times 1.20. The row
+///   does not say how the 20% stacks with Improved Life Tap, so the model assumes it scales what
+///   Life Tap generates: multiplicatively, never added to Improved Life Tap's share. The
+///   demon's Demonic Energies share is taken from the mana gained, the boosted figure. The bonus
+///   is its status aura alone here; the export reads that aura and writes the Life Tap effect's
+///   `mana_bonus`, which the fight applies to the mana.
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
+    set: ItemSet {
+        id: 2100,
+        name: "Demonheart Raiment",
+        alternative_name: "",
+        bonuses: &[
+            (2, demonheart_raiment_2),
+            (3, demonheart_raiment_3),
+            (4, demonheart_raiment_4),
+            (5, demonheart_raiment_5),
+        ],
+        required_profession: "",
+    },
+    not_prepared: &[],
+}];
+
+/// The label of the 5 piece bonus's status aura (`make_set_bonus_status_aura`), which the export
+/// reads to see that Life Tap is boosted.
+pub(super) const DEMONHEART_RAIMENT_5_AURA: &str = "Demonheart Raiment 5P";
+
+/// The added share of Life Tap's mana: the dummy aura's 20 of spell 1301715.
+pub(super) const DEMONHEART_RAIMENT_LIFE_TAP_MANA: f64 = 0.20;
+
+/// Tier 1 Warlock: improves your chance to hit by 1.0%.
+fn demonheart_raiment_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_hit(aura);
+    env.sim.expose_to_apl(aura, 1300966);
+}
+
+/// Tier 1 Warlock: reduces the cast time of your Banish spell by 1.5 sec. Banish is not a spell
+/// this engine registers, so the bonus is the status aura alone.
+fn demonheart_raiment_3(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301068);
+}
+
+/// Tier 1 Warlock: increases damage done by your spells and effects by up to 21 when fighting
+/// Demons.
+fn demonheart_raiment_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_spell_damage(aura, DEMON, 21.0);
+    env.sim.expose_to_apl(aura, 1301094);
+}
+
+/// Tier 1 Warlock: your Life Tap generates 20% more Mana at no additional Health cost. The
+/// status aura marks it; the export and the fight apply it to Life Tap (`mana_bonus`).
+fn demonheart_raiment_5(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301715);
 }
 
 #[cfg(test)]

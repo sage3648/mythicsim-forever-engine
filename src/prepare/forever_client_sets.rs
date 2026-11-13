@@ -1,5 +1,7 @@
-//! The item sets of the live Forever client that the reference does not register, whose pieces
-//! `data/forever-client-items.jsonl` holds (`tools/rust_client_items.py`, `CLIENT_SETS`).
+//! The class independent item sets of the live Forever client that the reference does not
+//! register, whose pieces `data/forever-client-items.jsonl` holds (`tools/rust_client_items.py`,
+//! `CLIENT_SETS`). The Tier 1 class sets are in each class's items module
+//! (`crate::classes::client_item_sets`).
 //!
 //! Each bonus is its ItemSetSpell row's spell, read from wago.tools `product=wowf` on 12 November
 //! 2026 (the tables of build 1.60.1.70888), beside the line the Wowhead Forever tooltips of the
@@ -109,10 +111,12 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
 mod tests {
     use super::*;
     use crate::data::tables::tables;
+    use crate::prepare::item_sets::client_sets;
 
     #[test]
     fn the_reference_registers_none_of_the_client_sets() {
-        for client in CLIENT_ITEM_SETS {
+        // The shared sets and each class's.
+        for client in client_sets() {
             let set = &client.set;
             assert!(
                 super::super::item_sets::find_set(&tables().item_sets, set.id, set.name).is_none(),
@@ -124,12 +128,28 @@ mod tests {
 
     #[test]
     fn every_bonus_of_a_client_set_is_applied_or_named_as_not_prepared() {
-        // ItemSetSpell thresholds of both sets: 2, 3, 4 and 5 pieces.
-        for client in CLIENT_ITEM_SETS {
+        // ItemSetSpell thresholds of every set: 2, 3, 4 and 5 pieces.
+        let sets = client_sets();
+        assert!(
+            sets.len() >= CLIENT_ITEM_SETS.len() + 12,
+            "the classes' sets are included"
+        );
+        for client in sets {
             let mut counts: Vec<i32> = client.set.bonuses.iter().map(|(n, _)| *n).collect();
             counts.extend(client.not_prepared);
             counts.sort_unstable();
             assert_eq!(counts, [2, 3, 4, 5], "{}", client.set.name);
+        }
+    }
+
+    #[test]
+    fn no_two_client_sets_share_an_id_or_a_name() {
+        let sets = client_sets();
+        for (i, a) in sets.iter().enumerate() {
+            for b in &sets[i + 1..] {
+                assert_ne!(a.set.id, b.set.id, "{}", a.set.name);
+                assert_ne!(a.set.name, b.set.name);
+            }
         }
     }
 }

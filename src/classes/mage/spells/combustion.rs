@@ -19,6 +19,8 @@ pub(crate) struct Combustion {
     crit_per_stack: f64,
     max_crits: i32,
     crit_mod: ModId,
+    /// Manaflare Regalia's 5 piece bonus: Frostfire Bolt's added crit while the buff is up.
+    frostfire_mod: Option<ModId>,
     /// Go's closure counter `numCrits`.
     crits: Cell<i32>,
 }
@@ -29,16 +31,22 @@ pub(crate) fn bind<A: Agent>(
     aura: &str,
     crit_per_stack: f64,
     max_crits: i32,
+    frostfire_bolt_crit: f64,
 ) -> Result<Combustion, String> {
     let aura = fight.player_aura(aura)?;
     let fire = fight.spells_with_class_and_school(ALL, FIRE);
     let crit_mod = fight.register_mod(ModKind::BonusCritPercent, 0.0, 0, fire);
+    let frostfire_mod = (frostfire_bolt_crit != 0.0).then(|| {
+        let bolt = fight.spells_with_class(&["frostfire_bolt"]);
+        fight.register_mod(ModKind::BonusCritPercent, frostfire_bolt_crit, 0, bolt)
+    });
     Ok(Combustion {
         aura,
         spell,
         crit_per_stack,
         max_crits,
         crit_mod,
+        frostfire_mod,
         crits: Cell::new(0),
     })
 }
@@ -58,11 +66,17 @@ impl Combustion {
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
         self.crits.set(0);
         fight.activate_mod(self.crit_mod);
+        if let Some(bolt) = self.frostfire_mod {
+            fight.activate_mod(bolt);
+        }
     }
 
     /// Go `cd.Use` and `UpdateMajorCooldowns`.
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
         fight.deactivate_mod(self.crit_mod);
+        if let Some(bolt) = self.frostfire_mod {
+            fight.deactivate_mod(bolt);
+        }
         if let Some((timer, duration)) = fight.spells[self.spell].cd {
             fight.timers[timer] = fight.now + duration;
         }

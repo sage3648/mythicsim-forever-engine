@@ -2,7 +2,8 @@
 //! Arcane Blast landing (20/40% at 1/2 points), or Arcane Wrath, Frostbolt, Frost Blast,
 //! Fireball or Frostfire Bolt landing (half of it) can make the next Arcane Missiles free and
 //! fire its missiles twice as often. The missiles proc nothing since patch 175 (the 19 October
-//! in-game tooltip), and a missile chance of 0 draws no roll, as Go's mask leaves them out. The client row
+//! in-game tooltip), and a missile chance of 0 draws no roll, as Go's mask leaves them out.
+//! Manaflare Regalia's 5 piece bonus adds ten points to a Frostfire Bolt's chance. The client row
 //! (400588) procs on a landed harmful spell, so a miss cannot and a bolt procs when it
 //! arrives; the chances and the buff's modifiers come from the rows.
 
@@ -14,6 +15,8 @@ pub(crate) struct MissileBarrage {
     arcane_blast_chance: f64,
     missile_chance: f64,
     bolt_chance: f64,
+    /// Points added to a Frostfire Bolt's chance, after the half share it takes.
+    frostfire_bolt_bonus: f64,
     label: String,
     cost_mod: ModId,
     tick_mod: ModId,
@@ -22,7 +25,7 @@ pub(crate) struct MissileBarrage {
 pub(crate) fn bind<A: Agent>(
     fight: &mut Fight<A>,
     aura: &str,
-    (arcane_blast_chance, missile_chance, bolt_chance): (f64, f64, f64),
+    (arcane_blast_chance, missile_chance, bolt_chance, frostfire_bolt_bonus): (f64, f64, f64, f64),
     label: &str,
     cost_percent_add: f64,
     tick_length_delta: i64,
@@ -42,6 +45,7 @@ pub(crate) fn bind<A: Agent>(
         arcane_blast_chance,
         missile_chance,
         bolt_chance,
+        frostfire_bolt_bonus,
         label: label.to_string(),
         cost_mod,
         tick_mod,
@@ -79,9 +83,8 @@ impl MissileBarrage {
         let chance = match fight.spells[spell].class_spell.as_deref() {
             Some("arcane_blast") => self.arcane_blast_chance,
             Some("arcane_missiles_tick") if self.missile_chance > 0.0 => self.missile_chance,
-            Some("arcane_wrath" | "fireball" | "frostbolt" | "frost_blast" | "frostfire_bolt") => {
-                self.bolt_chance
-            }
+            Some("arcane_wrath" | "fireball" | "frostbolt" | "frost_blast") => self.bolt_chance,
+            Some("frostfire_bolt") => self.bolt_chance + self.frostfire_bolt_bonus,
             _ => return,
         };
         if fight.proc(chance, &self.label) {

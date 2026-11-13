@@ -315,6 +315,7 @@ impl MageAgent {
                     aura,
                     trigger_aura,
                     proc_chance,
+                    frostfire_bolt_chance_bonus,
                     shatter_crit,
                     ..
                 } => {
@@ -322,7 +323,7 @@ impl MageAgent {
                         &mut fight,
                         aura,
                         trigger_aura,
-                        *proc_chance,
+                        (*proc_chance, *frostfire_bolt_chance_bonus),
                         *shatter_crit,
                     )?;
                     fight.agent.fingers_of_frost = Some(bound);
@@ -348,6 +349,7 @@ impl MageAgent {
                     arcane_blast_chance,
                     missile_chance,
                     bolt_chance,
+                    frostfire_bolt_chance_bonus,
                     rng_label,
                     cost_percent_add,
                     tick_length_delta_ns,
@@ -356,7 +358,12 @@ impl MageAgent {
                     let bound = missile_barrage::bind(
                         &mut fight,
                         aura,
-                        (*arcane_blast_chance, *missile_chance, *bolt_chance),
+                        (
+                            *arcane_blast_chance,
+                            *missile_chance,
+                            *bolt_chance,
+                            *frostfire_bolt_chance_bonus,
+                        ),
                         rng_label,
                         *cost_percent_add,
                         *tick_length_delta_ns,
@@ -424,14 +431,21 @@ impl MageAgent {
                     aura,
                     crit_per_stack,
                     max_crits,
+                    frostfire_bolt_crit,
                 } => {
                     let spell = fight
                         .spells
                         .iter()
                         .position(|spell| spell.id.spell_id == *spell_id && spell.id.tag == 0)
                         .ok_or_else(|| format!("Combustion spell {spell_id} is not registered"))?;
-                    let bound =
-                        combustion::bind(&mut fight, spell, aura, *crit_per_stack, *max_crits)?;
+                    let bound = combustion::bind(
+                        &mut fight,
+                        spell,
+                        aura,
+                        *crit_per_stack,
+                        *max_crits,
+                        *frostfire_bolt_crit,
+                    )?;
                     fight.agent.combustion = Some(Rc::new(bound));
                 }
                 Effect::Pyroblast {

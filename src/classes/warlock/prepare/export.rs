@@ -362,7 +362,8 @@ impl Warlock {
                 unrepresented,
             ));
         }
-        // lifetap.go: (base + Spirit) * (1 + Improved Life Tap) health into as much mana.
+        // lifetap.go: (base + Spirit) * (1 + Improved Life Tap) health into as much mana, and
+        // Demonheart Raiment's 5 piece bonus raises the mana alone.
         let life_tap = data.life_tap.highest();
         let mut tap = json!({
             "kind": "life_tap", "spell_id": life_tap.id,
@@ -372,7 +373,13 @@ impl Warlock {
             // neither.
             "no_threat": life_tap.no_threat(),
         });
-        // Demonic Energies hands the summoned demon a share of the restore.
+        if sim
+            .get_aura(unit, super::items::DEMONHEART_RAIMENT_5_AURA)
+            .is_some()
+        {
+            tap["mana_bonus"] = json!(super::items::DEMONHEART_RAIMENT_LIFE_TAP_MANA);
+        }
+        // Demonic Energies hands the summoned demon a share of the mana gained.
         let share = data
             .demonic_energies
             .effect_at(2)

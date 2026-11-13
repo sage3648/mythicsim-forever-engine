@@ -2802,6 +2802,32 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             }
         }
     }
+    // A Tier 1 set bonus's attack power or spell damage against a creature type
+    // (`client_set_effects`), described as an item's is: when every target is of the type, and
+    // inert against any other. The reference's rules have no such bonus in the attack tables'
+    // export, so there the bonus is unrepresented, as it always was.
+    for bonus in &env.sim.versus_bonuses {
+        let label = env.sim.aura(bonus.aura).label.clone();
+        if env.sim.rules != super::sim::Rules::Forever {
+            unrepresented.push(format!(
+                "{label} adds damage against {}, which is not prepared",
+                bonus.mob_type
+            ));
+            continue;
+        }
+        let of_type = env
+            .encounter
+            .targets
+            .iter()
+            .all(|&target| env.sim.unit(target).mob_type == bonus.mob_type);
+        if of_type {
+            effects.push(json!({
+                "kind": "mob_type_bonus", "aura": label, "attack_power": 0.0,
+                "ranged_attack_power": 0.0, "spell_damage": bonus.spell_damage,
+                "melee_attack_power": bonus.melee_attack_power,
+            }));
+        }
+    }
     // Under Forever's rules (Go's exporter refuses the swap): with an item swap, the item and
     // enchant speed auras the swap gains and expires, as core/enchant_speed.go attaches them.
     let swaps = env.sim.item_swap(env.player).is_some();

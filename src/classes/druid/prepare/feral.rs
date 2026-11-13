@@ -710,6 +710,8 @@ impl Druid {
         );
         self.berserk_aura = Some(aura);
 
+        // Grovekeeper Rage's 5 piece bonus takes 15 sec off the cooldown.
+        let cooldown = super::items::berserk_cooldown(sim, unit);
         let timer = sim.new_timer(unit);
         let spell = self.register_spell(
             sim,
@@ -720,7 +722,7 @@ impl Druid {
                 cast: CastConfig {
                     cd: Cooldown {
                         timer: Some(timer),
-                        duration: 180 * SECOND,
+                        duration: cooldown,
                     },
                     ..CastConfig::default()
                 },

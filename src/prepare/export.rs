@@ -38,7 +38,10 @@ impl TimerNames {
     pub(crate) fn cooldown(&mut self, cd: &Cooldown) -> Value {
         match cd.timer {
             None => Value::Null,
-            Some(timer) => json!({"timer": self.name(timer), "duration_ns": cd.duration}),
+            // A cooldown mod can take more than the base off (Raiments of Conviction's 5 piece
+            // bonus on Devouring Plague): the sum stays negative in the sim so the mod can be
+            // taken off again, and a negative cooldown is none.
+            Some(timer) => json!({"timer": self.name(timer), "duration_ns": cd.duration.max(0)}),
         }
     }
 }

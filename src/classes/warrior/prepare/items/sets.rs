@@ -5,8 +5,9 @@ use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::constants::PARRY_RATING_PER_PARRY_PERCENT;
+use crate::prepare::client_set_effects::HUMANOID;
 use crate::prepare::env::Environment;
-use crate::prepare::item_sets::{ApplySetBonus, ItemSet};
+use crate::prepare::item_sets::{ApplySetBonus, ClientItemSet, ItemSet};
 use crate::prepare::sim::{AuraConfig, AuraId, Sim, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::ProcMask;
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -443,3 +444,128 @@ pub(crate) static ITEM_SETS: &[ItemSet] = &[
     pvp("Champion's Battlearmor", PVP_ATTACK_POWER_FIRST),
     pvp("Lieutenant Commander's Battlearmor", PVP_ATTACK_POWER_FIRST),
 ];
+
+/// Battlegear of Glory (ItemSet 2102: Legplates 273944, Gauntlets 273945, Shoulders 273946,
+/// Greaves 273947) and Battleplate of Glory (ItemSet 2103: Legguards 273948, Handguards 273949,
+/// Pauldrons 273950, Sabatons 273951), the Warrior's Tier 1 of the Forever client, which the
+/// reference does not register. The bonuses are the ItemSetSpell spells of `data/spells.jsonl`
+/// (client 1.60.1.70425), beside the line the Wowhead Forever tooltips gave them on 13 November
+/// 2026.
+///
+/// Battlegear of Glory (Arms and Fury):
+///
+/// - (2) "Increases your attack speed and casting speed by 1%." Spell 1300968: a melee and ranged
+///   haste aura (342) and a casting speed aura (65) of 1.
+/// - (3) "Reduces the cooldown of your Intimidating Shout ability by 30 sec." Spell 1301069: a
+///   cooldown mod (107, misc 11) of -30000 ms on mask 262144 of family 4, which is Intimidating
+///   Shout (5246).
+/// - (4) "+36 Attack Power against Humanoids." Spell 1301095: melee attack power versus a
+///   creature type (102, mask 64) of 36.
+/// - (5) "Reduces the cooldown of your Recklessness ability by 30 sec." Spell 1301721: a cooldown
+///   mod (107, misc 11) of -30000 ms on mask 16 of family 4, which is Recklessness (1719).
+///
+/// Battleplate of Glory (Protection):
+///
+/// - (2) "Increased Defense +7." Spell 1300970: a skill aura (30) of 7 on Defense (skill 95). The
+///   row's family is 7 (the Druid's) and its tooltip reads "Requires Druid", though the spell is
+///   named Tier 1 Warrior Protection; the effect has no class mask, so the family changes
+///   nothing here.
+/// - (3) "Reduces the cooldown of your Intervene ability by 10 sec." Spell 1301071: a cooldown
+///   mod (107, misc 11) of -10000 ms on mask [0, 65536] of family 4. No spell of the client data
+///   carries that mask and nothing here registers Intervene (a spell on another player), so the
+///   bonus is the status aura alone.
+/// - (4) "Reduces the chance for your melee attacks to be Dodged or Parried by 1.2%." Spell
+///   1301096: a rating aura (189) of 12 on Expertise (mask 8388608), as Justice Battleplate's.
+/// - (5) "Reduces the cooldown of your Shield Wall ability by 30 sec." Spell 1301722: a cooldown
+///   mod (107, misc 11) of -30000 ms on mask 8192 of family 4, which is Shield Wall (871).
+pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
+    ClientItemSet {
+        set: ItemSet {
+            id: 2102,
+            name: "Battlegear of Glory",
+            alternative_name: "",
+            bonuses: &[
+                (2, battlegear_of_glory_2),
+                (3, battlegear_of_glory_3),
+                (4, battlegear_of_glory_4),
+                (5, battlegear_of_glory_5),
+            ],
+            required_profession: "",
+        },
+        not_prepared: &[],
+    },
+    ClientItemSet {
+        set: ItemSet {
+            id: 2103,
+            name: "Battleplate of Glory",
+            alternative_name: "",
+            bonuses: &[
+                (2, battleplate_of_glory_2),
+                (3, battleplate_of_glory_3),
+                (4, battleplate_of_glory_4),
+                (5, battleplate_of_glory_5),
+            ],
+            required_profession: "",
+        },
+        not_prepared: &[],
+    },
+];
+
+/// A cooldown mod of the given seconds on the class spells a mask names.
+fn cooldown_mod(class_mask: i64, seconds: i64) -> SpellModConfig {
+    SpellModConfig {
+        time_value: seconds * SECOND,
+        ..mod_for(class_mask, SpellModType::CooldownFlat)
+    }
+}
+
+/// Tier 1 Arms and Fury: increases your attack speed and casting speed by 1%.
+fn battlegear_of_glory_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_haste(aura);
+    env.sim.expose_to_apl(aura, 1300968);
+}
+
+/// Tier 1 Arms and Fury: reduces the cooldown of your Intimidating Shout ability by 30 sec.
+fn battlegear_of_glory_3(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(aura, cooldown_mod(masks::INTIMIDATING_SHOUT, -30));
+    sim.expose_to_apl(aura, 1301069);
+}
+
+/// Tier 1 Arms and Fury: +36 Attack Power against Humanoids.
+fn battlegear_of_glory_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_versus_attack_power(aura, HUMANOID, 36.0);
+    env.sim.expose_to_apl(aura, 1301095);
+}
+
+/// Tier 1 Arms and Fury: reduces the cooldown of your Recklessness ability by 30 sec.
+fn battlegear_of_glory_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(aura, cooldown_mod(masks::RECKLESSNESS, -30));
+    sim.expose_to_apl(aura, 1301721);
+}
+
+/// Tier 1 Protection: increased Defense +7.
+fn battleplate_of_glory_2(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_defense(aura, 7.0);
+    env.sim.expose_to_apl(aura, 1300970);
+}
+
+/// Tier 1 Protection: reduces the cooldown of your Intervene ability by 10 sec. Intervene is not
+/// a spell this engine registers, so the bonus is the status aura alone.
+fn battleplate_of_glory_3(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301071);
+}
+
+/// Tier 1 Protection: reduces the chance for your melee attacks to be Dodged or Parried by 1.2%.
+fn battleplate_of_glory_4(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_set_expertise(aura);
+    env.sim.expose_to_apl(aura, 1301096);
+}
+
+/// Tier 1 Protection: reduces the cooldown of your Shield Wall ability by 30 sec.
+fn battleplate_of_glory_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(aura, cooldown_mod(masks::SHIELD_WALL, -30));
+    sim.expose_to_apl(aura, 1301722);
+}

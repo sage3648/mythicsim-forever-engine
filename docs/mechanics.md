@@ -1656,3 +1656,42 @@ the Go goldens and exporter uses. The departures:
     `SpellFlagIgnoreTargetSchoolBonus`, which skips the target's school bonus and keeps the
     wearer's spell power share (`tests/forever_damage_shield_school_bonus_20261110.rs`).
 
+- The Tier 1 class sets of the Forever client (ItemSets 2098 to 2115, bonus spells 1300934 to
+  1301722 in client 1.60.1.70425; Wowhead Forever's tooltips of 13 November 2026), which the
+  reference does not register apart from the Paladin's three. Four crafted pieces of each are in
+  the item data, and each class's items module holds its sets beside its own, with every bonus's
+  tooltip line and spell (`tests/forever_tier1_sets_20261113.rs`,
+  `src/prepare/client_set_effects/tests.rs`). Under the reference's rules the pieces count for
+  nothing, as they do in Go.
+  - The (2) bonus is 1% melee and spell hit, 1% attack and casting speed (a Hunter's ranged
+    speed included: the attack speed multiplier is the melee and the ranged one) or Defense +7.
+    The (4) bonus is 12 Expertise rating, or melee attack power (aura 102) or spell damage (aura
+    59) against one creature type, which is applied only when every target is of that type, as
+    Ceremonial Mallet's and Courier's Clasp's are, and is inert, not refused, against any other.
+    The Hunter's melee attack power against Beasts is never read by ranged attacks.
+  - The (3) and (5) bonuses that name a cooldown, cost or duration are spell mods on the class
+    mask the row names: Kidney Shot, Freezing Trap, Intimidating Shout, Recklessness, Shield Wall,
+    Stormstrike, Shifting Power, Aimed Shot and Multi-Shot, Eviscerate's cost and Insect Swarm's
+    duration. The Hunter's row mask is Aimed Shot's alone and the Rogue's Eviscerate's alone
+    (Multi-Shot carries 4096 and Envenom has no class flags); the tooltips name both spells, and
+    the Hunter's mod follows the tooltip. A 3 piece bonus that names a spell nothing here
+    registers (Counterspell, Banish, Intervene, Shackle Undead, Earthbind Totem, Rebirth, Nature's
+    Grasp, Hibernate, the totems' radius) is its status aura alone. The Elemental 5 piece names
+    Lava Burst, which Forever's rules do not register (notes of 2 November 2026).
+  - Four 5 piece bonuses are modelled beyond a plain spell mod. No request reaches five pieces
+    yet, since an item goes to the slot its type names, so the unit tests count extra pieces.
+    - Warlock, Demonheart Raiment: Life Tap generates 20% more mana at no more health. The health
+      spent stays (base + Spirit) times Improved Life Tap's multiplier and the mana is that times
+      1.20 (the two multiply). Demonic Energies' demon share is taken from the boosted mana. The
+      Life Tap effect carries it as `mana_bonus`.
+    - Mage, Manaflare Regalia: for Frostfire Bolt alone, ten percentage points are added to
+      Missile Barrage's chance (after the half share the bolt takes) and to Fingers of Frost's
+      launch roll, and 10 crit while Combustion is up (`frostfire_bolt_chance_bonus` on both
+      effects, `frostfire_bolt_crit` on Combustion's). A talent not taken leaves its part with
+      nothing to change.
+    - Shadow Priest, Raiments of Conviction: -60 sec on Devouring Plague, whose cooldown is 24 sec,
+      so it has none. The spell mod keeps the negative sum, so it stays reversible, and the
+      exported cooldown and the fight's rotation reads floor a cooldown at zero.
+    - Guardian Druid, Grovekeeper Rage: Berserk's cooldown is 165 sec. Berserk has no class spell
+      mask, so the registration reads the bonus's status aura rather than a mod. Without the
+      Berserk talent nothing is registered and the bonus does nothing.

@@ -20,6 +20,8 @@ pub(crate) struct FingersOfFrost {
     pub(crate) aura: AuraRef,
     pub(crate) trigger: AuraRef,
     proc_chance: f64,
+    /// Manaflare Regalia's 5 piece bonus: points added to a Frostfire Bolt's launch roll.
+    frostfire_bolt_bonus: f64,
     shatter_mod: ModId,
     /// Go `launcher`: the bolt whose launch granted the charges, which spends none.
     launcher: Option<SpellId>,
@@ -29,7 +31,7 @@ pub(crate) fn bind<A: Agent>(
     fight: &mut Fight<A>,
     aura: &str,
     trigger: &str,
-    proc_chance: f64,
+    (proc_chance, frostfire_bolt_bonus): (f64, f64),
     shatter_crit: f64,
 ) -> Result<FingersOfFrost, String> {
     let find = |label: &str| {
@@ -53,6 +55,7 @@ pub(crate) fn bind<A: Agent>(
         aura,
         trigger,
         proc_chance,
+        frostfire_bolt_bonus,
         shatter_mod,
         launcher: None,
     })
@@ -97,7 +100,12 @@ impl FingersOfFrost {
         spell: SpellId,
         result: &SpellResult,
     ) -> bool {
-        if result.landed() && fight.proc(self.proc_chance, "Fingers of Frost") {
+        let chance = if fight.spells[spell].class_spell.as_deref() == Some("frostfire_bolt") {
+            self.proc_chance + self.frostfire_bolt_bonus
+        } else {
+            self.proc_chance
+        };
+        if result.landed() && fight.proc(chance, "Fingers of Frost") {
             self.launcher = Some(spell);
             return true;
         }

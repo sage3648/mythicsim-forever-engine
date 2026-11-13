@@ -500,6 +500,7 @@ impl WarlockAgent {
                     spell_id,
                     base_amount,
                     mana_multiplier,
+                    mana_bonus,
                     pet_mana_share,
                     no_threat,
                 } => {
@@ -508,6 +509,7 @@ impl WarlockAgent {
                         *spell_id,
                         *base_amount,
                         *mana_multiplier,
+                        *mana_bonus,
                         spirit,
                         *pet_mana_share,
                         demon_side,
