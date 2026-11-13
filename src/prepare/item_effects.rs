@@ -25,12 +25,9 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
         let usable = item.class_allowlist.is_empty() || item.class_allowlist.contains(&class);
         // Under Forever's rules a live client item's equip effect that acts when the wearer is
         // struck and is not prepared yet refuses the character it can reach
-        // (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`), and one that acts on harmful
-        // spell casts at a chance the client does not state refuses a character with a mana bar
-        // (`SPELL_CAST_EFFECTS_NOT_PREPARED`).
+        // (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`).
         if forever && usable {
             super::forever_effect_items::struck_effect_not_prepared(env, item.id, holds_shield)?;
-            super::forever_effect_items::spell_cast_effect_not_prepared(env, item.id)?;
         }
         // Under Forever's rules an item the reference has no effect for may still carry a
         // chance on hit (forever_items.rs `CHANCE_ON_HIT_ITEMS`), a live client item's use or

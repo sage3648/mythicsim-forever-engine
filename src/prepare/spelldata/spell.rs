@@ -180,6 +180,13 @@ impl Spell {
         self.first_aura(&[dbcenums::A_PERIODIC_DAMAGE])
     }
 
+    /// The aura a damage proc's row ticks: [`Self::periodic_damage_effect`] or, where the row has
+    /// none, the `A_PERIODIC_LEECH` aura, whose ticks deal their amount to the target (Farraki
+    /// Kris's Blood Sacrifice). The health the wearer gets back is not modelled.
+    pub(crate) fn periodic_damage_or_leech_effect(&self) -> &Effect {
+        self.first_aura(&[dbcenums::A_PERIODIC_DAMAGE, dbcenums::A_PERIODIC_LEECH])
+    }
+
     /// The `A_SCHOOL_ABSORB` aura the spell applies, or [`nil_effect`] where it applies none.
     /// Its Misc is the mask of the schools it absorbs, in core's `SpellSchool` bits.
     pub(crate) fn absorb_effect(&self) -> &Effect {
