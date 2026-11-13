@@ -22,6 +22,12 @@
 //! - Lightcrest Hammer (276419) is one more chance on hit weapon with no stated rate: Smite, a
 //!   Holy hit of 105 on the magic table, doubled when every target is Undead
 //!   (`CREATURE_TYPE_DAMAGE_ITEMS`).
+//! - Sul'thraze the Lasher (9372) is a reference item whose chance on hit the reference's list
+//!   leaves out ("deals damage and debuffs the target", docs/forever-chance-on-hit.md), so it sat
+//!   in a fight with no effect. It is registered here at the same assumed rate: Rage of Sul'thraze,
+//!   a Shadow hit of 95 to 223 on the magic table, and the Shadow Lash its row triggers on the
+//!   unit hit, 159 Shadow 5 sec later (`TRIGGERED_DOT_ITEMS`). The row's attack power reduction on
+//!   the target is not modelled.
 //! - Dreadfrost Saber (274603) is a spell data damage proc (`NewSpellDataDamageProc`), as Fiery
 //!   Plate Gauntlets' "Adds 4 fire damage to your weapon attack" is in the reference: its equip
 //!   aura (1294939) hears the wearer's landed main hand melee hits and casts a Frost hit of 1
@@ -178,7 +184,59 @@ pub(crate) const CHANCE_ON_HIT_ITEMS: &[Registration] = &[
             item_name: "Lightcrest Hammer",
         }],
     ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1294430,
+            is_weapon_proc: true,
+            trigger_spell_id: 1294430,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 9372,
+            item_name: "Sul'thraze the Lasher",
+        }],
+    ),
 ];
+
+/// A chance on hit whose damage row triggers a damage over time of its own on the unit it lands
+/// on (a Trigger Spell effect, type 64, aimed at the target), which the damage spell carries as
+/// its dot: it goes on only where the hit landed, as the row's effects apply only then.
+pub(crate) struct TriggeredDotItem {
+    pub(crate) item_id: i32,
+    /// The row the chance on hit casts.
+    pub(crate) spell_id: i32,
+    /// The row its Trigger Spell effect casts on the unit hit.
+    pub(crate) dot_spell_id: i32,
+}
+
+/// The chance on hit items whose hit triggers a damage over time.
+pub(crate) const TRIGGERED_DOT_ITEMS: [TriggeredDotItem; 1] = [TriggeredDotItem {
+    // Sul'thraze the Lasher: "Lash the enemy with the rage of Sul'thraze, reducing their attack
+    // power by 180 for 15 sec and dealing 95 to 223 Shadow damage. After 5 sec, the target
+    // suffers an additional 159 Shadow damage. This additional Shadow damage deals 2 times as
+    // much damage to Trolls." (Wowhead's Forever tooltip.) ItemEffect 98585 is a chance on hit
+    // (trigger type 2) of Rage of Sul'thraze (1294430) with no rate and no cooldown. Its
+    // SpellEffect 1315784 triggers Shadow Lash (1294431), whose SpellEffect 1315785 is a periodic
+    // damage aura of 159 every 5000 ms for 5 sec: one tick, 5 sec after the hit. Shadow Lash
+    // always hits (Attributes_3 0x40000) and its tick can crit (Attributes_8 0x200). Its Dummy of
+    // 2 against Trolls (SpellEffect 1315810) names no creature type a request can, as a Troll is
+    // a Humanoid, so it never applies here. The attack power reduction (SpellEffects 1315782 and
+    // 1315783, -180 melee and ranged on the target for 15 sec) only changes the target's swings,
+    // which the runtime's damage proc carries no debuff for; it is not modelled.
+    item_id: 9372,
+    spell_id: 1294430,
+    dot_spell_id: 1294431,
+}];
+
+/// The damage over time row a chance on hit item's hit triggers, if it is one of these.
+pub(crate) fn triggered_dot(item: i32, spell_id: i32) -> Option<&'static Spell> {
+    TRIGGERED_DOT_ITEMS
+        .iter()
+        .find(|triggered| triggered.item_id == item && triggered.spell_id == spell_id)
+        .map(|triggered| must_find(triggered.dot_spell_id))
+}
 
 /// A chance on hit whose hit deals `multiplier` times its damage to a target that faces the
 /// wearer, as the tooltip states it.

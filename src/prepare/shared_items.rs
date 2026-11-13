@@ -781,10 +781,22 @@ fn apply_spell_data_damage_proc(env: &mut Environment, cfg: &SpellDataProc) {
     let source = cfg.source();
     let (trigger, damage) = cfg.rows();
     let mut config = spell_data_proc_damage_spell(env, damage, true);
+    let forever_rateless = cfg.rateless && env.sim.rules == super::sim::Rules::Forever;
+    // A Forever chance on hit whose hit triggers a damage over time of its own on the unit hit
+    // (Sul'thraze's Shadow Lash) carries it as the hit's dot, under the triggered row's name.
+    let triggered = forever_rateless
+        .then(|| super::forever_effect_items::triggered_dot(cfg.item_id, damage.id))
+        .flatten();
+    if let Some(dot) = triggered {
+        config.dot = dot_config(
+            dot,
+            dot.periodic_damage_effect(),
+            &[label(format!("{} {}", dot.name, dot.id))],
+        );
+    }
     // A Forever chance on hit's damage over time is the item's debuff, not the class spell its
     // row is named after: the Rend of Blood Talon (13318) is not the Warrior's.
-    if cfg.rateless && env.sim.rules == super::sim::Rules::Forever && config.dot.number_of_ticks > 0
-    {
+    if forever_rateless && triggered.is_none() && config.dot.number_of_ticks > 0 {
         config.dot.aura.label = format!("{} {}", damage.name, damage.id);
         // A damage over time a missile carries alone goes on as the hit lands: its flight is
         // not modelled (docs/mechanics.md).

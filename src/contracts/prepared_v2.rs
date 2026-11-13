@@ -1760,7 +1760,8 @@ pub struct ProcArea {
 
 /// shared_utils.go `spellDataProcDamageSpell` for a row with a periodic damage effect: the tick's
 /// amount and the outcome applier each tick rolls (spelldata `Spell.TickOutcome`) by name:
-/// `tick_magic_hit_and_crit`, `tick_physical_crit` or `tick`. Where the row also deals a direct
+/// `tick_magic_hit_and_crit`, `tick_magic_crit` (a triggered row that always hits, Sul'thraze's
+/// Shadow Lash), `tick_physical_crit` or `tick`. Where the row also deals a direct
 /// hit the dot lands with it; alone it goes on unrolled, or on the hit roll `application` names.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
