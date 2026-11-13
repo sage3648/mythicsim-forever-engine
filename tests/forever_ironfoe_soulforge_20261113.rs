@@ -10,8 +10,7 @@
 //!   Attack Power, (8) +200 Armor. Before, its pieces were plain items.
 
 use forever_engine::{
-    check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared,
-    Rules,
+    check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared, Rules,
 };
 use serde_json::{json, Value};
 use std::{fs, path::Path};
@@ -108,8 +107,8 @@ fn ironfoe_rolls_three_percent_under_forevers_rules() {
     request["raid"]["parties"][0]["players"][0]["equipment"]["items"][MAIN_HAND] =
         json!({ "id": IRONFOE });
     let forever = prepare(&request, Rules::Forever);
-    let fury = effect(&forever, "extra_attack_proc", "Fury of Forgewright")
-        .expect("Fury of Forgewright");
+    let fury =
+        effect(&forever, "extra_attack_proc", "Fury of Forgewright").expect("Fury of Forgewright");
     assert_eq!(fury["proc_chance"], 0.03);
     assert_eq!(fury["attacks"], 2);
 }
