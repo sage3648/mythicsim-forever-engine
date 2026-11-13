@@ -19,9 +19,10 @@
 //!   ProcChance 100 beside the tooltip's "Chance", read as the rate it states
 //!   (`tests/forever_client_items_20261113c.rs`). Three Arcane Mage refusals.
 //!
-//! The two weapons roll the rate MythicSim assumes for a chance on hit without one
-//! (`shared_items::CHANCE_ON_HIT_PPM`, 1.8% per second of the weapon's speed), as Toofbreaker and
-//! the Rock on Stick weapons do. The kris casts Blood Sacrifice on every harmful spell: a character
+//! The baton rolls the rate MythicSim assumes for a chance on hit without one
+//! (`shared_items::CHANCE_ON_HIT_PPM`, 1.8% per second of the weapon's speed), as Toofbreaker
+//! does. The sword rolled it too until 14 November 2026, when combat logs gave it a rate of its
+//! own, 0.6 a minute (`tests/forever_rules_20261114.rs`). The kris casts Blood Sacrifice on every harmful spell: a character
 //! with no mana bar casts none and wears it as a plain dagger.
 //!
 //! No refused request was at hand, so the tests dress fixture characters: the Combat Rogue of
@@ -248,8 +249,8 @@ fn the_sword_row_is_the_tooltips_two_hand_sword() {
 }
 
 /// Dismember is the client row's: a Physical hit of 670 with a variance of 1 (335 to 1005) on the
-/// melee table, with no damage over time and no coefficient. No rate is stated: 6.66% a swing at
-/// 3.70.
+/// melee table, with no damage over time and no coefficient. No rate is stated: 3.7% a swing at
+/// 3.70, the 0.6 a minute combat logs measured (6.66% at the assumed rate before).
 #[test]
 fn dismember_is_a_physical_hit_on_the_weapons_proc_rate() {
     let prepared = prepared(&paladin(json!({ "id": SWORD_OF_DISMEMBERMENT })));
@@ -260,7 +261,11 @@ fn dismember_is_a_physical_hit_on_the_weapons_proc_rate() {
     assert_eq!(proc["outcome"], "melee_special_hit_and_crit");
     assert!(proc.get("periodic").is_none());
     assert!(proc.get("area").is_none());
-    assert_assumed_rate(proc, 3.7);
+    // 0.6 procs a minute at the sword's 3.7 speed, measured on combat logs (14 November 2026).
+    for chance in proc["chances"].as_array().unwrap() {
+        let chance = chance["chance"].as_f64().unwrap();
+        assert!((chance - 0.6 * 3.7 / 60.0).abs() < 1e-9, "{chance}");
+    }
     let spell = proc_spell(&prepared, "Sword of Dismemberment");
     assert_eq!(spell["action_id"]["spell_id"], DISMEMBER);
     assert_eq!(spell["school"], 1);

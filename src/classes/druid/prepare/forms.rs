@@ -103,6 +103,8 @@ pub(crate) struct State {
     /// Go `WolfsheadShiftingPowerEnergy` and `WolfsheadEnrageRage`.
     pub wolfshead_shifting_power_energy: StateSlot,
     pub wolfshead_enrage_rage: StateSlot,
+    /// Rage the Enraged Idol adds to each tick of Enrage while it is worn.
+    pub enraged_idol_tick_rage: StateSlot,
     pub last_cat_form_energy: StateSlot,
     pub last_cat_form_exit_at: TimeSlot,
 }
@@ -121,6 +123,7 @@ impl State {
             maul_queue_aura: Cell::new(None),
             wolfshead_shifting_power_energy: sim.new_state_slot(0.0),
             wolfshead_enrage_rage: sim.new_state_slot(0.0),
+            enraged_idol_tick_rage: sim.new_state_slot(0.0),
             last_cat_form_energy: sim.new_state_slot(0.0),
             last_cat_form_exit_at: sim.new_time_slot(0),
         }

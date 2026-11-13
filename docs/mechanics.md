@@ -1633,8 +1633,8 @@ the Go goldens and exporter uses. The departures:
     above base, where the reference keeps none for a Druid (`Unit::feral_combat_skill`,
     `forever_effect_items::FERAL_COMBAT_SKILL_ITEMS`). With no such item the skill is 0 and the
     attack table is the one before. Anyone else has no Feral Combat line and wears the wrap as a
-    plain chest. Oilskin Leggings (9414) carries the same equip spell in the reference database,
-    which registers no effect for it; it is left as it was.
+    plain chest. Oilskin Leggings (9414) carries the same equip spell and raises the skill the
+    same way since 14 November 2026 (below).
   - Fingerbreaker Stamp (276743), trinket, item level 53: "Equip: Increased Defense +6." (6
     Defense rating) and "Equip: Increases Strength by 38 while affected by a Bleed." ItemEffect
     237304 is an equip of Fingerbreaker Stamp (1314784), a periodic dummy aura (226) of 38 every
@@ -1668,6 +1668,46 @@ the Go goldens and exporter uses. The departures:
   only a character the target attacks takes, and the runtime's damage proc carries no debuff for
   the target. A tank wearing the sword takes the target's swings at full attack power. Under the
   reference's rules the sword is still worn with no effect.
+- Rules of 14 November 2026 (`tests/forever_rules_20261114.rs`), each under Forever's rules
+  only. Client rows are the ones wago.tools serves (`product=wowf`), read that day; log counts
+  are from combat logs of Forever players, levelling and in dungeons, in November 2026.
+  - Enraged Idol (272428): "Equip: Your Enrage ability generates an additional 10 Rage over its
+    duration." (Wowhead's Forever tooltip.) Its equip spell, Increased Enrage Rage (1291060,
+    SpellEffect 1310234), is a flat modifier (aura 107) of +10 on effect 1 (misc 3) of class mask
+    word 0 bit 524288, which only Enrage (5229) carries. Enrage's effect 1 is its periodic Rage,
+    20 tenths a second for 10 sec, so each tick gives 3 Rage in place of 2 and the ten ticks the
+    tooltip's 10. The instant 10 Rage is effect 2 and is unchanged. The idol had no effect before;
+    the Feral Bear reference wears it.
+  - Idol of Brutality (23198): "Equip: Reduces the Rage cost of Maul and Swipe by 2." Its row
+    (28855, SpellEffect 705014) is a flat cost modifier of -20 tenths on class mask word 0 bit
+    2048, which Maul and Swipe carry. Primal Bite's class flags are word 1 bit 64, so its cost
+    stays 20; the reference also cuts Primal Bite.
+  - Oilskin Leggings (9414): "Equip: Increases Feral Combat +1." ItemXItemEffect 170350 links the
+    item to ItemEffect 238249, an equip of Increased Feral Combat (1320726), the spell
+    Spiderchitin Wrap carries. It joins `FERAL_COMBAT_SKILL_ITEMS`.
+  - Redoubt rolls on every melee attack the paladin takes, not only on one that lands and deals
+    damage. Logs of about forty Protection paladins: Redoubt followed 152 of 1,394 swings that
+    were dodged, parried, missed, fully blocked or fully absorbed (10.9%) and 364 of 3,501
+    damaging ones (10.4%), against 10% with five points. Melee abilities roll it too (17 of 138);
+    ranged attacks do not (0 of 62). The Redoubt effect carries `any_attack`.
+  - Two-Handed Weapon Specialization's Holy damage does not reach Exorcism or Hammer of Wrath.
+    The live row (20111, SpellEffect 697263) is damage done on school mask 3, Physical and Holy.
+    Logs of Retribution paladins with the talent read Seal and Judgement hits, Holy Strike and
+    Consecration's ticks at the bonus, Exorcism at 1.001 to 1.010 of its untalented damage and
+    Hammer of Wrath at 0.991 (77 hammers of one paladin). No field of the rows sets the two
+    apart from Holy Wrath or Holy Shock, which no log has measured under the talent and which
+    keep the bonus. Retribution Aura's shield read 0.997 to 1.000 and never took the bonus here.
+  - Three chance on hit weapons whose rows state no rate take a measured one in place of the
+    assumed 1.08 a minute (`shared_items::chance_on_hit_ppm`), counted as procs over the weapon's
+    landed hits, white swings and specials alike, at the weapon's own speed:
+    Ripsaw (9478), Wound 1292573, 185 in 2,018 hits of one player, 2.04 a minute (1.77 to 2.34),
+    taken as 2; Bigger Rock on Bigger Stick (279480), 1306816, 255 in 3,130 on four players, 2.00
+    (1.77 to 2.24), taken as 2; Sword of Dismemberment (287005), Dismember 1324687, 91 in 2,333
+    on three paladins with hasted, extra and early swings left out, 0.63 (0.50 to 0.76), and 247
+    in 6,733 on seven players without those filters, 0.60, taken as 0.6. Bigger Rock on Bigger
+    Stick was read at three swing speeds (11.7% a swing at 3.4, 8.6% at a bear's 2.5, 2.5% at a
+    cat's 1.0), so such a rate is per minute and not a flat chance. Boneslicer (273819) shares
+    Ripsaw's Wound and keeps the assumed rate: the measured rates go by item.
 - Four items that refused players' sims on 13 November 2026 ("no item with id N") and two more
   rows a run of `tools/rust_client_items.py build` over every candidate found
   (`tests/forever_client_items_20261114b.rs`), from Wowhead's Forever tooltips and the client

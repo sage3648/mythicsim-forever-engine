@@ -259,8 +259,8 @@ fn bigger_rock_on_bigger_stick_prepares_and_runs() {
     }
 }
 
-/// The bash is a chance on hit with no stated rate, so it rolls the rate MythicSim assumes for one
-/// (1.8% per second of the weapon's speed: 6.12% a swing at 3.40) on the weapon's own landed hits,
+/// The bash is a chance on hit with no stated rate. It rolls the 2 a minute combat logs measured
+/// (11.33% a swing at 3.40; the assumed 1.08 a minute before) on the weapon's own landed hits,
 /// and puts ten ticks of 14 every 2 sec on the unit hit, which roll the physical crit (as every
 /// Forever physical damage over time row states) and have no hit of their own.
 #[test]
@@ -288,7 +288,9 @@ fn the_bash_is_a_physical_damage_over_time_on_the_weapons_proc_rate() {
         .iter()
         .map(|chance| chance["chance"].as_f64().unwrap())
         .fold(0.0, f64::max);
-    assert!((main_hand - 0.018 * 3.4).abs() < 1e-9, "{main_hand}");
+    // 2 procs a minute at the mace's 3.4 speed, measured on combat logs (14 November 2026);
+    // the assumed 1.08 a minute before.
+    assert!((main_hand - 2.0 * 3.4 / 60.0).abs() < 1e-9, "{main_hand}");
 }
 
 /// The ticks take no armor, as every physical damage over time here: the same damage against no

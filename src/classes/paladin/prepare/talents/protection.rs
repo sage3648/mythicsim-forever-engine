@@ -110,14 +110,23 @@ impl Paladin {
             },
         );
 
+        // Under Forever's rules every melee attack taken rolls it, not only one that landed and
+        // dealt damage. Combat logs of about forty Protection paladins: Redoubt followed 152 of
+        // 1,394 swings that were dodged, parried, missed, fully blocked or fully absorbed
+        // (10.9%) and 364 of 3,501 damaging ones (10.4%), at 10% with 5 points. Melee abilities
+        // roll it as well (17 of 138), ranged attacks do not (0 of 62).
+        let (outcome, require_damage_dealt) = match sim.rules {
+            Rules::Forever => (HitOutcome::default(), false),
+            Rules::GoReference => (HitOutcome::LANDED, true),
+        };
         sim.make_proc_trigger_aura(
             unit,
             &ProcTrigger {
                 name: format!("Redoubt - Trigger{label}"),
                 callback: CallbackMask::ON_SPELL_HIT_TAKEN,
                 proc_mask: ProcMask::MELEE,
-                outcome: HitOutcome::LANDED,
-                require_damage_dealt: true,
+                outcome,
+                require_damage_dealt,
                 // Up with the hit that procs it, like Shield Specialization.
                 trigger_immediately: true,
                 // The row carries the rank 5 chance on every rank; the beta client's talent

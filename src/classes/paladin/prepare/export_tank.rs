@@ -78,10 +78,15 @@ impl Paladin {
         let redoubt = talents.i32("redoubt");
         if redoubt > 0 {
             // talents_protection.go applyRedoubt: the chance is a Go literal
-            effects.push(json!({
+            let mut effect = json!({
                 "kind": "redoubt", "trigger_aura": format!("Redoubt - Trigger{label}"),
                 "aura": format!("Redoubt{label}"), "proc_chance": 0.02 * f64::from(redoubt),
-            }));
+            });
+            if sim.rules == Rules::Forever {
+                // See `apply_redoubt`: every melee attack taken rolls it.
+                effect["any_attack"] = json!(true);
+            }
+            effects.push(effect);
         }
         let shield_specialization = talents.i32("shield_specialization");
         if shield_specialization > 0 {
