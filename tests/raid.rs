@@ -935,16 +935,18 @@ fn a_target_swaps_between_two_tanks_on_a_timer() {
     );
     let swapped = run(&input);
     // Each tank holds the boss for half of the 120 second fight and takes about half of what it
-    // takes tanking it alone. The tolerance is 8% of that: a swing at a window's edge goes to one
+    // takes tanking it alone. The tolerance is 10% of that: a swing at a window's edge goes to one
     // tank or the other, which is a swing in sixty, and the fight to fight noise is a few percent
-    // when only half the swings land.
+    // when only half the swings land. At 3,000 iterations the second tank takes 0.536 of its damage
+    // alone and the first 0.507, before and after Ironfoe's 3% (13 November 2026), so the second
+    // tank's share sits near the edge of an 8% tolerance at the test's 300.
     for (name, alone) in [
         ("protection-warrior", first_alone),
         ("fury-protection-warrior", second_alone),
     ] {
         let share = dtps(&swapped, name) / alone;
         assert!(
-            (share - 0.5).abs() < 0.04,
+            (share - 0.5).abs() < 0.05,
             "{name} takes {share} of its damage alone"
         );
     }
