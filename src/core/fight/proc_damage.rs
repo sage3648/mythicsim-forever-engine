@@ -55,6 +55,9 @@ impl HitTable {
 pub(crate) enum TickTable {
     /// A tick that rolls the magic hit again, then the crit.
     MagicHitAndCrit,
+    /// A tick that rolls the magic crit alone: a row that always hits and whose ticks can crit
+    /// (Sul'thraze's Shadow Lash).
+    MagicCrit,
     /// A tick that crits on the physical crit chance.
     PhysicalCrit,
     /// A plain tick.
@@ -65,6 +68,7 @@ impl TickTable {
     fn of(name: &str) -> Result<Self, String> {
         match name {
             "tick_magic_hit_and_crit" => Ok(Self::MagicHitAndCrit),
+            "tick_magic_crit" => Ok(Self::MagicCrit),
             "tick_physical_crit" => Ok(Self::PhysicalCrit),
             "tick" => Ok(Self::Plain),
             other => Err(format!("unknown damage proc tick outcome {other}")),
@@ -74,6 +78,7 @@ impl TickTable {
     pub(crate) fn outcome(self) -> Outcome {
         match self {
             Self::MagicHitAndCrit => Outcome::TickMagicHitAndCrit,
+            Self::MagicCrit => Outcome::TickMagicCrit,
             Self::PhysicalCrit => Outcome::TickPhysicalCrit,
             Self::Plain => Outcome::Tick,
         }

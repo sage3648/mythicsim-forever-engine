@@ -1643,6 +1643,31 @@ the Go goldens and exporter uses. The departures:
     casts bleeds the wearer. So the Strength never applies and the stamp is worn with its Defense
     alone, exactly, as a struck effect is on a character no target attacks.
   The reference's rules still refuse all three as unknown.
+- Sul'thraze the Lasher (9372), two-hand sword, item level 55, 108 to 163, speed 2.60
+  (`tests/forever_client_items_20261114.rs`): "Chance on hit: Lash the enemy with the rage of
+  Sul'thraze, reducing their attack power by 180 for 15 sec and dealing 95 to 223 Shadow damage.
+  After 5 sec, the target suffers an additional 159 Shadow damage. This additional Shadow damage
+  deals 2 times as much damage to Trolls." (Wowhead's Forever tooltip.) The reference's chance on
+  hit list leaves it out ("deals damage and debuffs the target", docs/forever-chance-on-hit.md),
+  so a sim wearing it had no effect. The client rows wago.tools serves (`product=wowf`, read on
+  13 November 2026) are the store's own: ItemEffect 98585 is a chance on hit (trigger type 2) of
+  Rage of Sul'thraze (1294430) with no rate, no cooldown and no SpellAuraOptions row. Its
+  SpellEffect 1315781 is a School Damage of 159 with Variance 0.8 (95 to 223), Shadow, magic
+  defense, no coefficient; 1315782 and 1315783 are -180 melee and ranged attack power on the
+  target for 15 sec; 1315784 triggers Shadow Lash (1294431) on the target; 1315810 is a Dummy of
+  2, the doubling against Trolls. Shadow Lash's SpellEffect 1315785 is a periodic damage aura of
+  159 every 5000 ms for 5 sec, one tick 5 sec after the hit; it always hits (Attributes_3
+  0x40000) and its tick can crit (Attributes_8 0x200). It is registered beside Lightcrest Hammer
+  (`forever_effect_items::CHANCE_ON_HIT_ITEMS`) at the assumed rate (4.68% a swing at 2.60). The
+  hit rolls the magic hit and crit; where it lands, Shadow Lash goes on the unit hit as the hit's
+  dot (`TRIGGERED_DOT_ITEMS`) and its tick rolls the magic crit alone (the runtime's
+  `tick_magic_crit`). A second lash within 5 sec refreshes it, as a reapplied aura of the same
+  caster does, so the first one's tick is lost. Neither missile's flight is modelled beyond the
+  hit's own. A Troll is a Humanoid, no creature type a request names, so the doubling never
+  applies. The attack power reduction is not modelled: it changes only the target's swings, which
+  only a character the target attacks takes, and the runtime's damage proc carries no debuff for
+  the target. A tank wearing the sword takes the target's swings at full attack power. Under the
+  reference's rules the sword is still worn with no effect.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:

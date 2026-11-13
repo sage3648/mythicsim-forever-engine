@@ -2204,6 +2204,60 @@ fn chance_on_hit_dot_shape(
     Some(shape)
 }
 
+/// Under Forever's rules, a chance on hit whose single target hit triggers a damage over time of
+/// its own on the unit hit (`forever_effect_items::TRIGGERED_DOT_ITEMS`: Sul'thraze's Shadow
+/// Lash): the row's direct hit, then the triggered row's ticks on the dot the spell carries, put
+/// on where the hit landed. A triggered row that always hits ticks on the crit alone, or plainly
+/// where it cannot crit. The hit row's debuffs on the target are left out, and only where each
+/// changes the target's attack power, which only the target's own swings read. `None` for any
+/// other item or shape, which the shapes after it describe or refuse.
+fn triggered_dot_shape(
+    env: &Environment,
+    cfg: &super::shared_items::SpellDataProc,
+    row: &'static Spell,
+    position: usize,
+) -> Option<serde_json::Map<String, Value>> {
+    let dot_row = super::forever_effect_items::triggered_dot(cfg.item_id, row.id)?;
+    let level = env.sim.unit(env.player).level;
+    let (direct, periodic) = (row.damage_effect(), dot_row.periodic_damage_effect());
+    let spell = env.sim.spell(spell_at(env, position));
+    let only_attack_power = row.debuff_effects().into_iter().all(|i| {
+        matches!(
+            row.effect_n(i).aura,
+            dbcenums::A_MOD_ATTACK_POWER | dbcenums::A_MOD_RANGED_ATTACK_POWER
+        )
+    });
+    if direct.is_nil()
+        || periodic.is_nil()
+        || direct.hits_an_area()
+        || direct.chain_targets > 1
+        || !super::shared_items::proc_periodic_effect(env, row).is_nil()
+        || !only_attack_power
+        || spell.defense_type != DefenseType::Magic
+        || dot_row.defense_type_core() != DefenseType::Magic
+        || spell_dot(env, spell_at(env, position), env.encounter.targets[0]).is_none()
+    {
+        return None;
+    }
+    let tick = match (dot_row.always_hits(), dot_row.periodic_can_crit()) {
+        (true, true) => "tick_magic_crit",
+        (true, false) => "tick",
+        (false, _) => proc_tick_outcome(dot_row),
+    };
+    let mut shape = serde_json::Map::new();
+    shape.insert("spell".to_string(), json!(position));
+    shape.insert("average".to_string(), json!(direct.average(level)));
+    shape.insert("variance".to_string(), json!(direct.variance));
+    shape.insert("can_crit".to_string(), json!(!row.cannot_crit()));
+    shape.insert(
+        "periodic".to_string(),
+        json!({
+            "tick_base": periodic.average(level), "tick_outcome": tick, "with_direct": true,
+        }),
+    );
+    Some(shape)
+}
+
 /// The worn items, then with an item swap the swap set's, once each, as item_effects.rs
 /// registers them.
 fn chance_on_hit_items(env: &Environment) -> Vec<i32> {
@@ -2336,7 +2390,8 @@ fn chance_on_hit_item_effects(env: &Environment, unrepresented: &mut Vec<String>
                         unrepresented.push(not_single_target_magic_hit(cfg.name));
                         continue;
                     };
-                    let shape = match chance_on_hit_dot_shape(env, row, position)
+                    let shape = match triggered_dot_shape(env, &cfg, row, position)
+                        .or_else(|| chance_on_hit_dot_shape(env, row, position))
                         .map_or_else(|| proc_damage_shape(env, row, position), Ok)
                     {
                         Ok(shape) => shape,
