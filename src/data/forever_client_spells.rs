@@ -21,6 +21,13 @@
 //! Nor is Toofbreaker's row (1320269): every field of it is the client's, read from wago.tools
 //! `product=wowf` on 11 November 2026 (the tables of build 1.60.1.70888).
 //!
+//! Nor are Pyromancer's Baton's Ablaze (1320925) and Sword of Dismemberment's Dismember
+//! (1324687): every field of theirs is the client's, read from wago.tools `product=wowf` on 13
+//! November 2026 (the tables of build 1.60.1.70888).
+//!
+//! Nor is Lightcrest Hammer's Smite (1299631): every field of it is the client's, read from
+//! wago.tools `product=wowf` on 13 November 2026 (the tables of build 1.60.1.70888).
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -101,7 +108,150 @@ pub(crate) fn rows() -> Vec<Spell> {
         maw_of_minloth_trigger(),
         maw_of_minloth_leech(),
         toofbreak(),
+        ablaze(),
+        dismember(),
+        smite(),
     ]
+}
+
+/// Lightcrest Hammer's chance on hit (ItemEffect 234878, trigger type 2, no rate and no cooldown
+/// stated): "Smites a target for 105 Holy damage. Deals 2 times as much damage to Undead." The
+/// row is its own trigger, a Holy hit on the magic table.
+fn smite() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 846916: Attributes_15 8192 and nothing else.
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_299_631,
+        name: "Smite".to_string(),
+        // SpellMisc 846916: SchoolMask 2, Holy.
+        school: 2,
+        attr,
+        // SpellLevels 152461: SpellLevel 30.
+        spell_level: 30,
+        // SpellMisc 846916: RangeIndex 6, SpellRange's 100 yards.
+        max_range: 100.0,
+        // SpellCategories 185137: magic.
+        defense_type: 1,
+        effects: vec![
+            // SpellEffect 1323965: School Damage (2) of 105 to the target (6), with no variance
+            // and no spell power or attack power coefficient.
+            Effect {
+                id: 1_323_965,
+                spell_id: 1_299_631,
+                index: 0,
+                effect_type: 2,
+                base_points: 105.0,
+                spell_level: 30,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                target: [6, 0],
+                ..Effect::default()
+            },
+            // SpellEffect 1323966: a Dummy (3) with base points 2 on the target (6): the "2 times
+            // as much damage" to Undead, which the server applies and preparation restates
+            // (`forever_effect_items::CREATURE_TYPE_DAMAGE_ITEMS`).
+            Effect {
+                id: 1_323_966,
+                spell_id: 1_299_631,
+                index: 1,
+                effect_type: 3,
+                base_points: 2.0,
+                spell_level: 30,
+                pvp_mult: 1.0,
+                chain_amp: 1.0,
+                target: [6, 0],
+                ..Effect::default()
+            },
+        ],
+        ..Spell::default()
+    }
+}
+
+/// Pyromancer's Baton's chance on hit (ItemEffect 238191, trigger type 2, no rate and no cooldown
+/// stated): "Burns the target for 30 Fire damage every 3 sec for 9 sec." The row is its own
+/// trigger, as a reference chance on hit weapon's is, and has the shape of Flaming Incinerator's
+/// Incinerator (pinned row 1294537): a Fire damage over time alone, on the magic table.
+fn ablaze() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 866630: Attributes_8 512 (`PERIODIC_CAN_CRIT`) and Attributes_15 8192, and
+    // nothing else.
+    attr[8] = PERIODIC_CAN_CRIT;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_320_925,
+        name: "Ablaze".to_string(),
+        // SpellMisc 866630: SchoolMask 4, Fire.
+        school: 4,
+        attr,
+        // SpellMisc 866630: DurationIndex 105, SpellDuration's 9000 ms.
+        duration_ms: 9000,
+        // SpellMisc 866630: RangeIndex 577, SpellRange's 8 yards.
+        max_range: 8.0,
+        // SpellCategories 189172: magic defense, magic dispel.
+        defense_type: 1,
+        dispel_type: 1,
+        // SpellAuraOptions 248366: ProcChance 101 and nothing else, as Incinerator's row. The
+        // aura procs nothing; the importer writes a chance of 101 as `ALWAYS`.
+        proc_chance: 101,
+        proc_chance_source: 2,
+        // SpellEffect 1355874: Apply Aura (6) of Periodic Damage (3) of 30 every 3000 ms on the
+        // target (6), with no variance and no spell power or attack power coefficient.
+        effects: vec![Effect {
+            id: 1_355_874,
+            spell_id: 1_320_925,
+            index: 0,
+            effect_type: 6,
+            aura: 3,
+            base_points: 30.0,
+            period_ms: 3000,
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// Sword of Dismemberment's chance on hit (ItemEffect 238815, trigger type 2, no rate and no
+/// cooldown stated): "Dismember the target, inflicting 335 to 1005 Physical damage." The row is
+/// its own trigger, as Toofbreak's is, a Physical hit on the melee table.
+fn dismember() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 870298: Attributes_3 65536, Attributes_4 8388608 and Attributes_15 8192.
+    attr[3] = 65_536;
+    attr[4] = 8_388_608;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_324_687,
+        name: "Dismember".to_string(),
+        // SpellMisc 870298: SchoolMask 1, Physical.
+        school: 1,
+        attr,
+        // SpellLevels 154036: SpellLevel 1.
+        spell_level: 1,
+        // SpellMisc 870298: RangeIndex 13, SpellRange's 50000 yards ("Anywhere").
+        max_range: 50_000.0,
+        // SpellCategories 189951: melee.
+        defense_type: 2,
+        // SpellEffect 1361623: School Damage (2) of 670 to the target (6), variance 1 (335 to
+        // 1005, the tooltip's), with no spell power or attack power coefficient.
+        effects: vec![Effect {
+            id: 1_361_623,
+            spell_id: 1_324_687,
+            index: 0,
+            effect_type: 2,
+            base_points: 670.0,
+            spell_level: 1,
+            variance: 1.0,
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
 }
 
 /// Toofbreaker's chance on hit (ItemEffect 238089, trigger type 2, no rate and no cooldown

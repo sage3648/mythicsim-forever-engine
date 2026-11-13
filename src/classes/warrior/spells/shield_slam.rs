@@ -5,9 +5,10 @@
 //!
 //! Under Forever's rules it is a main hand special and adds twice the block value, from
 //! protection warrior combat logs of client 1.60.1.70862 (8 November 2026): the main hand
-//! weapon's proc fired on 54 of 80 isolated Shield Slams (and on none of 74 Shield Blocks), and
-//! at a block value of 28 the mean hit sits about 28 above one block value's worth (481
-//! against 453).
+//! weapon's equip effect (Dreadfrost Saber) fired on 54 of 80 isolated Shield Slams (and on
+//! none of 74 Shield Blocks), and at a block value of 28 the mean hit sits about 28 above one
+//! block value's worth (481 against 453). Weapon procs do not hear it (prepare/spells.rs
+//! `shield_strike_flags`).
 
 use crate::{
     contracts::prepared_v2::DamageRoll,

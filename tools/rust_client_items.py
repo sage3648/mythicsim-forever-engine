@@ -469,6 +469,23 @@ ENGINE_EFFECT = [
         "Equip: When struck in combat, has a chance to energize you for 66 to 110 mana. This "
         "effect cannot occur more than once every 15 sec. (15s cooldown)",
         "Equip: Deals 20 to 30 Physical damage every time you block.",
+        # Pyromancer's Baton 286650, Sword of Dismemberment 287005.
+        "Chance on hit: Burns the target for 30 Fire damage every 3 sec for 9 sec.",
+        "Chance on hit: Dismember the target, inflicting 335 to 1005 Physical damage.",
+        # Farraki Kris 274647: a chance on harmful spell cast whose rate the client does not
+        # state, which the engine does not apply and refuses on a character with a mana bar
+        # (forever_effect_items.rs, SPELL_CAST_EFFECTS_NOT_PREPARED).
+        "Equip: Chance on harmful spell cast to afflict the target with a draining ritual, "
+        "leeching 19 health every 2 sec for 6 sec. (100ms cooldown)",
+        # Lightcrest Hammer 276419.
+        "Chance on hit: Smites a target for 105 Holy damage. Deals 2 times as much damage to "
+        "Undead.",
+        # Spiderchitin Wrap 280016: the Feral Combat skill a Druid's forms attack with
+        # (forever_effect_items.rs, FERAL_COMBAT_SKILL_ITEMS).
+        "Equip: Increases Feral Combat +1.",
+        # Fingerbreaker Stamp 276743: Strength while the wearer bleeds, which nothing in a fight
+        # here causes, so the item is worn with its other lines (forever_effect_items.rs).
+        "Equip: Increases Strength by 38 while affected by a Bleed.",
     ]
 ]
 # A use that is a stat buff, by item: the exact use line of the tooltip and the item effect the row

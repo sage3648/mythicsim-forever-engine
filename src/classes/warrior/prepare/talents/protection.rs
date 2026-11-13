@@ -219,7 +219,7 @@ impl Warrior {
                 spell_school: rank.spell_school(),
                 defense_type: rank.defense_type_core(),
                 proc_mask: super::super::spells::shield_strike_proc_mask(sim.rules),
-                flags: F::MELEE_METRICS | F::APL,
+                flags: super::super::spells::shield_strike_flags(sim.rules),
                 max_range: MELEE_RANGE,
                 cost: rage_cost_with_refund(rank),
                 cast: cast_config(rank.gcd(), true, cd),

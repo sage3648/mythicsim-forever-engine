@@ -15,6 +15,13 @@
 //!   same way: a Physical hit of 42 on the unit hit, on the melee table. "Deals 2 times as much
 //!   damage if the target is facing you": the hit is doubled for a character in front of the
 //!   target or one the target swings at (`FACING_DAMAGE_ITEMS`).
+//! - Pyromancer's Baton (286650) and Sword of Dismemberment (287005) are chance on hit weapons
+//!   with no stated rate too, registered the same way: Ablaze, a Fire damage over time of 30
+//!   every 3 sec for 9 sec on the unit hit, which rolls the magic hit as it goes on, as Flaming
+//!   Incinerator's does; and Dismember, a Physical hit of 335 to 1005 on the melee table.
+//! - Lightcrest Hammer (276419) is one more chance on hit weapon with no stated rate: Smite, a
+//!   Holy hit of 105 on the magic table, doubled when every target is Undead
+//!   (`CREATURE_TYPE_DAMAGE_ITEMS`).
 //! - Dreadfrost Saber (274603) is a spell data damage proc (`NewSpellDataDamageProc`), as Fiery
 //!   Plate Gauntlets' "Adds 4 fire damage to your weapon attack" is in the reference: its equip
 //!   aura (1294939) hears the wearer's landed main hand melee hits and casts a Frost hit of 1
@@ -32,6 +39,16 @@
 //! here applies yet (`STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate (274651) and Girdle of Extracted
 //! Answers (276742). Each is a plain item on a character the effect cannot reach, and refuses a
 //! character it can.
+//!
+//! Spiderchitin Wrap (280016) raises the Feral Combat skill a Druid's forms attack with
+//! (`FERAL_COMBAT_SKILL_ITEMS`).
+//!
+//! Fingerbreaker Stamp (276743) has nothing registered: "Equip: Increases Strength by 38 while
+//! affected by a Bleed." (ItemEffect 237304, Fingerbreaker Stamp 1314784, a periodic dummy aura
+//! (226) of 38 every 1000 ms, SpellEffect 1346731) acts only while the wearer bleeds, and nothing
+//! in a fight here bleeds the wearer: a target only swings (preparation refuses a target with an
+//! AI, `target.rs`) and the wearer's own side casts no bleed on the wearer. The stamp is worn with
+//! its 6 Defense alone, exactly, as a struck effect is on a character no target attacks.
 
 use crate::contracts::prepared_v2::ActionId;
 
@@ -120,6 +137,48 @@ pub(crate) const CHANCE_ON_HIT_ITEMS: &[Registration] = &[
             item_name: "Toofbreaker",
         }],
     ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1320925,
+            is_weapon_proc: true,
+            trigger_spell_id: 1320925,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 286650,
+            item_name: "Pyromancer's Baton",
+        }],
+    ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1324687,
+            is_weapon_proc: true,
+            trigger_spell_id: 1324687,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 287005,
+            item_name: "Sword of Dismemberment",
+        }],
+    ),
+    Registration::Proc(
+        ProcKind::Damage,
+        SpellDataProc {
+            buff_spell_id: 1299631,
+            is_weapon_proc: true,
+            trigger_spell_id: 1299631,
+            rateless: true,
+            ..SpellDataProc::EMPTY
+        },
+        &[ItemVariant {
+            item_id: 276419,
+            item_name: "Lightcrest Hammer",
+        }],
+    ),
 ];
 
 /// A chance on hit whose hit deals `multiplier` times its damage to a target that faces the
@@ -162,6 +221,74 @@ pub(crate) fn apply_facing_damage(env: &mut Environment, item: i32) {
         .get_spell(unit, &ActionId::spell(facing.spell_id))
         .expect("the chance on hit registered its spell");
     env.sim.spell_mut(spell).damage_multiplier *= facing.multiplier;
+}
+
+/// A chance on hit whose hit deals `multiplier` times its damage to some creature types, as the
+/// tooltip states it.
+pub(crate) struct CreatureTypeDamageItem {
+    pub(crate) item_id: i32,
+    /// The spell the chance on hit casts.
+    pub(crate) spell_id: i32,
+    /// The creature types, by the request's name.
+    pub(crate) creature_types: &'static [&'static str],
+    pub(crate) multiplier: f64,
+}
+
+/// The chance on hit items that deal more to some creature types.
+pub(crate) const CREATURE_TYPE_DAMAGE_ITEMS: [CreatureTypeDamageItem; 1] =
+    [CreatureTypeDamageItem {
+        // Lightcrest Hammer's Smite (1299631): "Deals 2 times as much damage to Undead." The 2 is
+        // the row's second effect (SpellEffect 1323966, a dummy with base points 2), which the
+        // server applies.
+        item_id: 276419,
+        spell_id: 1299631,
+        creature_types: &["MobTypeUndead"],
+        multiplier: 2.0,
+    }];
+
+/// After a chance on hit item registered its spell: a hit that deals more to some creature types
+/// takes its multiplier as the spell's damage multiplier when every target is of one, as a
+/// fight's targets are of one type (Serpentbane Crown's use reads its Beasts the same way).
+pub(crate) fn apply_creature_type_damage(env: &mut Environment, item: i32) {
+    let Some(versus) = CREATURE_TYPE_DAMAGE_ITEMS
+        .iter()
+        .find(|versus| versus.item_id == item)
+    else {
+        return;
+    };
+    let every = env.encounter.targets.iter().all(|&target| {
+        versus
+            .creature_types
+            .contains(&env.sim.unit(target).mob_type.as_str())
+    });
+    if !every {
+        return;
+    }
+    let unit = env.player;
+    let spell = env
+        .sim
+        .get_spell(unit, &ActionId::spell(versus.spell_id))
+        .expect("the chance on hit registered its spell");
+    env.sim.spell_mut(spell).damage_multiplier *= versus.multiplier;
+}
+
+/// The items whose equip effect raises the Feral Combat skill, by item and amount.
+///
+/// Spiderchitin Wrap (280016): "Equip: Increases Feral Combat +1." (Wowhead's Forever tooltip, 13
+/// November 2026). ItemEffect 238248 is an equip (trigger type 1) of Increased Feral Combat
+/// (1320726), whose SpellEffect 1355535 is a skill aura (30) of 1 on skill line 3014. SkillLine
+/// 3014 is "Feral Combat", in the Weapon Skills category (6) beside Swords and Defense, and
+/// SkillRaceClassInfo 2554 gives it to Druids alone (ClassMask 1024), through the Feral Combat
+/// spell 1306742, a weapon proficiency (effect 25). It is read as the weapon skill a Druid's forms
+/// attack with (`Sim::update_weapon_skills`); anyone else has no such line and gains nothing.
+pub(crate) const FERAL_COMBAT_SKILL_ITEMS: [(i32, f64); 1] = [(280016, 1.0)];
+
+/// The Feral Combat skill the item raises, if it is one of these.
+pub(crate) fn feral_combat_skill(item: i32) -> Option<f64> {
+    FERAL_COMBAT_SKILL_ITEMS
+        .iter()
+        .find(|(id, _)| *id == item)
+        .map(|(_, amount)| *amount)
 }
 
 /// The equip damage procs, as `forever_items_generated::ITEMS` lists the reference's (Fiery Plate
@@ -344,6 +471,58 @@ pub(crate) fn struck_effect_not_prepared(
         format!(
             "item {item} has an effect not prepared yet ({} on a character the target attacks)",
             struck.effect
+        ),
+    ))
+}
+
+/// An equip effect that acts on the wearer's harmful spell casts at a chance the client does not
+/// state, and that nothing here applies yet.
+pub(crate) struct SpellCastEffectNotPrepared {
+    pub(crate) item_id: i32,
+    /// The effect, as the refusal names it.
+    pub(crate) effect: &'static str,
+}
+
+/// The items whose equip effect acts on the wearer's harmful spell casts at a chance the client
+/// does not state. The reference's items of this shape (Galgann's Firehammer, Spire of Hakkar,
+/// Depleted Eye of Influence) stay unregistered for the same want of a rate
+/// (`docs/forever-chance-on-hit.md`), and the assumed chance on hit rate is a rate per weapon hit,
+/// which a spell cast is not. A character with no mana bar (a Warrior, a Rogue) casts no harmful
+/// spell and wears the item as a plain one, exactly; one with a mana bar is refused, since the
+/// effect would change that fight.
+///
+/// Farraki Kris (274647): "Equip: Chance on harmful spell cast to afflict the target with a
+/// draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)" (Wowhead's Forever
+/// tooltip, 13 November 2026). ItemEffect 233957 is an equip (trigger type 1) of Blood Sacrifice
+/// (1294644): SpellAuraOptions 246039 has ProcChance 100 beside the tooltip's "Chance", ProcTypeMask
+/// 65536 (harmful spells dealt) and a proc recovery of 100 ms, and SpellEffect 1316123 casts Blood
+/// Sacrifice (1294645), whose SpellEffect 1316124 is a Periodic Leech (53) of 19 every 2000 ms,
+/// Shadow (SchoolMask 32), for SpellMisc 842035's DurationIndex 32, 6 sec. A chance of 100 beside a
+/// trigger clause that says the effect only sometimes happens is no rate
+/// (`spelldata::proc_chance_source::PPM`), as Krol'dok Battlegear's four piece and Defias
+/// Enforcer's Garb's five piece are not (`forever_client_sets`).
+pub(crate) const SPELL_CAST_EFFECTS_NOT_PREPARED: [SpellCastEffectNotPrepared; 1] =
+    [SpellCastEffectNotPrepared {
+        item_id: 274647,
+        effect: "a chance on harmful spell cast whose rate the client does not state",
+    }];
+
+/// Refuses a worn item of [`SPELL_CAST_EFFECTS_NOT_PREPARED`] on a character with a mana bar.
+pub(crate) fn spell_cast_effect_not_prepared(env: &Environment, item: i32) -> Result<(), Refusal> {
+    let Some(cast) = SPELL_CAST_EFFECTS_NOT_PREPARED
+        .iter()
+        .find(|cast| cast.item_id == item)
+    else {
+        return Ok(());
+    };
+    if !env.sim.unit(env.player).mana_bar.enabled {
+        return Ok(());
+    }
+    Err(Refusal::new(
+        "item_effect",
+        format!(
+            "item {item} has an effect not prepared yet ({} on a character with a mana bar)",
+            cast.effect
         ),
     ))
 }

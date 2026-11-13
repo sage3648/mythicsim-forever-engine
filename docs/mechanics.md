@@ -114,7 +114,11 @@ the Go goldens and exporter uses. The departures:
   moment with a white swing, dodged or parried ones 0 of 38). Cleave follows Heroic Strike, an
   assumption, as the logs hold one Cleave. The reference spends a charge on each landed white
   hit, Heroic Strike and Cleave included, and never on a miss. The prepared `warrior_flurry`
-  effect carries `every_swing_spends`.
+  effect carries `every_swing_spends`. A crit of Whirlwind's off hand strike starts Flurry as any
+  other strike's does: in combat logs of client 1.60.1.70888, 16 of the 18 Whirlwinds (of 97
+  casts by eight warriors) whose off hand strike alone crit started it. The reference leaves
+  that strike out; the effect carries `whirlwind_off_hand_starts`
+  (`tests/forever_rules_20261113.rs`).
 - Casting regeneration auras, from the client's mana regeneration interrupt aura (type 134),
   which acts as it is applied: Resourcefulness, Rapid Recuperation and Improved Stormstrike let
   more spirit regeneration continue while casting from the moment they are up. The reference
@@ -410,9 +414,14 @@ the Go goldens and exporter uses. The departures:
     the buff up, where 29 of 30 Whirlwinds spent one). Its share of attack power is 0.07,
     measured on ranks 1 and 4 (rank 4 reads floor(0.99 * (55 + 0.07 * attack power))); ranks 2,
     3, 5 and 6 carry it, unmeasured. The reference's literal is 0.0255.
-  - Shield Slam and Shield Bash are main hand specials: the main hand weapon's proc fired on 54
-    of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks. Their
-    rows still require the shield, and Windfury Totem still never rolls on them. Shield Slam adds
+  - Shield Slam and Shield Bash are main hand specials: Dreadfrost Saber's equip effect fired on
+    54 of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks.
+    Their rows still require the shield, and Windfury Totem still never rolls on them. Weapon
+    procs (a chance on hit or a weapon enchant) do not hear them either: in combat logs of client
+    1.60.1.70888 the Fiery Blaze enchant (36) fired on 0 of 617 Shield Slams and 0 of 78 Shield
+    Bashes, and Rock on Stick's chance on hit on 0 of 157 shield strikes. Both carry Suppress
+    Weapon Procs under Forever's rules; equip effects, Ironfoe's Fury of Forgewright and Hand of
+    Justice among them, still hear them (`tests/forever_rules_20261113.rs`). Shield Slam adds
     twice the block value (at a block value of 28 the mean hit sits about 28 above one block
     value's worth, 481 against 453). Its flat threat is 178 on rank 1 (177.7 measured at levels
     40 to 42); ranks 2 to 4 are not measured and carry rank 1's 4.45 a spell level as whole
@@ -1221,6 +1230,15 @@ the Go goldens and exporter uses. The departures:
   spell penetration. The client items gain 61 rows for Forever items revealed since 9 November
   (`tools/rust_client_items.py add`; 5,022 unrevealed client ids asked again, 73 revealed, 12 left
   for hand modelling).
+  Classes follow the tooltip too (the same tooltips of 12 November 2026): its "Classes: Priest,
+  Mage, Warlock" line is the row's class allowlist, and a tooltip without that line lifts it.
+  22 reference rows lose a list the live items do not carry: Plaguerot Sprig (Mage only in the
+  reference and in Classic, ilvl 42 and level 37 in Forever with no class line), Eye of the Beast
+  and 20 quest rewards such as Woestave, Circle of Hope, Soul Harvester and Moonshadow Stave,
+  which Classic itself gives every class. 11 gain the tooltip's class: the seven Bonescythe Armor
+  pieces (Rogue) and the four Atiesh, Greatstaff of the Guardian (Mage, Warlock, Priest, Druid).
+  An allowlist decides whether the item's effects reach the wearer
+  (`src/prepare/item_effects.rs`, `src/prepare/healer_gear.rs`).
 - Command on a Warlock's demons since the hotfixes of 6 November 2026 ("Fixes an issue where some
   Warlock pet abilities were benefitting too much from the Orc Command racial ability", Forever
   preparation; the reference has no Command). In client 1.60.1.70862 Command (20575) has two
@@ -1512,6 +1530,69 @@ the Go goldens and exporter uses. The departures:
     274297 (SpellEffect 1347318), and no client row states what the whelp deals, so the item
     stays refused as unknown.
   The reference's rules still refuse every one of these items as unknown.
+- Items that refused players' Quick Sims on 12 November 2026
+  (`tests/forever_client_items_20261113.rs`), from Wowhead's Forever tooltips and the client rows
+  wago.tools serves (`product=wowf`, client 1.60.1.70888) on 13 November 2026. None of their spell
+  rows is encrypted, so `src/data/forever_client_spells.rs` restates every field from the client:
+  - Pyromancer's Baton (286650), one-hand mace, item level 40, 46 to 86, speed 2.40: "Chance on
+    hit: Burns the target for 30 Fire damage every 3 sec for 9 sec." ItemEffect 238191 is a chance
+    on hit (trigger type 2) of Ablaze (1320925) with no rate and no cooldown. The spell is a
+    Periodic Damage aura of 30 every 3000 ms (SpellEffect 1355874), Fire, 9 sec, ticks that may
+    crit (SpellMisc 866630), magic defense (SpellCategories 189172), with no coefficient: the
+    shape of Flaming Incinerator's Incinerator. It rolls the assumed chance on hit rate (1.8% per
+    second of weapon speed, 4.32% a swing at 2.40, `docs/forever-chance-on-hit.md`) on the
+    weapon's own landed hits and puts three ticks on the unit hit, rolling the magic hit as it
+    goes on.
+  - Sword of Dismemberment (287005), two-hand sword, item level 42, 110 to 166, speed 3.70:
+    "Chance on hit: Dismember the target, inflicting 335 to 1005 Physical damage." ItemEffect
+    238815 is a chance on hit of Dismember (1324687) with no rate and no cooldown, a School Damage
+    of 670 with a variance of 1 (SpellEffect 1361623), Physical, melee defense (SpellCategories
+    189951), no coefficient. It rolls the assumed rate (6.66% a swing at 3.70) and the hit rolls
+    the melee table, may crit and takes armor, as Toofbreaker's does.
+  - Farraki Kris (274647), main hand dagger, item level 47, 23 to 44, speed 1.60, 54 spell damage
+    and healing, 2 spell penetration: "Equip: Chance on harmful spell cast to afflict the target
+    with a draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)". ItemEffect
+    233957 is an equip of Blood Sacrifice (1294644): SpellAuraOptions 246039 has ProcChance 100
+    beside the tooltip's "Chance", ProcTypeMask 65536 (harmful spells) and a 100 ms proc recovery,
+    casting 1294645, a Periodic Leech of 19 every 2 sec for 6 sec, Shadow. A chance of 100 beside
+    a clause that says the effect only sometimes happens is no rate, as for Krol'dok Battlegear's
+    four piece, and the assumed chance on hit rate is per weapon hit, not per spell (the
+    reference's Galgann's Firehammer and Spire of Hakkar stay unregistered for the same reason).
+    So the effect is not prepared: a character with no mana bar casts no harmful spell and wears
+    the kris as a plain dagger; one with a mana bar is refused with "item 274647 has an effect not
+    prepared yet (a chance on harmful spell cast whose rate the client does not state on a
+    character with a mana bar)" (`forever_effect_items::SPELL_CAST_EFFECTS_NOT_PREPARED`).
+  The reference's rules still refuse all three as unknown.
+- Three more items that refused players' Quick Sims on 12 November 2026
+  (`tests/forever_client_items_20261113b.rs`), from the same sources on 13 November 2026:
+  - Lightcrest Hammer (276419), one-hand mace, item level 60, 66 to 123, speed 2.40: "Chance on
+    hit: Smites a target for 105 Holy damage. Deals 2 times as much damage to Undead." ItemEffect
+    234878 is a chance on hit of Smite (1299631) with no rate and no cooldown, restated in
+    `src/data/forever_client_spells.rs`: a School Damage of 105 (SpellEffect 1323965), Holy, magic
+    defense (SpellMisc 846916, SpellCategories 185137), spell level 30 (SpellLevels 152461), no
+    coefficient, and a Dummy of 2 (SpellEffect 1323966), the doubling against Undead. It rolls the
+    assumed chance on hit rate (4.32% a swing at 2.40) and the hit rolls the magic hit and crit.
+    Against Undead the hit's damage multiplier is 2 when every target is Undead, as Serpentbane
+    Crown's use is against Beasts (`forever_effect_items::CREATURE_TYPE_DAMAGE_ITEMS`).
+  - Spiderchitin Wrap (280016), leather chest, item level 63: 176 Armor, +18 Strength, +24
+    Stamina, "Equip: Increases Feral Combat +1." ItemEffect 238248 is an equip of Increased Feral
+    Combat (1320726), a skill aura (30) of 1 on skill line 3014 (SpellEffect 1355535). SkillLine
+    3014 is "Feral Combat" in the Weapon Skills category, and SkillRaceClassInfo 2554 gives it to
+    Druids alone (granted by the Feral Combat spell 1306742, a weapon proficiency). It is read as
+    the skill a Druid's forms attack with: a Druid's main hand attacks take the Feral Combat skill
+    above base, where the reference keeps none for a Druid (`Unit::feral_combat_skill`,
+    `forever_effect_items::FERAL_COMBAT_SKILL_ITEMS`). With no such item the skill is 0 and the
+    attack table is the one before. Anyone else has no Feral Combat line and wears the wrap as a
+    plain chest. Oilskin Leggings (9414) carries the same equip spell in the reference database,
+    which registers no effect for it; it is left as it was.
+  - Fingerbreaker Stamp (276743), trinket, item level 53: "Equip: Increased Defense +6." (6
+    Defense rating) and "Equip: Increases Strength by 38 while affected by a Bleed." ItemEffect
+    237304 is an equip of Fingerbreaker Stamp (1314784), a periodic dummy aura (226) of 38 every
+    1000 ms (SpellEffect 1346731) that the server reads. The wearer is never bleeding in a fight
+    here: a target only swings (a target with an AI is refused), and nothing the wearer's side
+    casts bleeds the wearer. So the Strength never applies and the stamp is worn with its Defense
+    alone, exactly, as a struck effect is on a character no target attacks.
+  The reference's rules still refuse all three as unknown.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:

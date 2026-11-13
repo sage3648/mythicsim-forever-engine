@@ -4639,6 +4639,10 @@ pub enum Effect {
         /// hit spends one, Heroic Strike and Cleave included.
         #[serde(default, skip_serializing_if = "is_false")]
         every_swing_spends: bool,
+        /// Forever's rules: a crit of Whirlwind's off hand strike starts Flurry. Without it, as
+        /// in Go, that strike never does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        whirlwind_off_hand_starts: bool,
     },
     /// Reckless Swings (Forever's rules, the notes of 2 November 2026): a cast for a share of
     /// base health that gives the aura `charges` stacks, each landed white swing a spell batch
