@@ -40,14 +40,18 @@
 //!   of Ephemeral Power is in the reference: its client row carries the use as an item effect
 //!   (19 spell damage and healing for 30 sec, on the use spell's own cooldowns), which the shared
 //!   constructor reads (`ON_USE_STAT_ITEMS`).
+//! - Lucky Shovelnose Tuft (280060) and Flamebreak Talisman (280071) are stat on-use trinkets the
+//!   same way: 5% Dodge (60 Dodge rating) for 15 sec, a survival cooldown, and 33 Agility for 30
+//!   sec, each on a 5 minute cooldown. The talisman's "If there is an elemental nearby, gain an
+//!   additional 33" is not granted: no client row states when it applies.
 //!
 //! Two more items carry an equip effect that acts only when the wearer is struck or blocks, which
 //! `forever_tank_procs` models with the Krol'dok Battlegear bonuses that act the same way: Zealot
 //! Plate (274651) and Girdle of Extracted Answers (276742). Each is a plain item on a character the
 //! effect cannot reach.
 //!
-//! Spiderchitin Wrap (280016) raises the Feral Combat skill a Druid's forms attack with
-//! (`FERAL_COMBAT_SKILL_ITEMS`).
+//! Spiderchitin Wrap (280016) and Matriarch's Prowlers (286616) raise the Feral Combat skill a
+//! Druid's forms attack with (`FERAL_COMBAT_SKILL_ITEMS`).
 //!
 //! Fingerbreaker Stamp (276743) has nothing registered: "Equip: Increases Strength by 38 while
 //! affected by a Bleed." (ItemEffect 237304, Fingerbreaker Stamp 1314784, a periodic dummy aura
@@ -338,7 +342,10 @@ pub(crate) fn apply_creature_type_damage(env: &mut Environment, item: i32) {
 /// SkillRaceClassInfo 2554 gives it to Druids alone (ClassMask 1024), through the Feral Combat
 /// spell 1306742, a weapon proficiency (effect 25). It is read as the weapon skill a Druid's forms
 /// attack with (`Sim::update_weapon_skills`); anyone else has no such line and gains nothing.
-pub(crate) const FERAL_COMBAT_SKILL_ITEMS: [(i32, f64); 1] = [(280016, 1.0)];
+///
+/// Matriarch's Prowlers (286616), leather feet, carry the same line and the same equip spell
+/// (ItemEffect 238174, client 1.60.1.70938, 14 November 2026).
+pub(crate) const FERAL_COMBAT_SKILL_ITEMS: [(i32, f64); 2] = [(280016, 1.0), (286616, 1.0)];
 
 /// The Feral Combat skill the item raises, if it is one of these.
 pub(crate) fn feral_combat_skill(item: i32) -> Option<f64> {
@@ -458,7 +465,27 @@ pub(crate) fn apply_on_use_damage(env: &mut Environment, use_: &OnUseDamageItem)
 /// 30000 ms on SpellCategories 184157's category 1141, the one the reference's stat trinkets
 /// share. SpellEffect 1317148 is a damage done aura (13) of 19 on every magic school (mask 126)
 /// and 1348726 a healing done aura (135) of 19; SpellMisc 842632 has DurationIndex 9, 30 sec.
-pub(crate) const ON_USE_STAT_ITEMS: &[i32] = &[274615];
+///
+/// Lucky Shovelnose Tuft (280060): "Use: Increases your chance to Dodge by 5% for 15 sec. (5 Min
+/// Cooldown)" (Wowhead's Forever tooltip, 14 November 2026). The client's rows (wago.tools
+/// `product=wowf`, build 1.60.1.70938, 14 November 2026): ItemEffect 237439 is a use (trigger
+/// type 0) of Lucky Shovelnose Snout (1315844) on the item's own cooldowns, 300000 ms and 15000 ms
+/// on category 2554. SpellEffect 1348362 is a dodge percent aura (49) of 5 on the wearer;
+/// SpellMisc 862027 has DurationIndex 8, 15 sec. The row holds the 5% as 60 Dodge rating, 12 a
+/// percent, as the reference rows hold dodge. The buff is a survival cooldown
+/// (`StatBuffAura::infer_cd_type`), as a reference dodge trinket's would be.
+///
+/// Flamebreak Talisman (280071): "Use: Increase your agility by 33 for 30 sec. If there is an
+/// elemental nearby, gain an additional 33. (5 Min Cooldown)" (the same sources). ItemEffect
+/// 236650 is a use of Flamebreak Talisman (1315878) on 300000 ms and 30000 ms of category 1141
+/// (SpellCooldowns 101402 and SpellCategories 188378 state the same). SpellEffect 1348442 is an
+/// Agility aura (29, stat 1) of 33 on the wearer and SpellMisc 862061 has DurationIndex 9, 30
+/// sec. SpellEffect 1348471 is the same aura of 33 a second time, with the same target and no
+/// condition in any row (no SpellAuraRestrictions or SpellTargetRestrictions row; the aura's
+/// description adds the two, `$w1+$w2`): the server decides when "an elemental nearby" holds, and
+/// nothing says whether that is the target, any enemy or a friendly elemental, or how near. So
+/// the use grants the first 33 alone, on every target, a fight against an Elemental included.
+pub(crate) const ON_USE_STAT_ITEMS: &[i32] = &[274615, 280060, 280071];
 
 /// Whether the item is one of the stat on-use items.
 pub(crate) fn on_use_stat_item(item: i32) -> bool {
