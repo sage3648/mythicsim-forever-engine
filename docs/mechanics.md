@@ -1708,12 +1708,53 @@ the Go goldens and exporter uses. The departures:
     Stick was read at three swing speeds (11.7% a swing at 3.4, 8.6% at a bear's 2.5, 2.5% at a
     cat's 1.0), so such a rate is per minute and not a flat chance. Boneslicer (273819) shares
     Ripsaw's Wound and keeps the assumed rate: the measured rates go by item.
-  - Twelve more live item rows, each the reference row with what today's Wowhead Forever tooltip
-    states otherwise (`tools/rust_live_items.py`): Conqueror's Medallion (12059), Mar Alom's Grip
-    (12547), Breastplate of the Chromatic Flight (12895), Legguards and Legplates of the Chromatic
-    Defier (12903, 12945), Skullsmoke Pants (14577), Death Knight Sabatons (18692), Coldstone
-    Slippers (18697), Plaguehound Leggings (18736), Specter's Blade (18758), Oblivion's Touch
-    (18761) and Lefty's Brass Knuckle (22317). No reference build wears one.
+- Four items that refused players' sims on 13 November 2026 ("no item with id N") and two more
+  rows a run of `tools/rust_client_items.py build` over every candidate found
+  (`tests/forever_client_items_20261114b.rs`), from Wowhead's Forever tooltips and the client
+  rows wago.tools serves (`product=wowf`, build 1.60.1.70938) on 14 November 2026:
+  - Lucky Shovelnose Tuft (280060), trinket, item level 60: +11 Strength, +11 Spirit and "Use:
+    Increases your chance to Dodge by 5% for 15 sec. (5 Min Cooldown)". ItemEffect 237439 is a use
+    of Lucky Shovelnose Snout (1315844) on the item's own cooldowns, 300000 ms and 15000 ms on
+    category 2554. SpellEffect 1348362 is a dodge percent aura (49) of 5 on the wearer and
+    SpellMisc 862027 lasts 15 sec (DurationIndex 8). The row carries the use as an item effect of
+    60 Dodge rating (12 a percent, as the reference rows hold dodge), which the shared stat
+    on-use constructor registers (`forever_effect_items::ON_USE_STAT_ITEMS`). A dodge buff is a
+    survival cooldown, so a rotation that does not call for the item never presses it, as with a
+    reference survival trinket: a character wears the tuft for its Strength and Spirit.
+  - Flamebreak Talisman (280071), trinket, item level 61: +17 Fire Resistance and "Use: Increase
+    your agility by 33 for 30 sec. If there is an elemental nearby, gain an additional 33. (5 Min
+    Cooldown)". ItemEffect 236650 is a use of Flamebreak Talisman (1315878) on 300000 ms and
+    30000 ms of category 1141, the stat trinkets' shared category (SpellCooldowns 101402 and
+    SpellCategories 188378 state the same). SpellEffect 1348442 is an Agility aura (29, stat 1)
+    of 33 on the wearer and SpellMisc 862061 lasts 30 sec (DurationIndex 9). SpellEffect 1348471
+    is the same aura of 33 a second time, with the same target and no condition: the spell has no
+    SpellAuraRestrictions or SpellTargetRestrictions row, and the aura's description adds the two
+    (`$w1+$w2`), so the server decides when "an elemental nearby" holds. No row says whether that
+    is the target, any enemy or a friendly elemental, or how near. The use therefore grants the
+    first 33 alone, against an Elemental target as against any other; the second 33 is not
+    modelled.
+  - Tunnelweb Pincer (280085), one-hand dagger, item level 57: 42 to 78, speed 1.60, +7 Agility,
+    +8 Stamina and "Equip: Improves your chance to get a critical strike by 0.4%." At 14 rating a
+    percent that is 5.6 crit rating, no whole number, which the tool reads for this item alone
+    (`FRACTIONAL_RATING_LINES`). The client's own rating is a whole number the tooltip rounds (5
+    and 6 both show as 0.4%) and the item's ItemSparse row is encrypted, so the row takes the
+    stated 0.4% exactly.
+  - Egan's Blaster (13289), a Classic quest item worn in the ranged slot (Item class 12,
+    InventoryType 26), item level 1, Unique: "Use: Use to free Spectral and Ghostly Citizens."
+    (spell 17368, ItemEffect 99465, a periodic trigger on a quest target). Nothing a fight reads:
+    the tool takes it as a worn quest item (`WORN_QUEST_ITEMS`) and writes a ranged row with no
+    ranged weapon type, damage or speed, with the use left out (`NO_FIGHT_EFFECT`). Wearing it is
+    wearing nothing in the ranged slot, roll for roll. A Hunter is the one character whose fight
+    needs a ranged weapon there: a Hunter holding it is refused by name ("item 13289 (Egan's
+    Blaster) in the ranged slot is no ranged weapon"), rather than casting shots from an item
+    that cannot fire.
+  - Matriarch's Prowlers (286616), leather feet, item level 52: 94 Armor, +11 Agility and "Equip:
+    Increases Feral Combat +1." ItemEffect 238174 is an equip of Increased Feral Combat (1320726),
+    the spell Spiderchitin Wrap carries, so it is registered beside the wrap
+    (`forever_effect_items::FERAL_COMBAT_SKILL_ITEMS`).
+  - Berdun's Trusty Rifle (290333), gun, item level 48: 47 to 87, speed 3.00, +6 Strength, a
+    plain row. Its Item and ItemSparse rows are new in build 1.60.1.70938.
+  The reference's rules still refuse all six as unknown.
 - Rage of the Storm (280604), the Enhancement Shaman's two-hand mace, after the hotfix of the 10
   November 2026 weekly reset (`tests/forever_rage_of_the_storm_20261111.rs`). Hotfix push 113886
   (client 1.60.1.70888, wago.tools hotfixes, 10 November 2026) rewrites its ItemSparse row:
