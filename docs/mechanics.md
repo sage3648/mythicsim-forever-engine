@@ -258,6 +258,18 @@ the Go goldens and exporter uses. The departures:
   or parry of the target's swing rolls the talent's chance and finishes Stormstrike's cooldown, as
   the reference's handler does. Both let MythicSim's "Boss attacks you" sim an Enhancement Shaman in
   front of the boss (Redfall, 12 November 2026).
+- Water Shield's globes go to a target that tanks the shaman too (`water_shield`, Forever
+  preparation), from the client rows (1.60.1.70938): SpellAuraOptions 223904 of 408510 has
+  ProcTypeMask 221864, whose 0x8 bit is a melee hit taken, ProcChance 100, ProcCharges 3 and
+  ProcCategoryRecovery 3500, and SpellEffect 1072686 triggers 408511, whose SpellEffect 1072688
+  restores 2% of maximum mana. A landed swing spends a globe for that mana on the internal
+  cooldown the critical spells share; a miss, dodge or parry spends none. The gate refused a
+  shaman with the talent in front of the boss until 14 November 2026
+  (`tests/forever_shaman_shields_20261114.rs`).
+- The gate knows Lightning Shield's cast by every rank of the client's ladder (324, 325, 905, 945,
+  8134, 10431, 10432), not rank 7's id alone: a levelling shaman below 56 registers and runs the
+  rank it knows, and its rotation was refused (`rotation reaches spell 8134 without a known
+  behavior`, 14 November 2026).
 - The racial pass of Forever's development notes of 26 October 2026 (Forever preparation; the
   reference keeps the 16 October racials). Human Ruthless gives 1% crit (was 2%) and Human Spirit
   10% Spirit (was 5%). Dwarf Earth Fury is gone and Artisan's Precision gives 1% hit with

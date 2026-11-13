@@ -122,7 +122,8 @@ pub(crate) enum ShamanAura {
     RockbiterWeapon,
     /// The listener that casts Rockbiter Weapon Proc (patch 181).
     RockbiterThreat,
-    /// Water Shield's globes, which the shaman's critical spells spend.
+    /// Water Shield's globes, which the shaman's critical spells and a target's landed swings
+    /// spend.
     WaterShield,
     /// Lightning Shield's charges, which a target's landed swing spends under Forever's rules.
     LightningShield,
@@ -1689,6 +1690,17 @@ impl Agent for ShamanAgent {
                 .improved_stormstrike
                 .expect("Improved Stormstrike is bound")
                 .on_enemy_hit_taken(fight, result),
+            ShamanAura::WaterShield => {
+                let state = fight
+                    .agent
+                    .water_shield
+                    .clone()
+                    .expect("Water Shield is bound");
+                let ready = fight.agent.water_shield_ready;
+                if let Some(next) = state.on_hit_taken(fight, result, ready) {
+                    fight.agent.water_shield_ready = next;
+                }
+            }
             _ => {}
         }
     }

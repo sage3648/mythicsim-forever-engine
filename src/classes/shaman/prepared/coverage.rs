@@ -60,9 +60,10 @@ const EFFECTS: &[&str] = &[
 
 /// Go `applyRageOfTheFarseer` registers its cast (client 425336) without a class mask.
 const RAGE_OF_THE_FARSEER: i32 = 425336;
-/// Go `registerLightningShieldSpell` registers its cast (client 10432, the highest rank)
-/// without a class mask.
-const LIGHTNING_SHIELD: i32 = 10432;
+/// Go `registerLightningShieldSpell` registers its cast without a class mask: the rank the
+/// shaman knows, rank 7 (10432) from level 56, rank 6 (10431) from 48, rank 5 (8134) from 40
+/// and so on down the client's ladder.
+const LIGHTNING_SHIELD: [i32; 7] = [324, 325, 905, 945, 8134, 10431, 10432];
 /// Water Shield's cast (client 408510) is registered without a class mask.
 const WATER_SHIELD: i32 = 408510;
 /// Go `registerRockbiterThreat` registers Rockbiter Weapon Proc (20871) without a class mask.
@@ -77,7 +78,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
     if spell.class_spell.is_none() && id.spell_id == RAGE_OF_THE_FARSEER && id.tag == 0 {
         return Some("rage_of_the_farseer");
     }
-    if spell.class_spell.is_none() && id.spell_id == LIGHTNING_SHIELD && id.tag == 0 {
+    if spell.class_spell.is_none() && LIGHTNING_SHIELD.contains(&id.spell_id) && id.tag == 0 {
         return Some("lightning_shield");
     }
     if spell.class_spell.is_none() && id.spell_id == WATER_SHIELD && id.tag == 0 {

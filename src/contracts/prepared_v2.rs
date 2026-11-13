@@ -4192,7 +4192,7 @@ pub enum Effect {
     },
     /// Water Shield (client 1.60.1.70532): the cast puts up every globe; a critical hit of a
     /// trigger spell, damage or heal, spends one and restores a share of maximum mana, one globe
-    /// per internal cooldown.
+    /// per internal cooldown. A landed swing of a target that tanks the shaman spends one too.
     WaterShield {
         spell_id: i32,
         aura: String,
