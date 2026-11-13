@@ -700,7 +700,8 @@ fn hammer_of_the_righteous_cleaves() {
     // (Holy Strike no longer rolls it, the triggering swing keeps its charges). 968 since
     // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss. 967 since
     // judgements are ranged attacks (hotfixes of 11 November 2026) and melee procs skip them.
-    assert_eq!(casts, 967.0);
+    // 960 since Ironfoe's Fury of Forgewright rolls 3% under Forever's rules (13 November 2026).
+    assert_eq!(casts, 960.0);
     assert!(damage > 0.0);
 }
 
@@ -741,8 +742,8 @@ fn warrior_strikes_and_freezing_trap_run() {
         // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before). 531
         // since rage from damage taken reads the attacker's level and Shield Bash strikes with
         // the main hand (12 November 2026). 530 since weapon procs do not hear Shield Slam or
-        // Shield Bash (13 November 2026).
-        ("protection-warrior-shield-bash", 1672, 530.0),
+        // Shield Bash (13 November 2026). 529 since Ironfoe's Fury of Forgewright rolls 3%.
+        ("protection-warrior-shield-bash", 1672, 529.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
         // 77 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.

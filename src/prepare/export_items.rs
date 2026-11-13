@@ -2662,14 +2662,26 @@ fn ebon_hilt_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<
 fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
     // (set aura, trigger name, aura, aura spell, stats, proc mask)
-    let procs: [(&str, &str, &str, i32, Stats, ProcMask); 1] = [(
-        "Lightforge Armor 5P",
-        "Item - Crusader's Wrath Proc - Lightforge Armor",
-        "Crusader's Wrath",
-        27499,
-        Stats::from_pairs(&[(Stat::SpellDamage, 65.0), (Stat::HealingPower, 65.0)]),
-        ProcMask::MELEE_WHITE_HIT,
-    )];
+    let crusaders_wrath =
+        || Stats::from_pairs(&[(Stat::SpellDamage, 65.0), (Stat::HealingPower, 65.0)]);
+    let procs: [(&str, &str, &str, i32, Stats, ProcMask); 2] = [
+        (
+            "Lightforge Armor 5P",
+            "Item - Crusader's Wrath Proc - Lightforge Armor",
+            "Crusader's Wrath",
+            27499,
+            crusaders_wrath(),
+            ProcMask::MELEE_WHITE_HIT,
+        ),
+        (
+            "Soulforge Armor 4P",
+            super::forever_client_sets::SOULFORGE_CRUSADERS_WRATH,
+            "Crusader's Wrath",
+            27499,
+            crusaders_wrath(),
+            ProcMask::MELEE_WHITE_HIT,
+        ),
+    ];
     for (set_aura, name, aura_label, aura_id, stats, mask) in procs {
         let Some(set) = aura_named(env, set_aura) else {
             continue;
@@ -2710,10 +2722,15 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects.extend(set_stat_proc_effects(env, unrepresented));
     super::classic_export::crusader_effect(env, unrepresented, &mut effects);
     // common/classic/items_weapons.go Ironfoe (11684) and common/forever/items_trinkets.go Hand
-    // of Justice (11815): proc triggers on landed melee hits, Go literal chances, with the aura's
-    // cooldown, whose handlers grant two and one extra main hand attacks at once.
+    // of Justice (11815): proc triggers on landed melee hits, with the aura's cooldown, whose
+    // handlers grant two and one extra main hand attacks at once. Ironfoe's chance follows the
+    // rules (`classic_weapons::ironfoe_proc_chance`), Hand of Justice's is Go's literal.
     for (label, chance, attacks) in [
-        ("Fury of Forgewright", 0.06, 2),
+        (
+            "Fury of Forgewright",
+            super::classic_weapons::ironfoe_proc_chance(env.sim.rules),
+            2,
+        ),
         ("Hand of Justice", 0.01, 1),
     ] {
         if let Some(aura) = aura_named(env, label) {

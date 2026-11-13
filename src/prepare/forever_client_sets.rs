@@ -42,6 +42,22 @@
 //!   This effect is doubled in swamps." ItemSetSpell 8258, Defias Juggernaut (1324684), a proc
 //!   that casts 1324683. Not prepared: the rows state no chance (SpellAuraOptions 248691 has
 //!   ProcChance 100, the tooltip "a chance").
+//!
+//! Soulforge Armor (ItemSet 516: the Classic Tier 0.5 Paladin pieces 22086 to 22093, which the
+//! reference does not register; its Soulforge Armor is the later reissue's set), read the same
+//! way on 13 November 2026 beside the Wowhead Forever tooltip of Soulforge Breastplate (22089):
+//!
+//! - (2) "+8 All Resistances." ItemSetSpell 2317, Increased All Resist 08 (18679): a resistance
+//!   aura (22) of 8 on every school (mask 126).
+//! - (4) "Chance on melee attack to increase your damage and healing done by magical spells and
+//!   effects by up to 65 for 10 sec." ItemSetSpell 2318, Crusader's Wrath (27498), a proc on
+//!   melee autoattacks (ProcTypeMask 4) that casts 27499, 65 spell damage (13) and healing (135).
+//!   SpellAuraOptions 135342 has ProcChance 100 and no rate, as Lightforge Armor's (5) proc of the
+//!   same buff (450625) has; it runs at Lightforge's 3 per minute
+//!   (`forever_item_sets::crusaders_wrath`).
+//! - (6) "+40 Attack Power." ItemSetSpell 2316, Attack Power 40 (14049): melee (99) and ranged
+//!   (124) attack power of 40.
+//! - (8) "+200 Armor." ItemSetSpell 2319, Increased Armor 200 (14803): an armor aura (674) of 200.
 
 use super::character::constants::DEFENSE_RATING_PER_DEFENSE_LEVEL;
 use super::env::Environment;
@@ -82,6 +98,43 @@ fn defias_enforcers_garb_4(env: &mut Environment, aura: AuraId) {
     env.sim.attach_weapon_skill(aura, WeaponSkill::Swords, 1.0);
 }
 
+/// Soulforge Armor (2): +8 All Resistances.
+fn soulforge_armor_2(env: &mut Environment, aura: AuraId) {
+    let mut stats = Stats::default();
+    for stat in [
+        Stat::ArcaneResistance,
+        Stat::FireResistance,
+        Stat::FrostResistance,
+        Stat::NatureResistance,
+        Stat::ShadowResistance,
+    ] {
+        stats[stat] = 8.0;
+    }
+    env.sim.attach_stats_buff(aura, stats);
+}
+
+/// Soulforge Armor (4): Crusader's Wrath, as Lightforge Armor's (5).
+fn soulforge_armor_4(env: &mut Environment, aura: AuraId) {
+    super::forever_item_sets::crusaders_wrath(env, aura, SOULFORGE_CRUSADERS_WRATH, 27498);
+}
+
+/// The name of Soulforge Armor's Crusader's Wrath proc.
+pub(crate) const SOULFORGE_CRUSADERS_WRATH: &str = "Crusader's Wrath Proc - Soulforge Armor";
+
+/// Soulforge Armor (6): +40 Attack Power.
+fn soulforge_armor_6(env: &mut Environment, aura: AuraId) {
+    env.sim.attach_stats_buff(
+        aura,
+        Stats::from_pairs(&[(Stat::AttackPower, 40.0), (Stat::RangedAttackPower, 40.0)]),
+    );
+}
+
+/// Soulforge Armor (8): +200 Armor.
+fn soulforge_armor_8(env: &mut Environment, aura: AuraId) {
+    env.sim
+        .attach_stats_buff(aura, Stats::from_pairs(&[(Stat::Armor, 200.0)]));
+}
+
 /// The client's sets, with the bonuses applied and the piece counts that are not prepared yet.
 pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
     ClientItemSet {
@@ -113,6 +166,21 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
         },
         not_prepared: &[5],
     },
+    ClientItemSet {
+        set: ItemSet {
+            id: 516,
+            name: "Soulforge Armor",
+            alternative_name: "",
+            bonuses: &[
+                (2, soulforge_armor_2),
+                (4, soulforge_armor_4),
+                (6, soulforge_armor_6),
+                (8, soulforge_armor_8),
+            ],
+            required_profession: "",
+        },
+        not_prepared: &[],
+    },
 ];
 
 #[cfg(test)]
@@ -136,7 +204,7 @@ mod tests {
 
     #[test]
     fn every_bonus_of_a_client_set_is_applied_or_named_as_not_prepared() {
-        // ItemSetSpell thresholds of every set: 2, 3, 4 and 5 pieces.
+        // ItemSetSpell thresholds of every set: 2, 3, 4 and 5 pieces, unless the rows say others.
         let sets = client_sets();
         assert!(
             sets.len() >= CLIENT_ITEM_SETS.len() + 12,
@@ -146,7 +214,17 @@ mod tests {
             let mut counts: Vec<i32> = client.set.bonuses.iter().map(|(n, _)| *n).collect();
             counts.extend(client.not_prepared);
             counts.sort_unstable();
-            assert_eq!(counts, [2, 3, 4, 5], "{}", client.set.name);
+            // The generated rows where they hold the set (Soulforge Armor: 2, 4, 6 and 8).
+            let mut rows: Vec<i32> = super::super::forever_set_spells_generated::SET_BONUSES
+                .iter()
+                .filter(|(id, _, _)| *id == client.set.id)
+                .map(|(_, pieces, _)| *pieces)
+                .collect();
+            rows.dedup();
+            if rows.is_empty() {
+                rows = vec![2, 3, 4, 5];
+            }
+            assert_eq!(counts, rows, "{}", client.set.name);
         }
     }
 

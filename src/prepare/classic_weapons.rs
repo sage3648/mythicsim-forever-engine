@@ -184,10 +184,11 @@ fn dragons_call(env: &mut Environment) {
     );
 }
 
-/// Ironfoe: the equip Fury of Forgewright, a 6% chance on a landed melee hit, behind a 100 ms
+/// Ironfoe: the equip Fury of Forgewright, a chance on a landed melee hit, behind a 100 ms
 /// cooldown, to grant two extra main hand attacks.
 fn ironfoe(env: &mut Environment) {
     let unit = env.player;
+    let proc_chance = ironfoe_proc_chance(env.sim.rules);
     let aura = env.sim.make_proc_trigger_aura(
         unit,
         &ProcTrigger {
@@ -196,13 +197,25 @@ fn ironfoe(env: &mut Environment) {
             callback: CallbackMask::ON_SPELL_HIT_DEALT,
             proc_mask: ProcMask::MELEE,
             outcome: HitOutcome::LANDED,
-            proc_chance: 0.06,
+            proc_chance,
             icd: 100 * MILLISECOND,
             trigger_immediately: true,
             ..ProcTrigger::default()
         },
     );
     env.sim.register_item_proc(unit, 11684, aura);
+}
+
+/// Fury of Forgewright's chance. The reference rolls 6%. Under Forever's rules it is 3%: the
+/// client row's ProcChance 6 is the chance against Orcs, the tooltip's "Attacks against Orcs are 2
+/// times as likely to activate this effect", the same shape as Hand of Justice, whose row says 3
+/// and whose logs show a third of that.
+pub(crate) fn ironfoe_proc_chance(rules: super::sim::Rules) -> f64 {
+    if rules == super::sim::Rules::Forever {
+        0.03
+    } else {
+        0.06
+    }
 }
 
 /// Runeblade of Baron Rivendare: Unholy Aura, 8% movement speed, and 60 health every 5 sec.
@@ -386,6 +399,13 @@ mod tests {
             aura.callback_names(),
             vec!["on_reset", "on_spell_hit_dealt"]
         );
+    }
+
+    #[test]
+    fn ironfoe_rolls_three_percent_under_forevers_rules_and_six_in_the_reference() {
+        use crate::prepare::sim::Rules;
+        assert_eq!(ironfoe_proc_chance(Rules::Forever), 0.03);
+        assert_eq!(ironfoe_proc_chance(Rules::GoReference), 0.06);
     }
 
     #[test]
