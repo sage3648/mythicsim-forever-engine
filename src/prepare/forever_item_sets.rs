@@ -429,6 +429,24 @@ set_stats!(lightforge_armor_3, set_spell_power(18.0));
 
 /// Crusader's Wrath, moved down from 6 pieces and cut from 95 to 65 spell power.
 fn lightforge_armor_5(env: &mut Environment, aura: AuraId) {
+    crusaders_wrath(
+        env,
+        aura,
+        "Item - Crusader's Wrath Proc - Lightforge Armor",
+        450625,
+    );
+}
+
+/// Crusader's Wrath (27499), 65 spell damage and healing for 10 sec, from a proc on landed
+/// melee autoattacks at 3 per minute. Lightforge Armor (5) and Soulforge Armor (4) share it; the
+/// client rows of both procs (450625, 27498) have ProcChance 100 and no rate, and the 3 per
+/// minute is the one Lightforge's has always run at.
+pub(crate) fn crusaders_wrath(
+    env: &mut Environment,
+    aura: AuraId,
+    trigger_name: &str,
+    trigger_spell: i32,
+) {
     let unit = env.player;
     // Go NewLegacyPPMManager, which an item swap rebuilds for the weapons in the hands.
     let dpm = Rc::new(
@@ -448,8 +466,8 @@ fn lightforge_armor_5(env: &mut Environment, aura: AuraId) {
             outcome: HitOutcome::LANDED,
             dpm: Some(dpm),
             ..trigger(
-                "Item - Crusader's Wrath Proc - Lightforge Armor",
-                450625,
+                trigger_name,
+                trigger_spell,
                 CallbackMask::ON_SPELL_HIT_DEALT,
                 ProcMask::MELEE_WHITE_HIT,
             )
