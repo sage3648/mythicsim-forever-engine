@@ -35,10 +35,10 @@
 //!   (19 spell damage and healing for 30 sec, on the use spell's own cooldowns), which the shared
 //!   constructor reads (`ON_USE_STAT_ITEMS`).
 //!
-//! Two more items carry an equip effect that acts only when the wearer is struck, which nothing
-//! here applies yet (`STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate (274651) and Girdle of Extracted
-//! Answers (276742). Each is a plain item on a character the effect cannot reach, and refuses a
-//! character it can.
+//! Two more items carry an equip effect that acts only when the wearer is struck or blocks, which
+//! `forever_tank_procs` models with the Krol'dok Battlegear bonuses that act the same way: Zealot
+//! Plate (274651) and Girdle of Extracted Answers (276742). Each is a plain item on a character the
+//! effect cannot reach.
 //!
 //! Spiderchitin Wrap (280016) raises the Feral Combat skill a Druid's forms attack with
 //! (`FERAL_COMBAT_SKILL_ITEMS`).
@@ -61,7 +61,6 @@ use super::shared_items::{
 };
 use super::sim::{Cooldown, MILLISECOND};
 use super::spelldata::{must_find, Spell};
-use super::Refusal;
 
 /// A use that deals its spell row's damage to the target, on the item's own cooldowns.
 pub(crate) struct OnUseDamageItem {
@@ -406,85 +405,4 @@ pub(crate) const ON_USE_STAT_ITEMS: &[i32] = &[274615];
 /// Whether the item is one of the stat on-use items.
 pub(crate) fn on_use_stat_item(item: i32) -> bool {
     ON_USE_STAT_ITEMS.contains(&item)
-}
-
-/// Who an equip effect that acts when the wearer is struck can reach.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum StruckEffectReach {
-    /// A character a target attacks who has a mana bar: the effect restores mana.
-    TankWithMana,
-    /// A character a target attacks who holds a shield: the effect acts on a block.
-    TankWithShield,
-}
-
-/// An equip effect that acts only when the wearer is struck and that nothing here applies yet.
-pub(crate) struct StruckEffectNotPrepared {
-    pub(crate) item_id: i32,
-    /// The effect, as the refusal names it.
-    pub(crate) effect: &'static str,
-    pub(crate) reach: StruckEffectReach,
-}
-
-/// The items whose equip effect acts only when the wearer is struck. A character the effect
-/// cannot reach wears the item as a plain one, exactly; one it can reach is refused, since the
-/// effect would change that fight.
-///
-/// Zealot Plate (274651): "Equip: When struck in combat, has a chance to energize you for 66 to
-/// 110 mana. This effect cannot occur more than once every 15 sec. (15s cooldown)" (Wowhead's
-/// Forever tooltip, 12 November 2026). ItemEffect 233963 is an equip (trigger type 1) of Proc Self
-/// Energize 88 (1294668): SpellAuraOptions 246043 has ProcChance 100, ProcTypeMask 40 (melee
-/// swings and melee abilities taken) and a proc recovery of 15000 ms, and SpellEffect 1316157
-/// casts Zealotry (1294666), whose SpellEffect 1316155 is an Energize (30) of 88 with a variance
-/// of 0.5 (66 to 110) on mana. A character no target attacks is never struck, and one with no
-/// mana bar gains nothing.
-///
-/// Girdle of Extracted Answers (276742): "Equip: Deals 20 to 30 Physical damage every time you
-/// block." (Wowhead's Forever tooltip, 12 November 2026). ItemEffect 236443 is an equip of Shield
-/// Spike (1308777): SpellEffect 1337499 is a damage on proc aura (43) of 25 with a variance of
-/// 0.4 (20 to 30), SpellAuraOptions 247236 has ProcChance 100 and ProcTypeMask 40, and
-/// SpellCooldowns 100881 a recovery of 5000 ms. Only a character a target attacks who holds a
-/// shield blocks.
-pub(crate) const STRUCK_EFFECTS_NOT_PREPARED: [StruckEffectNotPrepared; 2] = [
-    StruckEffectNotPrepared {
-        item_id: 274651,
-        effect: "mana when struck",
-        reach: StruckEffectReach::TankWithMana,
-    },
-    StruckEffectNotPrepared {
-        item_id: 276742,
-        effect: "damage on block",
-        reach: StruckEffectReach::TankWithShield,
-    },
-];
-
-/// Refuses a worn item of [`STRUCK_EFFECTS_NOT_PREPARED`] on a character its effect can reach.
-/// `holds_shield` is whether any worn or swapped in item is a shield.
-pub(crate) fn struck_effect_not_prepared(
-    env: &Environment,
-    item: i32,
-    holds_shield: bool,
-) -> Result<(), Refusal> {
-    let Some(struck) = STRUCK_EFFECTS_NOT_PREPARED
-        .iter()
-        .find(|struck| struck.item_id == item)
-    else {
-        return Ok(());
-    };
-    if !env.tanking() {
-        return Ok(());
-    }
-    let reached = match struck.reach {
-        StruckEffectReach::TankWithMana => env.sim.unit(env.player).mana_bar.enabled,
-        StruckEffectReach::TankWithShield => holds_shield,
-    };
-    if !reached {
-        return Ok(());
-    }
-    Err(Refusal::new(
-        "item_effect",
-        format!(
-            "item {item} has an effect not prepared yet ({} on a character the target attacks)",
-            struck.effect
-        ),
-    ))
 }

@@ -1739,6 +1739,7 @@ impl<A: Agent> Fight<A> {
             || (!state.casts
                 && ((state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
                     || (state.require_damage && result.damage == 0.0)))
+            || (state.taken_outcome != 0 && result.outcome & state.taken_outcome == 0)
         {
             return;
         }
@@ -1963,8 +1964,14 @@ impl<A: Agent> Fight<A> {
                 self.armor_debuff_proc_handler(proc, result.target)
             }
             AuraBehavior::SpellDataStatProc(proc) => {
-                let aura = self.spell_stat_procs[proc].aura;
+                let (aura, add_stack) = (
+                    self.spell_stat_procs[proc].aura,
+                    self.spell_stat_procs[proc].add_stack,
+                );
                 self.activate_aura(aura);
+                if add_stack {
+                    self.add_stack(aura);
+                }
             }
             AuraBehavior::DragonbreathChili => {
                 let spell = self

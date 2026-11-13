@@ -8,12 +8,14 @@
 //!   Its bonuses of plain stats are applied ((2) +10 Fire Resistance, (3) +15 Stamina, (4)
 //!   Increased Swords +1); the (5) crit proc states no chance and refuses by name.
 //! - Krol'dok Battlegear's (2) +100 Armor and (3) Increased Defense +5 are applied; its (4) heal
-//!   on block and (5) Stamina when taking damage still refuse by name.
+//!   on block and (5) Stamina when taking damage are applied since 13 November 2026
+//!   (`tests/forever_client_items_tank_procs_20261113.rs`).
 //! - Heart of the Primeval (274615), a trinket: +18 Frost Resistance and a use of 19 spell damage
 //!   and healing for 30 sec on a 6 minute cooldown.
 //! - Zealot Plate (274651) and Girdle of Extracted Answers (276742), plate whose equip effect acts
 //!   only when the wearer is struck (mana, damage on block). A character the effect cannot reach
-//!   wears each as a plain item; one it can reach is refused.
+//!   wears each as a plain item; the effects are applied since 13 November 2026 to one it can
+//!   reach (`tests/forever_client_items_tank_procs_20261113.rs`).
 //!
 //! No refused request was at hand, so the tests dress the characters of `fixtures/forever-gaps`.
 
@@ -189,21 +191,19 @@ fn three_kroldok_pieces_add_five_defense() {
     );
 }
 
-/// The heal on block and the Stamina when taking damage are not prepared: the fourth piece
-/// refuses and names the bonus.
+/// The heal on block and the Stamina when taking damage are applied since 13 November 2026: four
+/// and five pieces prepare and run on a character no target attacks, whose listeners are inert.
 #[test]
-fn the_fourth_kroldok_piece_is_refused_by_name() {
+fn the_fourth_and_fifth_kroldok_pieces_are_prepared() {
     let four = warrior(&[
         (HEAD, KROLDOK_HELMET),
         (SHOULDER, KROLDOK_PAULDRONS),
         (CHEST, KROLDOK_CHEST),
         (HANDS, KROLDOK_GAUNTLETS),
     ]);
-    let reason = refusal(&four, Rules::Forever);
-    assert!(
-        reason.contains("set bonus Krol'dok Battlegear 4P is not prepared yet (item 287012)"),
-        "{reason}"
-    );
+    let (prepared, _) = run(&four);
+    assert!(has_aura(&prepared, "Krol'dok Battlegear 4P"));
+    assert!(!has_aura(&prepared, "Krol'dok Battlegear 5P"));
     let five = warrior(&[
         (HEAD, KROLDOK_HELMET),
         (SHOULDER, KROLDOK_PAULDRONS),
@@ -211,8 +211,8 @@ fn the_fourth_kroldok_piece_is_refused_by_name() {
         (HANDS, KROLDOK_GAUNTLETS),
         (LEGS, KROLDOK_LEGPLATES),
     ]);
-    let reason = refusal(&five, Rules::Forever);
-    assert!(reason.contains("Krol'dok Battlegear 4P"), "{reason}");
+    let (prepared, _) = run(&five);
+    assert!(has_aura(&prepared, "Krol'dok Battlegear 5P"));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -440,23 +440,26 @@ fn the_struck_effect_items_are_plain_on_a_character_no_target_attacks() {
     assert!(added(&girdle, &none, "Stamina") >= 15.0);
 }
 
-/// The Protection Paladin tanks the target, has mana and holds a shield, so both effects would
-/// act: each item refuses and names its effect.
+/// The Protection Paladin tanks the target, has mana and holds a shield, so both effects act:
+/// each item prepares and runs, with its effect described
+/// (`tests/forever_client_items_tank_procs_20261113.rs` checks what each does).
 #[test]
-fn the_struck_effect_items_refuse_a_character_they_reach() {
-    let reason = refusal(&paladin(&[(CHEST, ZEALOT_PLATE)]), Rules::Forever);
-    assert!(
-        reason.contains("item 274651 has an effect not prepared yet (mana when struck"),
-        "{reason}"
-    );
-    let reason = refusal(
-        &paladin(&[(WAIST, GIRDLE_OF_EXTRACTED_ANSWERS)]),
-        Rules::Forever,
-    );
-    assert!(
-        reason.contains("item 276742 has an effect not prepared yet (damage on block"),
-        "{reason}"
-    );
+fn the_struck_effect_items_prepare_on_a_character_they_reach() {
+    let (prepared, _) = run(&paladin(&[(CHEST, ZEALOT_PLATE)]));
+    assert!(prepared["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|effect| effect["kind"] == "mana_proc" && effect["trigger_aura"] == "Zealot Plate"));
+    let (prepared, _) = run(&paladin(&[(WAIST, GIRDLE_OF_EXTRACTED_ANSWERS)]));
+    assert!(prepared["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|effect| {
+            effect["kind"] == "spell_data_damage_proc"
+                && effect["trigger_aura"] == "Girdle of Extracted Answers"
+        }));
 }
 
 /// The same paladin when no target attacks them is never struck: both items are plain. So is the

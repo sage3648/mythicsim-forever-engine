@@ -82,6 +82,9 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
             shared_items::apply(env, ProcKind::Damage, &cfg);
             return Ok(true);
         }
+        if super::forever_tank_procs::apply_item(env, item) {
+            return Ok(true);
+        }
         if let Some(amount) = super::forever_effect_items::feral_combat_skill(item) {
             let unit = env.player;
             env.sim.add_feral_combat_skill(unit, amount);

@@ -6,8 +6,8 @@
 //! - Krol'dok Battlegear, the five plate pieces of a Forever set the reference does not register:
 //!   Chest 275005, Helmet 275006, Gauntlets 287012, Legplates 287013, Pauldrons 287014. A single
 //!   piece is a plain item. Of its bonuses the (2) +100 Armor and (3) Increased Defense +5 are
-//!   applied since 12 November 2026; the (4) heal on block and (5) Stamina when taking damage
-//!   are not, so an equipment that reaches one of those is refused and names the bonus.
+//!   applied since 12 November 2026, and the (4) heal on block and (5) Stamina when taking damage
+//!   since 13 November 2026 (`tests/forever_client_items_tank_procs_20261113.rs`).
 
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepare_json_with, simulate_prepared,
@@ -115,10 +115,11 @@ fn one_kroldok_piece_is_a_plain_item() {
 }
 
 /// Since 12 November 2026 the set's (2) +100 Armor and (3) Increased Defense +5 are applied
-/// (`tests/forever_client_items_20261112.rs`); the (4) heal on block and the (5) Stamina when
-/// taking damage still refuse by name.
+/// (`tests/forever_client_items_20261112.rs`), and since 13 November 2026 the (4) heal on block
+/// and the (5) Stamina when taking damage (`tests/forever_client_items_tank_procs_20261113.rs`):
+/// the DPS Warrior, whom no target attacks, wears all five pieces and refuses none.
 #[test]
-fn a_kroldok_set_bonus_that_is_not_prepared_is_refused_by_name() {
+fn every_kroldok_set_bonus_is_prepared() {
     let two = warrior(&[(CHEST, KROLDOK_CHEST), (LEGS, KROLDOK_LEGPLATES)]);
     run(&two);
     assert!(prepare(&two).to_string().contains("Krol'dok Battlegear 2P"));
@@ -129,11 +130,14 @@ fn a_kroldok_set_bonus_that_is_not_prepared_is_refused_by_name() {
         (HANDS, KROLDOK_GAUNTLETS),
         (LEGS, KROLDOK_LEGPLATES),
     ]);
-    let reason = refusal(&five, Rules::Forever);
-    assert!(
-        reason.contains("set bonus Krol'dok Battlegear 4P is not prepared yet (item 287012)"),
-        "{reason}"
-    );
+    run(&five);
+    let auras = prepare(&five).to_string();
+    for pieces in ["2P", "3P", "4P", "5P"] {
+        assert!(
+            auras.contains(&format!("Krol'dok Battlegear {pieces}")),
+            "{pieces}"
+        );
+    }
 }
 
 #[test]

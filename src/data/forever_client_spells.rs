@@ -32,6 +32,14 @@
 //! field of theirs is the client's, read from wago.tools `product=wowf` on 13 November 2026 (the
 //! tables of build 1.60.1.70888).
 //!
+//! Nor are the rows of Zealot Plate's mana when struck and Girdle of Extracted Answers' damage on a
+//! block (`src/prepare/forever_tank_procs.rs`): Proc Self Energize 88 (1294668), Zealotry
+//! (1294666) and Shield Spike (1308777). Every field of theirs is the client's, read from
+//! wago.tools `product=wowf` on 13 November 2026 (the tables of build 1.60.1.70888): SpellEffect,
+//! SpellAuraOptions, SpellMisc, SpellCooldowns, SpellCategories and SpellLevels, beside Wowhead's
+//! Forever tooltips of the same day. (Krol'dok Battlegear's four and five piece rows, 1324296 to
+//! 1324309, are in the pinned store.)
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -117,6 +125,9 @@ pub(crate) fn rows() -> Vec<Spell> {
         blood_sacrifice_trigger(),
         blood_sacrifice(),
         smite(),
+        zealot_plate_trigger(),
+        zealot_plate_energize(),
+        shield_spike(),
     ]
 }
 
@@ -599,6 +610,124 @@ fn blood_sacrifice() -> Spell {
             amplitude: 1.0,
             chain_amp: 1.0,
             target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// `ATTR_EX_1` bit 28, which Shield Spike's row carries (SpellMisc `Attributes_1` 268435456).
+const ATTR_1_BIT_28: u32 = 0x1000_0000;
+
+/// Zealot Plate's equip spell (ItemEffect 233963, trigger type 1, on equip): "When struck in
+/// combat, has a chance to energize you for 66 to 110 mana. This effect cannot occur more than
+/// once every 15 sec. (15s cooldown)" A passive aura on the wearer that casts Zealotry.
+fn zealot_plate_trigger() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842058: Attributes_0 64 (a passive) and Attributes_15 8192.
+    attr[0] = 64;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_668,
+        name: "Proc Self Energize 88".to_string(),
+        // SpellMisc 842058: SchoolMask 1.
+        school: 1,
+        attr,
+        // SpellAuraOptions 246043: ProcChance 100, ProcCategoryRecovery 15000 (the tooltip's 15s
+        // cooldown) and ProcTypeMask 40 (melee swings and melee abilities taken). The tooltip's
+        // "a chance" is read literally as the rate (the owner's decision of 13 November 2026): a
+        // 100 is every qualifying hit, gated by the 15 sec recovery.
+        proc_chance: 100,
+        proc_flags: [40, 0],
+        icd_ms: 15_000,
+        // SpellEffect 1316157: Apply Aura (6) of Proc Trigger Spell (42) on the caster, base
+        // points 1, triggering 1294666.
+        ref_ids: vec![1_294_666],
+        effects: vec![Effect {
+            id: 1_316_157,
+            spell_id: 1_294_668,
+            index: 0,
+            effect_type: 6,
+            aura: 42,
+            base_points: 1.0,
+            pvp_mult: 1.0,
+            trigger_id: 1_294_666,
+            chain_amp: 1.0,
+            target: [1, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// The spell Zealot Plate's aura casts, Zealotry: an Energize (30) of 88 with a variance of 0.5
+/// (66 to 110) on the wearer, into mana (Misc 0).
+fn zealot_plate_energize() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842056: Attributes_0 65536 and Attributes_15 8192.
+    attr[0] = 65_536;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_666,
+        name: "Zealotry".to_string(),
+        // SpellMisc 842056: SchoolMask 2, Holy.
+        school: 2,
+        attr,
+        effects: vec![Effect {
+            id: 1_316_155,
+            spell_id: 1_294_666,
+            index: 0,
+            effect_type: 30,
+            base_points: 88.0,
+            variance: 0.5,
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [1, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// Girdle of Extracted Answers' equip spell (ItemEffect 236443, trigger type 1, on equip): "Deals
+/// 20 to 30 Physical damage every time you block." The same shape as the pinned Mithril Shield
+/// Spike (9782): a Proc Trigger Damage (43) aura that deals its own amount, to the attacker, when
+/// a melee hit the wearer takes is blocked.
+fn shield_spike() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 855494: Attributes_0 64 (a passive), Attributes_1 268435456 and Attributes_15 8192.
+    attr[0] = 64;
+    attr[1] = ATTR_1_BIT_28;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_308_777,
+        name: "Shield Spike".to_string(),
+        // SpellMisc 855494: SchoolMask 1, Physical.
+        school: 1,
+        attr,
+        // SpellCooldowns 100881: RecoveryTime 5000, the tooltip's "5 sec cooldown" (ItemEffect
+        // 236443 states none of its own: -1). It is the spell's own cooldown, not a proc recovery
+        // (SpellAuraOptions 247236 has no ProcCategoryRecovery); `forever_tank_procs` reads it as
+        // the proc's cooldown.
+        cooldown_ms: 5000,
+        // SpellAuraOptions 247236: ProcChance 100 and ProcTypeMask 40. The tooltip's "every time
+        // you block" names the outcome the mask has no bit for, which `ProcHint` carries.
+        proc_chance: 100,
+        proc_flags: [40, 0],
+        proc_hint: 32,
+        // SpellEffect 1337499: Apply Aura (6) of Proc Trigger Damage (43) of 25 with a variance of
+        // 0.4 (20 to 30) on the caster, with no coefficient.
+        effects: vec![Effect {
+            id: 1_337_499,
+            spell_id: 1_308_777,
+            index: 0,
+            effect_type: 6,
+            aura: 43,
+            base_points: 25.0,
+            variance: f64::from(0.4_f32),
+            pvp_mult: 1.0,
+            chain_amp: 1.0,
+            target: [1, 0],
             ..Effect::default()
         }],
         ..Spell::default()

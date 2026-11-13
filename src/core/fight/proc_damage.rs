@@ -15,6 +15,9 @@ pub(crate) enum HitTable {
     Magic { can_crit: bool },
     /// A melee special or ranged attack table, which keeps the school's partial resist.
     Physical(PhysicalOutcome),
+    /// No table: a hit that always lands and cannot crit, as the damage of a Proc Trigger Damage
+    /// aura (Shield Spike) is dealt.
+    AlwaysHit,
 }
 
 impl HitTable {
@@ -22,6 +25,8 @@ impl HitTable {
     pub(crate) fn of(name: Option<&str>, can_crit: bool) -> Result<Self, String> {
         match name {
             None => Ok(Self::Magic { can_crit }),
+            Some("always_hit") if !can_crit => Ok(Self::AlwaysHit),
+            Some("always_hit") => Err("a hit that always lands cannot crit".to_string()),
             Some("melee_special_hit_and_crit") => {
                 Ok(Self::Physical(PhysicalOutcome::MeleeSpecialHitAndCrit {
                     count: true,
@@ -211,6 +216,9 @@ impl<A: Agent> Fight<A> {
             HitTable::Magic { can_crit: true } => self.calc_damage(spell, target, base),
             HitTable::Magic { can_crit: false } => self.calc_damage_hit_only(spell, target, base),
             HitTable::Physical(outcome) => self.calc_physical_damage(spell, target, base, outcome),
+            HitTable::AlwaysHit => {
+                self.calc_damage_with(spell, target, base, super::Outcome::AlwaysHit)
+            }
         }
     }
 

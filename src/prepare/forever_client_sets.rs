@@ -7,7 +7,8 @@
 //! 2026 (the tables of build 1.60.1.70888), beside the line the Wowhead Forever tooltips of the
 //! pieces give it on the same day. A bonus whose row is a plain stat is applied to the status
 //! aura its piece count registers, as the reference's sets are (`forever_item_sets`). A bonus
-//! that is a proc stays unprepared, and an equipment that reaches it is refused by name
+//! that is a proc is prepared by the module that models it where one does (`forever_tank_procs`),
+//! and stays unprepared otherwise: an equipment that reaches it is refused by name
 //! (`item_sets::client_set_bonuses`).
 //!
 //! Krol'dok Battlegear (ItemSet 2135: Helmet 275006, Pauldrons 287014, Chest 275005, Legplates
@@ -18,12 +19,14 @@
 //! - (3) "Increased Defense +5." ItemSetSpell 8248, Increased Defense (1324288). SpellEffect
 //!   1361065: a skill aura (30) of 5 on Defense (skill 95).
 //! - (4) "Chance on block to heal for 14 to 23. Healing is doubled in Strongholds and Cities."
-//!   ItemSetSpell 8249, Krol'dok Resolve (1324298), a proc that casts 1324296. Not prepared: the
-//!   rows state no chance for the tooltip's "chance on block" (SpellAuraOptions 248630 has
-//!   ProcChance 100).
+//!   ItemSetSpell 8249, Krol'dok Resolve (1324298), a proc that casts 1324296. SpellAuraOptions
+//!   248630 has ProcChance 100 beside the tooltip's "chance on block", which is read literally as
+//!   the rate: every block heals (`forever_tank_procs`).
 //! - (5) "Taking damage has a high chance to increase your Stamina by 1 for 30 sec, stacking up
 //!   to 20 times. (3s cooldown)" ItemSetSpell 8250, Ogre Dominance (1324309), a proc that casts
-//!   1324308. Not prepared: the "high chance" is not a number the rows state plainly.
+//!   1324308. SpellAuraOptions 248632 has ProcChance 100 and a proc recovery of 3000 ms beside the
+//!   tooltip's "high chance", which is read literally as the rate: every landed hit taken adds a
+//!   stack, at most once in 3 sec (`forever_tank_procs`).
 //!
 //! Defias Enforcer's Garb (ItemSet 2136: Mask 287019, Shoulderpads 276741, Chest 287020,
 //! Legguards 276746, Prowlers 287021):
@@ -86,10 +89,15 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
             id: 2135,
             name: "Krol'dok Battlegear",
             alternative_name: "",
-            bonuses: &[(2, kroldok_battlegear_2), (3, kroldok_battlegear_3)],
+            bonuses: &[
+                (2, kroldok_battlegear_2),
+                (3, kroldok_battlegear_3),
+                (4, super::forever_tank_procs::kroldok_battlegear_4),
+                (5, super::forever_tank_procs::kroldok_battlegear_5),
+            ],
             required_profession: "",
         },
-        not_prepared: &[4, 5],
+        not_prepared: &[],
     },
     ClientItemSet {
         set: ItemSet {

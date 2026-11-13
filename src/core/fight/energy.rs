@@ -55,9 +55,72 @@ pub(crate) struct EnergizeProc {
     pub(crate) energy: f64,
     pub(crate) metrics: usize,
     pub(crate) delay: i64,
+    /// What a "when struck" proc adds.
+    pub(crate) struck: StruckEnergize,
+}
+
+/// A "when struck" energize proc, as Zealot Plate's: it hears the target's melee swings at the
+/// player, and its handler restores a roll of the amount at once.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct StruckEnergize {
+    /// Whether the proc hears the target's swings instead of the player's own hits.
+    pub(crate) struck: bool,
+    /// The variance of the amount's roll.
+    pub(crate) variance: f64,
+    pub(crate) chance: f64,
+    pub(crate) landed_only: bool,
+    pub(crate) require_damage: bool,
+}
+
+impl Default for StruckEnergize {
+    fn default() -> Self {
+        Self {
+            struck: false,
+            variance: 0.0,
+            chance: 1.0,
+            landed_only: false,
+            require_damage: false,
+        }
+    }
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go `AttachProcTriggerCallback` for a struck mana proc: the swing's outcome and damage, the
+    /// trigger's cooldown and chance, then the mana of a roll at once, for a wearer with a mana
+    /// bar.
+    pub(crate) fn struck_energize_callback(
+        &mut self,
+        aura: super::AuraRef,
+        index: usize,
+        result: &super::SpellResult,
+    ) {
+        let proc = &self.energize_procs[index];
+        let state = proc.struck;
+        if (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+            || (state.require_damage && result.damage == 0.0)
+        {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if state.chance != 1.0 && self.random_for_aura(aura) > state.chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let proc = &self.energize_procs[index];
+        let (resource, average, metrics) = (proc.resource, proc.energy, proc.metrics);
+        if resource == super::ResourceKind::Mana && self.has_mana_bar() {
+            let amount = self.effect_roll(average, state.variance);
+            self.add_mana(amount, metrics);
+        }
+    }
+
     /// Go `AttachProcTriggerCallback` for an energize proc: a landed hit from a spell the proc
     /// manager hears rolls its chance, then the handler waits its delay.
     pub(crate) fn energize_proc_callback(
