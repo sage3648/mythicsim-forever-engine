@@ -701,7 +701,8 @@ fn hammer_of_the_righteous_cleaves() {
     // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss. 967 since
     // judgements are ranged attacks (hotfixes of 11 November 2026) and melee procs skip them.
     // 960 since Ironfoe's Fury of Forgewright rolls 3% under Forever's rules (13 November 2026).
-    assert_eq!(casts, 960.0);
+    // 969 since Redoubt rolls on every melee attack taken (14 November 2026).
+    assert_eq!(casts, 969.0);
     assert!(damage > 0.0);
 }
 

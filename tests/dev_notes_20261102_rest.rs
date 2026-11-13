@@ -78,7 +78,9 @@ fn vengeance_stacks_five_times() {
 }
 
 /// Two-Handed Weapon Specialization raises Holy damage as well as Physical, 6% at 3 points, but
-/// not a Holy heal. The reference raises neither Holy spell.
+/// not a Holy heal. The reference raises neither Holy spell. Exorcism and Hammer of Wrath are
+/// left out since 14 November 2026: combat logs read them at their untalented damage
+/// (`tests/forever_rules_20261114.rs`).
 #[test]
 fn two_handed_specialization_raises_holy_damage() {
     let forever = prepared(&retribution(RET_70707), Rules::Forever);
@@ -89,8 +91,6 @@ fn two_handed_specialization_raises_holy_damage() {
     for spell in [
         "holy_strike",
         "consecration",
-        "exorcism",
-        "hammer_of_wrath",
         "judgement_of_command",
         "seal_of_command_proc",
         "seal_of_righteousness_proc",
@@ -110,6 +110,17 @@ fn two_handed_specialization_raises_holy_damage() {
             "{spell} under the reference: {:?}",
             damage_multipliers(&reference, spell)
         );
+    }
+    for spell in ["exorcism", "hammer_of_wrath"] {
+        for prepared in [&forever, &reference] {
+            assert!(
+                damage_multipliers(prepared, spell)
+                    .iter()
+                    .all(|multiplier| *multiplier == 1.0),
+                "{spell}: {:?}",
+                damage_multipliers(prepared, spell)
+            );
+        }
     }
     // Seal of Light's proc heals, so the Holy damage bonus leaves it alone.
     for heal in ["seal_of_light_proc", "holy_light", "flash_of_light"] {
