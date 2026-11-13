@@ -59,10 +59,20 @@ pub(crate) fn apply_agentless_idol_effect(sim: &mut Sim, unit: UnitId, item: i32
         }
         23198 => {
             // Idol of Brutality: reduces the rage cost of Maul, Swipe and Primal Bite by 2.
+            // Under Forever's rules Primal Bite keeps its cost: the idol's row (28855, effect
+            // 705014, wago.tools wowf of 14 November 2026) is a flat cost modifier of -20 tenths
+            // on class mask word 0 bit 2048, which Maul and Swipe carry and Primal Bite (word 1
+            // bit 64) does not, and the tooltip reads "Reduces the Rage cost of Maul and Swipe
+            // by 2."
+            let class_mask = if sim.rules == Rules::Forever {
+                masks::MAUL | masks::SWIPE
+            } else {
+                masks::MAUL | masks::SWIPE | masks::PRIMAL_BITE
+            };
             sim.add_static_mod(
                 unit,
                 SpellModConfig {
-                    class_mask: masks::MAUL | masks::SWIPE | masks::PRIMAL_BITE,
+                    class_mask,
                     kind: SpellModType::PowerCostFlat,
                     int_value: -2,
                     ..SpellModConfig::default()
@@ -155,6 +165,17 @@ fn apply_shapeshift_cost_item(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
     true
 }
 
+/// Enraged Idol (272428). The Go reference has its row and no effect for it, so only Forever's
+/// rules register one (`Druid::apply_idol_effect`).
+pub(crate) const ENRAGED_IDOL: i32 = 272428;
+
+/// Whether the druid package registers an effect for the item on this character under Forever's
+/// rules alone, beyond the flat shapeshift cost items. The Enraged Idol's effect reads the
+/// druid's Enrage, so only a Druid has one.
+pub(crate) fn forever_item(sim: &Sim, unit: UnitId, item: i32) -> bool {
+    item == ENRAGED_IDOL && sim.character(unit).class == "ClassDruid"
+}
+
 impl Druid {
     /// The `core.NewItemEffect` registrations of Go's druid package: the idols above and Wolfshead
     /// Helm (8345), which reads the druid agent. Answers whether the class registers an effect for
@@ -192,6 +213,35 @@ impl Druid {
                             sim.set_state(energy, sim.state(energy) - energy_gain);
                             let rage = expire.wolfshead_enrage_rage;
                             sim.set_state(rage, sim.state(rage) - 5.0);
+                        })),
+                        ..AuraConfig::default()
+                    },
+                );
+                sim.make_permanent(aura);
+                true
+            }
+            ENRAGED_IDOL if sim.rules == Rules::Forever => {
+                // Enraged Idol: "Your Enrage ability generates an additional 10 Rage over its
+                // duration." Increased Enrage Rage (1291060, effect 1310234, wago.tools wowf of
+                // 14 November 2026) is a flat modifier of +10 on effect 1 of Enrage's class mask
+                // (word 0 bit 524288), the periodic Rage of 20 tenths a second: each of the ten
+                // ticks gives 3 Rage in place of 2. The reference registers nothing for it.
+                let row = crate::prepare::spelldata::store::must_find(1291060);
+                let tick_rage = row.effect_n(1).base_value() / 10.0;
+                let gain = Rc::clone(&self.st);
+                let expire = Rc::clone(&self.st);
+                let aura = sim.register_aura(
+                    unit,
+                    AuraConfig {
+                        label: "Enraged Idol".to_string(),
+                        action_id: Some(ActionId::spell(1291060)),
+                        on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
+                            let rage = gain.enraged_idol_tick_rage;
+                            sim.set_state(rage, sim.state(rage) + tick_rage);
+                        })),
+                        on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
+                            let rage = expire.enraged_idol_tick_rage;
+                            sim.set_state(rage, sim.state(rage) - tick_rage);
                         })),
                         ..AuraConfig::default()
                     },

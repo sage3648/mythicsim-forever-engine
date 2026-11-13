@@ -759,9 +759,12 @@ impl PaladinAgent {
                     });
                 }
                 Effect::Redoubt {
-                    aura, proc_chance, ..
+                    aura,
+                    proc_chance,
+                    any_attack,
+                    ..
                 } => {
-                    let bound = Redoubt::bind(&fight, effects, aura, *proc_chance)?;
+                    let bound = Redoubt::bind(&fight, effects, aura, *proc_chance, *any_attack)?;
                     fight.agent.redoubt = Some(Rc::new(bound));
                 }
                 Effect::ShieldSpecialization {

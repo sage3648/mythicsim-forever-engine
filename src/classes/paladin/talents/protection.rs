@@ -188,6 +188,8 @@ pub(crate) struct Redoubt {
     pub(crate) aura: AuraRef,
     chance: f64,
     stat_bit: Option<u32>,
+    /// Whether an attack that was avoided or dealt no damage rolls it too.
+    any_attack: bool,
 }
 
 impl Redoubt {
@@ -196,23 +198,26 @@ impl Redoubt {
         effects: &[Effect],
         aura: &str,
         chance: f64,
+        any_attack: bool,
     ) -> Result<Self, String> {
         let aura = fight.player_aura(aura)?;
         Ok(Redoubt {
             aura,
             chance,
+            any_attack,
             stat_bit: stat_bit(effects, fight, aura),
         })
     }
 
-    /// The trigger: a landed melee hit that dealt damage, at once.
+    /// The trigger: a landed melee hit that dealt damage, at once. Under Forever's rules
+    /// (`any_attack`) every melee attack taken, whatever came of it.
     pub(crate) fn trigger(
         &self,
         fight: &mut Fight<PaladinAgent>,
         trigger: AuraRef,
         result: &SpellResult,
     ) {
-        if result.outcome & OUTCOME_LANDED == 0 || result.damage == 0.0 {
+        if !self.any_attack && (result.outcome & OUTCOME_LANDED == 0 || result.damage == 0.0) {
             return;
         }
         if self.chance != 1.0 && fight.random_for_aura(trigger) > self.chance {

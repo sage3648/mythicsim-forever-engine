@@ -343,17 +343,34 @@ impl Paladin {
         );
         if sim.rules == Rules::Forever {
             // The notes of 2 November 2026: "both Holy and Physical damage", so Holy damage
-            // follows the main hand too (no row states it yet; the damage curve is 2/4/6% as
-            // before). Not a heal: a Holy heal is not damage.
-            apply_weapon_specialization(
-                sim,
+            // follows the main hand too. The live row says so since (20111, effect 697263,
+            // wago.tools wowf of 14 November 2026: A_MOD_DAMAGE_PERCENT_DONE on school mask 3,
+            // Physical and Holy; the damage curve is 2/4/6% as before). Not a heal: a Holy heal
+            // is not damage.
+            //
+            // Exorcism and Hammer of Wrath take none of it. Combat logs of Retribution paladins
+            // with the talent read the Seal and Judgement hits, Holy Strike and Consecration's
+            // ticks at the bonus, and Exorcism at 1.001 to 1.010 of its untalented damage and
+            // Hammer of Wrath at 0.991 (77 hammers of one paladin). No row field tells the two
+            // apart from Holy Wrath or Holy Shock, which no log has measured under the talent,
+            // so those keep the bonus. Retribution Aura's shield (0.997 to 1.000 in the same
+            // logs) has no proc mask and never took it.
+            let holy_mod = sim.add_dynamic_mod(
                 unit,
-                bonus,
-                two_hand,
-                "HandTypeTwoHand",
-                school::HOLY,
-                ProcMask(!ProcMask::SPELL_HEALING.0),
+                SpellModConfig {
+                    school: school::HOLY,
+                    proc_mask: ProcMask(!ProcMask::SPELL_HEALING.0),
+                    kind: SpellModType::DamageDonePct,
+                    float_value: bonus,
+                    spell_filter: Some(Rc::new(|sim: &Sim, spell| {
+                        sim.spell(spell).class_spell_mask
+                            & (masks::EXORCISM | masks::HAMMER_OF_WRATH)
+                            == 0
+                    })),
+                    ..SpellModConfig::default()
+                },
             );
+            super::follow_main_hand(sim, unit, holy_mod, two_hand, "HandTypeTwoHand");
             // Push 113554's effect 1367246: A_MOD_THREAT on every school, -7/-14/-20%, while
             // the two-hander the talent requires is in the main hand. A threat mod on every
             // spell that takes mods, which follows the main hand through an item swap as the

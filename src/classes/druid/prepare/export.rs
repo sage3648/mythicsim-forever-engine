@@ -662,7 +662,8 @@ impl Druid {
                     "instant_rage": rank.effect(A_NONE, 1).tenths()
                         + self.intensity_enrage_rage_bonus
                         + sim.state(self.st.wolfshead_enrage_rage),
-                    "rage_per_tick": rank.effect(A_PERIODIC_ENERGIZE, 1).base_value() / 10.0,
+                    "rage_per_tick": rank.effect(A_PERIODIC_ENERGIZE, 1).base_value() / 10.0
+                        + sim.state(self.st.enraged_idol_tick_rage),
                     "ticks": rank.duration() / SECOND,
                     "period_ns": nanos(SECOND),
                 }));

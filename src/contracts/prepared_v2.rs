@@ -2751,6 +2751,10 @@ pub enum Effect {
         trigger_aura: String,
         aura: String,
         proc_chance: f64,
+        /// Every melee attack taken rolls it, an avoided, fully blocked or fully absorbed one
+        /// included (Forever's rules).
+        #[serde(default, skip_serializing_if = "is_false")]
+        any_attack: bool,
     },
     /// Paladin talents_protection.go Shield Specialization: blocks restore mana.
     ShieldSpecialization {

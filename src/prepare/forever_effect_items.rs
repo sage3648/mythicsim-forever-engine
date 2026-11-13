@@ -46,8 +46,8 @@
 //! Plate (274651) and Girdle of Extracted Answers (276742). Each is a plain item on a character the
 //! effect cannot reach.
 //!
-//! Spiderchitin Wrap (280016) raises the Feral Combat skill a Druid's forms attack with
-//! (`FERAL_COMBAT_SKILL_ITEMS`).
+//! Spiderchitin Wrap (280016) and Oilskin Leggings (9414) raise the Feral Combat skill a Druid's
+//! forms attack with (`FERAL_COMBAT_SKILL_ITEMS`).
 //!
 //! Fingerbreaker Stamp (276743) has nothing registered: "Equip: Increases Strength by 38 while
 //! affected by a Bleed." (ItemEffect 237304, Fingerbreaker Stamp 1314784, a periodic dummy aura
@@ -338,7 +338,11 @@ pub(crate) fn apply_creature_type_damage(env: &mut Environment, item: i32) {
 /// SkillRaceClassInfo 2554 gives it to Druids alone (ClassMask 1024), through the Feral Combat
 /// spell 1306742, a weapon proficiency (effect 25). It is read as the weapon skill a Druid's forms
 /// attack with (`Sim::update_weapon_skills`); anyone else has no such line and gains nothing.
-pub(crate) const FERAL_COMBAT_SKILL_ITEMS: [(i32, f64); 1] = [(280016, 1.0)];
+///
+/// Oilskin Leggings (9414) carry the same equip: ItemXItemEffect 170350 links the item to
+/// ItemEffect 238249 (wago.tools wowf, 14 November 2026), and the item row names Increased Feral
+/// Combat (1320726); "Equip: Increases Feral Combat +1." on Wowhead's Forever tooltip.
+pub(crate) const FERAL_COMBAT_SKILL_ITEMS: [(i32, f64); 2] = [(280016, 1.0), (9414, 1.0)];
 
 /// The Feral Combat skill the item raises, if it is one of these.
 pub(crate) fn feral_combat_skill(item: i32) -> Option<f64> {
