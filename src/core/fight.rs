@@ -1179,6 +1179,8 @@ pub(crate) struct DamageProc {
     pub(crate) delay: Option<i64>,
     /// The label of the chance roll where it is not the trigger aura's.
     pub(crate) rng_label: Option<String>,
+    /// A struck proc's outcomes of the hit taken, as `HitOutcome` bits; zero hears every one.
+    pub(crate) taken_outcome: u16,
 }
 
 /// A proc whose manager rolls on landed hits and whose handler a spell batch window later
@@ -1211,6 +1213,8 @@ pub(crate) struct SpellStatProc {
     pub(crate) require_damage: bool,
     pub(crate) chance: f64,
     pub(crate) aura: AuraRef,
+    /// The handler also adds a stack of the aura after it activates it.
+    pub(crate) add_stack: bool,
 }
 
 /// A proc on the player's casts whose handler restores health a delay later: Nightslayer
@@ -2128,6 +2132,7 @@ pub(crate) fn chances_by_spell(
 pub(crate) fn damage_proc_of(effect: &Effect, spells: usize) -> Option<DamageProc> {
     let mut delay = None;
     let mut rng_label = None;
+    let mut taken_outcome = 0;
     let (trigger_spells, struck, casts, landed_only, require_damage, proc_chance, spell, chances) =
         match effect {
             Effect::SpellDataDamageProc {
@@ -2141,10 +2146,12 @@ pub(crate) fn damage_proc_of(effect: &Effect, spells: usize) -> Option<DamagePro
                 chances,
                 delay_ns,
                 rng_label: label,
+                taken_outcome: taken,
                 ..
             } => {
                 delay = *delay_ns;
                 rng_label = label.clone();
+                taken_outcome = outcome_bits(taken);
                 (
                     trigger_spells.clone(),
                     *struck,
@@ -2194,6 +2201,25 @@ pub(crate) fn damage_proc_of(effect: &Effect, spells: usize) -> Option<DamagePro
         spell,
         delay,
         rng_label,
+        taken_outcome,
+    })
+}
+
+/// The `HitOutcome` bits of the names an exported proc hears. A name the runtime does not know is
+/// a bit nothing sets, so the proc never fires rather than firing on every hit.
+fn outcome_bits(names: &[String]) -> u16 {
+    names.iter().fold(0, |bits, name| {
+        bits | match name.as_str() {
+            "Miss" => damage::OUTCOME_MISS,
+            "Hit" => damage::OUTCOME_HIT,
+            "Crit" => damage::OUTCOME_CRIT,
+            "Dodge" => damage::OUTCOME_DODGE,
+            "Parry" => damage::OUTCOME_PARRY,
+            "Block" => damage::OUTCOME_BLOCK,
+            "Glance" => damage::OUTCOME_GLANCE,
+            "Crush" => damage::OUTCOME_CRUSH,
+            _ => 1 << 15,
+        }
     })
 }
 
@@ -4374,6 +4400,7 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_mp5_sources(&player.mp5_sources, &stat_places)?;
         for effect in effects {
+            let mut struck = energy::StruckEnergize::default();
             let (rng_label, chances, resource, amount, metrics_action_id, delay_ns) = match effect {
                 Effect::EnergizeProc {
                     rng_label,
@@ -4396,15 +4423,29 @@ impl<A: Agent> Fight<A> {
                     mana,
                     metrics_action_id,
                     delay_ns,
+                    struck: hears_swings,
+                    variance,
+                    proc_chance,
+                    landed_only,
+                    require_damage,
                     ..
-                } => (
-                    rng_label,
-                    chances,
-                    ResourceKind::Mana,
-                    mana,
-                    metrics_action_id,
-                    delay_ns,
-                ),
+                } => {
+                    struck = energy::StruckEnergize {
+                        struck: *hears_swings,
+                        variance: *variance,
+                        chance: *proc_chance,
+                        landed_only: *landed_only,
+                        require_damage: *require_damage,
+                    };
+                    (
+                        rng_label,
+                        chances,
+                        ResourceKind::Mana,
+                        mana,
+                        metrics_action_id,
+                        delay_ns,
+                    )
+                }
                 _ => continue,
             };
             let mut by_spell = vec![None; fight.spells.len()];
@@ -4421,6 +4462,7 @@ impl<A: Agent> Fight<A> {
                 energy: *amount,
                 metrics,
                 delay: *delay_ns,
+                struck,
             });
         }
         for effect in effects {
@@ -5131,6 +5173,7 @@ impl<A: Agent> Fight<A> {
                 landed_only,
                 require_damage,
                 proc_chance,
+                add_stack,
                 ..
             } = effect
             {
@@ -5167,6 +5210,7 @@ impl<A: Agent> Fight<A> {
                     require_damage: *require_damage,
                     chance: *proc_chance,
                     aura,
+                    add_stack: *add_stack,
                 });
             }
             // Go spell_mod.go: one dynamic mod per amount, over the spells it changes.

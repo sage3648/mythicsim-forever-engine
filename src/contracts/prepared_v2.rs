@@ -2886,6 +2886,11 @@ pub enum Effect {
         /// trigger's own name.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         rng_label: Option<String>,
+        /// Go `HitOutcome` names a "when struck" proc hears of the hits the player takes, as a
+        /// proc "every time you block" does (Girdle of Extracted Answers). Empty hears every
+        /// outcome the other fields allow.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        taken_outcome: Vec<String>,
     },
     /// common/shared/shared_utils.go NewSpellDataAbsorbOnUse: the item use's aura shields the
     /// wearer for the absorb effect's roll against the schools its bits name.
@@ -3677,6 +3682,10 @@ pub enum Effect {
         gain_log: Option<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         expire_log: Option<String>,
+        /// The handler also adds a stack of the aura after it activates it, as Krol'dok
+        /// Battlegear's (5) Ogre Dominance does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        add_stack: bool,
     },
     /// An item use that activates an aura whose spell mods add flat amounts to spell costs, as
     /// common/classic/items_trinkets.go Burst of Knowledge.
@@ -5544,6 +5553,19 @@ pub enum Effect {
         mana: f64,
         metrics_action_id: ActionId,
         delay_ns: i64,
+        /// A "when struck" proc, as Zealot Plate's: it hears the target's melee swings at the
+        /// player instead of the spells in `chances`, and restores a roll of `mana` and
+        /// `variance` at once, at `proc_chance` behind the trigger aura's cooldown.
+        #[serde(default, skip_serializing_if = "is_false")]
+        struck: bool,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        variance: f64,
+        #[serde(default = "one", skip_serializing_if = "is_one")]
+        proc_chance: f64,
+        #[serde(default, skip_serializing_if = "is_false")]
+        landed_only: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        require_damage: bool,
     },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.

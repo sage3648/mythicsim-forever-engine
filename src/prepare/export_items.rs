@@ -2744,6 +2744,7 @@ pub(crate) fn item_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     effects.extend(super::oil_of_immolation::oil_of_immolation_effect(env));
     effects.extend(gear_proc_effects(env, unrepresented));
     effects.extend(spell_data_stat_proc_effects(env, unrepresented));
+    effects.extend(super::forever_tank_procs::export_effects(env));
     effects.extend(energy_proc_effects(env, unrepresented));
     effects.extend(super::healer_gear::export_effects(env, unrepresented));
     effects

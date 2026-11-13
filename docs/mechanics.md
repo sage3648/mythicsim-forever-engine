@@ -1492,8 +1492,9 @@ the Go goldens and exporter uses. The departures:
     armor aura of 100) and the (3) Increased Defense +5 (1324288: a skill aura of 5 on Defense)
     are applied, as Ironweave Battlesuit's Armor and Imperial Plate's Defense are. The (4) chance
     on block to heal for 14 to 23 (Krol'dok Resolve, 1324298) and the (5) Stamina when taking
-    damage (Ogre Dominance, 1324309) are procs whose chance the rows do not state plainly; an
-    equipment that reaches four pieces is refused by name.
+    damage (Ogre Dominance, 1324309) are procs whose tooltips say "chance" and "high chance"; they
+    are applied since 13 November 2026 (`tests/forever_client_items_tank_procs_20261113.rs`), see
+    below.
   - Defias Enforcer's Garb (ItemSet 2136), five leather pieces the reference does not register:
     Mask 287019 (124 Armor, +20 Stamina, 1% less dodged or parried, +30 Attack Power),
     Shoulderpads 276741 (115 Armor, +13 Stamina, 0.5% crit, +28 Attack Power), Chest 287020 (156
@@ -1519,11 +1520,43 @@ the Go goldens and exporter uses. The departures:
     plate waist of item level 53 (313 Armor, +12 Strength, +15 Stamina): "Equip: Deals 20 to 30
     Physical damage every time you block." Shield Spike (1308777, ItemEffect 236443) is a damage
     on proc aura of 25 with a variance of 0.4, and SpellCooldowns 100881 gives it a recovery of
-    5000 ms. Neither effect is applied yet. Each acts only when the wearer is struck, so the item
-    is exact as a plain one on a character the effect cannot reach, and preparation refuses the
-    character it can (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate on a
-    character a target attacks who has a mana bar, the girdle on one a target attacks who holds a
-    shield.
+    5000 ms. Both are applied since 13 November 2026, with Krol'dok Battlegear's (4) and (5), under
+    one decision (the owner's, 13 November 2026): the client rows are read literally, so a
+    ProcChance of 100 is the rate, gated by each row's own recovery or cooldown, whatever the
+    tooltip's "chance" or "high chance" (`forever_tank_procs`). A real player's Protection Warrior
+    refused with "set bonus Krol'dok Battlegear 4P is not prepared yet (item 287013)" ten times
+    in a day, and a Zealot Plate tank with a mana bar with "item 274651 has an effect not
+    prepared yet (mana when struck on a character the target attacks)".
+    - Krol'dok Battlegear (4), Krol'dok Resolve (1324298, SpellAuraOptions 248630: ProcChance 100,
+      ProcTypeMask 680, no recovery), casts 1324296, a Heal of 18 with a variance of 0.5 (13.5 to
+      22.5, the tooltip's 14 to 23). Every block heals the wearer, through a heal spell that can
+      crit. The second effect (a Dummy of 44) is the doubling in Strongholds and Cities, which no
+      fight is in. The pinned store files the row's chance as stated by no one (ProcChanceSource
+      3), so preparation states a chance of 1.
+    - Krol'dok Battlegear (5), Ogre Dominance (1324309, SpellAuraOptions 248632: ProcChance 100,
+      ProcCategoryRecovery 3000), applies 1324308: +1 Stamina (Mod Stat, Misc 2) for 30 sec
+      (SpellMisc 869924, DurationIndex 9), up to 20 stacks (CumulativeAura 20). Every landed
+      hit taken that deals damage, at most once in 3 sec, refreshes the buff and adds a stack a
+      spell batch window later. The buff's two other effects, a Mod Scale of 0.5 and a Mod
+      Transform at 20 stacks that triggers 1324682, change the model and no stat. The stacks are
+      a stat aura of five bits in the combinations the runtime reads, and the Health they move is
+      carried (`stat_auras`); a tank that wears five pieces also wears whatever other stat auras
+      its gear and buffs give, which together may not exceed the 16 bits Forever's rules allow.
+    - Zealot Plate, Proc Self Energize 88 (1294668, SpellAuraOptions 246043: ProcChance 100,
+      ProcTypeMask 40, ProcCategoryRecovery 15000), casts Zealotry (1294666), an Energize of 88
+      with a variance of 0.5 on mana: each landed melee hit taken that deals damage, at most once
+      in 15 sec, restores 66 to 110 mana to a wearer with a mana bar, at once.
+    - Girdle of Extracted Answers, Shield Spike (1308777, SpellAuraOptions 247236: ProcChance
+      100, ProcTypeMask 40), a Proc Trigger Damage aura of 25 with a variance of 0.4 (20 to 30)
+      Physical. Every block deals a roll of it to the attacker, at most once in 5 sec. The 5000
+      ms is SpellCooldowns 100881, the spell's own cooldown (ItemEffect 236443 states none of its
+      own, -1, and SpellAuraOptions has no ProcCategoryRecovery), which the tooltip reads as "5
+      sec cooldown"; it gates the proc as a recovery would. The damage is the aura's own, so it
+      rolls no attack table: it never misses and cannot crit, and takes the armor and
+      resistances of a hit of its school (`always_hit`).
+    A character no target attacks is never struck and never blocks, and wears each as a plain
+    item: the listeners are inert, and Ogre Dominance's stacks are no stat aura. A tank with no
+    mana bar gains nothing from Zealot Plate, and one with no shield never blocks.
   - Zarla's Snack Pouch (276744), a unique trinket of item level 55 (+13 Nature Resistance, 11
     spell damage and healing) whose use "Calls forth a Black Dragon Whelp to protect you in
     battle for a short period of time" (15 Min Cooldown). Its use spell 1315190 summons creature
@@ -1560,12 +1593,13 @@ the Go goldens and exporter uses. The departures:
     casting 1294645, a Periodic Leech of 19 every 2 sec for 6 sec, Shadow (SpellEffect 1316124,
     SpellMisc 842035 DurationIndex 32, SpellCategories 183947 magic defense, SpellLevels 152202).
     The first Quick Sims it refused were an Arcane Mage's, a Shadow Priest's and another Arcane
-    Mage's (13 November 2026). Reading the client rows literally, as Sage decided on 13 November
-    2026: ProcChance 100 is the rate, so the aura fires on every harmful spell the wearer casts,
+    Mage's (13 November 2026). Reading the client rows literally, under the owner's decision of 13
+    November 2026: ProcChance 100 is the rate, so the aura fires on every harmful spell the wearer casts,
     and the 100 ms proc recovery, which only matters for a proc that fires every time, is the
     cooldown the tooltip states. Earlier sessions read the tooltip's "Chance" beside a chance of 100
-    as no stated rate (as for Krol'dok Battlegear's four piece) and refused a character with a mana
-    bar; that is replaced by this reading. The mask is 65536, harmful spells dealt, which Searing
+    as no stated rate and refused a character with a mana bar; that is replaced by this reading,
+    which also applies Krol'dok Battlegear's four and five piece bonuses, Zealot Plate and the
+    girdle above. The mask is 65536, harmful spells dealt, which Searing
     Dagger's Sear shares, but Searing Dagger's hotfix limits it to spells with a damaging
     component and the kris has no such note, so every harmful cast counts. A character with no
     mana bar casts none and wears the kris as a plain dagger. Blood Sacrifice registers as an

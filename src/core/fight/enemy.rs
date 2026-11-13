@@ -460,6 +460,9 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].struck => {
                     self.spell_stat_proc_callback(aura, proc, None, Some(result))
                 }
+                AuraBehavior::EnergizeProc(index) if self.energize_procs[index].struck.struck => {
+                    self.struck_energize_callback(aura, index, result)
+                }
                 AuraBehavior::ForceReactiveDisk(_) => {
                     self.force_reactive_disk_callback(aura, result)
                 }

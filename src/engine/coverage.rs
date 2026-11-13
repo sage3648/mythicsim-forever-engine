@@ -731,6 +731,10 @@ fn proc_damage_mismatch(
     can_crit: bool,
     periodic: Option<&ProcPeriodic>,
 ) -> Option<String> {
+    // A hit that always lands rolls no table, whatever defense type the spell is filed under.
+    if outcome == Some("always_hit") && periodic.is_none() {
+        return None;
+    }
     let (table, crit) = match outcome {
         Some(name) => (
             if name.starts_with("melee_") {
@@ -1655,6 +1659,8 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "force_reactive_disk",
     "spell_data_heal_proc",
     "spell_data_stat_proc",
+    // Zealot Plate's mana when struck.
+    "mana_proc",
     "battlegear_of_might_rage",
     "cheat_death",
 ];
