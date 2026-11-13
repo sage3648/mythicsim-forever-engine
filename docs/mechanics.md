@@ -1557,14 +1557,27 @@ the Go goldens and exporter uses. The departures:
     with a draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)". ItemEffect
     233957 is an equip of Blood Sacrifice (1294644): SpellAuraOptions 246039 has ProcChance 100
     beside the tooltip's "Chance", ProcTypeMask 65536 (harmful spells) and a 100 ms proc recovery,
-    casting 1294645, a Periodic Leech of 19 every 2 sec for 6 sec, Shadow. A chance of 100 beside
-    a clause that says the effect only sometimes happens is no rate, as for Krol'dok Battlegear's
-    four piece, and the assumed chance on hit rate is per weapon hit, not per spell (the
-    reference's Galgann's Firehammer and Spire of Hakkar stay unregistered for the same reason).
-    So the effect is not prepared: a character with no mana bar casts no harmful spell and wears
-    the kris as a plain dagger; one with a mana bar is refused with "item 274647 has an effect not
-    prepared yet (a chance on harmful spell cast whose rate the client does not state on a
-    character with a mana bar)" (`forever_effect_items::SPELL_CAST_EFFECTS_NOT_PREPARED`).
+    casting 1294645, a Periodic Leech of 19 every 2 sec for 6 sec, Shadow (SpellEffect 1316124,
+    SpellMisc 842035 DurationIndex 32, SpellCategories 183947 magic defense, SpellLevels 152202).
+    The first Quick Sims it refused were an Arcane Mage's, a Shadow Priest's and another Arcane
+    Mage's (13 November 2026). Reading the client rows literally, as Sage decided on 13 November
+    2026: ProcChance 100 is the rate, so the aura fires on every harmful spell the wearer casts,
+    and the 100 ms proc recovery, which only matters for a proc that fires every time, is the
+    cooldown the tooltip states. Earlier sessions read the tooltip's "Chance" beside a chance of 100
+    as no stated rate (as for Krol'dok Battlegear's four piece) and refused a character with a mana
+    bar; that is replaced by this reading. The mask is 65536, harmful spells dealt, which Searing
+    Dagger's Sear shares, but Searing Dagger's hotfix limits it to spells with a damaging
+    component and the kris has no such note, so every harmful cast counts. A character with no
+    mana bar casts none and wears the kris as a plain dagger. Blood Sacrifice registers as an
+    equip damage proc (`forever_effect_items::EQUIP_DAMAGE_PROC_ITEMS`), its two rows restated in
+    `src/data/forever_client_spells.rs`. The leech is a damage over time on the target: the cast
+    rolls the magic hit (it can miss and resist), and each of the three ticks deals 19 under the
+    wearer's damage multipliers, on the plain tick path, with no spell power coefficient (the row
+    has none; SpellEffect 1316124 EffectBonusCoefficient 0) and no tick crit (the row lacks the
+    periodic crit attribute). The row has no SpellAuraOptions, so CumulativeAura is 0 and the aura
+    does not stack: a later cast refreshes the one aura on that target to a full six seconds.
+    Each target carries its own. The health the wearer gets back is not modelled, as Maw of
+    Min'loth's and Skullflame Shield's are not (`tests/forever_client_items_20261113c.rs`).
   The reference's rules still refuse all three as unknown.
 - Three more items that refused players' Quick Sims on 12 November 2026
   (`tests/forever_client_items_20261113b.rs`), from the same sources on 13 November 2026:

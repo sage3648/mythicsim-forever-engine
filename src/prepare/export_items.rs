@@ -1482,7 +1482,17 @@ fn spell_data_damage_proc_effects(
         let outcome_ok =
             listener.outcome == HitOutcome::EMPTY || listener.outcome == HitOutcome::LANDED;
         let struck_ok = !struck || hears_the_targets_swings(env, &listener);
-        let shape = position.and_then(|position| proc_damage_shape(env, damage, position).ok());
+        // A live client equip proc's damage over time that rolls a magic hit goes on as the hit
+        // lands and ticks its amount, as a Forever chance on hit's does.
+        let forever_equip = env.sim.rules == super::sim::Rules::Forever
+            && super::forever_effect_items::equip_damage_procs().any(|cfg| cfg.name == label);
+        let shape = position.and_then(|position| {
+            proc_damage_shape(env, damage, position).ok().or_else(|| {
+                forever_equip
+                    .then(|| chance_on_hit_dot_shape(env, damage, position))
+                    .flatten()
+            })
+        });
         let (Some(_), Some(shape)) = (position, shape) else {
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
@@ -2067,7 +2077,10 @@ fn proc_damage_shape_with(
     refuse_magic_ticks: bool,
 ) -> Result<serde_json::Map<String, Value>, &'static str> {
     let level = env.sim.unit(env.player).level;
-    let (direct, periodic) = (damage.damage_effect(), damage.periodic_damage_effect());
+    let (direct, periodic) = (
+        damage.damage_effect(),
+        super::shared_items::proc_periodic_effect(env, damage),
+    );
     let defense = env.sim.spell(spell_at(env, position)).defense_type;
     let outcome = proc_hit_outcome(defense, damage.cannot_crit());
     if direct.is_nil() && periodic.is_nil() {
@@ -2142,7 +2155,10 @@ fn chance_on_hit_dot_shape(
     position: usize,
 ) -> Option<serde_json::Map<String, Value>> {
     let level = env.sim.unit(env.player).level;
-    let (direct, periodic) = (damage.damage_effect(), damage.periodic_damage_effect());
+    let (direct, periodic) = (
+        damage.damage_effect(),
+        super::shared_items::proc_periodic_effect(env, damage),
+    );
     if periodic.is_nil() || damage.debuffs_the_target() {
         return None;
     }

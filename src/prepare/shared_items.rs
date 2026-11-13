@@ -16,7 +16,7 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
-use crate::data::spells::Spell;
+use crate::data::spells::{Effect, Spell};
 
 use super::aura_helpers::{HitOutcome, ProcTrigger, StackingStatAura, StatBuffAura};
 use super::dbcenums;
@@ -874,6 +874,17 @@ pub(crate) fn spell_data_proc_damage_spell_config(
     spell_data_proc_damage_spell(env, damage, true)
 }
 
+/// The aura a damage proc's row ticks: the reference's rows tick a periodic damage aura alone.
+/// Under Forever's rules a live client row's periodic leech ticks too (Farraki Kris's Blood
+/// Sacrifice).
+pub(crate) fn proc_periodic_effect<'a>(env: &Environment, damage: &'a Spell) -> &'a Effect {
+    if env.sim.rules == super::sim::Rules::Forever {
+        damage.periodic_damage_or_leech_effect()
+    } else {
+        damage.periodic_damage_effect()
+    }
+}
+
 /// Go `spellDataProcDamageSpell`: the spell the proc casts, as its row states it: school,
 /// defense type, spell power share, travel time and the amount it rolls. What the row cannot
 /// state is that it is a proc's spell: out of the rotation, not a cast of its own, and its hits
@@ -901,7 +912,7 @@ pub(crate) fn spell_data_proc_damage_spell(
 
     // The debuff the hit puts on each enemy it lands on registers the enemies' auras.
     super::shared_auras::debuff_on_landing(env, damage);
-    let periodic = damage.periodic_damage_effect();
+    let periodic = proc_periodic_effect(env, damage);
     if periodic.is_nil() {
         return config;
     }

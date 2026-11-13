@@ -92,14 +92,8 @@ fn prepared(request: &Value) -> Result<PreparedV2, String> {
     Ok(prepared)
 }
 
-/// Items whose effect is refused by name on the shaman, a character with a mana bar: Farraki
-/// Kris's chance on harmful spell cast has no stated rate
-/// (`forever_effect_items::SPELL_CAST_EFFECTS_NOT_PREPARED`).
-const REFUSED_ON_THE_SHAMAN: [i64; 1] = [274647];
-
 /// Every Forever item read from its tooltip alone (ids from 270000) prepares in its slot and
-/// passes the gate, the 71 added on 9 November among them, but for those refused by name on the
-/// shaman, which are refused for their effect and nothing else.
+/// passes the gate, the 71 added on 9 November among them.
 #[test]
 fn every_forever_client_item_prepares_in_its_slot() {
     let text = String::from_utf8(read("data/forever-client-items.jsonl")).unwrap();
@@ -109,17 +103,8 @@ fn every_forever_client_item_prepares_in_its_slot() {
         .filter(|row: &Value| row["id"].as_i64().unwrap() >= 270_000)
         .collect();
     assert!(rows.len() >= 230, "{} rows", rows.len());
-    for id in REFUSED_ON_THE_SHAMAN {
-        let row = rows.iter().find(|row| row["id"] == id).unwrap();
-        let err = prepared(&wearing(row)).err().unwrap_or_default();
-        assert!(
-            err.contains(&format!("item {id} has an effect not prepared yet")),
-            "{id}: {err}"
-        );
-    }
     let refused: Vec<String> = rows
         .iter()
-        .filter(|row| !REFUSED_ON_THE_SHAMAN.contains(&row["id"].as_i64().unwrap()))
         .filter_map(|row| {
             prepared(&wearing(row))
                 .err()

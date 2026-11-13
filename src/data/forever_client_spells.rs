@@ -28,6 +28,10 @@
 //! Nor is Lightcrest Hammer's Smite (1299631): every field of it is the client's, read from
 //! wago.tools `product=wowf` on 13 November 2026 (the tables of build 1.60.1.70888).
 //!
+//! Nor are Farraki Kris's equip spell (1294644) and the Blood Sacrifice it casts (1294645): every
+//! field of theirs is the client's, read from wago.tools `product=wowf` on 13 November 2026 (the
+//! tables of build 1.60.1.70888).
+//!
 //! A field the client hides and no tooltip states is left at zero: no range check, no missile
 //! travel, no spell power or attack power share. The one exception is `PERIODIC_CAN_CRIT`, which
 //! every Forever-added physical and Fire periodic damage row in the pinned store carries (19 of
@@ -110,6 +114,8 @@ pub(crate) fn rows() -> Vec<Spell> {
         toofbreak(),
         ablaze(),
         dismember(),
+        blood_sacrifice_trigger(),
+        blood_sacrifice(),
         smite(),
     ]
 }
@@ -489,6 +495,106 @@ fn maw_of_minloth_leech() -> Spell {
             index: 0,
             effect_type: 9,
             base_points: 40.0,
+            pvp_mult: 1.0,
+            amplitude: 1.0,
+            chain_amp: 1.0,
+            target: [6, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// Farraki Kris's equip spell (ItemEffect 233957, trigger type 1, on equip): "Chance on harmful
+/// spell cast to afflict the target with a draining ritual, leeching 19 health every 2 sec for 6
+/// sec. (100ms cooldown)". An aura on the wearer that casts Blood Sacrifice on the target of a
+/// harmful spell the wearer casts, as Searing Dagger's Sear (pinned row 1291568) does.
+fn blood_sacrifice_trigger() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842034: Attributes_0 65984 (a passive aura) and Attributes_15 8192.
+    attr[0] = 65_984;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_644,
+        name: "Blood Sacrifice".to_string(),
+        // SpellMisc 842034: SchoolMask 32, Shadow, the aura's own. The leech is the other row's.
+        school: 32,
+        attr,
+        // SpellLevels 152201: SpellLevel 20.
+        spell_level: 20,
+        // SpellAuraOptions 246039: ProcChance 100, ProcCategoryRecovery 100 (the tooltip's 100ms
+        // cooldown) and ProcTypeMask 65536, harmful spells dealt. The tooltip's "Chance" is read
+        // as the row states it: the aura fires on every harmful spell its recovery allows
+        // (`proc_chance_source::ALWAYS`; docs/mechanics.md).
+        proc_chance: 100,
+        proc_chance_source: 2,
+        proc_flags: [65_536, 0],
+        icd_ms: 100,
+        // SpellEffect 1316123: Apply Aura (6) of Proc Trigger Spell (42) on the caster, base
+        // points 0 and variance 0.01, triggering 1294645.
+        ref_ids: vec![1_294_645],
+        effects: vec![Effect {
+            id: 1_316_123,
+            spell_id: 1_294_644,
+            index: 0,
+            effect_type: 6,
+            aura: 42,
+            variance: 0.01,
+            pvp_mult: 1.0,
+            amplitude: 1.0,
+            trigger_id: 1_294_645,
+            chain_amp: 1.0,
+            target: [1, 0],
+            ..Effect::default()
+        }],
+        ..Spell::default()
+    }
+}
+
+/// The spell Farraki Kris's aura casts: a Periodic Leech of 19 every 2 sec for 6 sec, Shadow, on
+/// the magic table. Its row has no SpellAuraOptions, so the aura does not stack (CumulativeAura
+/// 0): a second cast while one ticks refreshes it.
+fn blood_sacrifice() -> Spell {
+    let mut attr = [0; 17];
+    // SpellMisc 842035: every attribute word the client sets.
+    attr[0] = 151_060_480;
+    attr[1] = 32;
+    attr[2] = 540_672;
+    attr[5] = 393_224;
+    attr[6] = 4096;
+    attr[8] = 32;
+    attr[9] = 2048;
+    attr[10] = 4_194_304;
+    attr[11] = 67_108_864;
+    attr[13] = 2;
+    attr[14] = 16;
+    attr[15] = ATTR_15_BIT_13;
+    Spell {
+        id: 1_294_645,
+        name: "Blood Sacrifice".to_string(),
+        // SpellMisc 842035: SchoolMask 32, Shadow.
+        school: 32,
+        attr,
+        // SpellLevels 152202: SpellLevel 20.
+        spell_level: 20,
+        // SpellMisc 842035: DurationIndex 32, SpellDuration's 6000 ms.
+        duration_ms: 6000,
+        // SpellMisc 842035: RangeIndex 6, SpellRange's 100 yards.
+        max_range: 100.0,
+        // SpellCategories 183947: magic defense, magic dispel.
+        defense_type: 1,
+        dispel_type: 1,
+        // SpellEffect 1316124: Apply Aura (6) of Periodic Leech (53) of 19 every 2000 ms on the
+        // target (6), with no variance and no spell power or attack power coefficient;
+        // EffectAmplitude 1, the share of the damage that heals the wearer.
+        effects: vec![Effect {
+            id: 1_316_124,
+            spell_id: 1_294_645,
+            index: 0,
+            effect_type: 6,
+            aura: 53,
+            base_points: 19.0,
+            period_ms: 2000,
             pvp_mult: 1.0,
             amplitude: 1.0,
             chain_amp: 1.0,

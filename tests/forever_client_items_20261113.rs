@@ -16,13 +16,13 @@
 //!   and healing, 2 spell penetration, and "Equip: Chance on harmful spell cast to afflict the
 //!   target with a draining ritual, leeching 19 health every 2 sec for 6 sec. (100ms cooldown)".
 //!   ItemEffect 233957 is an equip of Blood Sacrifice (1294644): SpellAuraOptions 246039 has
-//!   ProcChance 100 beside the tooltip's "Chance", so the client states no rate. Three Arcane Mage
-//!   refusals.
+//!   ProcChance 100 beside the tooltip's "Chance", read as the rate it states
+//!   (`tests/forever_client_items_20261113c.rs`). Three Arcane Mage refusals.
 //!
 //! The two weapons roll the rate MythicSim assumes for a chance on hit without one
 //! (`shared_items::CHANCE_ON_HIT_PPM`, 1.8% per second of the weapon's speed), as Toofbreaker and
-//! the Rock on Stick weapons do. The kris's effect is not prepared: a character with no mana bar
-//! casts no harmful spell and wears it as a plain dagger, one with a mana bar is refused by name.
+//! the Rock on Stick weapons do. The kris casts Blood Sacrifice on every harmful spell: a character
+//! with no mana bar casts none and wears it as a plain dagger.
 //!
 //! No refused request was at hand, so the tests dress fixture characters: the Combat Rogue of
 //! `fixtures/forever-gaps/combat-rogue-self-casts-at-player`, the Retribution Paladin of
@@ -323,20 +323,11 @@ fn the_kris_is_a_plain_dagger_on_a_character_with_no_mana_bar() {
     );
 }
 
-/// On a caster with a mana bar the effect would act on every harmful spell, at a chance the
-/// client does not state: the kris refuses and names it.
+/// On a caster with a mana bar the kris prepares: its effect is read from the client rows
+/// (`tests/forever_client_items_20261113c.rs`).
 #[test]
-fn the_kris_refuses_a_character_with_a_mana_bar() {
-    let reason = refusal(&shaman(json!({ "id": FARRAKI_KRIS })), Rules::Forever);
-    assert!(
-        reason.contains(
-            "item 274647 has an effect not prepared yet (a chance on harmful spell cast whose \
-             rate the client does not state on a character with a mana bar)"
-        ),
-        "{reason}"
-    );
-    // The same shaman with an empty main hand prepares.
-    prepared(&shaman(json!({})));
+fn the_kris_prepares_on_a_character_with_a_mana_bar() {
+    prepared(&shaman(json!({ "id": FARRAKI_KRIS })));
 }
 
 // ---------------------------------------------------------------------------------------------
