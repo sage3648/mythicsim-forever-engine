@@ -792,6 +792,8 @@ class CommittedFileTests(unittest.TestCase):
         # The chance on hit weapon, the Feral Combat skill and the bleed condition of 13
         # November 2026.
         self.assertLessEqual({276419, 276743, 280016}, ids)
+        # The trinket whose whelp use is never pressed, 13 November 2026.
+        self.assertIn(276744, ids)
 
     def test_the_worn_quest_item_is_committed(self):
         with open(tool.OUT) as rows:

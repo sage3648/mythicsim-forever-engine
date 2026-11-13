@@ -23,8 +23,9 @@ the same line of a Classic item. A line that changes nothing in a fight (mount s
 profession, quest text, a use that only controls an enemy; NO_FIGHT_EFFECT) is left out of the
 row. So is a use, chance on hit or equip line the engine models by hand (ENGINE_EFFECT:
 Serpentbane Crown's use, the two Rock on Stick weapons' bash, Toofbreaker's bash, Dreadfrost
-Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when struck), and
-an equip line that acts only when the wearer is struck, which the engine refuses on the
+Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when struck), a use
+the engine never presses (UNPRESSED_USE: Zarla's Snack Pouch's whelp, whose damage no row
+states), and an equip line that acts only when the wearer is struck, which the engine refuses on the
 character it can reach (Zealot Plate's mana, Girdle of Extracted Answers' damage on block). A use
 that is a stat buff (ON_USE_STATS: Heart of the Primeval) is written into the row as its item
 effect, as the reference rows hold a stat trinket's. A relic (a libram, idol or
@@ -488,6 +489,17 @@ ENGINE_EFFECT = [
         "Equip: Increases Strength by 38 while affected by a Bleed.",
     ]
 ]
+# Uses the engine never presses, by the exact line of the item it names: the item is taken with
+# its other lines and the use left out of the row, so a sim wears it as a plain item. Zarla's Snack
+# Pouch 276744: its use (spell 1315190) summons a Black Dragon Whelp (creature 274297, SpellEffect
+# 1347318), and no client row states what the whelp deals.
+UNPRESSED_USE = [
+    re.compile(re.escape(line))
+    for line in [
+        "Use: Calls forth a Black Dragon Whelp to protect you in battle for a short period of "
+        "time. (15 Min Cooldown)",
+    ]
+]
 # A use that is a stat buff, by item: the exact use line of the tooltip and the item effect the row
 # carries for it, in the shape the reference rows hold a stat trinket's (Talisman of Ephemeral
 # Power 18820). The buff, its stats and duration and the cooldowns are the client's rows; the
@@ -653,7 +665,7 @@ def parse_tooltip(response):
                 out["stats"][34] = out["stats"].get(34, 0) + int(match.group(1))
         elif SET_LINE.match(line):
             raise Unreadable("a set piece")
-        elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT + ENGINE_EFFECT):
+        elif any(pattern.fullmatch(line) for pattern in NO_FIGHT_EFFECT + ENGINE_EFFECT + UNPRESSED_USE):
             equip_lines += 1
         elif line in ON_USE_STAT_LINES:
             equip_lines += 1

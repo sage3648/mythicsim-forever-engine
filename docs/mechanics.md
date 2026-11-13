@@ -1524,11 +1524,14 @@ the Go goldens and exporter uses. The departures:
     character it can (`forever_effect_items::STRUCK_EFFECTS_NOT_PREPARED`): Zealot Plate on a
     character a target attacks who has a mana bar, the girdle on one a target attacks who holds a
     shield.
-  - Left out: Zarla's Snack Pouch (276744), a trinket of item level 55 (+13 Nature Resistance, 11
+  - Zarla's Snack Pouch (276744), a unique trinket of item level 55 (+13 Nature Resistance, 11
     spell damage and healing) whose use "Calls forth a Black Dragon Whelp to protect you in
     battle for a short period of time" (15 Min Cooldown). Its use spell 1315190 summons creature
-    274297 (SpellEffect 1347318), and no client row states what the whelp deals, so the item
-    stays refused as unknown.
+    274297 (SpellEffect 1347318), and no client row states what the whelp deals. It was refused
+    as unknown until four Quick Sims and a Droptimizer of 13 November 2026 failed on it; since
+    then the row is taken from the tooltip with the use left out (`tools/rust_client_items.py`,
+    UNPRESSED_USE), so the pouch is worn with its stats and the whelp is never summoned
+    (`tests/forever_client_items_20261113_pouch.rs`).
   The reference's rules still refuse every one of these items as unknown.
 - Items that refused players' Quick Sims on 12 November 2026
   (`tests/forever_client_items_20261113.rs`), from Wowhead's Forever tooltips and the client rows
