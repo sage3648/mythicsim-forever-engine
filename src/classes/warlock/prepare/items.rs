@@ -460,10 +460,13 @@ pub(crate) fn hazzarahs_charm_of_destruction(sim: &mut Sim, unit: UnitId) {
 /// - (4) "Increases damage done by your spells and effects by up to 21 when fighting Demons."
 ///   Spell 1301094: spell damage versus a creature type (59, mask 4) of 21.
 /// - (5) "Your Life Tap generates 20% more Mana at no additional Health cost." Spell 1301715: a
-///   dummy aura (4) of 20, which a server script reads. Not prepared: the Life Tap effect carries
-///   one multiplier (Improved Life Tap's) that scales the health it spends and the mana it gives
-///   together, so a mana only share has no hook, and nothing states whether the 20% stacks with
-///   Improved Life Tap by addition or by multiplication.
+///   dummy aura (4) of 20, which a server script reads. The health spent stays
+///   `(base + Spirit) * (1 + Improved Life Tap)`, and the mana gained is that times 1.20. The row
+///   does not say how the 20% stacks with Improved Life Tap, so the model assumes it scales what
+///   Life Tap generates: multiplicatively, never added to Improved Life Tap's share. The
+///   demon's Demonic Energies share is taken from the mana gained, the boosted figure. The bonus
+///   is its status aura alone here; the export reads that aura and writes the Life Tap effect's
+///   `mana_bonus`, which the fight applies to the mana.
 pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
     set: ItemSet {
         id: 2100,
@@ -473,11 +476,19 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
             (2, demonheart_raiment_2),
             (3, demonheart_raiment_3),
             (4, demonheart_raiment_4),
+            (5, demonheart_raiment_5),
         ],
         required_profession: "",
     },
-    not_prepared: &[5],
+    not_prepared: &[],
 }];
+
+/// The label of the 5 piece bonus's status aura (`make_set_bonus_status_aura`), which the export
+/// reads to see that Life Tap is boosted.
+pub(super) const DEMONHEART_RAIMENT_5_AURA: &str = "Demonheart Raiment 5P";
+
+/// The added share of Life Tap's mana: the dummy aura's 20 of spell 1301715.
+pub(super) const DEMONHEART_RAIMENT_LIFE_TAP_MANA: f64 = 0.20;
 
 /// Tier 1 Warlock: improves your chance to hit by 1.0%.
 fn demonheart_raiment_2(env: &mut Environment, aura: AuraId) {
@@ -496,6 +507,12 @@ fn demonheart_raiment_3(env: &mut Environment, aura: AuraId) {
 fn demonheart_raiment_4(env: &mut Environment, aura: AuraId) {
     env.sim.attach_versus_spell_damage(aura, DEMON, 21.0);
     env.sim.expose_to_apl(aura, 1301094);
+}
+
+/// Tier 1 Warlock: your Life Tap generates 20% more Mana at no additional Health cost. The
+/// status aura marks it; the export and the fight apply it to Life Tap (`mana_bonus`).
+fn demonheart_raiment_5(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301715);
 }
 
 #[cfg(test)]

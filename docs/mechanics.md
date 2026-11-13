@@ -1597,9 +1597,20 @@ the Go goldens and exporter uses. The departures:
     registers (Counterspell, Banish, Intervene, Shackle Undead, Earthbind Totem, Rebirth, Nature's
     Grasp, Hibernate, the totems' radius) is its status aura alone. The Elemental 5 piece names
     Lava Burst, which Forever's rules do not register (notes of 2 November 2026).
-  - Not prepared, so five pieces refuse by name: the Mage's Frostfire Bolt chances (no Frostfire
-    Bolt only proc chance, and "10% increased" is not stated as points or a scale), the Warlock's
-    Life Tap mana (the effect has one multiplier for health and mana), the Shadow Priest's
-    Devouring Plague cooldown (a flat 60 sec off a 24 sec cooldown) and the Guardian Druid's
-    Berserk cooldown (the spell has no class spell mask). No request reaches five pieces yet,
-    since an item goes to the slot its type names.
+  - Four 5 piece bonuses are modelled beyond a plain spell mod. No request reaches five pieces
+    yet, since an item goes to the slot its type names, so the unit tests count extra pieces.
+    - Warlock, Demonheart Raiment: Life Tap generates 20% more mana at no more health. The health
+      spent stays (base + Spirit) times Improved Life Tap's multiplier and the mana is that times
+      1.20 (the two multiply). Demonic Energies' demon share is taken from the boosted mana. The
+      Life Tap effect carries it as `mana_bonus`.
+    - Mage, Manaflare Regalia: for Frostfire Bolt alone, ten percentage points are added to
+      Missile Barrage's chance (after the half share the bolt takes) and to Fingers of Frost's
+      launch roll, and 10 crit while Combustion is up (`frostfire_bolt_chance_bonus` on both
+      effects, `frostfire_bolt_crit` on Combustion's). A talent not taken leaves its part with
+      nothing to change.
+    - Shadow Priest, Raiments of Conviction: -60 sec on Devouring Plague, whose cooldown is 24 sec,
+      so it has none. The spell mod keeps the negative sum, so it stays reversible, and the
+      exported cooldown and the fight's rotation reads floor a cooldown at zero.
+    - Guardian Druid, Grovekeeper Rage: Berserk's cooldown is 165 sec. Berserk has no class spell
+      mask, so the registration reads the bonus's status aura rather than a mod. Without the
+      Berserk talent nothing is registered and the bonus does nothing.

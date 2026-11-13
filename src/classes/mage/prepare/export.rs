@@ -136,6 +136,11 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         }
         effects.push(effect);
     }
+    // Manaflare Regalia's 5 piece bonus (spell 1301488), which each talent below carries when the
+    // talent is taken: a talent not taken leaves its part with nothing to change.
+    let manaflare = sim
+        .get_aura(unit, super::items::MANAFLARE_REGALIA_5_AURA)
+        .is_some();
     // talents_arcane.go registerMissileBarrage: the client rows; Arcane Wrath, Frost Blast and the
     // bolts proc at half of Arcane Blast's chance, and the missiles no longer proc it (patch 175,
     // the 19 October in-game tooltip; client 70425 gave them a quarter).
@@ -147,7 +152,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             .effect(dbcenums::A_PROC_TRIGGER_SPELL, 0)
             .value_at(missile_barrage)
             / 100.0;
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "missile_barrage", "trigger_aura": "Missile Barrage Trigger",
             "aura": "Missile Barrage",
             "arcane_blast_chance": arcane_blast_chance,
@@ -164,20 +169,28 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
                     .average(character_level()) as i64)
                     .wrapping_mul(MILLISECOND)
             ),
-        }));
+        });
+        if manaflare {
+            effect["frostfire_bolt_chance_bonus"] = json!(super::items::MANAFLARE_REGALIA_CHANCE);
+        }
+        effects.push(effect);
     }
     // talents_frost.go registerFingersOfFrost
     let fingers = talents.i32("fingers_of_frost");
     if fingers > 0 {
         let shatter = talents.i32("shatter");
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "fingers_of_frost", "talent_rank": fingers, "shatter_rank": shatter,
             "proc_chance": data.fingers_of_frost.effect_at(2).fraction_at(fingers),
             "max_stacks": data.fingers_of_frost.effect_at(1).value_at(fingers) as i32,
             "shatter_crit": data.shatter.value_at(shatter),
             "duration_ns": nanos(data.fingers_of_frost_triggered.highest().duration()),
             "trigger_aura": "Fingers of Frost Trigger", "aura": "Fingers of Frost",
-        }));
+        });
+        if manaflare {
+            effect["frostfire_bolt_chance_bonus"] = json!(super::items::MANAFLARE_REGALIA_CHANCE);
+        }
+        effects.push(effect);
     }
     // talents_frost.go registerWinterChill
     let winters_chill = talents.i32("winters_chill");
@@ -323,13 +336,17 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
     // combustion.go
     if talents.bool("combustion") {
         let buff = data.combustion_triggered.highest();
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "combustion", "spell_id": data.combustion.highest().id, "aura": "Combustion",
             "crit_per_stack": buff
                 .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_CRITICAL_CHANCE)
                 .average(character_level()),
             "max_crits": i32::from(data.combustion.highest().proc_charges),
-        }));
+        });
+        if manaflare {
+            effect["frostfire_bolt_crit"] = json!(super::items::MANAFLARE_REGALIA_CRIT);
+        }
+        effects.push(effect);
     }
     // talents_fire.go registerHotStreak
     if talents.bool("heating_up") {

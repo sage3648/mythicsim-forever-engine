@@ -1479,6 +1479,41 @@ mod tests {
         assert_eq!(s.cd.duration, 0);
     }
 
+    /// A cooldown mod that takes more than the spell's cooldown (Raiments of Conviction's 60 sec
+    /// off Devouring Plague's 24) keeps the negative sum, so deactivating it restores the base.
+    /// The export floors the sum at zero (`TimerNames::cooldown`).
+    #[test]
+    fn a_cooldown_mod_past_zero_stays_reversible() {
+        let mut sim = Sim::new();
+        let unit = new_unit(&mut sim);
+        let timer = sim.new_timer(unit);
+        let spell = sim.register_spell(
+            unit,
+            SpellConfig {
+                cast: CastConfig {
+                    cd: Cooldown {
+                        timer: Some(timer),
+                        duration: 24 * SECOND,
+                    },
+                    ..Default::default()
+                },
+                ..mana_spell(731)
+            },
+        );
+        let id = sim.add_dynamic_mod(
+            unit,
+            SpellModConfig {
+                kind: SpellModType::CooldownFlat,
+                time_value: -60 * SECOND,
+                ..Default::default()
+            },
+        );
+        sim.activate_spell_mod(id);
+        assert_eq!(sim.spell(spell).cd.duration, -36 * SECOND);
+        sim.deactivate_spell_mod(id);
+        assert_eq!(sim.spell(spell).cd.duration, 24 * SECOND);
+    }
+
     fn dot_spell(spell_id: i32) -> SpellConfig {
         SpellConfig {
             dot: DotConfig {

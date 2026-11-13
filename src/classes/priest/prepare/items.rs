@@ -203,11 +203,12 @@ fn absolution_regalia_4(env: &mut Environment, aura: AuraId) {
 ///   Spell 1301087: spell damage versus a creature type (59, mask 32) of 21.
 /// - (5) "Reduces the cooldown of your Devouring Plague spell by 60 sec." Spell 1301706: a
 ///   cooldown mod (107, misc 11) of -60000 ms on mask [0, 0, 0, 16] of family 6, which is
-///   Devouring Plague (2944 to 19278). Not prepared: the 16 October 2026 beta notes cut the
-///   cooldown to 24 sec and the row states 60 sec (`register_devouring_plague_spell`), and the
-///   bonus was written against the 60 sec one. A flat 60 sec off 24 sec leaves a negative
-///   cooldown here, and whether the game clamps it to none, or the notes changed this bonus
-///   with the cooldown, is not stated anywhere.
+///   Devouring Plague (2944 to 19278). The row's category cooldown is 24 sec (the 16 October 2026
+///   beta notes' figure; `register_devouring_plague_spell`), so the row's -60 sec leaves nothing:
+///   the model applies it as written, a `CooldownFlat` mod on the Devouring Plague mask, and
+///   assumes a cooldown driven below zero is no cooldown. The mod keeps the negative sum so it
+///   stays reversible; the exported cooldown (`TimerNames::cooldown`) and the fight's
+///   rotation reads floor it at zero.
 pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
     set: ItemSet {
         id: 2105,
@@ -217,10 +218,11 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
             (2, raiments_of_conviction_2),
             (3, raiments_of_conviction_3),
             (4, raiments_of_conviction_4),
+            (5, raiments_of_conviction_5),
         ],
         required_profession: "",
     },
-    not_prepared: &[5],
+    not_prepared: &[],
 }];
 
 /// Tier 1 Shadow: improves your chance to hit by 1.0%.
@@ -240,4 +242,19 @@ fn raiments_of_conviction_3(env: &mut Environment, aura: AuraId) {
 fn raiments_of_conviction_4(env: &mut Environment, aura: AuraId) {
     env.sim.attach_versus_spell_damage(aura, UNDEAD, 21.0);
     env.sim.expose_to_apl(aura, 1301087);
+}
+
+/// Tier 1 Shadow: reduces the cooldown of your Devouring Plague spell by 60 sec.
+fn raiments_of_conviction_5(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            class_mask: masks::DEVOURING_PLAGUE,
+            kind: SpellModType::CooldownFlat,
+            time_value: -60 * SECOND,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.expose_to_apl(aura, 1301706);
 }

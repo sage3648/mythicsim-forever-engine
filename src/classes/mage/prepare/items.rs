@@ -225,11 +225,19 @@ pub(crate) fn hazzarahs_charm(sim: &mut Sim, unit: UnitId) {
 /// - (5) "Your Frostfire Bolt spell has a 10% increased chance to trigger Missile Barrage, gains
 ///   10% increased critical strike chance while your Combustion spell is active, and has a 10%
 ///   increased chance to trigger Fingers of Frost." Spell 1301488: three dummy auras (4) of 10,
-///   which a server script reads. Not prepared: the fight rolls Missile Barrage's and Fingers of
-///   Frost's chance from one prepared value for every spell that triggers it, so a Frostfire
-///   Bolt only chance has no hook, the tooltip does not say whether "10% increased" adds ten
-///   points or scales the chance by 1.1, and the crit while Combustion is up has no aura to
-///   follow.
+///   which a server script reads. The tooltip does not say whether "10% increased" adds ten
+///   points or scales the chance by 1.1, so the model adds ten percentage points (0.10 to the
+///   chance, 10 to the crit), for Frostfire Bolt casts only:
+///   - Missile Barrage: a landed Frostfire Bolt rolls the half share it already takes plus 0.10.
+///   - Fingers of Frost: a Frostfire Bolt's launch roll is the talent's chance plus 0.10.
+///   - Combustion: Frostfire Bolt gains 10 crit while the Combustion aura is up, gained and
+///     removed with it, beside the aura's own Fire crit.
+///
+///   Each part applies only when its talent is taken, and a missing talent leaves that part with
+///   nothing to change, never an error. The bonus is its status aura here; the prepare layer
+///   (Combustion's mod) and the export (`frostfire_bolt_chance_bonus` on the Missile Barrage and
+///   Fingers of Frost effects, `frostfire_bolt_crit` on Combustion's) read that aura, and the
+///   fight applies them.
 pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
     set: ItemSet {
         id: 2098,
@@ -239,11 +247,23 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
             (2, manaflare_regalia_2),
             (3, manaflare_regalia_3),
             (4, manaflare_regalia_4),
+            (5, manaflare_regalia_5),
         ],
         required_profession: "",
     },
-    not_prepared: &[5],
+    not_prepared: &[],
 }];
+
+/// The label of the 5 piece bonus's status aura (`make_set_bonus_status_aura`), which the
+/// Combustion registration and the export read.
+pub(super) const MANAFLARE_REGALIA_5_AURA: &str = "Manaflare Regalia 5P";
+
+/// The added chance of Missile Barrage and Fingers of Frost from a Frostfire Bolt: the dummy
+/// auras' 10 as ten percentage points.
+pub(super) const MANAFLARE_REGALIA_CHANCE: f64 = 0.10;
+
+/// The critical strike chance points Frostfire Bolt gains while Combustion is up.
+pub(super) const MANAFLARE_REGALIA_CRIT: f64 = 10.0;
 
 /// Tier 1 Mage: improves your chance to hit by 1.0%.
 fn manaflare_regalia_2(env: &mut Environment, aura: AuraId) {
@@ -262,6 +282,13 @@ fn manaflare_regalia_3(env: &mut Environment, aura: AuraId) {
 fn manaflare_regalia_4(env: &mut Environment, aura: AuraId) {
     env.sim.attach_versus_spell_damage(aura, ELEMENTAL, 21.0);
     env.sim.expose_to_apl(aura, 1301079);
+}
+
+/// Tier 1 Mage: Frostfire Bolt has a 10% increased chance to trigger Missile Barrage and Fingers
+/// of Frost, and gains 10% critical strike chance while Combustion is active. The status aura
+/// marks it; Combustion's registration, the export and the fight apply the three parts.
+fn manaflare_regalia_5(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301488);
 }
 
 #[cfg(test)]

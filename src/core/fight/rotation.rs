@@ -662,7 +662,7 @@ impl<A: Agent> Fight<A> {
         let total = self.duration;
         let remaining = self.duration - self.now;
         let cast_offset = self.get_duration(offset);
-        let cd = self.spells[target].cd.map_or(0, |(_, cd)| cd);
+        let cd = self.spells[target].cd.map_or(0, |(_, cd)| cd.max(0));
         let duration = self.aura(target_buff).duration;
         let effective = cd + duration;
         // Go `1 + int(float64(totalTime)/float64(targetSpellCD))`; the gate requires a cooldown.
@@ -1932,7 +1932,9 @@ impl<A: Agent> Fight<A> {
                 }
             }
             // Go `Spell.CD.Duration`: zero for a spell without a cooldown.
-            Compiled::SpellFullCooldown(spell) => self.spells[*spell].cd.map_or(0, |(_, cd)| cd),
+            Compiled::SpellFullCooldown(spell) => {
+                self.spells[*spell].cd.map_or(0, |(_, cd)| cd.max(0))
+            }
             Compiled::Max(values) => {
                 let first = self.get_duration(&values[0]);
                 values[1..]

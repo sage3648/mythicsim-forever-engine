@@ -86,7 +86,7 @@ const FERAL: Case = Case {
     fixture: "fixtures/mage/prepared-v2/production-feral-druid.request.json",
 };
 
-fn request(case: &Case) -> Value {
+fn request(case: &Case, talents: Option<&str>) -> Value {
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(case.fixture);
     let mut request: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
     rogue_113483::forever_request(&mut request);
@@ -98,6 +98,9 @@ fn request(case: &Case) -> Value {
         2115 => player["talentsString"] = json!(FERAL_TALENTS),
         _ => {}
     }
+    if let Some(talents) = talents {
+        player["talentsString"] = json!(talents);
+    }
     request["simOptions"]["iterations"] = json!(5);
     request
 }
@@ -105,14 +108,26 @@ fn request(case: &Case) -> Value {
 /// The set's bonuses reached by this many pieces, counted beside the equipment, which holds none
 /// of them.
 fn with_pieces(case: &Case, pieces: usize) -> Result<Value, String> {
+    with_pieces_and_talents(case, pieces, None)
+}
+
+/// As [`with_pieces`], with the request's talents replaced.
+fn with_pieces_and_talents(
+    case: &Case,
+    pieces: usize,
+    talents: Option<&str>,
+) -> Result<Value, String> {
     EXTRA_PIECES.with(|extra| {
         *extra.borrow_mut() = (0..pieces)
             .map(|_| (case.id, case.set.to_string(), 0))
             .collect();
     });
-    let result =
-        crate::prepare_json_with(request(case).to_string().as_bytes(), "rust", Rules::Forever)
-            .map_err(|err| err.to_string());
+    let result = crate::prepare_json_with(
+        request(case, talents).to_string().as_bytes(),
+        "rust",
+        Rules::Forever,
+    )
+    .map_err(|err| err.to_string());
     EXTRA_PIECES.with(|extra| extra.borrow_mut().clear());
     result
 }
@@ -204,29 +219,194 @@ fn the_balance_five_piece_lengthens_insect_swarm_by_three_seconds() {
     assert_eq!(flat(5) - flat(4), 3.0);
 }
 
-/// The bonuses that stay unprepared refuse the request by name, and nothing else of their set does.
+/// The effect of a kind in a prepared export.
+fn effect<'a>(prepared: &'a Value, kind: &str) -> Option<&'a Value> {
+    prepared["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|effect| effect["kind"] == kind)
+}
+
 #[test]
-fn an_unprepared_five_piece_bonus_refuses_by_name() {
-    for case in [&MAGE, &WARLOCK, &SHADOW, &GUARDIAN] {
-        with_pieces(case, 4).unwrap_or_else(|err| panic!("{} with four pieces: {err}", case.set));
-        let reason = with_pieces(case, 5).expect_err(case.set);
+fn the_warlocks_five_piece_raises_life_tap_mana_alone() {
+    let tap = |pieces| {
+        let prepared = with_pieces(&WARLOCK, pieces).unwrap();
+        effect(&prepared, "life_tap").unwrap().clone()
+    };
+    let (before, after) = (tap(4), tap(5));
+    // The health side (base amount, Improved Life Tap's multiplier) is untouched, and the field
+    // is absent without the bonus.
+    assert!(before.get("mana_bonus").is_none(), "{before}");
+    assert_eq!(after["mana_bonus"], json!(0.2));
+    assert_eq!(after["base_amount"], before["base_amount"]);
+    assert_eq!(after["mana_multiplier"], before["mana_multiplier"]);
+}
+
+/// Forever's rules read the Mage tree in the client's order: Missile Barrage is the seventh
+/// Arcane talent, Combustion the seventeenth Fire talent and Fingers of Frost the sixteenth
+/// Frost talent.
+const MAGE_ALL_THREE: &str = "0000002-00000000000000001-0000000000000002";
+const MAGE_MISSILE_BARRAGE_ALONE: &str = "0000002-0-0";
+const MAGE_COMBUSTION_ALONE: &str = "0-00000000000000001-0";
+const MAGE_FINGERS_ALONE: &str = "0-0-0000000000000002";
+
+#[test]
+fn the_mages_five_piece_adds_ten_points_to_each_frostfire_bolt_part() {
+    let five = with_pieces_and_talents(&MAGE, 5, Some(MAGE_ALL_THREE)).unwrap();
+    let four = with_pieces_and_talents(&MAGE, 4, Some(MAGE_ALL_THREE)).unwrap();
+    let barrage = effect(&five, "missile_barrage").unwrap();
+    // The half share the bolt takes is the effect's own and stays as it was.
+    assert_eq!(barrage["frostfire_bolt_chance_bonus"], json!(0.1));
+    assert_eq!(
+        barrage["bolt_chance"],
+        effect(&four, "missile_barrage").unwrap()["bolt_chance"]
+    );
+    assert_eq!(
+        effect(&five, "fingers_of_frost").unwrap()["frostfire_bolt_chance_bonus"],
+        json!(0.1)
+    );
+    assert_eq!(
+        effect(&five, "combustion").unwrap()["frostfire_bolt_crit"],
+        json!(10.0)
+    );
+    for kind in ["missile_barrage", "fingers_of_frost", "combustion"] {
+        let effect = effect(&four, kind).unwrap();
         assert!(
-            reason.contains(&format!("set bonus {} 5P is not prepared yet", case.set)),
-            "{reason}"
+            effect.get("frostfire_bolt_chance_bonus").is_none(),
+            "{kind}"
+        );
+        assert!(effect.get("frostfire_bolt_crit").is_none(), "{kind}");
+    }
+}
+
+/// A part whose talent is not taken does nothing, and the request is not refused.
+#[test]
+fn the_mages_five_piece_does_nothing_for_a_talent_not_taken() {
+    for (talents, kind) in [
+        (MAGE_MISSILE_BARRAGE_ALONE, "missile_barrage"),
+        (MAGE_FINGERS_ALONE, "fingers_of_frost"),
+        (MAGE_COMBUSTION_ALONE, "combustion"),
+    ] {
+        let prepared = with_pieces_and_talents(&MAGE, 5, Some(talents)).unwrap();
+        for other in ["missile_barrage", "fingers_of_frost", "combustion"] {
+            assert_eq!(
+                effect(&prepared, other).is_some(),
+                other == kind,
+                "{talents}"
+            );
+        }
+        let present = effect(&prepared, kind).unwrap();
+        assert!(
+            present.get("frostfire_bolt_chance_bonus").is_some()
+                || present.get("frostfire_bolt_crit").is_some()
         );
     }
+}
+
+/// The prepare layer's Combustion aura carries the Frostfire Bolt crit with it: gained with the
+/// aura and removed when it expires, for the set's wearer alone.
+#[test]
+fn the_mages_five_piece_adds_frostfire_bolt_crit_while_combustion_is_up() {
+    use crate::classes::mage::prepare::masks;
+    use crate::contracts::request::Request;
+    use crate::prepare::env::Environment;
+
+    let crit = |pieces: usize| {
+        EXTRA_PIECES.with(|extra| {
+            *extra.borrow_mut() = (0..pieces)
+                .map(|_| (MAGE.id, MAGE.set.to_string(), 0))
+                .collect();
+        });
+        let bytes = request(&MAGE, Some(MAGE_ALL_THREE))
+            .to_string()
+            .into_bytes();
+        let parsed = Request::from_json(&bytes).expect("parsed");
+        let env = Environment::with_rules(
+            parsed.message(),
+            crate::classes::prepare_agent,
+            Rules::Forever,
+        );
+        EXTRA_PIECES.with(|extra| extra.borrow_mut().clear());
+        let mut env = env.expect("prepared");
+        let unit = env.player;
+        let bolt = env
+            .sim
+            .unit(unit)
+            .spellbook
+            .iter()
+            .copied()
+            .find(|id| env.sim.spell(*id).class_spell_mask & masks::FROSTFIRE_BOLT != 0)
+            .expect("Frostfire Bolt");
+        let aura = env.sim.get_aura(unit, "Combustion").expect("Combustion");
+        let before = env.sim.spell(bolt).bonus_crit_percent;
+        env.sim.activate(aura);
+        let during = env.sim.spell(bolt).bonus_crit_percent;
+        env.sim.deactivate(aura);
+        let after = env.sim.spell(bolt).bonus_crit_percent;
+        assert_eq!(before, after);
+        during - before
+    };
+    assert_eq!(crit(5) - crit(4), 10.0);
+}
+
+#[test]
+fn the_priests_five_piece_leaves_devouring_plague_no_cooldown() {
+    let cooldown = |pieces| {
+        let prepared = with_pieces(&SHADOW, pieces).unwrap();
+        let spells = prepared["player"]["spells"].as_array().unwrap();
+        let plague: Vec<f64> = spells
+            .iter()
+            .filter(|spell| spell["class_spell"] == "devouring_plague")
+            .map(|spell| spell["cd"]["duration_ns"].as_f64().unwrap() / 1e9)
+            .collect();
+        assert!(!plague.is_empty());
+        plague
+    };
+    // 24 sec less 60 sec is below zero, which the export floors.
+    assert!(cooldown(4).iter().all(|cd| *cd == 24.0));
+    assert!(cooldown(5).iter().all(|cd| *cd == 0.0));
+}
+
+/// Hotfix push 113531 removed Berserk from Forever's Druid tree, so a Guardian reaches the bonus
+/// with no Berserk to shorten: five pieces register the status aura and nothing else, and refuse
+/// nothing. The cooldown itself is `berserk_cooldown`'s (`classes::druid::prepare::items`).
+#[test]
+fn the_guardians_five_piece_leaves_the_export_as_it_was() {
+    let (four, five) = (
+        with_pieces(&GUARDIAN, 4).unwrap(),
+        with_pieces(&GUARDIAN, 5).unwrap(),
+    );
+    let berserk = |prepared: &Value| {
+        prepared["player"]["spells"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|spell| spell["action_id"]["spell_id"] == 417141)
+    };
+    assert!(!berserk(&four) && !berserk(&five));
+    assert_eq!(four["player"]["spells"], five["player"]["spells"]);
+    assert!(five["player"]["auras"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|aura| aura["label"] == "Grovekeeper Rage 5P"));
 }
 
 /// The five piece bonuses that are applied are reached: each set registers its status aura.
 #[test]
 fn the_prepared_five_piece_bonuses_register_their_aura() {
     for case in [
+        &MAGE,
         &ROGUE,
+        &WARLOCK,
         &HUNTER,
         &ARMS,
         &PROTECTION,
+        &SHADOW,
         &ENHANCEMENT,
         &ELEMENTAL,
+        &GUARDIAN,
         &BALANCE,
         &FERAL,
     ] {

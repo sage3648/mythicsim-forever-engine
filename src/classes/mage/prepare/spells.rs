@@ -1015,6 +1015,22 @@ impl Mage {
             },
         );
 
+        // Manaflare Regalia's 5 piece bonus: Frostfire Bolt gains 10% critical strike chance while
+        // the buff is up, on top of the stacks' Fire crit.
+        let frostfire_mod = sim
+            .get_aura(unit, super::items::MANAFLARE_REGALIA_5_AURA)
+            .map(|_| {
+                sim.add_dynamic_mod(
+                    unit,
+                    SpellModConfig {
+                        class_mask: masks::FROSTFIRE_BOLT,
+                        float_value: super::items::MANAFLARE_REGALIA_CRIT,
+                        kind: SpellModType::BonusCritPercent,
+                        ..SpellModConfig::default()
+                    },
+                )
+            });
+
         let combust_aura = sim.register_aura(
             unit,
             AuraConfig {
@@ -1023,12 +1039,18 @@ impl Mage {
                 duration: NEVER_EXPIRES,
                 max_stacks: i32::from(triggered.max_stack),
                 on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.activate_spell_mod(crit_mod)
+                    sim.activate_spell_mod(crit_mod);
+                    if let Some(bolt) = frostfire_mod {
+                        sim.activate_spell_mod(bolt);
+                    }
                 })),
                 // The expiry starts the cooldown and refreshes the major cooldowns, which only
                 // a fight observes.
                 on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.deactivate_spell_mod(crit_mod)
+                    sim.deactivate_spell_mod(crit_mod);
+                    if let Some(bolt) = frostfire_mod {
+                        sim.deactivate_spell_mod(bolt);
+                    }
                 })),
                 on_stacks_change: Some(Rc::new(move |sim: &mut Sim, _, _, new_stacks| {
                     sim.update_spell_mod_float_value(

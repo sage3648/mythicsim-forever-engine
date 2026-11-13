@@ -3416,6 +3416,10 @@ pub enum Effect {
         aura: String,
         crit_per_stack: f64,
         max_crits: i32,
+        /// Manaflare Regalia's 5 piece bonus: critical strike chance points (10 for 10%) Frostfire
+        /// Bolt gains while the buff is up.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        frostfire_bolt_crit: f64,
     },
     /// Fire Blast's instant hit.
     FireBlast {},
@@ -3560,6 +3564,10 @@ pub enum Effect {
         /// An Arcane Missiles missile's chance (client 70425).
         missile_chance: f64,
         bolt_chance: f64,
+        /// Manaflare Regalia's 5 piece bonus: points added to the chance of a Frostfire Bolt's
+        /// roll (0.1 for 10%), after the half share the bolt already takes.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        frostfire_bolt_chance_bonus: f64,
         rng_label: String,
         cost_percent_add: f64,
         tick_length_delta_ns: i64,
@@ -3568,6 +3576,10 @@ pub enum Effect {
         talent_rank: i32,
         shatter_rank: i32,
         proc_chance: f64,
+        /// Manaflare Regalia's 5 piece bonus: points added to the chance of a Frostfire Bolt's
+        /// launch roll (0.1 for 10%).
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        frostfire_bolt_chance_bonus: f64,
         max_stacks: i32,
         shatter_crit: f64,
         duration_ns: i64,
@@ -3890,6 +3902,11 @@ pub enum Effect {
         spell_id: i32,
         base_amount: f64,
         mana_multiplier: f64,
+        /// Demonheart Raiment's 5 piece bonus: the added fraction of the mana Life Tap generates
+        /// (0.2 for 20% more), with the health it spends unchanged. The demon's share is taken
+        /// from the boosted mana.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        mana_bonus: f64,
         /// Demonic Energies: the share of the restore the summoned demon gains.
         #[serde(default, skip_serializing_if = "is_zero_f64")]
         pet_mana_share: f64,

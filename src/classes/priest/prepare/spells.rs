@@ -342,8 +342,9 @@ impl Priest {
             unit,
             SpellConfig {
                 cast: CastConfig {
-                    // The 16 October 2026 beta notes cut the cooldown to 24 sec; the client row still
-                    // states a 60 sec category cooldown.
+                    // The 16 October 2026 beta notes cut the cooldown to 24 sec, which the row's
+                    // category cooldown states as well. Raiments of Conviction's 5 piece bonus
+                    // takes 60 sec off it, which leaves none (the export floors it at zero).
                     cd: Cooldown {
                         timer: Some(cd_timer),
                         duration: 24 * SECOND,

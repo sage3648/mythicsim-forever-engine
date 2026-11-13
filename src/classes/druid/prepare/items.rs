@@ -412,9 +412,13 @@ pub(crate) static ITEM_SETS: &[ItemSet] = &[
 ///   1301076: a rating aura (189) of 12 on Expertise (mask 8388608).
 /// - (5) "Reduces the cooldown of your Berserk ability by 15.0 sec." Spell 1301249: a cooldown
 ///   mod (107, misc 11) of -15000 ms on mask [0, 0, 64] of family 7, which is Berserk (417141).
-///   Not prepared: the Feral Berserk this engine registers (`apply_berserk`, a 180 sec cooldown)
-///   carries no class spell mask, and a new mask is a new class spell name in the prepared
-///   export, which is a change of its own.
+///   The Feral Berserk this engine registers (`apply_berserk`, a 180 sec cooldown) carries no
+///   class spell mask, and a new mask would be a new class spell name in the prepared export, so
+///   no mod is attached: `apply_berserk` reads the bonus's status aura (`berserk_cooldown`) and
+///   registers Berserk with 165 sec. The bonus does nothing without the Berserk talent, which
+///   registers no spell. Hotfix push 113531 removed Berserk from Forever's Druid tree, and the
+///   client sets exist under Forever's rules alone, so no request registers Berserk today and the
+///   bonus is its status aura until the talent returns.
 ///
 /// Grovekeeper Eclipse:
 ///
@@ -454,10 +458,11 @@ pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[
                 (2, grovekeeper_rage_2),
                 (3, grovekeeper_rage_3),
                 (4, grovekeeper_rage_4),
+                (5, grovekeeper_rage_5),
             ],
             required_profession: "",
         },
-        not_prepared: &[5],
+        not_prepared: &[],
     },
     ClientItemSet {
         set: ItemSet {
@@ -508,6 +513,23 @@ fn grovekeeper_rage_3(env: &mut Environment, aura: AuraId) {
 fn grovekeeper_rage_4(env: &mut Environment, aura: AuraId) {
     env.sim.attach_set_expertise(aura);
     env.sim.expose_to_apl(aura, 1301076);
+}
+
+/// The label of the Rage 5 piece bonus's status aura (`make_set_bonus_status_aura`), which
+/// [`berserk_cooldown`] reads.
+const GROVEKEEPER_RAGE_5_AURA: &str = "Grovekeeper Rage 5P";
+
+/// Berserk's cooldown: 180 sec, less the 15 sec (the row's -15000 ms) of the Grovekeeper Rage 5
+/// piece bonus when the druid wears it. `apply_berserk` registers the spell with it.
+pub(super) fn berserk_cooldown(sim: &Sim, unit: UnitId) -> i64 {
+    let bonus = sim.get_aura(unit, GROVEKEEPER_RAGE_5_AURA).is_some();
+    (180 - if bonus { 15 } else { 0 }) * SECOND
+}
+
+/// Tier 1 Guardian: reduces the cooldown of your Berserk ability by 15.0 sec. The status aura
+/// marks it; `apply_berserk` shortens Berserk's cooldown when it registers the spell.
+fn grovekeeper_rage_5(env: &mut Environment, aura: AuraId) {
+    env.sim.expose_to_apl(aura, 1301249);
 }
 
 /// Tier 1 Balance: improves your chance to hit by 1.0%.
@@ -576,4 +598,42 @@ fn grovekeeper_ferocity_5(env: &mut Environment, aura: AuraId) {
         },
     );
     sim.expose_to_apl(aura, 1301247);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::contracts::request::Request;
+    use crate::prepare::item_sets::EXTRA_PIECES;
+
+    const REQUEST: &str =
+        include_str!("../../../../fixtures/forever-gaps/feral-bear-druid-thorns.request.json");
+
+    fn environment(pieces: usize) -> Environment {
+        EXTRA_PIECES.with(|extra| {
+            *extra.borrow_mut() = (0..pieces)
+                .map(|_| (2113, "Grovekeeper Rage".to_string(), 0))
+                .collect();
+        });
+        let mut value: serde_json::Value = serde_json::from_str(REQUEST).expect("a request");
+        value["raid"]["parties"][0]["players"][0]["talentsString"] =
+            serde_json::json!("-5500033212310212551-055");
+        let bytes = serde_json::to_vec(&value).expect("json");
+        let request = Request::from_json(&bytes).expect("parsed");
+        let env = Environment::with_rules(
+            request.message(),
+            crate::classes::prepare_agent,
+            Rules::Forever,
+        );
+        EXTRA_PIECES.with(|extra| extra.borrow_mut().clear());
+        env.expect("prepared")
+    }
+
+    /// The 5 piece bonus takes 15 sec off Berserk's 180, and four pieces take none.
+    #[test]
+    fn the_five_piece_bonus_shortens_berserks_cooldown() {
+        let (four, five) = (environment(4), environment(5));
+        assert_eq!(berserk_cooldown(&four.sim, four.player), 180 * SECOND);
+        assert_eq!(berserk_cooldown(&five.sim, five.player), 165 * SECOND);
+    }
 }
