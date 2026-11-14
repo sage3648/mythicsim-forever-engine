@@ -13,10 +13,15 @@ Sources, at the data's client build (data/manifest.json):
     https://nether.wowhead.com/forever/tooltip/item/<id>?x=<random>
                                                        armor, damage, speed, block, stats
 
+The file name of a table's response names the build it is of. On 14 November 2026 the plain
+product=wowf address answered with build 1.60.1.70755, while the same address with
+&build=1.60.1.70938 answered with that build, 23 Item rows longer: check the name before reading.
+
 An item is taken when it is a weapon or armor row, not in items.jsonl, with an equipment slot,
 a real name (no deprecated, test, old or placeholder rows) and a tooltip whose every line this
 tool reads. A quest item a character wears (WORN_QUEST_ITEMS: Gahz'ridian Detector, a head piece
-of the client's quest class) is taken as an armor row with no armor type. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
+of the client's quest class) is taken as an armor row with no armor type, and one of the ranged
+slot (Egan's Blaster) as a ranged row with no ranged weapon type, damage or speed. The equip lines that are a plain stat (Increased Defense, Attack Power, spell damage
 and healing, hit, crit, mana per 5 sec, dodge, parry, block, expertise, weapon damage;
 EQUIP_STATS), a weapon skill (pseudo_stats) or all resistances are read as data/items.jsonl holds
 the same line of a Classic item. A line that changes nothing in a fight (mount speed, swimming, a
@@ -27,8 +32,10 @@ Saber's Frost damage, Totem of Rage's shock damage, Maw of Min'loth's leech when
 the engine never presses (UNPRESSED_USE: Zarla's Snack Pouch's whelp, whose damage no row
 states), and an equip line that acts only when the wearer is struck, which the engine refuses on the
 character it can reach (Zealot Plate's mana, Girdle of Extracted Answers' damage on block). A use
-that is a stat buff (ON_USE_STATS: Heart of the Primeval) is written into the row as its item
-effect, as the reference rows hold a stat trinket's. A relic (a libram, idol or
+that is a stat buff (ON_USE_STATS: Heart of the Primeval, Lucky Shovelnose Tuft, Flamebreak
+Talisman) is written into the row as its item effect, as the reference rows hold a stat trinket's.
+A crit line whose percentage is no whole rating is read only for the item listed with it
+(FRACTIONAL_RATING_LINES: Tunnelweb Pincer). A relic (a libram, idol or
 totem) is written in the ranged slot, as the reference rows hold one (RELIC_TYPE). An
 item whose tooltip is missing, or has any other use, chance on hit, set or equip line, or any line
 this tool does not read, is left out and listed.
@@ -106,9 +113,14 @@ REAL_ITEMS = {280505}
 
 # Items of the client's quest class (Item.ClassID 12) with an equipment slot that characters wear
 # into a fight. Gahz'ridian Detector 9978 is a head piece with no armor and no stats (two refused
-# Quick Sims on 10 November 2026); its row is an armor row with no armor type.
+# Quick Sims on 10 November 2026); its row is an armor row with no armor type. Egan's Blaster
+# 13289 sits in the ranged slot (InventoryType 26) with no damage, speed or stats (two refused
+# sims of a Retribution Paladin on 13 November 2026); its row is a ranged row with no ranged
+# weapon type, which nothing shoots with.
 QUEST_CLASS = 12
-WORN_QUEST_ITEMS = {9978}
+WORN_QUEST_ITEMS = {9978, 13289}
+# The InventoryType of a worn quest item of the ranged slot.
+QUEST_RANGED_SLOT = 26
 
 # The sets of the Forever client that this tool takes pieces of, by the name the tooltip gives,
 # with the ItemSet ID of the tooltip's item-set link. The reference database registers none of
@@ -436,6 +448,8 @@ NO_FIGHT_EFFECT = [
         r"Use: Charms the target, preventing all actions for up to \d+ sec\. .*",
         r"Use: Disarm target's weapon for \d+ sec\. .*",
         r"Use: Sift through an [A-Za-z' ]+ Dirt Pile\. .*",
+        # Egan's Blaster 13289: its use (spell 17368) frees the ghosts of a Stratholme quest.
+        r"Use: Use to free Spectral and Ghostly Citizens\.",
     ]
 ]
 # Use, chance on hit and equip lines the engine models by hand
@@ -481,8 +495,8 @@ ENGINE_EFFECT = [
         # Lightcrest Hammer 276419.
         "Chance on hit: Smites a target for 105 Holy damage. Deals 2 times as much damage to "
         "Undead.",
-        # Spiderchitin Wrap 280016: the Feral Combat skill a Druid's forms attack with
-        # (forever_effect_items.rs, FERAL_COMBAT_SKILL_ITEMS).
+        # Spiderchitin Wrap 280016 and Matriarch's Prowlers 286616: the Feral Combat skill a
+        # Druid's forms attack with (forever_effect_items.rs, FERAL_COMBAT_SKILL_ITEMS).
         "Equip: Increases Feral Combat +1.",
         # Fingerbreaker Stamp 276743: Strength while the wearer bleeds, which nothing in a fight
         # here causes, so the item is worn with its other lines (forever_effect_items.rs).
@@ -520,8 +534,49 @@ ON_USE_STATS = {
             "on_use": {"cooldown_ms": 360000, "category_id": 1141, "category_cooldown_ms": 30000},
         },
     ),
+    # Lucky Shovelnose Tuft: ItemEffect 237439 uses Lucky Shovelnose Snout (1315844) on the item's
+    # own cooldowns (300000 ms, and 15000 ms on category 2554). SpellEffect 1348362 is a dodge
+    # percent aura (49) of 5 on the wearer; SpellMisc 862027 has DurationIndex 8, 15 sec. 5% is 60
+    # Dodge rating, as the reference rows hold a dodge line (DODGE_RATING).
+    280060: (
+        "Use: Increases your chance to Dodge by 5% for 15 sec. (5 Min Cooldown)",
+        {
+            "buff_id": 1315844,
+            "buff_name": "Lucky Shovelnose Snout (1315844)",
+            "effect_duration_ms": 15000,
+            "scaling_options": {"0": {"stats": {"28": 5 * DODGE_RATING}}},
+            "on_use": {"cooldown_ms": 300000, "category_id": 2554, "category_cooldown_ms": 15000},
+        },
+    ),
+    # Flamebreak Talisman: ItemEffect 236650 uses Flamebreak Talisman (1315878) on the item's own
+    # cooldowns (300000 ms, and 30000 ms on category 1141; SpellCooldowns 101402 and
+    # SpellCategories 188378 say the same). SpellEffect 1348442 is an Agility aura (29, stat 1) of
+    # 33 on the wearer; SpellMisc 862061 has DurationIndex 9, 30 sec. The second effect, 1348471,
+    # is the same aura of 33 again: "If there is an elemental nearby, gain an additional 33." No
+    # client row states what counts as an elemental nearby (the two effects have the same target
+    # and no condition), so the row carries the first 33 alone.
+    280071: (
+        "Use: Increase your agility by 33 for 30 sec. If there is an elemental nearby, gain an "
+        "additional 33. (5 Min Cooldown)",
+        {
+            "buff_id": 1315878,
+            "buff_name": "Flamebreak Talisman (1315878)",
+            "effect_duration_ms": 30000,
+            "scaling_options": {"0": {"stats": {"1": 33}}},
+            "on_use": {"cooldown_ms": 300000, "category_id": 1141, "category_cooldown_ms": 30000},
+        },
+    ),
 }
 ON_USE_STAT_LINES = {line: item_id for item_id, (line, _) in ON_USE_STATS.items()}
+# A crit line whose percentage is no whole rating (14 a percent), by item: the exact line and the
+# stats the row carries for it. Tunnelweb Pincer's 0.4% is 5.6 crit rating, which reads back as the
+# 0.4% the tooltip states; the client's own rating is a whole number the tooltip rounds (5 shows as
+# 0.4%, and so does 6) and its ItemSparse row is encrypted, so the stated figure is the one taken.
+# Any other item with such a line stays left out ("fractional rating").
+FRACTIONAL_RATING_LINES = {
+    280085: ("Equip: Improves your chance to get a critical strike by 0.4%.", {21: 5.6}),
+}
+FRACTIONAL_RATING_ITEMS = {line: item_id for item_id, (line, _) in FRACTIONAL_RATING_LINES.items()}
 # A clause that doubles an equip line in a city or stronghold, where no fight is (Black Horn
 # Necklace 279863): the line reads as its base amount.
 CITY_CLAUSE = re.compile(r" This effect is doubled in Strongholds and Cities\.$")
@@ -670,6 +725,12 @@ def parse_tooltip(response):
         elif line in ON_USE_STAT_LINES:
             equip_lines += 1
             out.setdefault("on_use_stats", []).append(ON_USE_STAT_LINES[line])
+        elif line in FRACTIONAL_RATING_ITEMS:
+            equip_lines += 1
+            listed = FRACTIONAL_RATING_ITEMS[line]
+            out.setdefault("fractional_rating", []).append(listed)
+            for stat, value in FRACTIONAL_RATING_LINES[listed][1].items():
+                out["stats"][stat] = out["stats"].get(stat, 0) + value
         elif match := SKILL_LINE.fullmatch(line):
             equip_lines += 1
             pseudo = out.setdefault("pseudo", {})
@@ -751,6 +812,9 @@ def row_for(item_id, sparse, item, response):
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeShield", hand_type="HandTypeOffHand")
     elif item_class == ARMOR_CLASS and inventory == 23:
         row.update(type="ItemTypeWeapon", weapon_type="WeaponTypeOffHand", hand_type="HandTypeOffHand")
+    elif int(item["ClassID"]) == QUEST_CLASS and inventory == QUEST_RANGED_SLOT:
+        # A worn quest item of the ranged slot: no ranged weapon type, damage or speed.
+        row["type"] = "ItemTypeRanged"
     elif item_class == ARMOR_CLASS and inventory == RELIC_SLOT:
         if subclass not in RELIC_TYPE:
             raise Unreadable(f"relic subclass {subclass}")
@@ -799,6 +863,8 @@ def row_for(item_id, sparse, item, response):
         option["stats"] = {str(key): stats[key] for key in sorted(stats)}
     option["ilvl"] = parsed["ilvl"]
     row["scaling_options"] = {"0": option}
+    if parsed.get("fractional_rating", [item_id]) != [item_id]:
+        raise Unreadable("a fractional rating line listed for another item")
     if parsed.get("on_use_stats"):
         # The use line is the listed item's own, not one another item happens to share.
         if parsed["on_use_stats"] != [item_id]:

@@ -346,6 +346,79 @@ DEFIAS_ENFORCERS_MASK = {
     ),
 }
 
+# Lucky Shovelnose Tuft, a trinket whose use is a dodge buff (Wowhead, 14 November 2026).
+LUCKY_SHOVELNOSE_TUFT = {
+    "name": "Lucky Shovelnose Tuft",
+    "quality": 3,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q3\">Lucky Shovelnose Tuft</b><!--nend--><!--nd"
+        "start--><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->60</span><!--bo--><br>"
+        "Binds when picked up<br>Unique-Equipped<!--ue--><!--ue--><table width=\"100%\"><tr><td"
+        ">Trinket</td><th><!--scstart4:-4--><span class=\"q1\"></span><!--scend--></th></tr></t"
+        "able><!--rf--><span><!--stat4-->+11 Strength</span><br><span><!--stat6-->+11 Spirit<"
+        "/span><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--"
+        "><!--ps--></td></tr></table><table><tr><td>Requires Level <!--rlvl-->55<br><!--rr-->"
+        "<!--useText:0:1--><span id=\"useText1\" class=\"q2\">Use: <!--useEffect:0:1--><a href=\"/"
+        "forever/spell=1315844/lucky-shovelnose-snout\" class=\"q2\">Increases your chance to Do"
+        "dge by 5% for 15 sec.</a> (5 Min Cooldown)<!--useEffect:1--></span><!--useText:1--><"
+        "!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
+# Flamebreak Talisman, a trinket whose use is an Agility buff with a conditional second half
+# (Wowhead, 14 November 2026).
+FLAMEBREAK_TALISMAN = {
+    "name": "Flamebreak Talisman",
+    "quality": 3,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q3\">Flamebreak Talisman</b><!--nend--><!--ndst"
+        "art--><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->61</span><!--bo--><br>Bi"
+        "nds when picked up<br>Unique-Equipped<!--ue--><!--ue--><table width=\"100%\"><tr><td>T"
+        "rinket</td><th><!--scstart4:-4--><span class=\"q1\"></span><!--scend--></th></tr></tab"
+        "le><!--rf--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs-->+"
+        "17 Fire Resistance<!--e--><!--ps--></td></tr></table><table><tr><td>Requires Level <"
+        "!--rlvl-->56<br><!--rr--><!--useText:0:1--><span id=\"useText1\" class=\"q2\">Use: <!--u"
+        "seEffect:0:1--><a href=\"/forever/spell=1315878/flamebreak-talisman\" class=\"q2\">Incre"
+        "ase your agility by 33 for 30 sec. If there is an elemental nearby, gain an addition"
+        "al 33.</a> (5 Min Cooldown)<!--useEffect:1--></span><!--useText:1--><!--itemEffects:"
+        "1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></table>"
+    ),
+}
+# Tunnelweb Pincer, a dagger whose crit line is no whole rating (Wowhead, 14 November 2026).
+TUNNELWEB_PINCER = {
+    "name": "Tunnelweb Pincer",
+    "quality": 3,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q3\">Tunnelweb Pincer</b><!--nend--><!--ndstart"
+        "--><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->57</span><!--bo--><br>Binds"
+        " when picked up<!--ue--><!--ue--><table width=\"100%\"><tr><td>One-Hand</td><th><!--sc"
+        "start2:15--><span class=\"q1\">Dagger</span><!--scend--></th></tr></table><!--rf--><ta"
+        "ble width=\"100%\"><tr>\n    <td><span><!--dmg-->42 - 78 Damage</span></td>\n    <th>Spe"
+        "ed <!--spd-->1.60</th>\n</tr></table><!--dps-->(37.50 damage per second)<br><span><!-"
+        "-stat3-->+7 Agility</span><br><span><!--stat7-->+8 Stamina</span><!--ebstats--><!--e"
+        "gstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--></td></tr></tab"
+        "le><table><tr><td>Requires Level <!--rlvl-->52<br><!--rr--><span class=\"q2\">Equip: I"
+        "mproves your chance to get a critical strike by 0.4%.</span><!--itemEffects:1--><br>"
+        "<!--pvpEquip--><!--pvpEquip--></td></tr></table><!--i?280085:1:60:52-->"
+    ),
+}
+# Egan's Blaster, a quest item of the ranged slot with no damage or speed (Wowhead, 14 November
+# 2026).
+EGANS_BLASTER = {
+    "name": "Egan's Blaster",
+    "quality": 1,
+    "tooltip": (
+        "<table><tr><td><!--nstart--><b class=\"q1\">Egan's Blaster</b><!--nend--><!--ndstart--"
+        "><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->1</span><!--bo--><br>Quest It"
+        "em<br>Unique<!--ue--><!--ue--><table width=\"100%\"><tr><td>Ranged</td></tr></table><!"
+        "--rf--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e-"
+        "-><!--ps--></td></tr></table><table><tr><td><!--rr--><!--useText:0:1--><span id=\"use"
+        "Text1\" class=\"q2\">Use: <!--useEffect:0:1--><a href=\"/forever/spell=17368/egans-blast"
+        "er\" class=\"q2\">Use to free Spectral and Ghostly Citizens.</a><!--useEffect:1--></spa"
+        "n><!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--></td></tr></"
+        "table>"
+    ),
+}
+
 
 def item(class_id, subclass):
     return {"ClassID": str(class_id), "SubclassID": str(subclass)}
@@ -644,6 +717,66 @@ class ParseTests(unittest.TestCase):
         with self.assertRaisesRegex(tool.Unreadable, "listed for another item"):
             tool.row_for(274616, None, {**item(4, 0), "InventoryType": "12"}, HEART_OF_THE_PRIMEVAL)
 
+    def test_the_two_stat_use_trinkets_of_14_november_carry_their_use(self):
+        trinket = {**item(4, 0), "InventoryType": "12"}
+        # 5% Dodge is 60 Dodge rating, on the item effect's cooldowns (ItemEffect 237439).
+        tuft = tool.row_for(280060, None, trinket, LUCKY_SHOVELNOSE_TUFT)
+        self.assertEqual(
+            tool.dump_row(tuft),
+            '{"id":280060,"name":"Lucky Shovelnose Tuft","type":"ItemTypeTrinket",'
+            '"scaling_options":{"0":{"stats":{"0":11,"16":11},"ilvl":60}},"item_effects":[{"buff_id":'
+            '1315844,"buff_name":"Lucky Shovelnose Snout (1315844)","effect_duration_ms":15000,'
+            '"scaling_options":{"0":{"stats":{"28":60}}},"on_use":{"cooldown_ms":300000,'
+            '"category_id":2554,"category_cooldown_ms":15000}}],"unique":true}',
+        )
+        # The first 33 Agility alone: no row states when the second 33 applies.
+        talisman = tool.row_for(280071, None, trinket, FLAMEBREAK_TALISMAN)
+        self.assertEqual(
+            tool.dump_row(talisman),
+            '{"id":280071,"name":"Flamebreak Talisman","type":"ItemTypeTrinket",'
+            '"scaling_options":{"0":{"stats":{"36":17},"ilvl":61}},"item_effects":[{"buff_id":'
+            '1315878,"buff_name":"Flamebreak Talisman (1315878)","effect_duration_ms":30000,'
+            '"scaling_options":{"0":{"stats":{"1":33}}},"on_use":{"cooldown_ms":300000,'
+            '"category_id":1141,"category_cooldown_ms":30000}}],"unique":true}',
+        )
+        # A use line whose numbers change is no longer the listed line.
+        changed = dict(FLAMEBREAK_TALISMAN)
+        changed["tooltip"] = changed["tooltip"].replace("additional 33", "additional 34")
+        self.assertNotEqual(changed["tooltip"], FLAMEBREAK_TALISMAN["tooltip"])
+        with self.assertRaisesRegex(tool.Unreadable, "has an effect"):
+            tool.row_for(280071, None, trinket, changed)
+
+    def test_a_listed_fractional_crit_line_is_read_for_its_item_alone(self):
+        dagger = {**item(2, 15), "InventoryType": "13"}
+        # 0.4% is 5.6 crit rating, 14 a percent.
+        pincer = tool.row_for(280085, None, dagger, TUNNELWEB_PINCER)
+        self.assertEqual(
+            tool.dump_row(pincer),
+            '{"id":280085,"name":"Tunnelweb Pincer","type":"ItemTypeWeapon",'
+            '"weapon_type":"WeaponTypeDagger","hand_type":"HandTypeOneHand","weapon_speed":1.6,'
+            '"scaling_options":{"0":{"weapon_damage_min":42,"weapon_damage_max":78,'
+            '"stats":{"1":7,"2":8,"21":5.6},"ilvl":57}}}',
+        )
+        with self.assertRaisesRegex(tool.Unreadable, "listed for another item"):
+            tool.row_for(280086, None, dagger, TUNNELWEB_PINCER)
+        # Any other fractional rating stays unread.
+        other = dict(TUNNELWEB_PINCER)
+        other["tooltip"] = other["tooltip"].replace("by 0.4%", "by 0.6%")
+        with self.assertRaisesRegex(tool.Unreadable, "fractional rating"):
+            tool.row_for(280085, None, dagger, other)
+
+    def test_a_worn_quest_item_of_the_ranged_slot_is_a_ranged_row_of_no_type(self):
+        # Item row 13289: class 12 (quest), subclass 0, InventoryType 26.
+        quest = {**item(tool.QUEST_CLASS, 0), "InventoryType": "26"}
+        sparse = {"Display_lang": "Egan's Blaster", "ItemLevel": "1", "InventoryType": "26"}
+        self.assertEqual(
+            tool.dump_row(tool.row_for(13289, sparse, quest, EGANS_BLASTER)),
+            '{"id":13289,"name":"Egan\'s Blaster","type":"ItemTypeRanged",'
+            '"scaling_options":{"0":{"ilvl":1}},"unique":true}',
+        )
+        with self.assertRaisesRegex(tool.Unreadable, "not listed as worn"):
+            tool.row_for(13290, sparse, quest, EGANS_BLASTER)
+
     def test_a_piece_of_the_second_client_set_reads_its_stats_and_set(self):
         mask = tool.row_for(287019, None, {**item(4, 2), "InventoryType": "1"}, DEFIAS_ENFORCERS_MASK)
         self.assertEqual(
@@ -794,6 +927,8 @@ class CommittedFileTests(unittest.TestCase):
         self.assertLessEqual({276419, 276743, 280016}, ids)
         # The trinket whose whelp use is never pressed, 13 November 2026.
         self.assertIn(276744, ids)
+        # The two stat use trinkets and the second Feral Combat item of 14 November 2026.
+        self.assertLessEqual({280060, 280071, 286616}, ids)
 
     def test_the_worn_quest_item_is_committed(self):
         with open(tool.OUT) as rows:
@@ -801,6 +936,12 @@ class CommittedFileTests(unittest.TestCase):
         self.assertEqual(detector["type"], "ItemTypeHead")
         self.assertNotIn("armor_type", detector)
         self.assertEqual(detector["scaling_options"], {"0": {"ilvl": 1}})
+        with open(tool.OUT) as rows:
+            blaster = next(json.loads(line) for line in rows if '"id":13289,' in line)
+        self.assertEqual(blaster["type"], "ItemTypeRanged")
+        self.assertNotIn("ranged_weapon_type", blaster)
+        self.assertNotIn("weapon_speed", blaster)
+        self.assertEqual(blaster["scaling_options"], {"0": {"ilvl": 1}})
 
     def test_existing_rows_are_written_as_the_database_writes_them(self):
         with open(tool.ITEMS) as rows:

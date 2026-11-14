@@ -400,6 +400,24 @@ pub(crate) fn new_hunter(
     sim.unit_mut(unit).pseudo_stats.can_parry = true;
     sim.enable_mana_bar(unit);
 
+    // Under Forever's rules a worn quest item can sit in the ranged slot (Egan's Blaster, 13289: a
+    // row with no ranged weapon type, damage or speed). A Hunter's shots need a ranged weapon, so
+    // one who holds such an item is refused by name rather than shot with.
+    if sim.rules == Rules::Forever {
+        if let Some(item) = sim.ranged_weapon(unit) {
+            if item.ranged_weapon_type == "RangedWeaponTypeUnknown" {
+                return Err(Refusal::new(
+                    "ranged_weapon",
+                    format!(
+                        "item {} ({}) in the ranged slot is no ranged weapon, which a Hunter's \
+                         shots are not prepared without",
+                        item.id, item.name
+                    ),
+                ));
+            }
+        }
+    }
+
     let ranged_item_id = sim.ranged_weapon(unit).map(|item| item.id);
     hunter.apply_ammo_dps();
     hunter.apply_quiver_bonus(sim, ranged_item_id);
