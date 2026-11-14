@@ -1731,6 +1731,27 @@ the Go goldens and exporter uses. The departures:
   only a character the target attacks takes, and the runtime's damage proc carries no debuff for
   the target. A tank wearing the sword takes the target's swings at full attack power. Under the
   reference's rules the sword is still worn with no effect.
+- Energetic Rod (18321), main hand mace, item level 59, 41 to 78, speed 2.30, +5 Intellect, 68
+  spell damage and healing (`tests/forever_energetic_rod_20261114.rs`): "Equip: Chance on
+  landing a damaging spell to restore 48 mana to you." The reference's chance on hit list leaves
+  it out ("restores mana or rage", docs/forever-chance-on-hit.md), so a sim wearing it counted its
+  stats alone. The client rows wago.tools serves (`product=wowf`, build 1.60.1.70938, read on 14
+  November 2026): ItemEffect equips Demonic Energy (1302190), SpellAuraOptions 246697:
+  ProcChance 100, ProcCategoryRecovery 0, no SpellProcsPerMinute, ProcTypeMask 65536 (harmful
+  spells dealt). It casts 1302191, an Energize of 48 on mana (SpellEffect 1327685). Under the
+  owner's decision of 13 November 2026 the row is read literally: the chance is 100% and there is
+  no internal cooldown, so every landed damaging spell restores 48 mana a spell batch window later
+  (`forever_mana_procs`). The mask alone decodes to the cast as the trigger, as Farraki Kris's
+  "Chance on harmful spell cast" does, but the rod's tooltip names the landing of a damaging spell,
+  so the listener hears landed hits (a miss or full resist restores nothing) of spells with a
+  damaging component, the filter Searing Dagger's hotfix uses. Consecration restores nothing:
+  Forever's Consecration is an area trigger whose ticks are separate damage spells (1280345 to
+  1280349) carrying Attributes_3 0x2000000 (treat as periodic), which makes them periodic damage
+  the mask does not name, and its cast lands on no unit; the listener leaves out every spell the
+  runtime runs as an area damage over time. A judgement is a ranged attack under Forever's rules
+  (Judgement of Command a melee one since the hotfixes of 13 November 2026) and is not a spell of
+  the mask either. A wearer with no mana bar wears the rod as a plain mace,
+  and under the reference's rules it is still worn with its stats alone.
 - Four items that refused players' sims on 13 November 2026 ("no item with id N") and two more
   rows a run of `tools/rust_client_items.py build` over every candidate found
   (`tests/forever_client_items_20261114b.rs`), from Wowhead's Forever tooltips and the client
