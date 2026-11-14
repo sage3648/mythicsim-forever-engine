@@ -1,8 +1,9 @@
 //! Water Shield (408510), from the client (1.60.1.70532): three globes for 10 minutes; a critical
 //! spell of the shaman's, damage or heal, spends one and restores 2% of maximum mana (408511),
 //! one globe every 3.5 sec at most. Client 70532 lets harmful spells spend globes (its proc flags
-//! went from 156328 to 221864) and dropped the 15 sec cooldown. The globes a hit taken spends
-//! never come up: nothing in a simulated fight strikes the shaman.
+//! went from 156328 to 221864) and dropped the 15 sec cooldown. The same row hears the melee hits
+//! the shaman takes (the 0x8 bit of those flags, at 100%): a landed swing of a target that tanks
+//! the shaman spends a globe too, on the same internal cooldown.
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::core::fight::{Agent, AuraRef, Fight, ResourceKind, SpellId, SpellResult};
@@ -78,11 +79,30 @@ impl WaterShield {
         if fight.now < ready_at || fight.aura(self.aura).stacks == 0 {
             return None;
         }
+        Some(self.spend(fight))
+    }
+
+    /// The aura's OnSpellHitTaken for a target's swing: a landed hit spends a globe once the
+    /// internal cooldown is up. Returns when the next globe can go, if this one did.
+    pub(crate) fn on_hit_taken<A: Agent>(
+        &self,
+        fight: &mut Fight<A>,
+        result: &SpellResult,
+        ready_at: i64,
+    ) -> Option<i64> {
+        if !result.landed() || fight.now < ready_at || fight.aura(self.aura).stacks == 0 {
+            return None;
+        }
+        Some(self.spend(fight))
+    }
+
+    /// One globe goes for its share of maximum mana. Returns when the next can.
+    fn spend<A: Agent>(&self, fight: &mut Fight<A>) -> i64 {
         fight.remove_stack(self.aura);
         if fight.has_mana_bar() {
             let amount = fight.player.powers.max_mana * self.mana_fraction;
             fight.add_mana(amount, self.metrics);
         }
-        Some(fight.now + self.icd)
+        fight.now + self.icd
     }
 }

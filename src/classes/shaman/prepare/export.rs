@@ -454,8 +454,8 @@ impl Shaman {
             effects.push(effect);
         }
         // registerWaterShieldSpell (talent): the cast puts up every globe; the shaman's own
-        // critical spells spend one for mana (Forever's rules only: Go never casts it). The hit
-        // taken trigger never fires in scope.
+        // critical spells spend one for mana (Forever's rules only: Go never casts it), and so
+        // does a landed swing of a target that tanks the shaman.
         if let Some(aura) = sim
             .get_aura(player, "Water Shield")
             .filter(|_| sim.rules == crate::prepare::sim::Rules::Forever)
