@@ -67,7 +67,8 @@ pub(super) fn seal_label(name: &str, label: &str, rank: &Row) -> String {
     format!("{name}{label} Rank {}", rank.rank_number())
 }
 
-/// The proc mask of every seal's judgement. Go gives them a main hand special's. Blizzard's WoW
+/// The proc mask of every seal's judgement but Command's (`judgement_of_command_proc_mask`). Go
+/// gives them a main hand special's. Blizzard's WoW
 /// Forever hotfixes of 11 November 2026: "Judgement changed to now be considered a Ranged
 /// Attack. This means it no longer counts as a Melee attack for the purposes of item and effect
 /// procs and uses the Paladin's Ranged Hit chance." So under Forever's rules a judgement is a
@@ -80,6 +81,15 @@ pub(super) fn judgement_proc_mask(sim: &Sim) -> ProcMask {
         Rules::Forever => ProcMask::RANGED_SPECIAL,
         Rules::GoReference => ProcMask::MELEE_MH_SPECIAL,
     }
+}
+
+/// Judgement of Command's proc mask, a main hand special under both rules. Blizzard's WoW
+/// Forever hotfixes of 13 November 2026: "Judgement of Command now activates on-hit effects and
+/// counts as a melee attack." The developers' note keeps the rest ranged: "All other judgements
+/// will continue to be considered Ranged attacks." So melee procs hear it again, Windfury Totem
+/// among them, and its roll reads melee hit, crit and the main hand's weapon skill.
+pub(super) fn judgement_of_command_proc_mask() -> ProcMask {
+    ProcMask::MELEE_MH_SPECIAL
 }
 
 /// The fields every judgement spell of a seal shares: Melee in SpellCategories, so it rolls on
@@ -252,7 +262,7 @@ impl Paladin {
                 judge_rank,
                 masks::JUDGEMENT_OF_COMMAND,
                 SpellFlag::MELEE_METRICS,
-                judgement_proc_mask(sim),
+                judgement_of_command_proc_mask(),
             )
         };
         sim.register_spell(unit, judgement);

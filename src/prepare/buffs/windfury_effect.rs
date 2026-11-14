@@ -8,7 +8,7 @@ use super::super::env::Environment;
 use super::super::resolve_proc::{chance, proc_trigger};
 use super::super::sim::Rules;
 use super::super::sim::SECOND;
-use super::super::spell::ProcMask;
+use super::super::spell::{ProcMask, SpellFlag};
 use super::super::spelldata::{find, must_find};
 
 /// Go `outcomeNames`: the names of the outcome bits a listener hears. A single bit's name is the
@@ -76,12 +76,22 @@ fn proc_trigger_spells(env: &Environment, trigger: &ProcTrigger) -> Vec<usize> {
 /// specials, and its extra condition refuses an off hand special when the character wields an
 /// off hand weapon: a shield strike is a main hand attack to the server.
 ///
-/// Under Forever's rules the trigger hears main hand autos, extra swings included, and only the
-/// abilities whose client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off in
-/// place of the next swing (`Attributes[0]` 0x4). Forever combat logs: Bloodthirst 0 of 45,
-/// Whirlwind 0 of 55 and 0 of 279, Overpower 0 of 97 and Holy Strike 0 of 78 rolls, while Mortal
-/// Strike procs it 29 times in 150 and Maul, which goes off on the next swing, 27.2% of the time.
-/// No off hand special hears it, a shield strike included.
+/// Under Forever's rules the trigger hears main hand autos, extra swings included, and the main
+/// hand strike of every melee ability. Blizzard's WoW Forever hotfixes of 13 November 2026:
+/// "Windfury Totem is now correctly activated by all melee abilities even if it doesn't involve
+/// your main hand weapon", with the developers' note "Strikes from abilities that involve your
+/// offhand weapon like Whirlwind or Mutilate do not have a chance to activate Windfury. The
+/// main-hand strike from those abilities still does." Until then only an ability whose client
+/// row needs a main hand weapon (`Attributes[3]` 0x400) or goes off in place of the next swing
+/// (`Attributes[0]` 0x4) rolled it: in combat logs taken before the hotfix Bloodthirst rolled 0
+/// of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of 97 and Holy Strike 0 of 78, while
+/// Mortal Strike procs it 29 times in 150 and Maul, which goes off on the next swing, 27.2% of
+/// the time. No off hand special hears it.
+///
+/// A triggered hit is not an ability and stays out unless its row carries one of the two flags:
+/// a seal's proc, Windfury Weapon's strikes and the Sweeping Strikes hit, each a Passive Spell.
+/// Whether the game rolls the totem on those is not stated and needs a log taken after the
+/// hotfix, as does the chance, which stays the autos' 20% for abilities.
 pub(crate) fn windfury_trigger_spells(env: &Environment, trigger: &ProcTrigger) -> Vec<usize> {
     let forever = env.sim.rules == Rules::Forever;
     let mut trigger = trigger.clone();
@@ -104,9 +114,12 @@ pub(crate) fn windfury_trigger_spells(env: &Environment, trigger: &ProcTrigger) 
             }
             if forever {
                 let row = find(spell.action_id.spell_id);
+                // Every ability's main hand strike since the hotfixes of 13 November 2026. A
+                // triggered hit, which carries Passive Spell, still needs the row's flags.
                 return spell.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
                     || row.requires_main_hand()
-                    || row.on_next_swing();
+                    || row.on_next_swing()
+                    || !spell.flags.matches(SpellFlag::PASSIVE_SPELL);
             }
             !(spell.proc_mask.matches(ProcMask::MELEE_OH_SPECIAL) && has_oh_weapon)
         })

@@ -231,7 +231,8 @@ fn shield_slam_and_shield_bash_strike_with_the_main_hand() {
     // Rank 4 at spell level 60 carries rank 1's measured 4.45 a spell level: 267.
     assert_eq!(spell(&forever, SHIELD_SLAM).1["flat_threat_bonus"], 267.0);
     assert_eq!(spell(&reference, SHIELD_SLAM).1["flat_threat_bonus"], 508.0);
-    // Windfury Totem still never rolls on them.
+    // Windfury Totem rolls on them since the hotfixes of 13 November 2026 ("activated by all
+    // melee abilities even if it doesn't involve your main hand weapon"); it never did before.
     if let Some(totem) = forever["effects"]
         .as_array()
         .unwrap()
@@ -242,7 +243,7 @@ fn shield_slam_and_shield_bash_strike_with_the_main_hand() {
         for spell_id in [SHIELD_SLAM, SHIELD_BASH] {
             let position = spell(&forever, spell_id).0;
             assert!(
-                !totem["trigger_spells"]
+                totem["trigger_spells"]
                     .as_array()
                     .unwrap()
                     .iter()

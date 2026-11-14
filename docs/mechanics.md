@@ -428,7 +428,8 @@ the Go goldens and exporter uses. The departures:
     3, 5 and 6 carry it, unmeasured. The reference's literal is 0.0255.
   - Shield Slam and Shield Bash are main hand specials: Dreadfrost Saber's equip effect fired on
     54 of 80 isolated Shield Slams and 7 of 8 Shield Bashes, and on none of 74 Shield Blocks.
-    Their rows still require the shield, and Windfury Totem still never rolls on them. Weapon
+    Their rows still require the shield. Windfury Totem never rolled on them until the hotfixes
+    of 13 November 2026, and does since (above). Weapon
     procs (a chance on hit or a weapon enchant) do not hear them either: in combat logs of client
     1.60.1.70888 the Fiery Blaze enchant (36) fired on 0 of 617 Shield Slams and 0 of 78 Shield
     Bashes, and Rock on Stick's chance on hit on 0 of 157 shield strikes. Both carry Suppress
@@ -484,6 +485,55 @@ the Go goldens and exporter uses. The departures:
     client names the talent Unsealed Wrath (1310735). The totem's extra main hand attack neither
     stores the active seal nor spends the other Echoes; every other landed auto still does. The
     talent exists only under Forever's rules.
+- The hotfixes of 13 November 2026 (Blizzard's hotfix post; Forever preparation only, the
+  reference keeps its own; `tests/hotfix_20261113.rs`):
+  - Shaman: "Windfury Totem is now correctly activated by all melee abilities even if it doesn't
+    involve your main hand weapon." Developers' note: "Strikes from abilities that involve your
+    offhand weapon like Whirlwind or Mutilate do not have a chance to activate Windfury. The
+    main-hand strike from those abilities still does." Every ability's main hand strike rolls
+    the totem, whatever its row's flags: Bloodthirst, Overpower, Whirlwind's main hand strike,
+    Shield Slam and Shield Bash, Holy Strike, Hammer of the Righteous, Stormstrike's main hand
+    strike, Garrote, Strider Kick and the cat's and the bear's abilities, which need no weapon.
+    Off hand strikes still never roll it. This replaces the rule measured on logs taken before
+    the hotfix (the row needs a main hand weapon or goes off on the next swing), further down.
+    Two things the post does not state, both waiting on a combat log taken after the hotfix:
+    - A triggered hit is not an ability and stays out: a seal's proc (Seal of Command,
+      Righteousness and Fury), Windfury Weapon's strikes and the Sweeping Strikes hit. Each is a
+      Passive Spell in the spellbook, which is how the trigger tells them apart
+      (`windfury_trigger_spells`). Main hand autos and extra swings roll it as before.
+    - An ability rolls the autos' 20%. Before the hotfix Mortal Strike procced it 29 times in
+      150 and Maul on 27.2% of its landed hits, so the chance is kept and not measured since.
+  - Paladin: "Judgement of Command now activates on-hit effects and counts as a melee attack."
+    Developers' note: "All other judgements will continue to be considered Ranged attacks."
+    Judgement of Command takes a main hand special's proc mask again
+    (`judgement_of_command_proc_mask`), as in the reference: melee procs hear it (weapon
+    enchants and oils, chance on hit items, Vindication, the judgement refresh, Windfury Totem
+    under the line above) and its roll reads melee hit and crit and the main hand's weapon
+    skill. The other seals' judgements keep the ranged special of 11 November.
+  - "Blessed Band of Light's Hit stat has been removed." The live row of 272407 drops the 1% hit
+    and keeps 10 Stamina, 8 Spirit, 31 healing and 10 spell damage
+    (`data/forever-live-items.jsonl`). Wowhead's Forever tooltip and the ItemSparse row of
+    client 1.60.1.70938 still showed the hit on 14 November 2026, so the row is the post's.
+  - "Darkspear signet rings have had their Mp5 corrected and now match Alliance-equivalent
+    rings." The Alliance's rings of the same four item levels are the Militant's Bands (271913
+    to 271916, Theramore Expeditionary Force), 3, 3, 2 and 2 mana per 5 sec at item levels 63,
+    53, 43 and 33, so the live rows of the Darkspear Signets (272068 to 272071) take those in
+    place of 9, 7, 6 and 4. The post gives no number and both tooltip sources still showed the
+    old ones on 14 November 2026: the values are read from "now match".
+  - Not taken, each waiting on a row or a tooltip that shows the change: "Channeler's Ring now
+    has Spell Power (was Spirit)" (272406; no amount is stated), "Everstaring Abomination Eye's
+    Spirit stats corrected" (284097), "The Bad Hat no longer provides an incorrect amount of
+    spell power" (260212) and "The Souvenir Sea Shell's stats have been corrected" (274749).
+    "Gloves of Holy Might is now only activated by spells and abilities that are harmful and
+    deal damage" (867): Wowhead's tooltip names spell 1330855 for its equip effect (ItemEffect
+    238916 in client 1.60.1.70938; a 15% chance with a 20 second cooldown), which the pinned
+    store does not hold, and the registration read from the pinned rows is a chance on hit of a weapon, which
+    never fires from the hands slot. The proc is not modelled yet.
+  - No fight changes with the rest: "Fixed a bug incorrectly allowing Wild Growth to be cast
+    while moving" (it is a 3 second cast here), "Wild Growth spell healing coefficient increased
+    to 6.6% (was 3.3%)" (applied since hotfix push 113718, above), Taran Icebreaker "now
+    correctly behaves as a 2-handed Mace" (its live row is one) and Glimmering Mithril Insignia
+    "no longer requires the ability to wear Mail armor" (no class is refused it).
 - The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
   preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
   The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the
@@ -1069,13 +1119,14 @@ the Go goldens and exporter uses. The departures:
   totem is cast (air slot, mana, global cooldown) and its trigger stays off while the party's
   totem stands or the imbue is up; an item swap that takes the imbue off lets it back on at
   once. The reference refuses the request, as before (`one_aura` on `windfury_totem_self`).
-- Windfury Totem's triggers and charges, from Forever combat logs. An ability rolls the totem
-  only when its client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off on the
+- Windfury Totem's triggers and charges, from Forever combat logs. Since the hotfixes of 13
+  November 2026 every ability's main hand strike rolls the totem (above); until then an ability
+  rolled it only when its client row needs a main hand weapon (`Attributes[3]` 0x400) or goes off on the
   next swing (`Attributes[0]` 0x4); main hand autos and extra swings always roll it. Unflagged
-  abilities never proc it: Bloodthirst 0 of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of
+  abilities never procced it then: Bloodthirst 0 of 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of
   97, Holy Strike 0 of 78. Flagged ones proc it at the swing rate (Mortal Strike 29 of 150), and
   Maul, which goes off on the next swing, on 27.2% of its landed hits. No off hand special rolls
-  it, a shield strike included. A landed hit rolls it without dealing damage (Sunder Armor
+  it. A landed hit rolls it without dealing damage (Sunder Armor
   applications at 15%); a miss still does not. The proc grants every charge and the auto that
   fired it spends none, so the next off hand auto keeps the attack power (46 of 47), and every
   outcome of a later auto spends one (8 of 8 missed swings). The reference rolls it off every

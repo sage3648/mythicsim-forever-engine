@@ -701,7 +701,9 @@ fn hammer_of_the_righteous_cleaves() {
     // Judgement of Wisdom pays only on landed hits, which moved the rolls after a miss. 967 since
     // judgements are ranged attacks (hotfixes of 11 November 2026) and melee procs skip them.
     // 960 since Ironfoe's Fury of Forgewright rolls 3% under Forever's rules (13 November 2026).
-    assert_eq!(casts, 960.0);
+    // 967 since every ability's main hand strike rolls Windfury Totem, Holy Strike and Hammer of
+    // the Righteous among them (hotfixes of 13 November 2026).
+    assert_eq!(casts, 967.0);
     assert!(damage > 0.0);
 }
 
@@ -724,14 +726,16 @@ fn seal_of_justice_judges_justice() {
     // 3298 since push 113554's tree (3983 before): the fixture's talents read in it. 3295 since
     // Windfury Totem's Forever rules. 3262 since Judgement of Wisdom pays only on landed hits.
     // 3258 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
-    // 3256 since judgements are ranged attacks (hotfixes of 11 November 2026).
-    assert_eq!(action(&player, 20164, 0).0, 3256.0);
+    // 3256 since judgements are ranged attacks (hotfixes of 11 November 2026). 3273 since every
+    // ability's main hand strike rolls Windfury Totem (hotfixes of 13 November 2026).
+    assert_eq!(action(&player, 20164, 0).0, 3273.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
     // Wisdom pays only on landed hits. 748 since the 11 November live rows of Truestrike
     // Shoulders and Battleborn Armbraces. 749 since judgements are ranged attacks (hotfixes of
-    // 11 November 2026).
-    assert_eq!(action(&player, 20184, 0).0, 749.0);
+    // 11 November 2026). 754 since every ability's main hand strike rolls Windfury Totem
+    // (hotfixes of 13 November 2026).
+    assert_eq!(action(&player, 20184, 0).0, 754.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -742,8 +746,10 @@ fn warrior_strikes_and_freezing_trap_run() {
         // 530 since Windfury Totem's and Sword Specialization's Forever rules (531 before). 531
         // since rage from damage taken reads the attacker's level and Shield Bash strikes with
         // the main hand (12 November 2026). 530 since weapon procs do not hear Shield Slam or
-        // Shield Bash (13 November 2026). 529 since Ironfoe's Fury of Forgewright rolls 3%.
-        ("protection-warrior-shield-bash", 1672, 529.0),
+        // Shield Bash (13 November 2026). 529 since Ironfoe's Fury of Forgewright rolls 3%. 531
+        // since every ability's main hand strike rolls Windfury Totem, the shield strikes too
+        // (hotfixes of 13 November 2026).
+        ("protection-warrior-shield-bash", 1672, 531.0),
         // 78 since the notes of 2 November (Two-Handed Weapon Specialization 6%, Slam on 15 sec)
         // changed the rage a fight has (77 after #183 and #184).
         // 77 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
@@ -793,8 +799,9 @@ fn a_druids_own_thorns_strikes_back() {
     // Songstone of Ironforge. 1659 since Judgement of Wisdom pays only on landed hits, which
     // moved the rolls after a missed spell. 1647 since the 11 November live rows of Ban'thok Sash,
     // Hands of Power, Robe of Everlasting Night and Burial Shawl, and Star of Mystaria's hit
-    // counted once (1.3%, not 1.3% and 1% spell hit).
-    assert_eq!(action(&player, 9910, 0).0, 1647.0);
+    // counted once (1.3%, not 1.3% and 1% spell hit). 1651 since Blessed Band of Light gives no
+    // hit (hotfixes of 13 November 2026), which moved the rolls after a missed spell.
+    assert_eq!(action(&player, 9910, 0).0, 1651.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 

@@ -290,8 +290,9 @@ fn dismember_hits_for_three_hundred_thirty_five_to_a_thousand_and_five() {
         .unwrap()["targets"][0]["hitRange"];
     let (min, max) = (hit["min"].as_f64().unwrap(), hit["max"].as_f64().unwrap());
     assert!(min >= 335.0 && max <= 1005.0 * 1.15 + 1e-9, "{min} {max}");
-    // The row's range is three to one, whatever multiplies it.
-    assert!(max / min <= 3.0 + 1e-9, "{min} {max}");
+    // The row's range is three to one, whatever multiplies it, and Vengeance may be up for the
+    // largest hit alone.
+    assert!(max / min <= 3.0 * 1.15 + 1e-9, "{min} {max}");
 }
 
 // ---------------------------------------------------------------------------------------------
