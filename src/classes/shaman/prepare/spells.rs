@@ -321,6 +321,13 @@ impl Shaman {
         let mut config = self.new_shock_spell_config(rank, school::NATURE, shock_timer);
         config.class_spell_mask = masks::EARTH_SHOCK;
         config.flags |= SpellFlag::BINARY;
+        // Under Forever's rules Earth Shock is the high threat shock: its tooltip ends "Causes a
+        // high amount of threat" at every rank (8042 to 10414), Frost Shock's does not, and
+        // Classic threat measurements double Earth Shock's damage as threat. The reference
+        // doubles Frost Shock instead.
+        if sim.rules == Rules::Forever {
+            config.threat_multiplier *= 2.0;
+        }
         sim.register_spell(unit, config);
     }
 
@@ -376,7 +383,9 @@ impl Shaman {
         let mut config = self.new_shock_spell_config(rank, school::FROST, shock_timer);
         config.class_spell_mask = masks::FROST_SHOCK;
         config.flags |= SpellFlag::BINARY;
-        config.threat_multiplier *= 2.0;
+        if sim.rules != Rules::Forever {
+            config.threat_multiplier *= 2.0;
+        }
         sim.register_spell(unit, config);
     }
 
