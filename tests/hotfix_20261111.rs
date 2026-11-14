@@ -3,7 +3,8 @@
 //!
 //! - "Judgement changed to now be considered a Ranged Attack. This means it no longer counts as
 //!   a Melee attack for the purposes of item and effect procs and uses the Paladin's Ranged Hit
-//!   chance." Every seal's judgement is a ranged special: melee procs no longer hear it.
+//!   chance." Every seal's judgement but Command's is a ranged special: melee procs no longer
+//!   hear it. Judgement of Command went back to a melee attack two days later.
 //! - Retribution: "Unsealed Fury no longer generates echoes from Windfury Totem attacks." The
 //!   talent is Unsealed Wrath (1310735) in the client; the totem's extra swing neither stores
 //!   the active seal in its Echo nor spends the others.
@@ -12,9 +13,10 @@ use forever_engine::{check_prepared, prepare_json_with, simulate_prepared, Rules
 use serde_json::Value;
 use std::{fs, path::Path};
 
-/// One rank of each seal's judgement the reference also has: Righteousness, Command, the
-/// Crusader, Wisdom, Light and Justice.
-const JUDGEMENTS: [i64; 6] = [20286, 20968, 20303, 20355, 20346, 20184];
+/// One rank of each seal's judgement the reference also has, but Command's: Righteousness, the
+/// Crusader, Wisdom, Light and Justice. Judgement of Command is a melee attack again since the
+/// hotfixes of 13 November 2026 (`tests/hotfix_20261113.rs`).
+const JUDGEMENTS: [i64; 5] = [20286, 20303, 20355, 20346, 20184];
 
 /// A production twisting rotation with Unsealed Wrath and Windfury Totem (5 November 2026).
 const ECHOES_FIXTURE: &str =

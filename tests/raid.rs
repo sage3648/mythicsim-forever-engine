@@ -967,8 +967,10 @@ fn a_target_swaps_between_two_tanks_on_a_timer() {
             times.len()
         );
         for time in times {
-            let window = (time / 30.0).floor() as usize;
-            assert_eq!(window % 2, tank, "tank {tank} is hit at {time}");
+            // The log rounds to hundredths, so a swing in a window's last 5 ms reads as the
+            // mark that ends it (119.995 as 120.00).
+            let windows = [*time, time - 0.005].map(|time| (time / 30.0).floor() as usize % 2);
+            assert!(windows.contains(&tank), "tank {tank} is hit at {time}");
         }
         // Both of the tank's windows see swings.
         for window in (tank..4).step_by(2) {

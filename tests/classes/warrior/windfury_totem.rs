@@ -1,10 +1,13 @@
-//! The party's Windfury Totem on a Warrior under Forever's rules, from Forever combat logs. An
-//! ability rolls the totem only when its client row needs a main hand weapon (`Attributes[3]`
-//! 0x400) or goes off on the next swing (`Attributes[0]` 0x4): Bloodthirst 0 of 45, Whirlwind
-//! 0 of 55 and 0 of 279, Overpower 0 of 97, while Mortal Strike procs it 29 times in 150. A
-//! landed hit rolls it without dealing damage (Sunder Armor applications at 15%). The auto that
-//! fires the proc spends no charge, so the next off hand auto keeps the attack power (46 of
-//! 47), and a missed auto spends one (8 of 8).
+//! The party's Windfury Totem on a Warrior under Forever's rules. Every ability's main hand
+//! strike rolls the totem since Blizzard's hotfixes of 13 November 2026 ("Windfury Totem is now
+//! correctly activated by all melee abilities even if it doesn't involve your main hand
+//! weapon"); an off hand strike and a triggered hit such as Sweeping Strikes' do not. Before the
+//! hotfix an ability rolled it only when its client row needs a main hand weapon
+//! (`Attributes[3]` 0x400) or goes off on the next swing (`Attributes[0]` 0x4): Bloodthirst 0 of
+//! 45, Whirlwind 0 of 55 and 0 of 279, Overpower 0 of 97, while Mortal Strike procs it 29 times
+//! in 150. From Forever combat logs: a landed hit rolls it without dealing damage (Sunder Armor
+//! applications at 15%). The auto that fires the proc spends no charge, so the next off hand
+//! auto keeps the attack power (46 of 47), and a missed auto spends one (8 of 8).
 
 use forever_engine::{contracts::prepared_v2::PreparedV2, prepare_json_with, Rules};
 use serde_json::{json, Value};
@@ -17,6 +20,8 @@ const MORTAL_STRIKE: i64 = 21553;
 const WHIRLWIND: i64 = 1680;
 const OVERPOWER: i64 = 11585;
 const SLAM: i64 = 11605;
+/// Sweeping Strikes' extra hit, a triggered hit.
+const SWEEPING_STRIKES_HIT: i64 = 12723;
 /// The tag of the totem's extra main hand attack.
 const TOTEM_SWING: i64 = 25584;
 /// The totem's charges of attack power.
@@ -151,26 +156,32 @@ fn time_of(line: &str) -> &str {
 }
 
 #[test]
-fn only_main_hand_and_next_swing_abilities_roll_the_totem() {
+fn every_ability_main_hand_strike_rolls_the_totem() {
     let mut fury = prepared(&request("warrior", Rules::Forever), Rules::Forever);
     let fury_heard = heard(&mut fury);
     assert!(hears_auto(&fury_heard, 1), "the main hand auto");
     assert!(hears_auto(&fury_heard, TOTEM_SWING), "the extra swing");
     assert!(!hears_auto(&fury_heard, 2), "the off hand auto");
-    for (spell, tag) in [
-        (BLOODTHIRST, 0),
-        (WHIRLWIND, 1),
-        (WHIRLWIND, 2),
-        (OVERPOWER, 0),
-    ] {
-        assert!(!hears(&fury_heard, spell, tag), "{spell} tag {tag}");
+    for (spell, tag) in [(BLOODTHIRST, 0), (WHIRLWIND, 1), (OVERPOWER, 0)] {
+        assert!(hears(&fury_heard, spell, tag), "{spell} tag {tag}");
     }
+    assert!(
+        !hears(&fury_heard, WHIRLWIND, 2),
+        "Whirlwind's off hand strike"
+    );
     let mut arms = prepared(&request("arms-warrior", Rules::Forever), Rules::Forever);
     let arms_heard = heard(&mut arms);
-    for spell in [MORTAL_STRIKE, SLAM] {
+    for spell in [MORTAL_STRIKE, SLAM, OVERPOWER] {
         assert!(hears(&arms_heard, spell, 0), "{spell}");
     }
+    for tag in [0, 1] {
+        assert!(
+            !hears(&arms_heard, SWEEPING_STRIKES_HIT, tag),
+            "Sweeping Strikes' hit, tag {tag}"
+        );
+    }
     let effect = totem(&mut fury).clone();
+    assert_eq!(effect["trigger_proc_chance"], json!(0.2));
     assert_eq!(effect["trigger_require_damage"], json!(false));
     assert_eq!(effect["trigger_spends_no_charge"], json!(true));
     assert_eq!(effect["any_outcome_spends"], json!(true));
@@ -184,11 +195,11 @@ fn only_main_hand_and_next_swing_abilities_roll_the_totem() {
     assert!(effect.get("any_outcome_spends").is_none());
 }
 
-/// A warrior that casts nothing but Bloodthirst gets no totem procs off its abilities under
-/// Forever's rules, while one that casts Mortal Strike does. The reference procs it off
-/// Bloodthirst too.
+/// A warrior that casts nothing but Bloodthirst gets totem procs off it under Forever's rules
+/// since the hotfixes of 13 November 2026, as one that casts Mortal Strike does and as the
+/// reference does.
 #[test]
-fn bloodthirst_never_rolls_the_totem_and_mortal_strike_does() {
+fn bloodthirst_rolls_the_totem_as_mortal_strike_does() {
     let procs = |name: &str, stance: i64, spell: i64, rules: Rules| {
         let mut request = request(name, rules);
         request["raid"]["parties"][0]["players"][0]["rotation"] = rotation(stance, &[spell]);
@@ -196,10 +207,7 @@ fn bloodthirst_never_rolls_the_totem_and_mortal_strike_does() {
         abilities_only_at_full_chance(&mut prepared);
         totem_swings(&simulate(prepared, 20))
     };
-    assert_eq!(
-        procs("warrior", BERSERKER_STANCE, BLOODTHIRST, Rules::Forever),
-        0
-    );
+    assert!(procs("warrior", BERSERKER_STANCE, BLOODTHIRST, Rules::Forever) > 100);
     assert!(procs("warrior", BERSERKER_STANCE, BLOODTHIRST, Rules::GoReference) > 100);
     assert!(procs("arms-warrior", BATTLE_STANCE, MORTAL_STRIKE, Rules::Forever) > 100);
 }

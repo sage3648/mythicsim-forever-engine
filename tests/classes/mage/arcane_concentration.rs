@@ -68,7 +68,7 @@ fn clearcasting_proc(line: &str) -> bool {
 
 /// Each Arcane Missiles channel (rank 7, 10212) rolls as it starts, between its cast and its
 /// channel aura on the target, before any missile flies. Nine seeded ten-minute fights of nothing
-/// but Arcane Missiles, about a thousand channels: Clearcasting comes from the starts at about
+/// but Arcane Missiles, about nine hundred channels: Clearcasting comes from the starts at about
 /// a sixth of the talent's chance (the start's share beside the five missiles, hotfixes of 9
 /// November 2026), every channel together gains it at about the whole chance, and the channel
 /// that procs it at its start does not spend it.
@@ -110,7 +110,9 @@ fn arcane_missiles_channel_start_rolls_for_clearcasting() {
             );
         }
     }
-    assert!(channels > 900, "only {channels} channels");
+    // 887 since Blessed Band of Light, which the board's request wears, gives no hit (hotfixes of
+    // 13 November 2026); 911 before.
+    assert!(channels > 850, "only {channels} channels");
     let rate = f64::from(procs) / f64::from(channels);
     let share = chance / 6.0;
     assert!(
