@@ -36,6 +36,7 @@ pub(crate) mod forever_effect_items;
 pub(crate) mod forever_item_sets;
 pub(crate) mod forever_items;
 pub(crate) mod forever_items_generated;
+pub(crate) mod forever_mana_procs;
 pub(crate) mod forever_set_spells_generated;
 pub(crate) mod forever_tank_procs;
 pub(crate) mod healer_gear;

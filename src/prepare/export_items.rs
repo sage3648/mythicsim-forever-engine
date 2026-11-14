@@ -1445,6 +1445,20 @@ fn has_damaging_component(row: &Spell, depth: u8) -> bool {
     })
 }
 
+/// Whether the spell at this spellbook position has a damaging component (Forever rules). A
+/// spell the sim gives a spell power coefficient or runs as a damage over time deals damage even
+/// where its row scripts it with a dummy effect (Holy Shock's hit, Fire Nova). An item's own
+/// action or a spell the store lacks is left as it was.
+pub(crate) fn deals_damage(env: &Environment, position: usize) -> bool {
+    let spell = env.sim.unit(env.player).spellbook[position];
+    let state = env.sim.spell(spell);
+    state.bonus_coefficient != 0.0
+        || state.dots.iter().any(Option::is_some)
+        || state.aoe_dot.is_some()
+        || crate::data::spells::find(state.action_id.spell_id)
+            .is_none_or(|row| has_damaging_component(row, 0))
+}
+
 /// melee_procs.go `spellDataDamageProcEffects`: a listener resolved from the trigger row that
 /// casts the damage spell at once on the unit hit, or, for a hit taken, on the attacker. The hit
 /// is described as `proc_damage_shape` does: dealt where it lands, or struck by a melee or ranged
@@ -1516,19 +1530,7 @@ fn spell_data_damage_proc_effects(
             proc_trigger_spells(env, &listener)
         };
         if env.sim.rules == super::sim::Rules::Forever && DAMAGING_SPELLS_ONLY.contains(&label) {
-            trigger_spells.retain(|&position| {
-                let spell = env.sim.unit(env.player).spellbook[position];
-                // A spell the sim gives a spell power coefficient or runs as a damage over time
-                // deals damage even where its row scripts it with a dummy effect (Holy Shock's
-                // hit, Fire Nova). An item's own action or a spell the store lacks is left as it
-                // was.
-                let state = env.sim.spell(spell);
-                state.bonus_coefficient != 0.0
-                    || state.dots.iter().any(Option::is_some)
-                    || state.aoe_dot.is_some()
-                    || crate::data::spells::find(state.action_id.spell_id)
-                        .is_none_or(|row| has_damaging_component(row, 0))
-            });
+            trigger_spells.retain(|&position| deals_damage(env, position));
         }
         let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": label, "trigger_spells": trigger_spells,
@@ -2817,6 +2819,7 @@ pub(crate) fn item_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     effects.extend(gear_proc_effects(env, unrepresented));
     effects.extend(spell_data_stat_proc_effects(env, unrepresented));
     effects.extend(super::forever_tank_procs::export_effects(env));
+    effects.extend(super::forever_mana_procs::export_effects(env));
     effects.extend(energy_proc_effects(env, unrepresented));
     effects.extend(super::healer_gear::export_effects(env, unrepresented));
     effects

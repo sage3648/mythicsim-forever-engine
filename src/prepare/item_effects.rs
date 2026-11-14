@@ -31,6 +31,7 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
                     || super::forever_effect_items::equip_damage_proc(item.id).is_some()
                     || super::forever_effect_items::feral_combat_skill(item.id).is_some()
                     || super::forever_tank_procs::has_item_effect(item.id)
+                    || super::forever_mana_procs::has_item_effect(item.id)
                     || super::forever_items::versus_attack_power(item.id).is_some()
                     || crate::classes::forever_item_effect(&env.sim, unit, item.id)));
         if has_effect && !seen_items.contains(&item.id) && usable {
