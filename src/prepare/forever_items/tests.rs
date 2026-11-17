@@ -232,10 +232,11 @@ mod exports {
             effect["armor_by_stacks"],
             json!([0.0, -100.0, -200.0, -300.0])
         );
-        // Two procs a minute of the main hand's 2.6 second swing, heard by its auto attack.
+        // Forever's 3.2 procs a minute of the main hand's 2.6 second swing, heard by its auto
+        // attack.
         assert_eq!(
             effect["chances"],
-            json!([{"spell": main_hand_auto(&env), "chance": 2.6 * (2.0 / 60.0)}])
+            json!([{"spell": main_hand_auto(&env), "chance": 2.6 * (3.2 / 60.0)}])
         );
     }
 
