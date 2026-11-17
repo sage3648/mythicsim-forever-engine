@@ -397,13 +397,16 @@ impl Warrior {
         }
         if talent("deep_wounds") > 0 {
             let bleed = data.deep_wounds_triggered.by_id(412609);
-            effects.push(json!({"kind": "deep_wounds", "spell_id": bleed.id,
+            let mut deep_wounds = json!({"kind": "deep_wounds", "spell_id": bleed.id,
                 "trigger_aura": "Deep Wounds - Trigger",
                 "share": data.deep_wounds.fraction_at(talent("deep_wounds")),
                 "tick_can_crit": bleed.periodic_can_crit(),
-                "tick_magic": bleed.defense_type_core() == DefenseType::Magic,
+                "tick_magic": bleed.defense_type_core() == DefenseType::Magic});
+            if sim.rules == Rules::Forever {
                 // Forever's logs: a Thunder Clap crit starts no bleed (deep_wounds.rs).
-                "thunder_clap_starts_none": sim.rules == Rules::Forever}));
+                deep_wounds["thunder_clap_starts_none"] = json!(true);
+            }
+            effects.push(deep_wounds);
         }
         // talents_fury.go registerUnbridledWrath: white hits, not melee specials
         if talent("unbridled_wrath") > 0 {
