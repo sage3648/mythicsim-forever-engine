@@ -215,6 +215,9 @@ pub(crate) struct WarriorAgent {
     /// Flurry under Forever's rules: the Heroic Strike or Cleave cast, by spell and moment, that
     /// last spent a charge, so a Cleave's second target spends none.
     pub(crate) flurry_strike_spent: Option<(SpellId, i64)>,
+    /// Reckless Swings under Forever's rules: the Heroic Strike or Cleave cast, by spell and
+    /// moment, that last gave its Rage, so a Cleave's second target gives none.
+    pub(crate) reckless_strike_spent: Option<(SpellId, i64)>,
     /// Whether each spell's proc mask holds a bit of a hand that wields a sword.
     sword_mask: Vec<bool>,
     /// With an item swap, Weaponmaster's sword mask for each set, Main then Swap1: the hands
@@ -1108,6 +1111,7 @@ impl WarriorAgent {
                     spell_id,
                     share,
                     tick_can_crit,
+                    thunder_clap_starts_none,
                     ..
                 } => {
                     let spell = find(&fight, *spell_id, 0)?;
@@ -1119,6 +1123,7 @@ impl WarriorAgent {
                         dot,
                         share: *share,
                         tick_can_crit: *tick_can_crit,
+                        thunder_clap_starts_none: *thunder_clap_starts_none,
                     });
                 }
                 Effect::UnbridledWrath {
@@ -1145,6 +1150,7 @@ impl WarriorAgent {
                     rage,
                     charges,
                     health_cost,
+                    strikes_spend_once,
                     ..
                 } => {
                     // The proc's own spell id (1329554) is not exported; its Rage goes under the
@@ -1157,6 +1163,7 @@ impl WarriorAgent {
                         charges: *charges,
                         health_cost: *health_cost,
                         metrics,
+                        strikes_spend_once: *strikes_spend_once,
                     });
                 }
                 Effect::WarriorFlurry {
@@ -1166,6 +1173,7 @@ impl WarriorAgent {
                     every_swing_spends,
                     whirlwind_off_hand_starts,
                     strikes_spend_once,
+                    totem_strike_spends_none,
                     ..
                 } => {
                     fight.agent.flurry = Some(Flurry {
@@ -1175,6 +1183,7 @@ impl WarriorAgent {
                         every_swing_spends: *every_swing_spends,
                         whirlwind_off_hand_starts: *whirlwind_off_hand_starts,
                         strikes_spend_once: *strikes_spend_once,
+                        totem_strike_spends_none: *totem_strike_spends_none,
                     })
                 }
                 Effect::AngerManagement {
@@ -1897,6 +1906,7 @@ impl Agent for WarriorAgent {
         }
         fight.agent.sword_rolled_at.fill(None);
         fight.agent.flurry_strike_spent = None;
+        fight.agent.reckless_strike_spent = None;
         let queue = &mut fight.agent.queue;
         queue.current = None;
         queue.queued.iter_mut().for_each(|queued| *queued = false);

@@ -1268,6 +1268,24 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
+                // A set proc that casts roll too: its roll under the trigger's name, then the
+                // handler a batch window later. A cast carries no result.
+                AuraBehavior::StatProc(proc) => {
+                    let Some(chance) = self.stat_procs[proc].cast_chances[spell] else {
+                        continue;
+                    };
+                    if self.rng.proc(chance, &self.stat_procs[proc].rng_label) {
+                        let result = SpellResult {
+                            armor_multiplier: 0.0,
+                            target: self.current_target_side(),
+                            attacker: Side::Player,
+                            outcome: 0,
+                            damage: 0.0,
+                            threat: 0.0,
+                        };
+                        self.schedule_delayed_proc(aura, spell, result);
+                    }
+                }
                 AuraBehavior::ManaOnCast(index) => self.mana_on_cast_callback(aura, index, spell),
                 AuraBehavior::InstantCast(index) => self.instant_cast_spent(aura, index, spell),
                 AuraBehavior::HealProc(proc) if self.heal_procs[proc].casts => {

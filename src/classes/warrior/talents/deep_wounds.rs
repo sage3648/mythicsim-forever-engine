@@ -6,6 +6,12 @@
 //! the off hand's for a dual wielder's off hand crit, the main hand's otherwise (a shield strike is
 //! a main hand attack to the server).
 //! Its ticks ignore the warrior's damage modifiers, which the client flags on the tick spell.
+//!
+//! Under Forever's rules a Thunder Clap crit, which rolls the magic hit table, starts no bleed:
+//! public Forever reports on forever.warcraftlogs.com of 10 to 16 November 2026 (25 warriors in
+//! 24 reports, among them 176QTFWR8PtdfGZB, 1mRKL7Tb8qwjkgv3 and 1yjwF8MxXqvtD4bT) hold 79
+//! Thunder Clap crits, none followed by the bleed, against 70 of 94 white crits of the same
+//! warriors.
 
 use crate::core::fight::{Agent, DotId, Fight, Side, SpellId, SpellResult, OUTCOME_CRIT};
 
@@ -20,6 +26,8 @@ pub(crate) struct DeepWounds {
     pub(crate) share: f64,
     /// spelldata `TickOutcome`: the client row lets its ticks roll the physical crit.
     pub(crate) tick_can_crit: bool,
+    /// Forever's rules: a Thunder Clap crit starts no bleed.
+    pub(crate) thunder_clap_starts_none: bool,
 }
 
 /// The trigger's OnSpellHitDealt, which acts at once. `empty_mask` is whether the spell's proc
@@ -36,6 +44,9 @@ pub(crate) fn on_hit<A: Agent>(
         return;
     }
     if state.school & 1 == 0 {
+        return;
+    }
+    if params.thunder_clap_starts_none && state.class_spell.as_deref() == Some("thunder_clap") {
         return;
     }
     fight.cast(params.spell, result.target);

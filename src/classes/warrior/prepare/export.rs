@@ -401,7 +401,9 @@ impl Warrior {
                 "trigger_aura": "Deep Wounds - Trigger",
                 "share": data.deep_wounds.fraction_at(talent("deep_wounds")),
                 "tick_can_crit": bleed.periodic_can_crit(),
-                "tick_magic": bleed.defense_type_core() == DefenseType::Magic}));
+                "tick_magic": bleed.defense_type_core() == DefenseType::Magic,
+                // Forever's logs: a Thunder Clap crit starts no bleed (deep_wounds.rs).
+                "thunder_clap_starts_none": sim.rules == Rules::Forever}));
         }
         // talents_fury.go registerUnbridledWrath: white hits, not melee specials
         if talent("unbridled_wrath") > 0 {
@@ -431,6 +433,8 @@ impl Warrior {
                 // The hotfixes of 16 November 2026: a Heroic Strike or Cleave spends one charge
                 // a cast whatever its outcome (flurry.rs).
                 flurry["strikes_spend_once"] = json!(true);
+                // Push 114115: the Windfury Totem strike spends no charge (flurry.rs).
+                flurry["totem_strike_spends_none"] = json!(true);
             }
             effects.push(flurry);
         }
@@ -445,7 +449,9 @@ impl Warrior {
                 "charges": i32::from(row.proc_charges),
                 "health_cost": sim.character(unit).base_stats[Stat::Health]
                     * f64::from(row.power(dbcenums::POWER_HEALTH).cost_pct) / 100.0,
-                "delay_ns": SPELL_BATCH_WINDOW}));
+                "delay_ns": SPELL_BATCH_WINDOW,
+                // Push 114115: one grant a Heroic Strike or Cleave cast (reckless_swings.rs).
+                "strikes_spend_once": true}));
         }
         if self.has_talent("anger_management") {
             let row = data.anger_management.highest();

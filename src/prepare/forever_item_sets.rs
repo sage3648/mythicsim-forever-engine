@@ -437,10 +437,26 @@ fn lightforge_armor_5(env: &mut Environment, aura: AuraId) {
     );
 }
 
+/// Crusader's Wrath's rate under Forever's rules, in procs a minute: public Forever reports on
+/// forever.warcraftlogs.com of 13 to 17 November 2026 (client 1.60.1.70938; 12 paladins in
+/// Lightforge Armor (5) or Soulforge Armor (4), among them NXMZV9xjvWpB7GtP, dnDg7j9kRw6WtbML,
+/// JBxW16RqGXMPYH3d, zmDY4LVX7N8vh9aR and Bg7J4jxckP6pdvrZ) hold 334 procs in 9,299 landed white
+/// swings, 0.85 (0.76 to 0.95) a minute on the weapon's base speed, and 193 in 7,217 casts, 1.06
+/// (0.77 to 1.22) on the cast time; one rate fitted to both reads 0.92 (0.79 to 0.99). A seal,
+/// Judgement, Holy Shield, Cleanse or Consecration rolls it, once a cast; a cast that costs no
+/// mana does not (Swift Judgement 0 of 65), nor do Holy Strike (0 of 2,796), Hammer of Wrath (0
+/// of 561), hits taken or avoided swings.
+pub(crate) const CRUSADERS_WRATH_PPM: f64 = 0.9;
+
 /// Crusader's Wrath (27499), 65 spell damage and healing for 10 sec, from a proc on landed
 /// melee autoattacks at 3 per minute. Lightforge Armor (5) and Soulforge Armor (4) share it; the
 /// client rows of both procs (450625, 27498) have ProcChance 100 and no rate, and the 3 per
 /// minute is the one Lightforge's has always run at.
+///
+/// Under Forever's rules it rolls 0.9 times a minute ([`CRUSADERS_WRATH_PPM`]) on landed white
+/// swings, each on its weapon's base speed, and on each completed cast that costs mana and is no
+/// melee or ranged ability, priced on its cast time and at least 1.5 sec
+/// (`export_items::crusaders_wrath_cast_chances`).
 pub(crate) fn crusaders_wrath(
     env: &mut Environment,
     aura: AuraId,
@@ -448,17 +464,24 @@ pub(crate) fn crusaders_wrath(
     trigger_spell: i32,
 ) {
     let unit = env.player;
+    let forever = env.sim.rules == super::sim::Rules::Forever;
+    let ppm = if forever { CRUSADERS_WRATH_PPM } else { 3.0 };
     // Go NewLegacyPPMManager, which an item swap rebuilds for the weapons in the hands.
     let dpm = Rc::new(
         env.sim
-            .new_ppm_manager(unit, 3.0, ProcMask::MELEE_WHITE_HIT)
+            .new_ppm_manager(unit, ppm, ProcMask::MELEE_WHITE_HIT)
             .rebuilt_by_swap(
                 &env.sim,
                 unit,
-                super::item_swap::ManagerChance::Ppm(3.0),
+                super::item_swap::ManagerChance::Ppm(ppm),
                 super::item_swap::ManagerMask::Static(ProcMask::MELEE_WHITE_HIT),
             ),
     );
+    let callback = if forever {
+        CallbackMask(CallbackMask::ON_SPELL_HIT_DEALT.0 | CallbackMask::ON_CAST_COMPLETE.0)
+    } else {
+        CallbackMask::ON_SPELL_HIT_DEALT
+    };
     set_stat_proc(
         env,
         aura,
@@ -468,7 +491,7 @@ pub(crate) fn crusaders_wrath(
             ..trigger(
                 trigger_name,
                 trigger_spell,
-                CallbackMask::ON_SPELL_HIT_DEALT,
+                callback,
                 ProcMask::MELEE_WHITE_HIT,
             )
         },
@@ -487,18 +510,34 @@ fn vestments_of_the_devout_5(env: &mut Environment, aura: AuraId) {
 
 set_stats!(shadowcraft_armor_3, set_attack_power(30.0));
 
+/// Rogue Armor Energize's rate (27787, the 4 piece of Darkmantle Armor and the 5 piece of
+/// Shadowcraft Armor), whose client row states ProcChance 100 and no rate: the reference's 1 proc
+/// a minute, and under Forever's rules 0.8: 1,900 procs in 70,840 landed white swings and Windfury
+/// Totem strikes of 26 wearers in public Forever reports on forever.warcraftlogs.com of 11 to 17
+/// November 2026 (client 1.60.1.70938; gBDMLv8J1K7nqkpd, H2T7NDqBgm6LxGYK and 7fz9Kk8rY6jyQAbL
+/// among them), 0.83 (0.80 to 0.86) a minute priced on each swing's weapon base speed, 0.84
+/// under Slice and Dice and 0.81 without it. No ability or cast rolled it (0 of 1,012 casts).
+pub(crate) fn rogue_armor_energize_ppm(rules: super::sim::Rules) -> f64 {
+    if rules == super::sim::Rules::Forever {
+        0.8
+    } else {
+        1.0
+    }
+}
+
 /// Chance on melee attack to restore energy, moved down from 6 pieces and cut 35 to 20.
 fn shadowcraft_armor_5(env: &mut Environment, aura: AuraId) {
     let unit = env.player;
+    let ppm = rogue_armor_energize_ppm(env.sim.rules);
     // Go NewLegacyPPMManager, which an item swap rebuilds for the weapons in the hands, as
     // Lightforge Armor's.
     let dpm = Rc::new(
         env.sim
-            .new_ppm_manager(unit, 1.0, ProcMask::MELEE_WHITE_HIT)
+            .new_ppm_manager(unit, ppm, ProcMask::MELEE_WHITE_HIT)
             .rebuilt_by_swap(
                 &env.sim,
                 unit,
-                super::item_swap::ManagerChance::Ppm(1.0),
+                super::item_swap::ManagerChance::Ppm(ppm),
                 super::item_swap::ManagerMask::Static(ProcMask::MELEE_WHITE_HIT),
             ),
     );

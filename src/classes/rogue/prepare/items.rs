@@ -456,17 +456,20 @@ fn darkmantle_2(env: &mut Environment, aura: AuraId) {
     );
 }
 
-/// Darkmantle Armor, 4 pieces: a white hit has a chance to restore 20 energy.
+/// Darkmantle Armor, 4 pieces: a white hit has a chance to restore 20 energy, at the
+/// reference's 1 proc a minute, or Forever's measured rate
+/// ([`crate::prepare::forever_item_sets::rogue_armor_energize_ppm`]).
 fn darkmantle_4(env: &mut Environment, aura: AuraId) {
     let unit = env.player;
+    let ppm = crate::prepare::forever_item_sets::rogue_armor_energize_ppm(env.sim.rules);
     // Go `NewLegacyPPMManager`, which an item swap rebuilds for the weapons in the hands.
     let dpm = env
         .sim
-        .new_ppm_manager(unit, 1.0, ProcMask::MELEE_WHITE_HIT)
+        .new_ppm_manager(unit, ppm, ProcMask::MELEE_WHITE_HIT)
         .rebuilt_by_swap(
             &env.sim,
             unit,
-            crate::prepare::item_swap::ManagerChance::Ppm(1.0),
+            crate::prepare::item_swap::ManagerChance::Ppm(ppm),
             crate::prepare::item_swap::ManagerMask::Static(ProcMask::MELEE_WHITE_HIT),
         );
     env.sim.attach_proc_trigger(

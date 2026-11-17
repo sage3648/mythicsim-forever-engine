@@ -2765,16 +2765,46 @@ fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> 
             continue;
         };
         let id = ActionId::spell(aura_id);
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "stat_proc", "trigger_aura": set_aura, "rng_label": name, "aura": aura_label,
             "chances": dpm_chances(env, dpm, |spell| {
                 spell.proc_mask.matches(mask) && !spell.flags.matches(SpellFlag::PROC)
             }),
             "gain_log": format!("Gained {} from {}.", flat_string(&stats), action_id_string(&id)),
             "expire_log": format!("Lost {} from fading {}.", flat_string(&stats), action_id_string(&id)),
-        }));
+        });
+        if env.sim.rules == super::sim::Rules::Forever {
+            effect["cast_chances"] = json!(crusaders_wrath_cast_chances(env));
+        }
+        effects.push(effect);
     }
     effects
+}
+
+/// Crusader's Wrath's chance on each completed cast under Forever's rules
+/// (`forever_item_sets::CRUSADERS_WRATH_PPM`): a spell that costs mana and is no melee or ranged
+/// ability rolls it once a cast, at the rate over a minute of its cast time, at least 1.5 sec
+/// (an instant's 2.25%), as the logs price it.
+fn crusaders_wrath_cast_chances(env: &Environment) -> Vec<Value> {
+    use super::spell::Resource;
+    let mut chances = Vec::new();
+    for (position, spell) in env.sim.unit(env.player).spellbook.iter().enumerate() {
+        let spell = env.sim.spell(*spell);
+        let costs_mana = spell
+            .cost
+            .as_ref()
+            .is_some_and(|cost| cost.resource == Resource::Mana && cost.base_cost > 0);
+        if !costs_mana
+            || spell.flags.matches(SpellFlag::PROC)
+            || spell.proc_mask.matches(ProcMask::MELEE_OR_RANGED)
+        {
+            continue;
+        }
+        let seconds = (spell.default_cast.cast_time as f64 / 1e9).max(1.5);
+        let chance = super::forever_item_sets::CRUSADERS_WRATH_PPM * seconds / 60.0;
+        chances.push(json!({"spell": position, "chance": chance}));
+    }
+    chances
 }
 
 /// melee_procs.go `meleeProcEffects`: the weapon, item and set procs that act on melee hits, in
@@ -2845,6 +2875,30 @@ pub(crate) fn item_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
 // ---------------------------------------------------------------------------------------------
 // gear_procs.go and energy_procs.go.
 // ---------------------------------------------------------------------------------------------
+
+/// The spells whose landed hits roll Warrior's Resolve (450587, Battlegear of Valor's 5 piece
+/// and Battlegear of Heroism's 4 piece): Go's every melee hit, or under Forever's rules white
+/// swings alone, extra attacks and the party's Windfury Totem strike among them (each a main
+/// hand autoattack here), and no melee ability. Public Forever reports on
+/// forever.warcraftlogs.com of 11 to 17 November 2026 (client 1.60.1.70938; 16 wearers, among
+/// them vYpj9gc1tk6zGFRX, 4Tc3yBNVYn7wW8RJ and Wy6TdamAk4ZxJ8MC) hold 720 procs in 21,667 landed
+/// white swings and totem strikes, 0.94 (0.87 to 1.01) a minute on the weapon's base speed, and
+/// 1 in 4,204 casts. Of the Battlegear of Valor wearers of 14 to 16 November (AfJ6DYbh9dmkgHZL,
+/// DGFd8KtQk19hXabN, FN8krKfCb3BXWmwV and six more), none of 230 landed Heroic Strikes or 1,864
+/// landed Cleaves is followed by a proc, while 37 of 1,299 totem strikes are (2.85%, against
+/// 2.68% on white swings).
+fn warriors_resolve_hears(spell: &super::spell::Spell, forever: bool) -> bool {
+    if spell.flags.matches(SpellFlag::PROC) {
+        return false;
+    }
+    if forever {
+        // Heroic Strike and Cleave carry the main hand's auto mask too (ProcMask::MELEE_MH).
+        spell.proc_mask.matches(ProcMask::MELEE_WHITE_HIT)
+            && !spell.proc_mask.matches(ProcMask::MELEE_SPECIAL)
+    } else {
+        spell.proc_mask.matches(ProcMask::MELEE)
+    }
+}
 
 /// gear_procs.go `gearProcEffects`: shared gear procs of common/forever: Battlegear of Valor's
 /// Warrior's Resolve and the Puncture Armor weapon procs.
@@ -2958,7 +3012,9 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     }
     // item_sets_classic.go Battlegear of Valor 5 piece, Warrior's Resolve: landed melee hits roll
     // a legacy one proc a minute manager under the trigger's name; a batch window later the
-    // handler heals Roll(88, 133) and, with a rage bar, gives 10 rage, both Go literals.
+    // handler heals Roll(88, 133) and, with a rage bar, gives 10 rage, both Go literals. Under
+    // Forever's rules only white swings roll it ([`warriors_resolve_hears`]).
+    let forever = env.sim.rules == super::sim::Rules::Forever;
     if let Some(set) = aura_named(env, "Battlegear of Valor 5P") {
         match env.sim.aura(set).dpm.as_ref() {
             None => unrepresented.push("Battlegear of Valor 5P has no proc manager".to_string()),
@@ -2971,9 +3027,7 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                 effects.push(json!({
                     "kind": "health_rage_proc", "trigger_aura": env.sim.aura(set).label,
                     "rng_label": "Warrior's Resolve",
-                    "chances": dpm_chances(env, dpm, |spell| {
-                        spell.proc_mask.matches(ProcMask::MELEE) && !spell.flags.matches(SpellFlag::PROC)
-                    }),
+                    "chances": dpm_chances(env, dpm, |spell| warriors_resolve_hears(spell, forever)),
                     "heal_min": 88.0, "heal_max": 133.0, "rage": rage,
                     "metrics_action_id": json!({"spell_id": 450589}),
                 }));
@@ -3007,9 +3061,7 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                 effects.push(json!({
                     "kind": "health_rage_proc", "trigger_aura": env.sim.aura(set).label,
                     "rng_label": "Warrior's Resolve",
-                    "chances": dpm_chances(env, dpm, |spell| {
-                        spell.proc_mask.matches(ProcMask::MELEE) && !spell.flags.matches(SpellFlag::PROC)
-                    }),
+                    "chances": dpm_chances(env, dpm, |spell| warriors_resolve_hears(spell, forever)),
                     "heal_min": 88.0, "heal_max": 133.0, "rage": rage,
                     "metrics_action_id": json!({"spell_id": 450589}),
                 }));
@@ -3050,8 +3102,8 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             _ => unrepresented.push("Darkmoon Card: Heroism has no proc manager".to_string()),
         }
     }
-    // items_weapons.go Bashguuder and Rivenspike: a weapon proc at two procs a minute of the
-    // weapon's speed on landed hits; a batch window later the handler activates the target's
+    // items_weapons.go Bashguuder and Rivenspike: a weapon proc at its rate (forever_items.rs
+    // `puncture_armor`) of the weapon's speed on landed hits; a batch window later the handler activates the target's
     // Puncture Armor and adds a stack, and each stack change moves the target's armor through
     // AddStatDynamic. The armor at each stack count is read from a separate reset simulation.
     // stat_bonus_procs_auto_gen.go Annihilator is the same through
