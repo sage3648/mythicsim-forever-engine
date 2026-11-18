@@ -153,6 +153,62 @@ fn a_hunters_sheet_has_the_ranged_rows() {
     assert!(["Bows", "Guns", "Crossbows"].contains(&skill["detail"].as_str().unwrap()));
 }
 
+/// A tank's sheet states the swing the fight rolls against it: the chance the target misses or
+/// is dodged or parried, the chance it crits and what a block takes off are the prepared
+/// target's own rolls. Dodge, parry and block are the character sheet's, against an attacker of
+/// the character's level, so a level 63 target rolls 0.6 less of each.
+#[test]
+fn a_tanks_sheet_states_the_swing_the_target_rolls() {
+    let request = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/all-values-protection-warrior.request.json");
+    let (prepared, sheet) = forever_engine::prepare_json_with_sheet(
+        &fs::read(request).unwrap(),
+        "stat-sheet",
+        forever_engine::Rules::GoReference,
+    )
+    .unwrap();
+    let player = serde_json::json!({ "statSheet": sheet.expect("a sheet") });
+    assert_parts_add_up("all-values-protection-warrior", &player);
+    let value = |key: &str| row(&player, key).expect(key)["value"].as_f64().unwrap();
+    let rolls = &prepared["enemy"]["rolls"][0];
+    let roll = |key: &str| rolls[key].as_f64().expect(key) * 100.0;
+    let close = |sheet: f64, rolled: f64, what: &str| {
+        assert!((sheet - rolled).abs() < 1e-3, "{what}: {sheet} != {rolled}");
+    };
+    close(
+        value("avoidance"),
+        roll("miss_chance") + roll("dodge_chance") + roll("parry_chance"),
+        "avoidance",
+    );
+    close(value("critTaken"), roll("crit_chance"), "crit taken");
+    close(value("dodge") - 0.6, roll("dodge_chance"), "dodge");
+    close(value("parry") - 0.6, roll("parry_chance"), "parry");
+    close(value("block") - 0.6, roll("block_chance"), "block");
+    assert_eq!(
+        value("blockValue"),
+        rolls["block_reduction"].as_f64().unwrap()
+    );
+}
+
+/// A talent that adds hit to a school shows on that school's hit row and not on spell hit:
+/// Shadow Focus on a Shadow Priest.
+#[test]
+fn school_hit_is_its_own_row() {
+    let name = "shadow-priest-line-checks";
+    let player = run("school-hit", name, true);
+    let value = |key: &str| row(&player, key).expect(key)["value"].as_f64().unwrap();
+    assert!(value("shadowHit") > value("spellHit"));
+    assert_eq!(value("holyHit"), value("spellHit"));
+    // The talent step is the fourth part.
+    let shadow = row(&player, "shadowHit").unwrap()["parts"][3]
+        .as_f64()
+        .unwrap();
+    let spell = row(&player, "spellHit").unwrap()["parts"][3]
+        .as_f64()
+        .unwrap();
+    assert_eq!(shadow - spell, value("shadowHit") - value("spellHit"));
+}
+
 /// The sheet comes only with `--rotation-stats`, and asking for it simulates the same fight.
 #[test]
 fn the_sheet_is_reported_only_on_request_and_changes_no_result() {

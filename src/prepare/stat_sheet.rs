@@ -14,13 +14,17 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use serde_json::{json, Value};
 
+use super::attack::new_attack_table;
+use super::character::constants::{
+    DEFENSE_RATING_PER_DEFENSE_LEVEL, MISS_DODGE_PARRY_BLOCK_CRIT_CHANCE_PER_DEFENSE,
+};
 use super::env::Environment;
 use super::items;
 use super::sim::{
-    BuildPhase, Sim, UnitId, PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT,
+    BuildPhase, Rules, Sim, UnitId, PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT,
     SPELL_HASTE_RATING_PER_HASTE_PERCENT,
 };
-use super::stats::{Stat, Stats};
+use super::stats::{SchoolIndex, Stat, Stats};
 use super::weapon_skill::{self, WeaponSkill};
 
 /// The sheet's layout, raised when a row changes meaning.
@@ -44,6 +48,18 @@ const SCHOOLS: [(&str, Stat); 6] = [
     ("holyDamage", Stat::HolyDamage),
     ("natureDamage", Stat::NatureDamage),
     ("shadowDamage", Stat::ShadowDamage),
+];
+
+/// The hit row of each school: spell hit and the hit the character has on that school alone
+/// (a talent that reads "your Frost spells"). Hit a talent gives to named spells is on those
+/// spells, not on a school, and no row has it.
+const SCHOOL_HIT: [(&str, SchoolIndex); 6] = [
+    ("arcaneHit", SchoolIndex::Arcane),
+    ("fireHit", SchoolIndex::Fire),
+    ("frostHit", SchoolIndex::Frost),
+    ("holyHit", SchoolIndex::Holy),
+    ("natureHit", SchoolIndex::Nature),
+    ("shadowHit", SchoolIndex::Shadow),
 ];
 
 /// One row of a reading: its key, its value and, for a weapon skill, the skill line.
@@ -112,6 +128,7 @@ pub(crate) fn read(sim: &Sim, unit_id: UnitId, stats: &Stats, step: Option<usize
     let physical_haste =
         1.0 + stats[Stat::MeleeHasteRating] / (PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT * 100.0);
     row("attackPower", stats[Stat::AttackPower]);
+    row("armorPenetration", stats[Stat::ArmorPenetration]);
     row("meleeHit", stats[Stat::PhysicalHitPercent]);
     row("meleeCrit", stats[Stat::PhysicalCritPercent]);
     row(
@@ -140,6 +157,12 @@ pub(crate) fn read(sim: &Sim, unit_id: UnitId, stats: &Stats, step: Option<usize
     }
     row("healingPower", stats[Stat::HealingPower]);
     row("spellHit", stats[Stat::SpellHitPercent]);
+    for (key, school) in SCHOOL_HIT {
+        row(
+            key,
+            stats[Stat::SpellHitPercent] + pseudo.school_bonus_hit_chance[school as usize],
+        );
+    }
     row("spellCrit", stats[Stat::SpellCritPercent]);
     row(
         "spellHaste",
@@ -157,9 +180,83 @@ pub(crate) fn read(sim: &Sim, unit_id: UnitId, stats: &Stats, step: Option<usize
         "defense",
         f64::from(5 * unit.level) + stats[Stat::DefenseRating].floor(),
     );
+    for (key, value) in defense_rows(sim, unit_id, stats) {
+        row(key, value);
+    }
 
     rows.extend(skill_rows(sim, unit_id, step));
     Reading(rows)
+}
+
+/// How the character takes a swing, in percent.
+///
+/// Dodge, parry and block are the character sheet's: the chance against an attacker of the
+/// character's own level, which is what the game shows. A character that cannot parry or block
+/// has no such row. Block value is what one block takes off, as the fight takes it off.
+///
+/// `avoidance` and `critTaken` are against the fight's target instead, the way its swing is
+/// rolled (`enemy_values`): the chance it misses or is dodged or parried, with the target's own
+/// hit and expertise taken off, and the chance it crits. A `critTaken` of nothing is a
+/// character the target cannot crit.
+fn defense_rows(sim: &Sim, unit_id: UnitId, stats: &Stats) -> Vec<(&'static str, f64)> {
+    let unit = sim.unit(unit_id);
+    let pseudo = &unit.pseudo_stats;
+    let dodge = pseudo.base_dodge_chance * 100.0 + stats[Stat::DodgePercent];
+    let parry = pseudo.base_parry_chance * 100.0 + stats[Stat::ParryPercent];
+    let block = pseudo.base_block_chance * 100.0 + stats[Stat::BlockPercent];
+
+    let own_level = new_attack_table(unit.level, unit.unit_type, unit.level);
+    let mut rows = vec![("dodge", own_level.base_dodge_chance * 100.0 + dodge)];
+    if pseudo.can_parry {
+        rows.push(("parry", own_level.base_parry_chance * 100.0 + parry));
+    }
+    if pseudo.can_block {
+        rows.push(("block", own_level.base_block_chance * 100.0 + block));
+        let value = stats[Stat::BlockValue] * pseudo.block_value_multiplier;
+        rows.push((
+            "blockValue",
+            if sim.rules == Rules::Forever {
+                value.floor()
+            } else {
+                value
+            },
+        ));
+    }
+
+    let Some(target) = unit.current_target else {
+        return rows;
+    };
+    let attacker = sim.unit(target);
+    let table = new_attack_table(attacker.level, unit.unit_type, unit.level);
+    let miss = table.base_miss_chance * 100.0
+        + pseudo.reduced_physical_hit_taken_chance
+        + (stats[Stat::DefenseRating] / DEFENSE_RATING_PER_DEFENSE_LEVEL).floor()
+            * MISS_DODGE_PARRY_BLOCK_CRIT_CHANCE_PER_DEFENSE
+        - attacker.stats[Stat::PhysicalHitPercent];
+    let suppression = attacker.stats[Stat::ExpertisePercent];
+    let dodged = table.base_dodge_chance * 100.0 + dodge
+        - suppression
+        - attacker.pseudo_stats.dodge_reduction * 100.0;
+    let parried = if pseudo.can_parry {
+        table.base_parry_chance * 100.0 + parry - suppression
+    } else {
+        0.0
+    };
+    rows.push((
+        "avoidance",
+        miss.max(0.0) + dodged.max(0.0) + parried.max(0.0),
+    ));
+    let crit_reduction = (pseudo.base_reduced_crit_taken_percent
+        + stats[Stat::ReducedCritTakenPercent] / 100.0)
+        * 100.0;
+    rows.push((
+        "critTaken",
+        (attacker.stats[Stat::PhysicalCritPercent]
+            - table.melee_crit_suppression * 100.0
+            - crit_reduction)
+            .max(0.0),
+    ));
+    rows
 }
 
 /// The skill each hand attacks with, as the character sheet counts it: 5 a level and what
