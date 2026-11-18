@@ -2,10 +2,21 @@
 
 use crate::mechanics::damage::{
     binary_resist_hit, crit_damage_multiplier, partial_resist_thresholds, resist_coefficient,
-    spell_chance_to_miss,
+    spell_chance_to_miss, spell_piercing_tenths,
 };
 
 use super::{log::action_string, Action, Agent, Fight, Side, SpellId, PRIORITY_GCD};
+
+/// Which kind of damage asks for the Spell Piercing bonus.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum PiercingHit {
+    /// A direct hit, a channel's wave included.
+    Direct,
+    /// A damage over time tick.
+    Tick,
+    /// A tick's expected damage, which draws nothing.
+    ExpectedTick,
+}
 
 pub(crate) const OUTCOME_MISS: u16 = 1;
 pub(crate) const OUTCOME_HIT: u16 = 1 << 1;
@@ -318,19 +329,17 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `spellVulnerabilityMultiplier` (MythicSim patch 146): the caster's Spell Piercing past
-    /// the target's resistance, floored at 0, adds 1 / (5 x target level) of damage a point, on
-    /// binary spells too. Schools with no resistance take none.
-    pub(crate) fn spell_vulnerability(&self, spell: SpellId, target: Side) -> f64 {
+    /// The caster's Spell Piercing past the target's resistance in the spell's school, floored at
+    /// 0. Schools with no resistance have none.
+    fn spell_piercing_beyond(&self, spell: SpellId, target: Side) -> f64 {
         let state = &self.spells[spell];
-        let level = self.unit_config(state.caster).target_level;
-        if state.school_index <= 1 || level <= 0 {
-            return 1.0;
+        if state.school_index <= 1 {
+            return 0.0;
         }
         // Go ResistanceStat: Arcane, Fire, Frost, Nature and Shadow alone have one; Frostfire
         // takes the lower of its two.
         if !state.frostfire && !matches!(state.school, 4 | 8 | 16 | 32 | 64) {
-            return 1.0;
+            return 0.0;
         }
         let resistance = &self.target_unit(target).state.resistance;
         let raw = if state.frostfire {
@@ -338,11 +347,60 @@ impl<A: Agent> Fight<A> {
         } else {
             resistance[state.school_index]
         };
-        let beyond = self.unit(state.caster).powers.spell_piercing - raw.max(0.0);
+        (self.unit(state.caster).powers.spell_piercing - raw.max(0.0)).max(0.0)
+    }
+
+    /// Go `spellVulnerabilityMultiplier` (MythicSim patch 146): the caster's Spell Piercing past
+    /// the target's resistance, floored at 0, adds 1 / (5 x target level) of damage a point, on
+    /// binary spells too. Schools with no resistance take none.
+    pub(crate) fn spell_vulnerability(&self, spell: SpellId, target: Side) -> f64 {
+        let level = self.unit_config(self.spells[spell].caster).target_level;
+        if level <= 0 {
+            return 1.0;
+        }
+        let beyond = self.spell_piercing_beyond(spell, target);
         if beyond <= 0.0 {
             return 1.0;
         }
         1.0 + beyond / (5.0 * f64::from(level))
+    }
+
+    /// What Spell Piercing past the target's resistance multiplies a hit or tick by.
+    ///
+    /// Under Forever's rules it is the partial resist roll turned over
+    /// ([`spell_piercing_tenths`]): a direct hit rolls 10% or 20% more damage around an average
+    /// of piercing / (piercing + 8 x caster level + 19). A binary spell takes none, and neither
+    /// does a damage over time tick, save the ticks of the spells flagged for it. An expected
+    /// tick takes the roll's average and draws nothing. The reference adds
+    /// [`Self::spell_vulnerability`] to everything.
+    pub(crate) fn spell_piercing_multiplier(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        hit: PiercingHit,
+    ) -> f64 {
+        let caster = self.spells[spell].caster;
+        if !self.unit_config(caster).spell_piercing_rolls {
+            return self.spell_vulnerability(spell, target);
+        }
+        let flags = self.spells[spell].flags;
+        if flags.binary || flags.no_piercing_bonus {
+            return 1.0;
+        }
+        if hit != PiercingHit::Direct && !flags.piercing_ticks {
+            return 1.0;
+        }
+        let beyond = self.spell_piercing_beyond(spell, target);
+        if beyond <= 0.0 {
+            return 1.0;
+        }
+        let level = f64::from(self.unit_config(caster).player_level);
+        let average = beyond / (beyond + 8.0 * level + 19.0);
+        if hit == PiercingHit::ExpectedTick {
+            return 1.0 + average;
+        }
+        let roll = self.random("Spell Piercing");
+        1.0 + 0.1 * f64::from(spell_piercing_tenths(average, roll))
     }
 
     fn resist(&self, spell: SpellId, target: Side, binary: bool) -> f64 {
@@ -540,8 +598,16 @@ impl<A: Agent> Fight<A> {
                 result.damage *= result.armor_multiplier;
             }
         } else if !self.spells[spell].flags.ignore_resists {
-            // Spell Vulnerability multiplies the partial resist, and a binary spell's whole hit.
-            let vulnerability = self.spell_vulnerability(spell, target);
+            // Spell Piercing multiplies the partial resist, and under the reference a binary
+            // spell's whole hit.
+            let hit = match outcome {
+                Outcome::ExpectedMagicHit
+                | Outcome::ExpectedMagicAlwaysHit
+                | Outcome::ExpectedMagicCrit => PiercingHit::ExpectedTick,
+                _ if periodic => PiercingHit::Tick,
+                _ => PiercingHit::Direct,
+            };
+            let vulnerability = self.spell_piercing_multiplier(spell, target, hit);
             let (multiplier, outcome) = if binary {
                 (vulnerability, 0)
             } else {

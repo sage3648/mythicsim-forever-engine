@@ -111,6 +111,25 @@ the Go goldens and exporter uses. The departures:
   the crushing blow past 3 above and the 1.8% of crit the boss column carries are
   approximations. A level the columns cover reads the same numbers as before. The prepared
   target carries `level_gap_tables` when its level is outside the reference's 0 to 3 above.
+- Spell Piercing is rolled a hit, from public Forever logs on forever.warcraftlogs.com (45
+  dungeon reports of 14 to 18 November 2026, clients 1.60.1.70938 and 70959, 18 casters, on mobs
+  that never resisted the school). Piercing past the target's resistance is the partial resist
+  roll turned over: a direct hit gains a tenth or two tenths of its damage (1,114 and 590 of the
+  non-crit hits that gained, 27 gained three), around an average of piercing / (piercing + 8 x
+  caster level + 19). A shaman with 8 Spell Piercing on gear gained on 71 of 518 direct hits, 1.8%
+  on average (8 / 507 is 1.6%), and a warlock with 6 on 29 of 381, 1.0% (6 / 505 is 1.2%); the
+  reference's piercing / (5 x target level) on every hit and tick gives them 2.5% and 1.9%.
+  - A binary spell gains nothing: Frostbolt 0 of 412 hits, Cone of Cold 0 of 505, Frost Nova 0 of
+    463, Earth Shock 0 of 256, Ice Lance 0 of 94 and Mind Flay 0 of 915 ticks, beside Blizzard
+    1,220 of 4,672, Arcane Explosion 438 of 1,745, Arcane Missiles 424 of 1,205, Arcane Blast 95
+    of 272 and Mind Blast 28 of 176 from the same casters on the same mobs. Arcane Wrath (0 of
+    87), Shadow Word: Death (0 of 68) and Flamestrike (0 of 168) gain nothing either
+    (`SpellFlagNoPiercingBonus`).
+  - A damage over time tick gains nothing: Shadow Word: Pain 0 of 1,315, Curse of Agony 0 of 658,
+    Corruption 0 of 454, Fireball 0 of 227, Flame Shock 0 of 179. Devouring Plague's ticks (59 of
+    461) and Hellfire's (179 of 415) gain as hits do (`SpellFlagPiercingTicks`). A tick's
+    expected damage takes the roll's average.
+  The prepared target carries `spell_piercing_rolls`.
 - The raid's Expose Armor, from MythicSim's Discord (28 October 2026, Bae and Vrelk): a player
   who picks the raid's Expose Armor instead of its Sunder Armor should not gain from the pick, but
   the reference applies Expose Armor at full from the pull while Sunder Armor ramps a stack every
@@ -1511,6 +1530,10 @@ the Go goldens and exporter uses. The departures:
     (99 in 3,101), Stoneslayer 1.95 (537 in 4,200), The Black Knight 0.6 (47 in 2,490) and
     Heartseeking Crossbow 2.7 (105 in 747 ranged shots). The other rateless chance on hit items
     keep the assumed 1.08.
+  - Waveslicer (18324) rolls 1.95 times a minute: 910 procs in 9,170 landed physical hits of 4
+    shamans and a paladin on its 3.1 s speed, 1.92, every wearer 1.81 to 2.06 (reports
+    AyTmpNtxB9jbnJ2H, q23Tz8hnZGkvbLx6, NrpM7DJQBKWqbzVF, DpVmH4WRxL72nGwd, H2Zg1jRm93PpTqK4 of
+    13 to 17 November 2026).
   - Drakefang Butcher's Rend (14118) deals twice its damage to Dragonkin: the tooltip's "Deals 2
     times as much damage to Dragonkin." is the row's second effect, a dummy of 2 (SpellEffect
     1324263, client 1.60.1.70938), applied as Lightcrest Hammer's against Undead is
