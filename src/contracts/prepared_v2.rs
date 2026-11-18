@@ -315,6 +315,13 @@ pub struct Target {
     /// target partially resists non-binary spells and dot ticks by 2% a level on average.
     #[serde(default, skip_serializing_if = "is_false")]
     pub no_level_partial_resist: bool,
+    /// Forever's rule: Spell Piercing past the target's resistance is the partial resist roll
+    /// turned over. A direct hit rolls 10% or 20% more damage around an average of
+    /// piercing / (piercing + 8 x caster level + 19); a binary spell and a damage over time tick
+    /// take none. False is the Go reference, which adds piercing / (5 x target level) to every
+    /// hit and tick.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub spell_piercing_rolls: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -3102,6 +3109,10 @@ pub enum Effect {
         /// window later.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         immediate: bool,
+        /// Forever's rules: the target's auras the debuff never lands beside, and whose landing
+        /// takes it off (Faerie Fire and Curse of Recklessness).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        blocked_by: Vec<String>,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {

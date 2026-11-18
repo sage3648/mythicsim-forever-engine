@@ -191,6 +191,20 @@ pub(crate) fn export_auras(sim: &Sim, unit: UnitId, timers: &mut TimerNames) -> 
     Value::Array(out)
 }
 
+/// Class spells the engine does not flag binary whose hits gain nothing from Spell Piercing in
+/// Forever's logs, beside the casters' other spells of the school gaining on a quarter to a
+/// third of theirs (forever.warcraftlogs.com, 14 to 18 November 2026): Arcane Wrath 0 of 87
+/// hits of 4 mages, Shadow Word: Death 0 of 68 and Flamestrike 0 of 168 of 3 mages. Each row
+/// carries a dummy, script or area trigger effect beside its damage, as the binary spells'
+/// rows carry an aura or an interrupt.
+const PIERCING_BONUS_NONE: [&str; 3] = ["arcane_wrath", "shadow_word_death", "flamestrike"];
+
+/// Class spells whose ticks gain from Spell Piercing as direct hits do, in the same logs:
+/// Devouring Plague on 59 of 461 ticks of 3 priests and Hellfire's on 179 of 415 of 3
+/// warlocks, where Shadow Word: Pain (0 of 1,315), Curse of Agony (0 of 658), Corruption (0 of
+/// 454), Fireball (0 of 227) and Flame Shock (0 of 179) ticks gain nothing.
+const PIERCING_BONUS_TICKS: [&str; 2] = ["devouring_plague", "hellfire"];
+
 /// Go `exportSpell`.
 pub(crate) fn export_spell_of(
     env: &Environment,
@@ -259,6 +273,18 @@ pub(crate) fn export_spell_of(
     if super::levels::is_unlearned_with_aliases(spell.action_id.spell_id, &aliases) {
         flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
         flags.push("SpellFlagUnlearned".to_string());
+    }
+    // Forever's rules on Spell Piercing (docs/mechanics.md): a binary spell takes no bonus, and
+    // a tick only where logs show one.
+    if env.rules == Rules::Forever {
+        if spell.flags.matches(SpellFlag::BINARY)
+            || PIERCING_BONUS_NONE.contains(&class_spell.as_str())
+        {
+            flags.push("SpellFlagNoPiercingBonus".to_string());
+        }
+        if PIERCING_BONUS_TICKS.contains(&class_spell.as_str()) {
+            flags.push("SpellFlagPiercingTicks".to_string());
+        }
     }
     out.insert("flags".into(), json!(flags));
     if !class_spell.is_empty() {
@@ -1169,6 +1195,9 @@ pub(crate) fn export_state(
     // the reference keeps them.
     if env.rules == Rules::Forever {
         prepared["target"]["no_level_partial_resist"] = json!(true);
+        // Spell Piercing past the target's resistance is rolled a hit (docs/mechanics.md); the
+        // reference adds it to every hit and tick.
+        prepared["target"]["spell_piercing_rolls"] = json!(true);
         // The client's mana regeneration interrupt aura acts at once (docs/mechanics.md);
         // the reference's cached tick waits for another refresh.
         prepared["player"]["casting_regen_at_once"] = json!(true);
