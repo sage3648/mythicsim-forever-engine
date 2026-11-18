@@ -1201,6 +1201,8 @@ pub(crate) struct StatProc {
     pub(crate) aura: AuraRef,
     /// The handler also adds a stack of the aura.
     pub(crate) add_stack: bool,
+    /// Each spell's chance on a completed cast (Forever's Crusader's Wrath); none by default.
+    pub(crate) cast_chances: Vec<Option<f64>>,
 }
 
 /// Go common/shared/shared_utils.go `applySpellDataProc`: a stat proc on the spells, heals and
@@ -5347,21 +5349,27 @@ impl<A: Agent> Fight<A> {
                 aura,
                 chances,
                 add_stack,
+                cast_chances,
                 ..
             } = effect
             {
-                let mut by_spell = vec![None; fight.spells.len()];
-                for entry in chances {
-                    if let Some(slot) = by_spell.get_mut(entry.spell) {
-                        *slot = Some(entry.chance);
+                let by_spell = |entries: &[crate::contracts::prepared_v2::SpellChance]| {
+                    let mut by_spell = vec![None; fight.spells.len()];
+                    for entry in entries {
+                        if let Some(slot) = by_spell.get_mut(entry.spell) {
+                            *slot = Some(entry.chance);
+                        }
                     }
-                }
+                    by_spell
+                };
+                let (chances, cast_chances) = (by_spell(chances), by_spell(cast_chances));
                 let aura = fight.player_aura(aura)?;
                 fight.stat_procs.push(StatProc {
-                    chances: by_spell,
+                    chances,
                     rng_label: rng_label.clone(),
                     aura,
                     add_stack: *add_stack,
+                    cast_chances,
                 });
             }
         }

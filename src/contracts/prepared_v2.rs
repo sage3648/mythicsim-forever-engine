@@ -2451,6 +2451,10 @@ pub enum Effect {
         /// does.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         add_stack: bool,
+        /// Forever's rules: each spell's chance on a completed cast, for a proc that casts roll
+        /// too (Crusader's Wrath), under the same roll label.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        cast_chances: Vec<SpellChance>,
     },
     /// Paladin talents_holy.go Illumination: a heal crit's chance to return a share of the
     /// heal's base cost, a batch window later.
@@ -4657,6 +4661,10 @@ pub enum Effect {
         share: f64,
         tick_can_crit: bool,
         tick_magic: bool,
+        /// Forever's rules: a Thunder Clap crit, which rolls the magic hit table, starts no
+        /// bleed. Without it, as in Go, any physical crit does.
+        #[serde(default, skip_serializing_if = "is_false")]
+        thunder_clap_starts_none: bool,
     },
     /// Unbridled Wrath: landed white hits may grant rage a spell batch window later.
     UnbridledWrath {
@@ -4689,6 +4697,10 @@ pub enum Effect {
         /// spends one charge a cast whatever its outcome, in place of only when it misses.
         #[serde(default, skip_serializing_if = "is_false")]
         strikes_spend_once: bool,
+        /// Forever's rules since push 114115: the party's Windfury Totem strike spends no charge,
+        /// though its crit starts Flurry. Without it the strike spends one as a white swing.
+        #[serde(default, skip_serializing_if = "is_false")]
+        totem_strike_spends_none: bool,
     },
     /// Reckless Swings (Forever's rules, the notes of 2 November 2026): a cast for a share of
     /// base health that gives the aura `charges` stacks, each landed white swing a spell batch
@@ -4701,6 +4713,10 @@ pub enum Effect {
         charges: i32,
         health_cost: f64,
         delay_ns: i64,
+        /// Forever's rules since push 114115: a Heroic Strike or Cleave gives Rage and spends a
+        /// charge once a cast, however many targets it hits.
+        #[serde(default, skip_serializing_if = "is_false")]
+        strikes_spend_once: bool,
     },
     /// Anger Management: rage every period from the reset.
     AngerManagement {

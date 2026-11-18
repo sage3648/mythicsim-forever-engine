@@ -654,9 +654,19 @@ fn bonereavers_edge(env: &mut Environment) {
 }
 
 /// items_weapons.go Bashguuder and Rivenspike: each stack of Puncture Armor on the target
-/// takes 100 armor.
+/// takes 100 armor, at the reference's 2 procs a minute. Under Forever's rules Bashguuder rolls
+/// 3.2 times a minute: 955 procs in 9,926 landed hits of 7 wearers (warriors and rogues, either
+/// hand) in public Forever reports on forever.warcraftlogs.com of 11 to 16 November 2026 (client
+/// 1.60.1.70938; FHqYCNcKntvDAjxg, JRQqNL6DkvWKYdPB, VK83G7MdBhLRFAfa, VYBjgJx8aZtRhmpy,
+/// v8Zp2QF7An4d9xMj, xXWkB3fqAjt9NJGH), 3.21 (2.72 to 4.18) a minute. Rivenspike's logs (1,419
+/// procs, 1.60, 1.20 to 2.25) do not rule out 2, so it keeps it.
 fn puncture_armor(env: &mut Environment, item_id: i32, name: &'static str) {
-    create_weapon_proc_trigger(env, item_id, name, 2.0, false, |env| {
+    let ppm = if item_id == 13204 && env.sim.rules == super::sim::Rules::Forever {
+        3.2
+    } else {
+        2.0
+    };
+    create_weapon_proc_trigger(env, item_id, name, ppm, false, |env| {
         for target in env.sim.all_units() {
             if env.sim.unit(target).unit_type != UnitType::Enemy {
                 continue;

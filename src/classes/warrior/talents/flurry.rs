@@ -19,6 +19,14 @@
 //! of 372 Cleaves with Flurry up, and one charge by 327 of 328 Cleaves that hit two targets.
 //! Combat logs of client 1.60.1.70888 hold 97 Whirlwinds of eight warriors: 16 of the 18 whose
 //! off hand strike alone crit started Flurry.
+//!
+//! The party's Windfury Totem strike spends no charge since push 114115, though its crit starts
+//! Flurry: a combat log of a level 60 dual wield Fury warrior in Upper Blackrock Spire on 16
+//! November 2026 (client 1.60.1.70938, after the push) holds 74 strikes with Flurry up, 68 with
+//! no charge removed, 4 whose removal a white swing or strike of the same moment explains, and 2
+//! dodged or parried ones beside a refresh; the strike's crit started or refreshed Flurry 22 of
+//! 22 times. Without the push's rule the strike, a main hand autoattack here, spends one as a
+//! white swing does.
 
 use crate::classes::warrior::agent::WarriorAgent;
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult, OUTCOME_MISS};
@@ -36,6 +44,8 @@ pub(crate) struct Flurry {
     /// Forever's rules since the hotfixes of 16 November 2026: a Heroic Strike or Cleave spends
     /// one charge a cast whatever its outcome. Without it, only a miss spends one.
     pub(crate) strikes_spend_once: bool,
+    /// Forever's rules since push 114115: the Windfury Totem strike spends no charge.
+    pub(crate) totem_strike_spends_none: bool,
 }
 
 /// The trigger's OnSpellHitDealt, which acts at once.
@@ -76,13 +86,16 @@ pub(crate) fn on_hit(
     }
     // Heroic Strike and Cleave carry the main hand's auto mask too (ProcMask::MELEE_MH), so
     // they are told apart from the white swing by name.
-    let spends = if !params.every_swing_spends {
-        white_hit
-    } else if strike {
-        !params.strikes_spend_once && result.outcome & OUTCOME_MISS != 0
-    } else {
-        white_hit
-    };
+    let spends =
+        if params.totem_strike_spends_none && fight.windfury_strike_attack_power(spell).is_some() {
+            false
+        } else if !params.every_swing_spends {
+            white_hit
+        } else if strike {
+            !params.strikes_spend_once && result.outcome & OUTCOME_MISS != 0
+        } else {
+            white_hit
+        };
     if spends {
         fight.remove_stack(params.aura);
     }
