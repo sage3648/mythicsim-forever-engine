@@ -109,6 +109,9 @@ pub(crate) struct Environment {
     )>,
     /// What a healer's gear changes under Forever's rules (`healer_gear`).
     pub healer_gear: super::healer_gear::HealerGear,
+    /// The player's character sheet as each step of building it left it, in the steps' order
+    /// (`stat_sheet`). Fewer than every step when a reading failed, and then there is no sheet.
+    pub build_readings: Vec<super::stat_sheet::Reading>,
     /// The first [`Environment::fresh`] simulation, which every later one copies.
     pristine: Rc<std::cell::OnceCell<Environment>>,
 }
@@ -278,6 +281,7 @@ impl Environment {
             rules,
             raid_live,
             healer_gear: super::healer_gear::HealerGear::default(),
+            build_readings: Vec::new(),
         };
         if let Some(debuffs) = raid.message("debuffs") {
             // The agent's constructor may have changed the raid's debuffs.
@@ -466,25 +470,43 @@ impl Environment {
         }
         super::professions::apply_profession_effects(self);
         self.sim.apply_build_phase_auras(unit, BuildPhase::BASE);
+        self.read_build_step(None);
 
         self.sim.apply_equipment(unit);
         super::item_effects::apply_item_effects(self)?;
         super::item_effects::apply_item_set_bonus_effects(self)?;
         super::healer_gear::apply(self)?;
         self.sim.apply_build_phase_auras(unit, BuildPhase::GEAR);
+        // The request's bonus stats came in with the equipment (`equip_stats`); the sheet
+        // reads the gear without them, then with them.
+        let bonus = self.sim.character(unit).bonus_stats;
+        self.read_build_step(Some(&bonus));
+        self.read_build_step(None);
 
         self.agent.apply_talents(&mut self.sim, unit);
         let effects = self.agent.take_post_finalize_effects();
         self.post_finalize.extend(effects);
         self.sim.apply_build_phase_auras(unit, BuildPhase::TALENTS);
+        self.read_build_step(None);
 
         super::buffs::apply_buff_effects(self, raid_buffs, party_buffs, individual)?;
         self.sim.apply_build_phase_auras(unit, BuildPhase::BUFFS);
+        self.read_build_step(None);
 
         super::consumes::apply_consume_effects(self, party_buffs)?;
         self.sim.apply_build_phase_auras(unit, BuildPhase::CONSUMES);
+        self.read_build_step(None);
         self.sim.clear_build_phase_auras(unit, BuildPhase::ALL);
         Ok(())
+    }
+
+    /// The player's sheet as the build step just applied leaves it: Go `measureStats`. With
+    /// `less`, as it would be without those stats.
+    fn read_build_step(&mut self, less: Option<&super::stats::Stats>) {
+        let step = self.build_readings.len();
+        if let Some(reading) = super::stat_sheet::measure(&self.sim, self.player, step, less) {
+            self.build_readings.push(reading);
+        }
     }
 
     /// Go `Environment.finalize` without the fake prepull.

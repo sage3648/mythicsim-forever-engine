@@ -1,5 +1,5 @@
 use forever_engine::{
-    contracts::prepared_v2::PreparedV2, prepare_json_with, prepared_refusals, simulate,
+    contracts::prepared_v2::PreparedV2, prepare_json_with_sheet, prepared_refusals, simulate,
     simulate_prepared, simulate_prepared_gated, validate_prepared, Gated, PrepareError,
     PreparedError, RaidError, Refusal, Request, Rules, SOURCE_REVISION,
 };
@@ -94,12 +94,15 @@ const EXIT_NOT_PREPARED: i32 = 5;
 ///
 /// A panic inside preparation is reported the same way, with the code `prepare_fault`, so a
 /// defect in Rust preparation sends the request to Go rather than failing it.
+///
+/// Beside the prepared input comes the character sheet its simulation starts with, when it
+/// could be read, for `sim --request --rotation-stats` to add to the result.
 fn prepare_request(
     request: &[u8],
     scenario: &str,
     rules: Rules,
-) -> Result<serde_json::Value, Failure> {
-    let prepared = std::panic::catch_unwind(|| prepare_json_with(request, scenario, rules))
+) -> Result<(serde_json::Value, Option<serde_json::Value>), Failure> {
+    let prepared = std::panic::catch_unwind(|| prepare_json_with_sheet(request, scenario, rules))
         .unwrap_or_else(|panic| {
             let reason = panic
                 .downcast_ref::<String>()
@@ -253,7 +256,7 @@ fn run() -> Result<(), Failure> {
             );
         }
         let input = fs::read(request).map_err(|err| err.to_string())?;
-        let prepared = prepare_request(&input, scenario.as_deref().unwrap_or("rust"), rules)?;
+        let (prepared, _) = prepare_request(&input, scenario.as_deref().unwrap_or("rust"), rules)?;
         let output = serde_json::to_string_pretty(&prepared).map_err(|err| err.to_string())?;
         if let Some(path) = outfile {
             write_atomically(&path, &(output + "\n"))?;
@@ -265,13 +268,16 @@ fn run() -> Result<(), Failure> {
     if scenario.is_some() && request_file.is_none() {
         return Err("--scenario requires --request".into());
     }
+    let mut stat_sheet = None;
     let prepared_from_request = match request_file {
         Some(request) => {
             if infile.is_some() || args[0] != "sim" {
                 return Err("--request replaces --infile and is for sim and prepare".into());
             }
             let input = fs::read(request).map_err(|err| err.to_string())?;
-            let prepared = prepare_request(&input, scenario.as_deref().unwrap_or("rust"), rules)?;
+            let (prepared, sheet) =
+                prepare_request(&input, scenario.as_deref().unwrap_or("rust"), rules)?;
+            stat_sheet = sheet;
             Some(serde_json::to_vec(&prepared).map_err(|err| err.to_string())?)
         }
         None => None,
@@ -306,6 +312,9 @@ fn run() -> Result<(), Failure> {
             simulate_prepared(&prepared).map_err(|err| err.to_string())?
         };
         if rotation_stats {
+            if let Some(sheet) = stat_sheet {
+                report.set_stat_sheet(sheet);
+            }
             report.add_rotation_stats();
         }
         let output = if args[0] == "bench" {

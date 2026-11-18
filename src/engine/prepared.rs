@@ -311,6 +311,11 @@ pub struct PreparedReport {
     /// [`PreparedReport::add_rotation_stats`] adds them.
     #[serde(skip)]
     cast_cooldowns: Vec<serde_json::Value>,
+    /// The character sheet the simulation started with, kept out of the result unless
+    /// [`PreparedReport::add_rotation_stats`] adds it. Preparation reads it
+    /// ([`crate::prepare_json_with_sheet`]); a prepared input carries none.
+    #[serde(skip)]
+    stat_sheet: Option<serde_json::Value>,
 }
 
 impl PreparedReport {
@@ -339,7 +344,17 @@ impl PreparedReport {
             "castCooldowns".into(),
             serde_json::Value::Array(self.cast_cooldowns.clone()),
         );
+        // The stats the fight started with and where each came from, so a player can check
+        // the character the engine built against the game's own sheet.
+        if let Some(sheet) = &self.stat_sheet {
+            player.insert("statSheet".into(), sheet.clone());
+        }
         true
+    }
+
+    /// Keep the character sheet preparation read for [`PreparedReport::add_rotation_stats`].
+    pub fn set_stat_sheet(&mut self, sheet: serde_json::Value) {
+        self.stat_sheet = Some(sheet);
     }
 }
 
@@ -400,6 +415,7 @@ impl PreparedReport {
             presentation,
             extra_attack_strikes,
             cast_cooldowns,
+            stat_sheet: None,
         })
     }
 }
