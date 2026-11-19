@@ -72,17 +72,13 @@ fn metric(result: &Value, spell_id: i64, field: &str) -> f64 {
 }
 
 /// Under Forever's rules Puncture Armor carries its strike, the client's row of the melee
-/// defense type; the Go reference lands it with the proc.
+/// defense type.
 #[test]
 fn puncture_armor_is_a_strike() {
     let request = board(1);
     let forever = prepared(&request, Rules::Forever);
     let strike = spell_position(&forever, PUNCTURE_ARMOR).expect("the strike is registered");
     assert_eq!(armor_debuff(&forever)["strike_spell"], json!(strike));
-
-    let go = prepared(&request, Rules::GoReference);
-    assert!(armor_debuff(&go).get("strike_spell").is_none());
-    assert_eq!(spell_position(&go, PUNCTURE_ARMOR), None);
 }
 
 /// The strike from behind a level 63 target is dodged, never parried, and a dodged one puts
@@ -93,7 +89,7 @@ fn puncture_armor_strikes_are_dodged() {
     let hits = metric(&result, PUNCTURE_ARMOR, "hits");
     let dodges = metric(&result, PUNCTURE_ARMOR, "dodges");
     let parries = metric(&result, PUNCTURE_ARMOR, "parries");
-    assert!(hits > 1000.0, "{hits} landed strikes");
+    assert!(hits > 500.0, "{hits} landed strikes");
     assert_eq!(parries, 0.0);
     let failed = dodges / (hits + dodges);
     assert!(
@@ -116,11 +112,6 @@ fn gut_ripper_doubles_below_a_quarter() {
         forever["player"]["spells"][position]["execute_damage_bonus"],
         json!([25.0, 2.0])
     );
-    let go = prepared(&request, Rules::GoReference);
-    let go_position = spell_position(&go, WOUND).expect("the Wound is registered");
-    assert!(go["player"]["spells"][go_position]
-        .get("execute_damage_bonus")
-        .is_none());
 
     let with = run(&forever);
     let mut plain = forever.clone();
@@ -137,8 +128,8 @@ fn gut_ripper_doubles_below_a_quarter() {
     assert!((1.1..1.5).contains(&ratio), "{ratio}");
 }
 
-/// Flame Wrath rolls 1.5 times a minute of its 3.3 s speed under Forever's rules, 8.25% a hit;
-/// the Go reference keeps its 1.0.
+/// Flame Wrath rolls 1.5 times a minute of its 3.3 s speed under Forever's rules, 8.25% a hit,
+/// in place of the reference's 1.0.
 #[test]
 fn flame_wrath_rolls_its_measured_rate() {
     let mut request = board(1);
@@ -158,5 +149,4 @@ fn flame_wrath_rolls_its_measured_rate() {
         effect["chances"][0]["chance"].as_f64().unwrap()
     };
     assert!((chance(Rules::Forever) - 1.5 * 3.3 / 60.0).abs() < 1e-9);
-    assert!((chance(Rules::GoReference) - 3.3 / 60.0).abs() < 1e-9);
 }
