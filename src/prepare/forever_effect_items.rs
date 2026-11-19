@@ -408,6 +408,48 @@ pub(crate) fn apply_creature_type_damage(env: &mut Environment, item: i32) {
     env.sim.spell_mut(spell).damage_multiplier *= versus.multiplier;
 }
 
+/// The chance on hit items whose Fatal Wound deals more to a target below some health, by item
+/// and the spell the chance on hit casts. Each row states it in two dummies (effect type 3):
+/// the second the percent more, the third the health percent, as the Forever client carries
+/// them (client 1.60.1.70959, 20 November 2026) and Wowhead's Forever tooltips state them:
+///
+/// - Pendulum of Doom (9425), Fatal Wound 10373: 50 and 25, "Deals 50% increased damage to
+///   targets below 25% health."
+/// - Diabolic Skiver (9475), Fatal Wound 18206: 50 and 25, the same text.
+/// - Gut Ripper (2164), Wound 18107: 100 and 25, "Deals 100% increased damage to targets below
+///   25% health"
+///
+/// The fight's execute phases stand for the target's health.
+pub(crate) const EXECUTE_DAMAGE_ITEMS: [(i32, i32); 3] =
+    [(9425, 10373), (9475, 18206), (2164, 18107)];
+
+/// After a chance on hit item registered its spell: a Fatal Wound's bonus below the row's
+/// health percent, read off its row, under Forever's rules.
+pub(crate) fn apply_execute_damage(env: &mut Environment, item: i32) {
+    let Some(&(_, spell_id)) = EXECUTE_DAMAGE_ITEMS.iter().find(|(id, _)| *id == item) else {
+        return;
+    };
+    if env.sim.rules != super::sim::Rules::Forever {
+        return;
+    }
+    let row = must_find(spell_id);
+    let dummy = |index: u8| {
+        row.effects
+            .iter()
+            .find(|effect| effect.index == index && effect.effect_type == 3)
+            .map(|effect| effect.base_value())
+    };
+    let (Some(percent), Some(health)) = (dummy(1), dummy(2)) else {
+        return;
+    };
+    let unit = env.player;
+    let spell = env
+        .sim
+        .get_spell(unit, &ActionId::spell(spell_id))
+        .expect("the chance on hit registered its spell");
+    env.sim.spell_mut(spell).execute_damage_bonus = Some([health, 1.0 + percent / 100.0]);
+}
+
 /// The items whose equip effect raises the Feral Combat skill, by item and amount.
 ///
 /// Spiderchitin Wrap (280016): "Equip: Increases Feral Combat +1." (Wowhead's Forever tooltip, 13
