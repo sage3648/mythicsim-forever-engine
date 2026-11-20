@@ -794,7 +794,7 @@ fn ghostly_strike_readies_one_ambush_without_stealth() {
 
 /// Shank's live rows carry no Suppress Weapon Procs (Wowhead Forever, 21 November 2026, both
 /// ranks; the client rows of 1.60.1.70959 still do), so the strike is exported without the flag
-/// and the off hand's poison hears it: in a fight, poisons land at the moment of Shanks that no
+/// and the off hand's Deadly Poison hears it: in a fight, it lands at the moment of Shanks that no
 /// swing landed beside.
 #[test]
 fn shank_procs_weapon_effects() {
@@ -827,7 +827,10 @@ fn shank_procs_weapon_effects() {
         .into_iter()
         .filter(|time| !at(*time, "{OtherID: 1}") && !at(*time, "{OtherID: 2}"))
         .collect();
-    let poisoned = lone.iter().filter(|time| at(**time, "Poison")).count();
+    // The fixture's off hand carries Deadly Poison (imbue 27186), which the log names as
+    // {SpellID: 25347, Tag: ...}.
+    let deadly = |time: f64| at(time, "{SpellID: 25347,");
+    let poisoned = lone.iter().filter(|time| deadly(**time)).count();
     assert!(
         poisoned > 0,
         "no poison heard any of {} lone Shanks",
