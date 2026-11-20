@@ -755,8 +755,9 @@ fn hammer_of_the_righteous_cleaves() {
     // 960 since Ironfoe's Fury of Forgewright rolls 3% under Forever's rules (13 November 2026).
     // 967 since every ability's main hand strike rolls Windfury Totem, Holy Strike and Hammer of
     // the Righteous among them (hotfixes of 13 November 2026). 949 since the totem's proc is a
-    // weapon strike (Forever's rules of 15 November 2026).
-    assert_eq!(casts, 949.0);
+    // weapon strike (Forever's rules of 15 November 2026). 948 since Spell Piercing is rolled a
+    // hit (19 November 2026), which moved the rolls.
+    assert_eq!(casts, 948.0);
     assert!(damage > 0.0);
 }
 
@@ -781,16 +782,18 @@ fn seal_of_justice_judges_justice() {
     // 3258 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
     // 3256 since judgements are ranged attacks (hotfixes of 11 November 2026). 3273 since every
     // ability's main hand strike rolls Windfury Totem (hotfixes of 13 November 2026). 3282 since
-    // the totem's proc is a weapon strike (15 November 2026).
-    assert_eq!(action(&player, 20164, 0).0, 3282.0);
+    // the totem's proc is a weapon strike (15 November 2026). 3274 since Spell Piercing is
+    // rolled a hit (19 November 2026), which moved the rolls.
+    assert_eq!(action(&player, 20164, 0).0, 3274.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
     // Wisdom pays only on landed hits. 748 since the 11 November live rows of Truestrike
     // Shoulders and Battleborn Armbraces. 749 since judgements are ranged attacks (hotfixes of
     // 11 November 2026). 754 since every ability's main hand strike rolls Windfury Totem
     // (hotfixes of 13 November 2026). 748 since the totem's proc is a weapon strike (15
-    // November 2026).
-    assert_eq!(action(&player, 20184, 0).0, 748.0);
+    // November 2026). 760 since Spell Piercing is rolled a hit (19 November 2026), which moved
+    // the rolls.
+    assert_eq!(action(&player, 20184, 0).0, 760.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing
@@ -859,8 +862,9 @@ fn a_druids_own_thorns_strikes_back() {
     // moved the rolls after a missed spell. 1647 since the 11 November live rows of Ban'thok Sash,
     // Hands of Power, Robe of Everlasting Night and Burial Shawl, and Star of Mystaria's hit
     // counted once (1.3%, not 1.3% and 1% spell hit). 1651 since Blessed Band of Light gives no
-    // hit (hotfixes of 13 November 2026), which moved the rolls after a missed spell.
-    assert_eq!(action(&player, 9910, 0).0, 1651.0);
+    // hit (hotfixes of 13 November 2026), which moved the rolls after a missed spell. 1660 since
+    // Spell Piercing is rolled a hit (19 November 2026), which moved the rolls.
+    assert_eq!(action(&player, 9910, 0).0, 1660.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 

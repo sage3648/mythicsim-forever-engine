@@ -1035,11 +1035,18 @@ fn lion_horn_proc(env: &Environment, trigger: AuraId) -> Option<Value> {
     {
         return None;
     }
-    let chance = if proc.f64("proc_chance") == 0.0 {
+    let mut chance = if proc.f64("proc_chance") == 0.0 {
         1.0
     } else {
         proc.f64("proc_chance")
     };
+    // Forever's rules: the row's chance (20847, SpellAuraOptions 132262, ProcChance 10) is the
+    // chance in Strongholds and Cities. The live tooltip reads "When struck in combat has a 5%
+    // chance of increasing all party member's armor by 725 for 30 sec. This chance is doubled in
+    // Strongholds and Cities.", and no fight here is in one.
+    if env.sim.rules == super::sim::Rules::Forever {
+        chance /= 2.0;
+    }
     let bonus = effect_stats(&entry);
     let id = env
         .sim
@@ -3153,6 +3160,24 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
         });
         if immediate {
             effect["immediate"] = json!(true);
+        }
+        // Forever's rules: neither debuff lands on a target under Faerie Fire or Curse of
+        // Recklessness, and either one landing takes it off; Sunder Armor shares the target
+        // with it (docs/mechanics.md).
+        if env.sim.rules == super::sim::Rules::Forever {
+            let blockers: Vec<String> = scratch
+                .sim
+                .unit(target)
+                .auras
+                .iter()
+                .map(|aura| scratch.sim.aura(*aura).label.clone())
+                .filter(|label| {
+                    label.starts_with("Faerie Fire") || label.starts_with("Curse of Recklessness")
+                })
+                .collect();
+            if !blockers.is_empty() {
+                effect["blocked_by"] = json!(blockers);
+            }
         }
         effects.push(effect);
     }

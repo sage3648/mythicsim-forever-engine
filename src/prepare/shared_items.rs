@@ -84,6 +84,13 @@ pub(crate) const CHANCE_ON_HIT_PPM: f64 = 1.08;
 /// priced on the weapon's base speed:
 ///
 /// - Destiny (647), 17152: 670 procs in 9,440 hits, 1.18 (1.10 to 1.27).
+///
+/// From public Forever logs of 13 to 17 November 2026 (forever.warcraftlogs.com, client
+/// 1.60.1.70938; AyTmpNtxB9jbnJ2H, q23Tz8hnZGkvbLx6, NrpM7DJQBKWqbzVF, DpVmH4WRxL72nGwd,
+/// H2Zg1jRm93PpTqK4), every landed physical hit of the wearer, priced on the 3.1 s speed:
+///
+/// - Waveslicer (18324), 1302166: 910 procs in 9,170 hits of 4 shamans and a paladin, 1.92, every
+///   wearer 1.81 to 2.06.
 const MEASURED_CHANCE_ON_HIT_PPM: &[(i32, f64)] = &[
     (9453, 1.8),
     (6220, 1.55),
@@ -92,6 +99,7 @@ const MEASURED_CHANCE_ON_HIT_PPM: &[(i32, f64)] = &[
     (12974, 0.6),
     (13040, 2.7),
     (647, 1.2),
+    (18324, 1.95),
 ];
 
 /// The procs a minute of an item's rateless chance on hit under Forever's rules: the measured
