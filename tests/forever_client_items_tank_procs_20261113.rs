@@ -206,10 +206,11 @@ fn five_kroldok() -> Vec<(usize, i64)> {
 // Krol'dok Battlegear.
 // ---------------------------------------------------------------------------------------------
 
-/// (4) Every block heals the wearer once: a heal proc that hears the blocked swings of the target,
-/// at a chance of 1, for a roll of 18 with a variance of 0.5.
+/// (4) A block heals the wearer, at most once a second: a heal proc that hears the blocked swings
+/// of the target, at a chance of 1, for a roll of 18 with a variance of 0.5. Client 1.60.1.71037
+/// gives the row a proc recovery of 1000 ms.
 #[test]
-fn four_kroldok_pieces_heal_on_every_block() {
+fn four_kroldok_pieces_heal_on_a_block_once_a_second() {
     let request = tank_warrior(&four_kroldok());
     let (prepared, player) = run(&request);
     assert!(has_aura(&prepared, "Krol'dok Battlegear 4P"));
@@ -220,20 +221,19 @@ fn four_kroldok_pieces_heal_on_every_block() {
     assert_eq!(heal["proc_chance"], 1.0);
     assert_eq!(heal["average"], 18.0);
     assert_eq!(heal["variance"], 0.5);
-    // No proc recovery: the trigger row states none.
     let trigger = prepared["player"]["auras"]
         .as_array()
         .unwrap()
         .iter()
         .find(|aura| aura["label"] == "Krol'dok Battlegear 4P")
         .unwrap();
-    assert!(trigger["icd"].is_null(), "{trigger}");
+    assert_eq!(trigger["icd"]["duration_ns"], 1_000_000_000_i64, "{trigger}");
 
     let blocks = player["blocksTaken"].as_f64().unwrap();
     assert!(blocks > 0.0);
     let heals = total(&player, KROLDOK_RESOLVE_HEAL, "hits")
         + total(&player, KROLDOK_RESOLVE_HEAL, "crits");
-    assert_eq!(heals, blocks, "one heal for every block");
+    assert!(heals > 0.0 && heals <= blocks, "{heals} heals for {blocks} blocks");
     // A roll of 13.5 to 22.5 through the spell's multipliers, crits included.
     let average = total(&player, KROLDOK_RESOLVE_HEAL, "healing") / heals;
     assert!((13.0..=32.0).contains(&average), "{average}");

@@ -567,11 +567,12 @@ pub(super) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool 
 ///   8643) alone.
 /// - (4) "+36 Attack Power against Humanoids." Spell 1301088: melee attack power versus a creature
 ///   type (102, mask 64) of 36.
-/// - (5) "Reduces the cost of your Envenom and Eviscerate abilities by 5 Energy." Spell 1301708:
-///   a cost mod (107, misc 14) of -5 on mask [131072, 8] of family 8. In the client data that
-///   mask is Eviscerate's alone (2098 to 6762): Envenom (399968) is a row with no class flags,
-///   no cost and no effect, and nothing here registers it, so the tooltip's Envenom has no cost
-///   to lower.
+/// - (5) "Reduces the cost of your Eviscerate and Death Mark abilities by 5 Energy." Spell
+///   1301708: a cost mod (107, misc 14) of -5. Client 1.60.1.70425 to 70959 give it mask
+///   [131072, 8] of family 8, Eviscerate's alone, and named Envenom, which Forever has no cost
+///   for. The live row (Wowhead Forever, 21 November 2026: "Eviscerate and Death Mark", affected
+///   spells Eviscerate and Death Mark ranks 1 to 4) adds Death Mark (1316709, 1325756 to
+///   1325758; class mask [0, 0, 4, 0]).
 pub(crate) static CLIENT_ITEM_SETS: &[ClientItemSet] = &[ClientItemSet {
     set: ItemSet {
         id: 2099,
@@ -615,13 +616,13 @@ fn grimstitch_armor_4(env: &mut Environment, aura: AuraId) {
     env.sim.expose_to_apl(aura, 1301088);
 }
 
-/// Tier 1 Rogue: reduces the cost of your Envenom and Eviscerate abilities by 5 Energy.
+/// Tier 1 Rogue: reduces the cost of your Eviscerate and Death Mark abilities by 5 Energy.
 fn grimstitch_armor_5(env: &mut Environment, aura: AuraId) {
     let sim = &mut env.sim;
     sim.attach_spell_mod(
         aura,
         SpellModConfig {
-            class_mask: masks::EVISCERATE,
+            class_mask: masks::EVISCERATE | masks::DEATH_MARK,
             kind: SpellModType::PowerCostFlat,
             int_value: -5,
             ..SpellModConfig::default()

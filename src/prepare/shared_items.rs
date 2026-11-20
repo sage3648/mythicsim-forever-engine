@@ -84,6 +84,13 @@ pub(crate) const CHANCE_ON_HIT_PPM: f64 = 1.08;
 /// priced on the weapon's base speed:
 ///
 /// - Destiny (647), 17152: 670 procs in 9,440 hits, 1.18 (1.10 to 1.27).
+///
+/// From 799 public Forever dungeon reports listed on 21 November 2026 (client 1.60.1.70959),
+/// isolated landed white swings of wearers with no off-hand weapon (no other damage event of the
+/// wearer within 30 ms), priced on the weapon's base speed:
+///
+/// - The Blackrock Slicer (13285, 4.0 s), Wound 17407: 209 procs in 1,533 swings on 4 players,
+///   2.04 (1.78 to 2.30).
 const MEASURED_CHANCE_ON_HIT_PPM: &[(i32, f64)] = &[
     (9453, 1.8),
     (6220, 1.55),
@@ -92,6 +99,7 @@ const MEASURED_CHANCE_ON_HIT_PPM: &[(i32, f64)] = &[
     (12974, 0.6),
     (13040, 2.7),
     (647, 1.2),
+    (13285, 2.05),
 ];
 
 /// The procs a minute of an item's rateless chance on hit under Forever's rules: the measured

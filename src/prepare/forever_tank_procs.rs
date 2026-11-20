@@ -9,8 +9,10 @@
 //! - Krol'dok Battlegear (4), Krol'dok Resolve (1324298, ItemSetSpell 8249): "Chance on block to
 //!   heal for 14 to 23. Healing is doubled in Strongholds and Cities." Every block heals the
 //!   wearer by a roll of the heal row (1324296: 18 with a variance of 0.5), through a heal spell
-//!   cast on the wearer as an enchant's heal proc is (`NewSpellDataHealProc`). No fight is in a
-//!   Stronghold or City, so the doubling never applies.
+//!   cast on the wearer as an enchant's heal proc is (`NewSpellDataHealProc`), at most once a
+//!   second: client 1.60.1.71037 gives the row's SpellAuraOptions (248630) a ProcCategoryRecovery
+//!   of 1000 ms, where 70959 and the pinned store have none. No fight is in a Stronghold or City,
+//!   so the doubling never applies.
 //! - Krol'dok Battlegear (5), Ogre Dominance (1324309, ItemSetSpell 8250): "Taking damage has a
 //!   high chance to increase your Stamina by 1 for 30 sec, stacking up to 20 times. (3s
 //!   cooldown)" Each landed hit taken that deals damage, at most once in the row's 3 sec proc
@@ -54,6 +56,8 @@ pub(crate) const GIRDLE_OF_EXTRACTED_ANSWERS: i32 = 276_742;
 /// Krol'dok Resolve and the heal it casts.
 const KROLDOK_RESOLVE: i32 = 1_324_298;
 const KROLDOK_RESOLVE_HEAL: i32 = 1_324_296;
+/// Krol'dok Resolve's proc recovery in client 1.60.1.71037 (the pinned store has none).
+const KROLDOK_RESOLVE_RECOVERY: crate::prepare::sim::Duration = crate::prepare::sim::SECOND;
 /// Ogre Dominance and the buff it applies.
 const OGRE_DOMINANCE: i32 = 1_324_309;
 const OGRE_DOMINANCE_BUFF: i32 = 1_324_308;
@@ -102,6 +106,8 @@ pub(crate) fn kroldok_battlegear_4(env: &mut Environment, set_aura: AuraId) {
     listener.outcome = HitOutcome::BLOCK;
     listener.require_damage_dealt = false;
     listener.trigger_immediately = true;
+    // Client 1.60.1.71037: SpellAuraOptions 248630, ProcCategoryRecovery 1000.
+    listener.icd = KROLDOK_RESOLVE_RECOVERY;
     env.sim.attach_proc_trigger(set_aura, &listener);
 }
 

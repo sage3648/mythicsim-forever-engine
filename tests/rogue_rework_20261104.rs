@@ -792,11 +792,12 @@ fn ghostly_strike_readies_one_ambush_without_stealth() {
     assert!(log.contains(&format!("Aura faded: {{SpellID: {GHOSTLY_READY}}}")));
 }
 
-/// Shank's rows carry Suppress Weapon Procs (attributes 4, 0x800000), so the strike is exported
-/// with the flag and no poison or weapon effect hears it: in a fight, no poison lands at the
-/// moment of a Shank unless a swing landed then too.
+/// Shank's live rows carry no Suppress Weapon Procs (Wowhead Forever, 21 November 2026, both
+/// ranks; the client rows of 1.60.1.70959 still do), so the strike is exported without the flag
+/// and the off hand's poison hears it: in a fight, poisons land at the moment of Shanks that no
+/// swing landed beside.
 #[test]
-fn shank_suppresses_weapon_procs() {
+fn shank_procs_weapon_effects() {
     let prepared = prepared(&combat(&[]), Rules::Forever);
     let flags: Vec<&str> = spell(&prepared, "shank")["flags"]
         .as_array()
@@ -804,7 +805,7 @@ fn shank_suppresses_weapon_procs() {
         .iter()
         .map(|flag| flag.as_str().unwrap())
         .collect();
-    assert!(flags.contains(&"SpellFlagSuppressWeaponProcs"), "{flags:?}");
+    assert!(!flags.contains(&"SpellFlagSuppressWeaponProcs"), "{flags:?}");
 
     let request = with_shank(combat(&[]), SHANK, 60);
     let log = first_fight_log(&request, Rules::Forever);
@@ -819,10 +820,10 @@ fn shank_suppresses_weapon_procs() {
             .filter(|line| line.starts_with('[') && close(time_of(line), time))
             .any(|line| line.contains(needle))
     };
-    for time in shanks {
-        if at(time, "{OtherID: 1}") || at(time, "{OtherID: 2}") {
-            continue;
-        }
-        assert!(!at(time, "Poison"), "a poison at {time} heard Shank");
-    }
+    let lone: Vec<f64> = shanks
+        .into_iter()
+        .filter(|time| !at(*time, "{OtherID: 1}") && !at(*time, "{OtherID: 2}"))
+        .collect();
+    let poisoned = lone.iter().filter(|time| at(**time, "Poison")).count();
+    assert!(poisoned > 0, "no poison heard any of {} lone Shanks", lone.len());
 }
