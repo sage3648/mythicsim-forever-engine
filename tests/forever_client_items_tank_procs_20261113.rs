@@ -227,13 +227,19 @@ fn four_kroldok_pieces_heal_on_a_block_once_a_second() {
         .iter()
         .find(|aura| aura["label"] == "Krol'dok Battlegear 4P")
         .unwrap();
-    assert_eq!(trigger["icd"]["duration_ns"], 1_000_000_000_i64, "{trigger}");
+    assert_eq!(
+        trigger["icd"]["duration_ns"], 1_000_000_000_i64,
+        "{trigger}"
+    );
 
     let blocks = player["blocksTaken"].as_f64().unwrap();
     assert!(blocks > 0.0);
     let heals = total(&player, KROLDOK_RESOLVE_HEAL, "hits")
         + total(&player, KROLDOK_RESOLVE_HEAL, "crits");
-    assert!(heals > 0.0 && heals <= blocks, "{heals} heals for {blocks} blocks");
+    assert!(
+        heals > 0.0 && heals <= blocks,
+        "{heals} heals for {blocks} blocks"
+    );
     // A roll of 13.5 to 22.5 through the spell's multipliers, crits included.
     let average = total(&player, KROLDOK_RESOLVE_HEAL, "healing") / heals;
     assert!((13.0..=32.0).contains(&average), "{average}");

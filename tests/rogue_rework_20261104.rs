@@ -805,7 +805,10 @@ fn shank_procs_weapon_effects() {
         .iter()
         .map(|flag| flag.as_str().unwrap())
         .collect();
-    assert!(!flags.contains(&"SpellFlagSuppressWeaponProcs"), "{flags:?}");
+    assert!(
+        !flags.contains(&"SpellFlagSuppressWeaponProcs"),
+        "{flags:?}"
+    );
 
     let request = with_shank(combat(&[]), SHANK, 60);
     let log = first_fight_log(&request, Rules::Forever);
@@ -825,5 +828,9 @@ fn shank_procs_weapon_effects() {
         .filter(|time| !at(*time, "{OtherID: 1}") && !at(*time, "{OtherID: 2}"))
         .collect();
     let poisoned = lone.iter().filter(|time| at(**time, "Poison")).count();
-    assert!(poisoned > 0, "no poison heard any of {} lone Shanks", lone.len());
+    assert!(
+        poisoned > 0,
+        "no poison heard any of {} lone Shanks",
+        lone.len()
+    );
 }
