@@ -1133,6 +1133,7 @@ fn item_swap_limits(
     } else {
         Vec::new()
     };
+    let speed_ties = movement_speed_ties(prepared, swapped, &targets);
     for change in swapped {
         if let Some(reason) = swap_change_limit(
             prepared,
@@ -1144,11 +1145,68 @@ fn item_swap_limits(
             &threat_mods,
             aura_effects,
             &displaced_totem,
+            &speed_ties,
         ) {
             reasons.push(reason);
         }
     }
     reasons
+}
+
+/// The speed auras whose exclusive state an item swap may move because the runtime's category
+/// does the same and the speed stays as it was: each of the aura's categories is a single aura
+/// movement category whose members all sit in one player movement effect's speed auras, an aura
+/// the swap switches bids in it at the aura's own priority, and the swap leaves that effect's
+/// speed multiplier as it was. A Retribution Paladin's Runeblade of Baron Rivendare in a Manual
+/// Crowd Pummeler opener's swap set: its Unholy Aura (8%) ties Pursuit of Justice (8%) in the
+/// passive movement speed category and takes it over at the swap, as the runtime's tie does,
+/// and the speed stays 1.08 (two refused Best Gear runs on 19 November 2026).
+fn movement_speed_ties<'a>(
+    prepared: &'a PreparedV2,
+    swapped: &[SwapChange],
+    switched: &[&str],
+) -> Vec<&'a str> {
+    let auras = &prepared.player.auras;
+    let mut ties = Vec::new();
+    for (index, effect) in prepared.effects.iter().enumerate() {
+        let Effect::PlayerMovement { speed_auras, .. } = effect else {
+            continue;
+        };
+        let speed = format!("/effects/{index}/speed_multiplier");
+        if swapped.iter().any(|change| change.path == speed) {
+            continue;
+        }
+        for aura in auras {
+            if !speed_auras.contains(&aura.label) || aura.exclusive_memberships.is_empty() {
+                continue;
+            }
+            let tied = aura.exclusive_memberships.iter().all(|membership| {
+                let category = membership.category.as_str();
+                let mut members = auras.iter().filter(|other| {
+                    other
+                        .exclusive_memberships
+                        .iter()
+                        .any(|bid| bid.category == category)
+                });
+                membership.single_aura
+                    && crate::core::fight::MOVEMENT_CATEGORIES.contains(&category)
+                    && members
+                        .clone()
+                        .all(|other| speed_auras.contains(&other.label))
+                    && members.any(|other| {
+                        switched.contains(&other.label.as_str())
+                            && other.exclusive_memberships.iter().any(|bid| {
+                                bid.category == category
+                                    && bid.priority.to_bits() == membership.priority.to_bits()
+                            })
+                    })
+            });
+            if tied {
+                ties.push(aura.label.as_str());
+            }
+        }
+    }
+    ties
 }
 
 /// Whether a Flametongue Weapon trigger an item swap switches leaves Flametongue Totem's benefit
@@ -1203,6 +1261,7 @@ fn swap_change_limit(
     threat_mods: &[(&[usize], f64, bool, bool)],
     aura_effects: &[crate::contracts::prepared_v2::SwapAuraEffect],
     displaced_totem: &[&str],
+    speed_ties: &[&str],
 ) -> Option<String> {
     let parts: Vec<&str> = change.path.split('/').skip(1).collect();
     let refuse = || {
@@ -1327,6 +1386,17 @@ fn swap_change_limit(
                 .get(index.parse::<usize>().ok()?)?
                 .label;
             if displaced_totem.contains(&label.as_str()) {
+                None
+            } else if speed_ties.contains(&label.as_str())
+                && (*field != "displaced_by"
+                    || change.value.is_null()
+                    || change
+                        .value
+                        .as_str()
+                        .is_some_and(|by| speed_ties.contains(&by)))
+            {
+                // A movement speed tie the runtime's category resolves as the swapped state
+                // does (movement_speed_ties).
                 None
             } else if *field == "displaced_by" {
                 refuse()
@@ -2758,12 +2828,11 @@ pub(crate) fn prepared_coverage(
                 .into_iter()
                 .map(|(reason, code)| Refusal::new(code, reason)),
         );
-    } else if player.prepull_actions != 0 {
-        reasons.push(Refusal::new(
-            "prepull_unsupported",
-            "prepull actions outside the rotation are unsupported",
-        ));
     }
+    // No rotation means it failed to parse, which refuses it for its own reasons: its prepull
+    // actions were never counted, so they are not called unsupported here (a Hunter's "move has
+    // no range" Quick Sim on 19 November 2026 also read "prepull actions outside the rotation
+    // are unsupported").
 
     let implemented = implemented_effects();
     let missing: Vec<Refusal> = required

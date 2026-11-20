@@ -119,9 +119,11 @@ REAL_ITEMS = {280505}
 # Quick Sims on 10 November 2026); its row is an armor row with no armor type. Egan's Blaster
 # 13289 sits in the ranged slot (InventoryType 26) with no damage, speed or stats (two refused
 # sims of a Retribution Paladin on 13 November 2026); its row is a ranged row with no ranged
-# weapon type, which nothing shoots with.
+# weapon type, which nothing shoots with. Amulet of Draconic Subversion 16787 is a neck with no
+# stats whose use is a disguise (five refused Quick Sims of an Enhancement Shaman on 19 November
+# 2026); its row is an armor row with no armor type.
 QUEST_CLASS = 12
-WORN_QUEST_ITEMS = {9978, 13289}
+WORN_QUEST_ITEMS = {9978, 13289, 16787}
 # The InventoryType of a worn quest item of the ranged slot.
 QUEST_RANGED_SLOT = 26
 
@@ -469,6 +471,9 @@ NO_FIGHT_EFFECT = [
         # item, outside a fight.
         r"Use: Combines Axe of Lingering Dread and Axe of Inevitable Ruin to reconstruct the "
         r"Pendulum of Doom\.",
+        # Amulet of Draconic Subversion 16787: its use, Illusion: Black Dragonkin (19937), is a
+        # transform (aura 56) and a forced faction reaction (aura 139), nothing a fight reads.
+        r"Use: Use to disguise yourself as a member of the Black Dragonflight\.",
     ]
 ]
 # Use, chance on hit and equip lines the engine models by hand

@@ -2123,7 +2123,7 @@ pub(crate) struct Fight<A: Agent> {
 /// Go movement.go's exclusive categories of movement speed effects: `NewPassiveMovementSpeedEffect`
 /// and `NewActiveMovementSpeedEffect` bid their bonus in single aura categories, and the active
 /// effect multiplies the unit's speed.
-const MOVEMENT_CATEGORIES: [&str; 2] = ["PassiveMovementSpeed", "ActiveMovementSpeed"];
+pub(crate) const MOVEMENT_CATEGORIES: [&str; 2] = ["PassiveMovementSpeed", "ActiveMovementSpeed"];
 
 /// Errors that make a prepared input impossible to run despite passing coverage.
 pub(crate) type BuildError = String;
