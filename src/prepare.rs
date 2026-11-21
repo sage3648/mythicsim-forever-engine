@@ -87,6 +87,7 @@ pub(crate) mod spell;
 pub(crate) mod spell_mod;
 pub(crate) mod spelldata;
 pub(crate) mod stat_auras;
+pub(crate) mod stat_sheet;
 pub(crate) mod stats;
 pub(crate) mod talent_layout;
 pub(crate) mod target;
@@ -160,6 +161,26 @@ pub(crate) fn prepare_json_raid(
     rules: Rules,
     raid_live: env::RaidLive,
 ) -> Result<serde_json::Value, PrepareError> {
+    prepare_with_sheet(request, scenario, rules, raid_live).map(|(prepared, _)| prepared)
+}
+
+/// Prepares a request as [`prepare_json_with`] does, and reads the character sheet its
+/// simulation starts with (`prepare/stat_sheet.rs`) for the application to show beside the
+/// result. The sheet is `None` when it could not be read, which never fails the preparation.
+pub fn prepare_json_with_sheet(
+    request: &[u8],
+    scenario: &str,
+    rules: Rules,
+) -> Result<(serde_json::Value, Option<serde_json::Value>), PrepareError> {
+    prepare_with_sheet(request, scenario, rules, env::RaidLive::default())
+}
+
+fn prepare_with_sheet(
+    request: &[u8],
+    scenario: &str,
+    rules: Rules,
+    raid_live: env::RaidLive,
+) -> Result<(serde_json::Value, Option<serde_json::Value>), PrepareError> {
     let bytes = request;
     let mut request = Request::from_json(bytes).map_err(PrepareError::Invalid)?;
     let options = request.message().message("sim_options");
@@ -211,7 +232,11 @@ pub(crate) fn prepare_json_raid(
             raid_live,
         )
         .map_err(PrepareError::Refused)?;
-        export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
+        // Read before the export, which resets and reads the environment for its effects.
+        let sheet = stat_sheet::of_environment(&env);
+        let prepared =
+            export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)?;
+        Ok((prepared, sheet))
     })
 }
 
