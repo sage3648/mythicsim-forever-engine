@@ -979,6 +979,36 @@ pub(crate) fn spell_data_proc_damage_spell(
     config
 }
 
+/// Forever's rules: the strike a weapon proc's debuff row casts where the row's defense type is
+/// melee or ranged. It deals nothing, rolls the hit table of that type with no crit, and the
+/// debuff lands only where the roll does. Puncture Armor (17315, defense type melee in the
+/// client's SpellCategories) logs a missed, dodged or parried attempt as a damage event of no
+/// amount, 4% of its attempts in public Forever logs (docs/mechanics.md). A row on the magic
+/// table or on none (Armor Shatter 16928) lands with the proc and has no strike. Registered
+/// once for the wearer however many weapons carry the row.
+pub(crate) fn proc_debuff_strike_spell(
+    env: &mut Environment,
+    row: &'static Spell,
+) -> Option<SpellId> {
+    if env.sim.rules != super::sim::Rules::Forever
+        || !matches!(
+            row.defense_type_core(),
+            DefenseType::Melee | DefenseType::Ranged
+        )
+    {
+        return None;
+    }
+    let unit = env.player;
+    if let Some(spell) = env.sim.get_spell(unit, &ActionId::spell(row.id)) {
+        return Some(spell);
+    }
+    let mut config = spell_config(&mut env.sim, unit, row, &[damage_shape(row), cast_by(true)]);
+    // As any other proc's spell: no hit kind, and no damage-dealt listener hears it.
+    config.proc_mask = ProcMask::EMPTY;
+    config.flags |= SpellFlag::NO_ON_DAMAGE_DEALT;
+    Some(register_spell(env, config))
+}
+
 /// Go `spellDataProcHealSpell`: the heal the proc casts, as its row states it: a share of the
 /// target's maximum health or an amount the effect rolls, the spell power share the row states,
 /// and a crit unless the row rules one out; or a heal over time where the row's heal is a

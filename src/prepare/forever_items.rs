@@ -114,6 +114,7 @@ fn apply_chance_on_hit_item(env: &mut Environment, item: i32) -> bool {
             }
             super::forever_effect_items::apply_facing_damage(env, item);
             super::forever_effect_items::apply_creature_type_damage(env, item);
+            super::forever_effect_items::apply_execute_damage(env, item);
             return true;
         }
     }
@@ -530,7 +531,12 @@ fn create_weapon_proc_spell(
 ///   Forever reports (client 1.60.1.70938, 14 and 15 November 2026), 1.93 (1.85 to 2.02) a minute,
 ///   1.95 in place of the reference's 1.7. Off hand swings (12 in 12,870) and ranged type hits (0
 ///   in 579) do not roll it, as the main hand proc already rolls.
-const FOREVER_WEAPON_DAMAGE_PPM: &[(i32, f64)] = &[(6472, 1.75), (13361, 1.95)];
+/// - Flame Wrath (11809), 16559 with its Fire Shield 16560: 88 procs in 1,089 isolated landed
+///   main hand white swings of 6 paladins and 2 warriors in 8 public Forever reports (client
+///   1.60.1.70959, 18 to 20 November 2026; fights whose gear snapshot holds it in the main hand),
+///   8.1% (6.5% to 9.7%) a swing on its 3.3 s speed, 1.47 (1.18 to 1.76) a minute, 1.5 in place
+///   of the reference's 1.0.
+const FOREVER_WEAPON_DAMAGE_PPM: &[(i32, f64)] = &[(6472, 1.75), (13361, 1.95), (11809, 1.5)];
 
 fn weapon_damage_proc(env: &mut Environment, proc: &WeaponDamageProc) {
     let ppm = FOREVER_WEAPON_DAMAGE_PPM
@@ -681,6 +687,7 @@ fn bonereavers_edge(env: &mut Environment) {
 /// takes 100 armor.
 fn puncture_armor(env: &mut Environment, item_id: i32, name: &'static str) {
     create_weapon_proc_trigger(env, item_id, name, 2.0, false, |env| {
+        super::shared_items::proc_debuff_strike_spell(env, must_find(17315));
         for target in env.sim.all_units() {
             if env.sim.unit(target).unit_type != UnitType::Enemy {
                 continue;
