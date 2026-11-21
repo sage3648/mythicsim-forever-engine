@@ -1053,11 +1053,13 @@ pub(crate) fn item_swap_effect(
     // A Rogue's swap set is the same weapons with poisons of their own, in either hand or both,
     // which the Rogue's preparation checks (rogue `poisons`).
     if swap.slots != [slot::MAIN_HAND] && class != "ClassRogue" {
-        if swap.slots != [slot::MAIN_HAND, slot::OFF_HAND] || class != "ClassWarrior" {
+        if swap.slots != [slot::MAIN_HAND, slot::OFF_HAND] {
             return refuse("an item swap of a slot other than the main hand alone is unsupported");
         }
-        // A Warrior's two-hander for a one-hander and shield, or the other way: neither set
-        // swings an off hand, so the swap changes the main hand's attack and what a shield gives.
+        // A two-hander for a one-hander and a shield or a held in off hand item, or the other
+        // way (a Warrior's shield set, the Manual Crowd Pummeler opener of a Shaman holding a
+        // scepter): neither set swings an off hand, so the swap changes the main hand's attack
+        // and what the off hand item gives.
         let dual_wields = |swapped: bool| {
             let equipment = swap.set(swapped);
             let off_hand = &equipment[slot::OFF_HAND];

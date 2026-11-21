@@ -926,10 +926,11 @@ fn item_swap_limits(
     };
     let mut reasons = Vec::new();
     let player = &prepared.player;
-    // A Warrior's off hand swaps beside the main hand when neither set swings it: the swapped
+    // The off hand swaps beside the main hand when neither set swings it (a Warrior's shield
+    // set, the Manual Crowd Pummeler opener of a player holding an off hand item): the swapped
     // state's off hand and dual wield must then read as the reset's, which the changes check.
     let off_hand = slots.as_slice() == ["ItemSlotMainHand", "ItemSlotOffHand"]
-        && prepared.player.class == "ClassWarrior"
+        && prepared.player.class != "ClassRogue"
         && !prepared.melee.dual_wielding;
     // A Rogue's swap set holds the same weapons with poisons of their own (MythicSim, Forever's
     // rules), in either hand or both: the changes must leave the weapons as the reset's.

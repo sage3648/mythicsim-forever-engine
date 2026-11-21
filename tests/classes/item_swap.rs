@@ -169,12 +169,12 @@ fn a_specialization_crit_must_follow_its_modifiers() {
     )));
 }
 
-/// Beside a Warrior's off hand, a swap only of the main hand is followed: another slot in the
-/// swap set is refused.
+/// Beside the off hand (when neither set swings it), a swap only of the main hand is followed:
+/// another slot in the swap set is refused.
 #[test]
 fn a_swap_of_another_slot_is_refused() {
     let mut value = fixture("mcp-retribution-paladin");
-    item_swap(&mut value)["slots"] = json!(["ItemSlotMainHand", "ItemSlotOffHand"]);
+    item_swap(&mut value)["slots"] = json!(["ItemSlotHead", "ItemSlotMainHand"]);
     assert!(refusals(value)
         .iter()
         .any(|refusal| refusal.starts_with("item_swap_unsupported: an item swap of slots")));
@@ -614,4 +614,62 @@ fn a_prepull_swap_puts_its_weapon_in_the_hand_under_forever_rules() {
     assert!(!forever.contains("Item Swap to set Main"));
     assert_eq!(stat_changes(&reference)[..2], ["[-1.00]", "[-0.00]"]);
     assert!(stat_changes(&forever)[1] != "[-0.00]");
+}
+
+/// The Manual Crowd Pummeler opener of an Enhancement Shaman who holds an off hand item: the
+/// Pummeler at the pull with the off hand empty, then the own one-hander and the held item back
+/// (Scepter of Interminable Focus, +9 spell hit and +1% spell crit's worth of stats). It prepares
+/// under Forever's rules, the swap covers both hands, and the swapped set's stats carry the held
+/// item's.
+#[test]
+fn the_opener_swaps_back_a_held_off_hand_item() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/mcp-enhancement-shaman.request.json");
+    let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let player = &mut request["raid"]["parties"][0]["players"][0];
+    // Hand of Edward the Odd back in the main hand, the Scepter in the off hand.
+    player["itemSwap"]["items"][14] = json!({"id": 2243});
+    player["itemSwap"]["items"][15] = json!({"id": 22329});
+    let bytes = serde_json::to_vec(&request).unwrap();
+    let with_held =
+        forever_engine::prepare_json_with(&bytes, "held", forever_engine::Rules::GoReference)
+            .unwrap_or_else(|err| panic!("{err}"));
+    let swap = with_held["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|effect| effect["kind"] == "item_swap")
+        .expect("an item swap effect");
+    assert_eq!(
+        swap["slots"],
+        json!(["ItemSlotMainHand", "ItemSlotOffHand"]),
+        "{}",
+        swap["slots"]
+    );
+    let prepared: PreparedV2 = serde_json::from_value(with_held.clone()).unwrap();
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
+
+    // Without the held item the same swap covers the main hand alone; with it the swapped set
+    // adds the Scepter's stats.
+    player_off_hand_empty(&mut request);
+    let bytes = serde_json::to_vec(&request).unwrap();
+    let without =
+        forever_engine::prepare_json_with(&bytes, "empty", forever_engine::Rules::GoReference)
+            .unwrap_or_else(|err| panic!("{err}"));
+    let log = |value: &Value| {
+        value["effects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|effect| effect["kind"] == "item_swap")
+            .unwrap()["to_swapped_log"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    assert_ne!(log(&with_held), log(&without));
+}
+
+fn player_off_hand_empty(request: &mut Value) {
+    request["raid"]["parties"][0]["players"][0]["itemSwap"]["items"][15] = json!({});
 }
