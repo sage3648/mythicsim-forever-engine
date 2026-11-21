@@ -8,14 +8,20 @@ use forever_engine::{prepare_json_with, Rules};
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 
-/// The Combat Rogue fixture wearing Stormshroud's chest, legs, gloves and shoulders.
+/// The live Combat Rogue reference's talents, which only Forever's rules take.
+const COMBAT: &str = "00530320250001-320013220201232115-";
+
+/// The Combat Rogue fixture wearing Stormshroud's chest, legs, gloves and shoulders, on the
+/// live tree under Forever's rules.
 fn stormshroud_rogue(rules: Rules) -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/mage/prepared-v2/production-combat-rogue.request.json");
     let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    let items = request["raid"]["parties"][0]["players"][0]["equipment"]["items"]
-        .as_array_mut()
-        .unwrap();
+    let player = &mut request["raid"]["parties"][0]["players"][0];
+    if rules == Rules::Forever {
+        player["talentsString"] = json!(COMBAT);
+    }
+    let items = player["equipment"]["items"].as_array_mut().unwrap();
     for (slot, id) in [(2, 15058), (4, 15056), (8, 15057), (6, 21278)] {
         items[slot] = json!({ "id": id });
     }
