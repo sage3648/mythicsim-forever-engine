@@ -331,7 +331,21 @@ fn stormshroud_armor_2(env: &mut Environment, aura: AuraId) {
     set_melee_damage_proc(env, aura, "Lightning", 18979, 18980, school::NATURE);
 }
 
-/// 4% chance on melee attack of restoring 30 energy.
+/// Revitalize (23863), Stormshroud Armor's 3 pieces, as (chance on a landed melee hit, energy
+/// restored by 23864): the client rows' 4% and 30, or under Forever's rules the live server's 3%
+/// and 18. Wowhead's Forever tooltip for 23863 read "3% chance on melee attack of restoring 18
+/// energy" on 21 November 2026, while the client rows of 1.60.1.71037 (20 November) still state
+/// 4% and 30, so the change is a server-side hotfix the client files do not carry yet.
+pub(crate) fn stormshroud_revitalize(rules: Rules) -> (f64, f64) {
+    if rules == Rules::Forever {
+        (0.03, 18.0)
+    } else {
+        (stated_chance(must_find(23863)), 30.0)
+    }
+}
+
+/// 4% chance on melee attack of restoring 30 energy; 3% for 18 under Forever's rules
+/// ([`stormshroud_revitalize`]).
 fn stormshroud_armor_3(env: &mut Environment, aura: AuraId) {
     if !env.sim.unit(env.player).energy_bar.enabled {
         return;
@@ -344,7 +358,7 @@ fn stormshroud_armor_3(env: &mut Environment, aura: AuraId) {
             callback: CallbackMask::ON_SPELL_HIT_DEALT,
             outcome: HitOutcome::LANDED,
             proc_mask: ProcMask::MELEE,
-            proc_chance: stated_chance(must_find(23863)),
+            proc_chance: stormshroud_revitalize(env.sim.rules).0,
             ..ProcTrigger::default()
         },
     );

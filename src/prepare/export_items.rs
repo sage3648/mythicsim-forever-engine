@@ -3186,7 +3186,7 @@ pub(crate) fn energy_proc_effects(
     // item_sets_classic.go Stormshroud Armor (3), Revitalize: a set bonus proc trigger on landed
     // melee hits, none flagged a proc, at the client's 4% (23863) rolled under its name, whose
     // handler a spell batch window later restores 30 energy (23864). Go attaches it only to a
-    // character with an energy bar.
+    // character with an energy bar. Forever's rules read the live server's 3% and 18.
     if let Some(aura) = aura_named(env, "Stormshroud Armor 3P") {
         let listener = ProcTrigger {
             callback: CallbackMask::ON_SPELL_HIT_DEALT,
@@ -3194,7 +3194,7 @@ pub(crate) fn energy_proc_effects(
             proc_mask: ProcMask::MELEE,
             ..ProcTrigger::default()
         };
-        let chance = super::resolve_proc::stated_chance(must_find(23863));
+        let (chance, energy) = super::forever_item_sets::stormshroud_revitalize(env.sim.rules);
         let chances: Vec<Value> = proc_trigger_spells(env, &listener)
             .into_iter()
             .map(|spell| json!({"spell": spell, "chance": chance}))
@@ -3205,7 +3205,7 @@ pub(crate) fn energy_proc_effects(
         } else {
             effects.push(json!({
                 "kind": "energize_proc", "trigger_aura": a.label, "rng_label": "Revitalize",
-                "chances": chances, "energy": 30.0,
+                "chances": chances, "energy": energy,
                 "metrics_action_id": json!({"spell_id": 23864}), "delay_ns": SPELL_BATCH_WINDOW,
             }));
         }
