@@ -133,6 +133,15 @@ the Go goldens and exporter uses. The departures:
   resource row of its own, named after the totem (`src/core/fight/mp5_sources.rs`). The mana
   gained is the same; as with Innervate, the rest of the regeneration fills the mana bar first.
   The prepared player carries `mp5_sources`.
+- A Shaman's Spirit regeneration, from the client's `GetManaRegen()` on a level 40 Shaman (client
+  1.60.1.71037, 22 November 2026): out of casting a Shaman regenerates 6.25 mana a second and an
+  eighth of its Spirit, as Priests and Mages do, where the reference gives every other class 7.5
+  and a tenth. Two gear sets read 23.276 a second at 117 Spirit and 27.526 at 151 Spirit, each
+  2.401 while casting (2 MP5 from gear and Warchief's Blessing's 10 MP5, the only mana
+  regeneration on the character). Less that, Spirit gives 20.875 and 25.125, which are
+  6.25 + 117/8 and 6.25 + 151/8 exactly; the reference's rule gives 19.2 and 22.6
+  (`tests/forever_rules_20261122_shaman_spirit_regen.rs`). The other classes were not measured
+  and keep the reference's rule.
 - Overhealing, from Forever's level 30 beta logs on foreverlogs.gg (1 to 24 October 2026, 74
   public reports): a healer sim counts each heal less the share real Holy and Discipline
   Priests, Holy Paladins and Restoration Druids and Shamans overhealed of it, such as Flash Heal

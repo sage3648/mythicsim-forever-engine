@@ -549,7 +549,11 @@ impl Sim {
             },
         );
         let class = self.character(unit).class.clone();
-        let (base, per_spirit) = if class == "ClassPriest" || class == "ClassMage" {
+        // Forever's Shaman regenerates 6.25 mana a second and an eighth of its Spirit, as Priests
+        // and Mages do, where the reference gives it 7.5 and a tenth (docs/mechanics.md).
+        let forever_shaman = self.rules == Rules::Forever && class == "ClassShaman";
+        let (base, per_spirit) = if class == "ClassPriest" || class == "ClassMage" || forever_shaman
+        {
             (6.25, 1.0 / 8.0)
         } else {
             (7.5, 1.0 / 10.0)
