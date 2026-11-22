@@ -1688,7 +1688,10 @@ the Go goldens and exporter uses. The departures:
     (2) +10 Fire Resistance (1324673), (3) +15 Stamina (1324674, whose name says 10 and whose row
     and tooltip say 15) and (4) Increased Swords +1 (1324675) are applied. The (5) "Melee attacks
     have a chance to increase your Critical Strike chance by 2% for 20 sec" (Defias Juggernaut,
-    1324684) states no chance and refuses the fifth piece by name.
+    1324684) runs at 1 proc per minute on landed melee hits of either hand, priced on the hitting
+    weapon: four five piece wearers on forever.warcraftlogs.com (22 November 2026) gained it 548
+    times in about 111 minutes of melee, up 35 to 55% of the time. From 13 to 22 November every
+    landed main hand hit refreshed it (the row's ProcChance 100 read as the rate).
   - Heart of the Primeval (274615), a trinket of item level 40: +18 Frost Resistance and "Use:
     Increases damage and healing done by magical spells and effects by up to 19 for 30 sec. (6
     Min Cooldown)". ItemEffect 234049 uses Heart of the Primeval (1295233) with no cooldowns of

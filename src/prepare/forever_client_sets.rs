@@ -42,10 +42,14 @@
 //!   This effect is doubled in swamps." ItemSetSpell 8258, Defias Juggernaut (1324684), a proc
 //!   (ProcTypeMask 4116 and, in the second word, 32: the main hand's melee hits) that casts
 //!   1324683, an A_MOD_CRIT_PCT (290) of 2 for 20 sec that does not stack. SpellAuraOptions 248691
-//!   has ProcChance 100 beside the tooltip's "a chance", which the owner's decision of 13 November
-//!   2026 reads literally as the rate (`forever_tank_procs`): every landed main hand melee hit
-//!   refreshes the buff. No fight is in a swamp, so the doubling (the buff's Dummy of 4) never
-//!   applies. The rows are in the pinned store.
+//!   has ProcChance 100 beside the tooltip's "a chance". Logs measure 1 proc per minute on the
+//!   landed melee hits of either hand, priced on the hitting weapon's speed: four five piece
+//!   wearers on forever.warcraftlogs.com (22 November 2026, reports mTk2BJK7FLQWwcC8,
+//!   GVXDntYPzaRmk9yK, TXbC4jMJv8GN2wD3, g1YV283cxqG4pWm6) gained it 548 times in about 111
+//!   minutes of melee, on 3.2 to 4.3% of a Rogue's landed hits and 4.6% of a bear's (2.5 sec
+//!   swings), with the buff up 35 to 55% of the time. Until then every landed main hand hit
+//!   refreshed it. No fight is in a swamp, so the doubling (the buff's Dummy of 4) never applies.
+//!   The rows are in the pinned store.
 //!
 //! Soulforge Armor (ItemSet 516: the Classic Tier 0.5 Paladin pieces 22086 to 22093, which the
 //! reference does not register; its Soulforge Armor is the later reissue's set), read the same
@@ -63,20 +67,18 @@
 //!   (124) attack power of 40.
 //! - (8) "+200 Armor." ItemSetSpell 2319, Increased Armor 200 (14803): an armor aura (674) of 200.
 
-use serde_json::{json, Value};
+use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::aura_helpers::{HitOutcome, ProcTrigger};
+use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::character::constants::DEFENSE_RATING_PER_DEFENSE_LEVEL;
-use super::common_effects::{action_id_string, flat_string};
-use super::consumable_effects::proc_trigger_spells;
 use super::dbcenums::A_MOD_CRIT_PCT;
 use super::env::Environment;
-use super::export_items::{aura_named, callback_names};
+use super::export_items::aura_named;
 use super::item_sets::{ClientItemSet, ItemSet};
-use super::resolve_proc::{chance, proc_trigger};
 use super::sim::AuraId;
+use super::spell::ProcMask;
 use super::spelldata::must_find;
 use super::stats::{Stat, Stats};
 use super::weapon_skill::WeaponSkill;
@@ -117,24 +119,21 @@ fn defias_enforcers_garb_4(env: &mut Environment, aura: AuraId) {
 const DEFIAS_JUGGERNAUT: i32 = 1_324_684;
 const DEFIAS_JUGGERNAUT_BUFF: i32 = 1_324_683;
 /// The permanent aura the five pieces register (`item_sets`), which the listener goes by.
-const DEFIAS_ENFORCERS_GARB_5: &str = "Defias Enforcer's Garb 5P";
+pub(crate) const DEFIAS_ENFORCERS_GARB_5: &str = "Defias Enforcer's Garb 5P";
 /// The buff's temporary stats aura.
-const DEFIAS_JUGGERNAUT_AURA: &str = "Defias Juggernaut";
+pub(crate) const DEFIAS_JUGGERNAUT_AURA: &str = "Defias Juggernaut";
 
-/// The listener the proc row decodes to, its ProcChance of 100 the rate.
-fn defias_juggernaut_listener(env: &Environment) -> ProcTrigger {
-    let mut listener = proc_trigger(
-        &env.sim,
-        Some(env.player),
-        must_find(DEFIAS_JUGGERNAUT),
-        &[chance(1.0)],
-    );
-    listener.name = DEFIAS_ENFORCERS_GARB_5.to_string();
-    listener
-}
+/// The rate logs measure, in procs per minute of the hitting weapon's speed.
+const DEFIAS_JUGGERNAUT_PPM: f64 = 1.0;
+/// The hits it rolls on: the melee hits of either hand, white and special.
+const DEFIAS_JUGGERNAUT_MASK: ProcMask = ProcMask::MELEE;
+/// The listener's name, which the exported proc rolls under.
+pub(crate) const DEFIAS_JUGGERNAUT_TRIGGER: &str = "Defias Juggernaut";
+/// The buff's spell, for the export's logs.
+pub(crate) const DEFIAS_JUGGERNAUT_BUFF_ID: i32 = DEFIAS_JUGGERNAUT_BUFF;
 
 /// The buff's crit: its A_MOD_CRIT_PCT, every kind of crit, as `parse_effects` reads the aura.
-fn defias_juggernaut_stats() -> Stats {
+pub(crate) fn defias_juggernaut_stats() -> Stats {
     let crit = must_find(DEFIAS_JUGGERNAUT_BUFF)
         .effects
         .iter()
@@ -146,7 +145,9 @@ fn defias_juggernaut_stats() -> Stats {
     ])
 }
 
-/// Defias Enforcer's Garb (5): the buff, and the listener on the set's aura that refreshes it.
+/// Defias Enforcer's Garb (5): the buff, and a listener on the set's aura that rolls 1 proc per
+/// minute on landed melee hits of either hand, through a manager an item swap rebuilds for the
+/// weapons in the hands, as Lightforge Armor's Crusader's Wrath does.
 fn defias_enforcers_garb_5(env: &mut Environment, aura: AuraId) {
     let unit = env.player;
     env.sim.new_temporary_stats_aura(
@@ -156,8 +157,28 @@ fn defias_enforcers_garb_5(env: &mut Environment, aura: AuraId) {
         defias_juggernaut_stats(),
         must_find(DEFIAS_JUGGERNAUT_BUFF).duration(),
     );
-    let listener = defias_juggernaut_listener(env);
-    env.sim.attach_proc_trigger(aura, &listener);
+    let dpm = Rc::new(
+        env.sim
+            .new_ppm_manager(unit, DEFIAS_JUGGERNAUT_PPM, DEFIAS_JUGGERNAUT_MASK)
+            .rebuilt_by_swap(
+                &env.sim,
+                unit,
+                super::item_swap::ManagerChance::Ppm(DEFIAS_JUGGERNAUT_PPM),
+                super::item_swap::ManagerMask::Static(DEFIAS_JUGGERNAUT_MASK),
+            ),
+    );
+    env.sim.attach_proc_trigger(
+        aura,
+        &ProcTrigger {
+            action_id: ActionId::spell(DEFIAS_JUGGERNAUT),
+            name: DEFIAS_JUGGERNAUT_TRIGGER.to_string(),
+            callback: CallbackMask::ON_SPELL_HIT_DEALT,
+            proc_mask: DEFIAS_JUGGERNAUT_MASK,
+            outcome: HitOutcome::LANDED,
+            dpm: Some(dpm),
+            ..ProcTrigger::default()
+        },
+    );
 }
 
 /// The stat auras of the client sets, for the combinations `statAurasEffect` reads.
@@ -167,28 +188,6 @@ pub(crate) fn stat_auras(env: &Environment) -> Vec<String> {
     } else {
         Vec::new()
     }
-}
-
-/// The exported effects of the client sets' listeners the character wears: Defias Juggernaut, a
-/// `spell_data_stat_proc` on the hits its row decodes to, at a chance of 1.
-pub(crate) fn export_effects(env: &Environment) -> Vec<Value> {
-    let Some(set) = aura_named(env, DEFIAS_ENFORCERS_GARB_5) else {
-        return Vec::new();
-    };
-    let listener = defias_juggernaut_listener(env);
-    let bonus = defias_juggernaut_stats();
-    let id = ActionId::spell(DEFIAS_JUGGERNAUT_BUFF);
-    vec![json!({
-        "kind": "spell_data_stat_proc", "trigger_aura": env.sim.aura(set).label,
-        "aura": DEFIAS_JUGGERNAUT_AURA,
-        "trigger_spells": proc_trigger_spells(env, &listener),
-        "callbacks": callback_names(listener.callback),
-        "landed_only": listener.outcome == HitOutcome::LANDED,
-        "require_damage": listener.require_damage_dealt,
-        "proc_chance": listener.proc_chance,
-        "gain_log": format!("Gained {} from {}.", flat_string(&bonus), action_id_string(&id)),
-        "expire_log": format!("Lost {} from fading {}.", flat_string(&bonus), action_id_string(&id)),
-    })]
 }
 
 /// Soulforge Armor (2): +8 All Resistances.

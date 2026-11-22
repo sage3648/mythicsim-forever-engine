@@ -328,9 +328,9 @@ fn four_defias_enforcer_pieces_add_one_sword_skill() {
     assert_eq!(skill(&rogue(&four)), skill(&rogue(&three)));
 }
 
-/// The crit proc of five pieces is Defias Juggernaut from its client rows, whose ProcChance of 100
-/// the owner's decision of 13 November 2026 reads as the rate: every landed main hand melee hit
-/// gives 2% crit, melee, ranged and spell, for 20 sec, and the fifth piece no longer refuses.
+/// The crit proc of five pieces is Defias Juggernaut from its client rows: 2% crit, melee, ranged
+/// and spell, for 20 sec, at the 1 proc per minute logs measure (22 November 2026) on landed
+/// melee hits of either hand, priced on the hitting weapon.
 #[test]
 fn five_defias_enforcer_pieces_proc_defias_juggernaut() {
     let four = rogue(&[
@@ -354,17 +354,23 @@ fn five_defias_enforcer_pieces_proc_defias_juggernaut() {
         .iter()
         .find(|effect| effect["trigger_aura"] == "Defias Enforcer's Garb 5P")
         .expect("the five piece's listener is exported");
-    assert_eq!(effect["kind"], "spell_data_stat_proc");
+    assert_eq!(effect["kind"], "stat_proc");
     assert_eq!(effect["aura"], "Defias Juggernaut");
-    assert_eq!(effect["proc_chance"], 1.0);
-    assert_eq!(effect["landed_only"], true);
-    assert_eq!(effect["callbacks"], json!(["on_spell_hit_dealt"]));
-    let heard = effect["trigger_spells"].as_array().unwrap();
-    assert!(!heard.is_empty());
-    // The main hand's hits only: the off hand's swing is not among the spells heard.
-    for position in heard {
-        let spell = &prepared["player"]["spells"][position.as_u64().unwrap() as usize];
-        assert_ne!(spell["action_id"]["tag"], 2, "{spell}");
+    // Both hands roll, each at its own weapon's speed over 60 sec.
+    let chances = effect["chances"].as_array().unwrap();
+    let tags: std::collections::BTreeSet<u64> = chances
+        .iter()
+        .map(|entry| {
+            prepared["player"]["spells"][entry["spell"].as_u64().unwrap() as usize]["action_id"]
+                ["tag"]
+                .as_u64()
+                .unwrap_or(0)
+        })
+        .collect();
+    assert!(tags.contains(&1) && tags.contains(&2), "{tags:?}");
+    for entry in chances {
+        let chance = entry["chance"].as_f64().unwrap();
+        assert!(chance > 0.0 && chance < 0.06, "{entry}");
     }
     let buff = prepared["player"]["auras"]
         .as_array()
@@ -381,14 +387,19 @@ fn five_defias_enforcer_pieces_proc_defias_juggernaut() {
     let (four_prepared, _) = run(&four);
     assert!(!has_aura(&four_prepared, "Defias Juggernaut"));
     assert!(player["dps"]["avg"].as_f64().unwrap() > 0.0);
-    let uptime = player["auras"]
+    let aura = player["auras"]
         .as_array()
         .unwrap()
         .iter()
         .find(|aura| aura["id"]["spellId"] == 1324683)
-        .and_then(|aura| aura["uptimeSecondsAvg"].as_f64())
-        .unwrap_or(0.0);
-    assert!(uptime > 0.0, "Defias Juggernaut is up for {uptime} sec");
+        .expect("the buff is reported");
+    let uptime = aura["uptimeSecondsAvg"].as_f64().unwrap_or(0.0);
+    let duration = five["encounter"]["duration"].as_f64().unwrap();
+    // Up part of the fight, no longer all of it.
+    assert!(
+        uptime > 0.1 * duration && uptime < 0.8 * duration,
+        "Defias Juggernaut is up {uptime} of {duration} sec"
+    );
 }
 
 // ---------------------------------------------------------------------------------------------

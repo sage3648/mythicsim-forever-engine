@@ -2784,7 +2784,7 @@ fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> 
     // (set aura, trigger name, aura, aura spell, stats, proc mask)
     let crusaders_wrath =
         || Stats::from_pairs(&[(Stat::SpellDamage, 65.0), (Stat::HealingPower, 65.0)]);
-    let procs: [(&str, &str, &str, i32, Stats, ProcMask); 3] = [
+    let procs: [(&str, &str, &str, i32, Stats, ProcMask); 4] = [
         (
             "Lightforge Armor 5P",
             "Item - Crusader's Wrath Proc - Lightforge Armor",
@@ -2810,6 +2810,16 @@ fn set_stat_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> 
             "Spider's Kiss",
             17333,
             Stats::from_pairs(&[(Stat::Armor, -100.0)]),
+            ProcMask::MELEE,
+        ),
+        // Defias Enforcer's Garb (5): 1 per minute on landed melee hits of either hand
+        // (forever_client_sets.rs `defias_enforcers_garb_5`).
+        (
+            super::forever_client_sets::DEFIAS_ENFORCERS_GARB_5,
+            super::forever_client_sets::DEFIAS_JUGGERNAUT_TRIGGER,
+            super::forever_client_sets::DEFIAS_JUGGERNAUT_AURA,
+            super::forever_client_sets::DEFIAS_JUGGERNAUT_BUFF_ID,
+            super::forever_client_sets::defias_juggernaut_stats(),
             ProcMask::MELEE,
         ),
     ];
@@ -2894,7 +2904,6 @@ pub(crate) fn item_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     effects.extend(gear_proc_effects(env, unrepresented));
     effects.extend(spell_data_stat_proc_effects(env, unrepresented));
     effects.extend(super::forever_tank_procs::export_effects(env));
-    effects.extend(super::forever_client_sets::export_effects(env));
     effects.extend(super::forever_mana_procs::export_effects(env));
     effects.extend(energy_proc_effects(env, unrepresented));
     effects.extend(super::healer_gear::export_effects(env, unrepresented));
