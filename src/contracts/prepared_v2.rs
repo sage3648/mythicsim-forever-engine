@@ -4185,6 +4185,11 @@ pub enum Effect {
         /// Without it the strike spends one as a white swing.
         #[serde(default, skip_serializing_if = "is_false")]
         totem_strike_spends_none: bool,
+        /// Forever's rules: a Windfury Weapon strike spends a charge as a white swing does,
+        /// except in the instant another Windfury Weapon strike's crit gained the charges.
+        /// Without it the strike spends none.
+        #[serde(default, skip_serializing_if = "is_false")]
+        imbue_strike_spends: bool,
     },
     /// Improved Stormstrike: Stormstrike may raise casting spirit regeneration; its cooldown
     /// reset hears only hits the player takes.

@@ -275,6 +275,9 @@ impl Shaman {
                 // The hotfixes of 17 November 2026: a Windfury Totem strike spends no charge
                 // (flurry.rs).
                 flurry["totem_strike_spends_none"] = json!(true);
+                // Combat logs of 23 November 2026: a Windfury Weapon strike spends a
+                // charge (flurry.rs).
+                flurry["imbue_strike_spends"] = json!(true);
             }
             effects.push(flurry);
         }

@@ -565,7 +565,21 @@ the Go goldens and exporter uses. The departures:
     first fight. One thing the post does not state: the strike's crit still starts Flurry, as
     any melee crit does. The post speaks of lost stacks only, and a level 60 Fury warrior's
     combat log of 16 November 2026 shows the same strike's crit starting the Warrior's Flurry 22
-    of 22 times. No Shaman log is counted yet.
+    of 22 times. Shaman logs of 23 November 2026 agree: a Stormstrike followed by Windfury
+    Totem strikes alone spends a charge 7 of 171 times (below).
+  - Shaman Flurry and Windfury Weapon (combat logs, Forever preparation only;
+    `tests/forever_flurry_windfury_weapon_20261124.rs`): a Windfury Weapon strike (439440,
+    439441) spends a charge as a white swing does, on the same 500 ms charge cooldown, except in
+    the instant another Windfury Weapon strike's crit gained the charges (`imbue_strike_spends`
+    on the prepared `flurry` effect). Combat logs of 23 November 2026, 36 level 60 Enhancement
+    shamans in 35 reports: a Stormstrike that does not crit, with charges up and the cooldown
+    ready, spends a charge 160 of 173 times when Windfury Weapon strikes follow it, 45 of 1,507
+    times when no hit does and 7 of 171 times when only Windfury Totem strikes do; a white or
+    Stormstrike crit followed by Windfury Weapon strikes alone ends on two charges 294 of 367
+    times (the engine: every time), against three 2,931 of 3,052 times when no hit follows; a
+    second Windfury Weapon strike in the same millisecond as one whose crit gained the charges
+    leaves three 293 of 298 times. The reference, where the strike is a special attack, spends
+    none.
 - The rest of the Shaman changes in the development notes of 2 November 2026 (Forever
   preparation, the reference keeps the frozen rows; the rows are in `prepare::hotfix_113554`).
   The damage rows are Wowhead's Forever tooltips of 4 November 2026 (the live client's, rows the

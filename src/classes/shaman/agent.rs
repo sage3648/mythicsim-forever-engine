@@ -163,8 +163,13 @@ pub(crate) struct ShamanAgent {
     flurry: Option<Flurry>,
     /// Flurry's charge cooldown, a Go timer: when it is ready.
     flurry_icd: i64,
+    /// When Flurry last gained its charges, and whether a Windfury Weapon strike's crit gained
+    /// them.
+    flurry_gain: flurry::Gain,
     /// Melee auto attacks, Go `ProcMaskMeleeWhiteHit`, by spellbook position.
     white: Vec<bool>,
+    /// Windfury Weapon's strikes (439440 and 439441), by spellbook position.
+    windfury_weapon_strike: Vec<bool>,
     farseer: Option<RageOfTheFarseer>,
     elemental_mastery: Option<elemental_mastery::ElementalMastery>,
     /// Stormstrike's main hand strike, when the character has a main hand weapon.
@@ -616,6 +621,11 @@ impl ShamanAgent {
                     .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeOHAuto")
             })
             .collect();
+        fight.agent.windfury_weapon_strike = fight
+            .spells
+            .iter()
+            .map(|spell| flurry::WINDFURY_WEAPON_STRIKES.contains(&spell.id.spell_id))
+            .collect();
         let holds = |spell: &ExportedSpell, names: [&str; 2]| {
             spell
                 .proc_mask
@@ -795,6 +805,7 @@ impl ShamanAgent {
                     charge_icd_ns,
                     can_proc_from_procs,
                     totem_strike_spends_none,
+                    imbue_strike_spends,
                     ..
                 } => {
                     fight.agent.flurry = Some(flurry::bind(
@@ -805,6 +816,7 @@ impl ShamanAgent {
                         *charge_icd_ns,
                         *can_proc_from_procs,
                         *totem_strike_spends_none,
+                        *imbue_strike_spends,
                     )?);
                 }
                 Effect::ElementalMastery {
@@ -1529,6 +1541,7 @@ impl Agent for ShamanAgent {
     fn reset(fight: &mut Fight<Self>) {
         fight.agent.totems = Expirations::default();
         fight.agent.flurry_icd = crate::core::time::STARTING_CD_TIME;
+        fight.agent.flurry_gain = flurry::Gain::default();
         fight.agent.water_shield_ready = crate::core::time::STARTING_CD_TIME;
         fight.agent.lightning_shield_ready = crate::core::time::STARTING_CD_TIME;
     }
@@ -1734,10 +1747,15 @@ impl Agent for ShamanAgent {
         match kind {
             ShamanAura::FlurryTrigger => {
                 let state = fight.agent.flurry.expect("Flurry is bound");
-                let white = fight.agent.white[spell];
+                let hit = flurry::Hit {
+                    white: fight.agent.white[spell],
+                    imbue_strike: fight.agent.windfury_weapon_strike[spell],
+                };
                 let mut icd = fight.agent.flurry_icd;
-                state.handle(fight, spell, &result, white, &mut icd);
+                let mut gain = fight.agent.flurry_gain;
+                state.handle(fight, spell, &result, hit, &mut icd, &mut gain);
                 fight.agent.flurry_icd = icd;
+                fight.agent.flurry_gain = gain;
             }
             ShamanAura::ElementalDevastationTrigger => fight
                 .agent
