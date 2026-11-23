@@ -248,8 +248,8 @@ fn a_strike_beside_a_strike_crit_that_started_flurry_spends_none() {
         let Some(&(_, left)) = logged
             .charges
             .iter()
-            .filter(|&&(time, _)| same_batch(crit.time, time))
-            .last()
+            .rev()
+            .find(|&&(time, _)| same_batch(crit.time, time))
         else {
             continue;
         };
