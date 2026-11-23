@@ -93,6 +93,19 @@ cargo clippy --locked --lib --target wasm32-unknown-unknown -- -D warnings
 cargo build --locked --target wasm32-wasip1
 ```
 
+`wasm/` is the browser build: a crate of its own (its own workspace and lock file, so the root
+checks never build it) that wraps the library in a C ABI. `fe_sim_request` takes one
+application request and does what `forever-engine sim --request FILE --scenario route --gate
+--rotation-stats` does, with the same report. CI checks its formatting and lints; build it
+with:
+
+```sh
+cargo build --release --locked --manifest-path wasm/Cargo.toml --target wasm32-unknown-unknown
+```
+
+The module is `wasm/target/wasm32-unknown-unknown/release/forever_engine_wasm.wasm`. It has no
+imports, so a page instantiates it as it is, one instance per Web Worker.
+
 `cargo test` builds with `opt-level = 1` (`[profile.test]` in `Cargo.toml`) and runs the Go
 golden comparison of every accepted fixture across the machine's cores, which brings the
 suite from over fifteen minutes to a few. Optimization does not change results, since Rust
