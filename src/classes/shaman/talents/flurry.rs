@@ -38,6 +38,15 @@ pub(crate) struct Hit {
     pub(crate) imbue_strike: bool,
 }
 
+/// Forever's rules on the strikes that follow a swing.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct StrikeRules {
+    /// A Windfury Totem strike spends no charge.
+    pub(crate) totem_strike_spends_none: bool,
+    /// A Windfury Weapon strike spends a charge.
+    pub(crate) imbue_strike_spends: bool,
+}
+
 /// When Flurry last gained its charges, and whether a Windfury Weapon strike's crit gained them.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Gain {
@@ -75,8 +84,7 @@ pub(crate) fn bind<A: Agent>(
     speed: f64,
     charge_icd: i64,
     can_proc_from_procs: bool,
-    totem_strike_spends_none: bool,
-    imbue_strike_spends: bool,
+    strike_rules: StrikeRules,
 ) -> Result<Flurry, String> {
     Ok(Flurry {
         trigger: fight.player_aura(trigger)?,
@@ -84,8 +92,8 @@ pub(crate) fn bind<A: Agent>(
         speed,
         charge_icd,
         can_proc_from_procs,
-        totem_strike_spends_none,
-        imbue_strike_spends,
+        totem_strike_spends_none: strike_rules.totem_strike_spends_none,
+        imbue_strike_spends: strike_rules.imbue_strike_spends,
     })
 }
 

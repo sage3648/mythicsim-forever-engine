@@ -815,8 +815,10 @@ impl ShamanAgent {
                         *melee_speed_multiplier,
                         *charge_icd_ns,
                         *can_proc_from_procs,
-                        *totem_strike_spends_none,
-                        *imbue_strike_spends,
+                        flurry::StrikeRules {
+                            totem_strike_spends_none: *totem_strike_spends_none,
+                            imbue_strike_spends: *imbue_strike_spends,
+                        },
                     )?);
                 }
                 Effect::ElementalMastery {
