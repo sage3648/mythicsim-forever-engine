@@ -820,8 +820,9 @@ fn warrior_strikes_and_freezing_trap_run() {
         // owner's melee and attack speed (Rapid Fire), which moves the fights' random draws. 211
         // since Judgement of Wisdom pays only on landed hits. 212 since the 11 November live row
         // of Truestrike Shoulders. 213 since Windfury Totem's proc is a weapon strike (15
-        // November 2026).
-        ("hunter-freezing-trap", 1499, 213.0),
+        // November 2026). 214 since the Aimed Shot precast leaves its travel time before the
+        // pull and lands on it (25 November 2026).
+        ("hunter-freezing-trap", 1499, 214.0),
     ] {
         let (_, player) = run(name);
         assert_eq!(action(&player, spell_id, 0).0, casts, "{name}");

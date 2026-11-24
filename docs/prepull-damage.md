@@ -70,7 +70,19 @@ Neither sim counts damage before 0:00 toward the fight, and neither starts the c
 damage. wowsims drops it and leaves timing to the preset; SimulationCraft lands the precast on the
 pull.
 
-## The rule
+## The rule since 25 November 2026
+
+Forever follows how its game plays, not SimulationCraft's convention: a caster times a precast so
+its damage lands as the fight starts, and a Warlock sends the Imp in so its first Firebolt does
+too. Under Forever's rules (`prepull_casts_finish_on_pull`) a precast that haste or an early press
+would finish too soon finishes its travel time before the pull, so a missile arrives on 0:00; a
+spell without travel finishes on 0:00 as before. A pet's first cast with a cast time begun on the
+pull is its precast: it lands on 0:00 with its cast and GCD behind it (the Imp's Firebolt; every
+other pet ability is instant). Damage before 0:00 still never counts, the clock still starts at
+0:00, and `Rules::GoReference` keeps the Go engine's timing. The paragraphs below describe the
+rule as it stood from 4 to 25 November.
+
+## The rule until 25 November 2026
 
 Under Forever's rules (`prepull_casts_finish_on_pull`, written by Forever preparation only) a
 cast begun before the pull that would finish before 0:00 finishes on 0:00, and it completes

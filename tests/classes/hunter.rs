@@ -1808,29 +1808,33 @@ fn multi_shot_casts(logs: &str) -> Vec<(bool, bool, &str)> {
 /// Forever's rule (docs/mechanics.md): Multi-Shot casts over half a second divided by
 /// the ranged haste multiplier, as Aimed Shot's two seconds are. Our Forever beta logs: 0.44 to
 /// 0.45 seconds with the quiver's 15% (0.5 / 1.15), 0.32 under Rapid Fire as well (0.5 / 1.61).
-/// Seed 20's first fight casts it with the quiver alone and with Rapid Fire up (seed 4 did until
-/// Judgement of Wisdom stopped rolling on misses, which moved the rolls after them).
+/// The first seed from 20 whose first fight casts it with the quiver alone and with Rapid Fire
+/// up is checked, so a change that moves the rolls (the precast landing on the pull, 25 November
+/// 2026) does not need a new seed by hand.
 #[test]
 fn multi_shot_casts_half_a_second_over_the_ranged_haste_in_forever() {
-    let mut value = production_marksmanship_prepared(forever_engine::Rules::Forever);
-    value["sim"]["seed"] = json!(20);
-    let logs = first_fight_log(value);
-    let casts = multi_shot_casts(&logs);
     let expected = |rapid_fire: bool, quick_shots: bool| match (rapid_fire, quick_shots) {
         (false, false) => "Cast Time = 434.782608ms",
         (true, false) => "Cast Time = 310.559006ms",
         (false, true) => "Cast Time = 334.44816ms",
         (true, true) => "Cast Time = 238.891543ms",
     };
-    for &(rapid_fire, quick_shots, line) in &casts {
-        assert!(line.contains(expected(rapid_fire, quick_shots)), "{line}");
+    for seed in 20..60 {
+        let mut value = production_marksmanship_prepared(forever_engine::Rules::Forever);
+        value["sim"]["seed"] = json!(seed);
+        let logs = first_fight_log(value);
+        let casts = multi_shot_casts(&logs);
+        for &(rapid_fire, quick_shots, line) in &casts {
+            assert!(line.contains(expected(rapid_fire, quick_shots)), "{line}");
+        }
+        if [false, true]
+            .iter()
+            .all(|&rapid_fire| casts.iter().any(|&(rf, qs, _)| rf == rapid_fire && !qs))
+        {
+            return;
+        }
     }
-    for rapid_fire in [false, true] {
-        assert!(
-            casts.iter().any(|&(rf, qs, _)| rf == rapid_fire && !qs),
-            "no Multi-Shot with Rapid Fire {rapid_fire} and Quick Shots down: {casts:?}"
-        );
-    }
+    panic!("no seed from 20 to 59 casts Multi-Shot with and without Rapid Fire, Quick Shots down");
 }
 
 /// Only Forever preparation gives Multi-Shot its half second cast; under the reference's rules

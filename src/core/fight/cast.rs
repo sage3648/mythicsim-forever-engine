@@ -660,11 +660,23 @@ impl<A: Agent> Fight<A> {
                 self.log_casting(spell);
             }
             let mut expires = self.now + cur.cast_time;
-            // Forever's rule: a precast that haste or an early press would finish before the pull
-            // finishes on it, as a player times a precast to land as the fight starts; damage
-            // before 0:00 is never counted (docs/prepull-damage.md).
-            if self.prepull_casts_finish_on_pull && expires < 0 {
-                expires = 0;
+            // Forever's rule: a precast that haste or an early press would finish too soon lands
+            // on the pull, as a player times it in game: it finishes on 0:00, or a missile its
+            // travel time before so that it arrives on 0:00. Damage before 0:00 is never counted
+            // (docs/prepull-damage.md).
+            if self.prepull_casts_finish_on_pull {
+                let leaves = -self.travel_time(spell);
+                if expires < leaves {
+                    expires = leaves;
+                }
+                // A pet acts from the pull, so its first cast with a cast time begun on 0:00 is
+                // the one its owner sends it in to precast (an Imp's Firebolt): it lands on the
+                // pull, and the cast and its GCD are behind it, so the next cast starts at once.
+                if side.is_pet() && self.now == 0 && !self.active_pet(side).precast_spent {
+                    self.active_pet_mut(side).precast_spent = true;
+                    expires = 0;
+                    self.set_gcd_timer_of(side, 0);
+                }
             }
             self.changed(super::reads::CASTS);
             self.unit_mut(side).hardcast = super::Hardcast {
