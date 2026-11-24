@@ -126,15 +126,17 @@ fn a_precast_finishing_after_the_pull_is_unchanged() {
 
 /// The Hunter turret board's Aimed Shot at -2.5 s: ranged haste makes its 2 s cast 1.74 s, so
 /// the reference finishes it at -0.76 s and its arrow lands at -0.46 s, uncounted. Under
-/// Forever's rule the cast finishes on the pull and the arrow lands 0.3 s into the fight.
+/// Forever's rule the cast finishes its 0.3 s flight before the pull, so the arrow lands on the
+/// pull, as a player times it in game (25 November 2026; until then it finished on 0:00 and
+/// landed 0.3 s in, SimulationCraft's precast).
 #[test]
-fn the_hunter_turret_aimed_shot_lands_after_the_pull() {
+fn the_hunter_turret_aimed_shot_lands_on_the_pull() {
     let request = request("hunter-turret-aimed-shot");
 
     let (lines, player) = fight(&request, true);
-    assert_eq!(first(&lines, AIMED_SHOT, "Completed cast"), 0.0);
+    assert_eq!(first(&lines, AIMED_SHOT, "Completed cast"), -0.3);
     let hits_forever = hits(&lines, AIMED_SHOT);
-    assert_eq!(hits_forever[0].0, 0.3);
+    assert_eq!(hits_forever[0].0, 0.0);
     let logged: f64 = hits_forever.iter().map(|(_, damage)| damage).sum();
     assert!((counted(&player, 20904) - logged).abs() < 1e-6 * logged);
 

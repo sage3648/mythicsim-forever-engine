@@ -438,6 +438,9 @@ pub(crate) struct ActivePet {
     pub(crate) last_custom: i64,
     /// Go `APLRotation.inLoop`.
     pub(crate) in_rotation: bool,
+    /// Forever's rule: whether this fight's precast has been spent, the pet's first cast with a
+    /// cast time begun on the pull ([`Fight::cast`]).
+    pub(crate) precast_spent: bool,
     /// Go `focusBar`, for a pet with one.
     pub(crate) focus: Option<super::focus::FocusBar>,
     /// The distance the pet starts each fight at and its movement speed.
@@ -513,6 +516,7 @@ impl ActivePet {
             dismiss_log: exported.dismiss_log.clone(),
             active_dismiss_log: exported.active_dismiss_log.clone(),
             last_custom: NEVER_EXPIRES,
+            precast_spent: false,
             in_rotation: false,
             focus: exported.focus.as_ref().map(super::focus::FocusBar::new),
             start_distance: exported.distance_yards,
@@ -662,6 +666,7 @@ impl<A: Agent> Fight<A> {
         state.mana_tick_not_casting = not_casting * 2.0;
         pet.last_custom = NEVER_EXPIRES;
         pet.in_rotation = false;
+        pet.precast_spent = false;
         pet.config.distance = pet.start_distance;
         pet.state.moving = false;
         pet.state.movement = None;
