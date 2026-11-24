@@ -256,7 +256,12 @@ pub(crate) fn export_spell_of(
         .iter()
         .map(|alias| alias.spell_id)
         .collect();
-    if super::levels::is_unlearned_with_aliases(spell.action_id.spell_id, &aliases) {
+    // A Hunter holding a thrown weapon cannot press what needs a bow, gun or crossbow (its
+    // ranged attacks and Volley), so those read as unlearned too (Sim::hunter_holds_thrown).
+    let needs_bow = spell.unit == env.player
+        && sim.hunter_holds_thrown(env.player)
+        && (spell.proc_mask.matches(super::spell::ProcMask::RANGED) || class_spell == "volley");
+    if needs_bow || super::levels::is_unlearned_with_aliases(spell.action_id.spell_id, &aliases) {
         flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
         flags.push("SpellFlagUnlearned".to_string());
     }
@@ -541,7 +546,9 @@ pub(crate) fn export_melee_of(
             "glance_spread": glance_spread,
         });
     }
-    if aa.auto_swing_ranged {
+    // A Hunter holding a thrown weapon has no Auto Shot, but the target's bonus ranged attack
+    // power (Hunter's Mark) still counts where the higher attack power is read (traps).
+    if aa.auto_swing_ranged || sim.hunter_holds_thrown(player) {
         out["ranged_state"] = json!({
             "ranged_speed_multiplier": pseudo.ranged_speed_multiplier,
             "defender_bonus_ranged_attack_power": defender.bonus_ranged_attack_power,

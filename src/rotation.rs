@@ -1767,6 +1767,27 @@ fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
                     wait: None,
                 })
             }
+            // Go `newActionWait` as a step. Without a duration it builds no action, and a
+            // strict sequence with a step it builds no action for is no action either: the
+            // whole item reads as such a wait.
+            ("wait", config) => {
+                let Some(duration) = parse_value_field("wait", config, "duration")? else {
+                    return Ok(Action::Wait(None));
+                };
+                let condition = match action.get("condition") {
+                    Some(condition) => {
+                        Some(parse_value(condition).map_err(|reasons| reasons.join("; "))?)
+                    }
+                    None => None,
+                };
+                spells.push(Step {
+                    spell: ActionId::default(),
+                    target: UnitRef::CurrentTarget,
+                    condition,
+                    change_target: false,
+                    wait: Some(duration),
+                })
+            }
             (name, _) => return Err(format!("strictSequence action {name} is unsupported")),
         }
     }

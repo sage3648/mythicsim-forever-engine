@@ -113,12 +113,12 @@ fn interrupt_conditions_read_missing_auras_as_inactive() {
 }
 
 #[test]
-fn unsupported_sequence_steps_and_channel_targets_are_named() {
+fn sequence_waits_run_and_channel_targets_are_named() {
+    // A strict sequence's wait step runs since 24 November 2026 (tests/engine_gaps_20261124.rs).
     let mut value = production();
     let sequence = &mut item(&mut value, "strictSequence")["action"]["strictSequence"];
     sequence["actions"][0] = json!({"wait": {"duration": {"const": {"val": "1s"}}}});
-    assert!(reasons(value)
-        .contains(&"rotation item 6: strictSequence action wait is unsupported".into()));
+    assert!(check_prepared(&parse(value)).is_ok());
 
     // A channel is cast on the current target; a target that names no unit drops it.
     let mut value = production();

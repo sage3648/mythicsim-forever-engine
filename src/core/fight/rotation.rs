@@ -43,6 +43,9 @@ pub(crate) enum Act {
         changes: Vec<Option<(usize, i64)>>,
         /// Each step's own condition, `None` for one without.
         conditions: Vec<Option<Rc<Cond>>>,
+        /// Each step that is Go `APLActionWait`: its own rotation item (an `Act::Wait`), which
+        /// holds the time it waits until; its spell and target are unused.
+        waits: Vec<Option<usize>>,
         next: usize,
     },
     /// Go `APLActionSequence`: its name, its casts, the units they are cast on, and the next
@@ -353,6 +356,10 @@ impl Item {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct AplState {
     pub(crate) controlling: Option<usize>,
+    /// The strict sequence under a wait it ran as a step: Go's controlling actions are a stack,
+    /// and a strict sequence's wait step pushes the wait on top of it. Control goes back to the
+    /// sequence when the wait ends.
+    pub(crate) suspended: Option<usize>,
     pub(crate) in_sequence: bool,
     interrupt_channel_if: Option<usize>,
     allow_channel_recast: bool,
@@ -1132,7 +1139,7 @@ impl<A: Agent> Fight<A> {
             match &mut item.action {
                 Act::Schedule { inner, .. } => *inner += offset,
                 // A sequence's wait steps are inner items too.
-                Act::Sequence { waits, .. } => {
+                Act::Sequence { waits, .. } | Act::StrictSequence { waits, .. } => {
                     for wait in waits.iter_mut().flatten() {
                         *wait += offset;
                     }
@@ -1233,7 +1240,11 @@ impl<A: Agent> Fight<A> {
                 let casts: Vec<Option<StepCast>> = steps
                     .iter()
                     .map(|step| {
-                        if step.change_target {
+                        if step.wait.is_some() {
+                            // Go `newActionWait`: built with a duration, and its step casts
+                            // nothing; the wait itself is compiled below.
+                            Some((NO_SPELL, Side::Player, None))
+                        } else if step.change_target {
                             // Go `newActionChangeTarget`: none for a unit it finds nothing for.
                             match step.target.resolve(self.targets.len())? {
                                 Unit::Target(position) => {
@@ -1250,6 +1261,18 @@ impl<A: Agent> Fight<A> {
                 let casts = casts.into_iter().collect::<Option<Vec<_>>>()?;
                 if casts.is_empty() {
                     return None;
+                }
+                // Go `newActionWait` is nil without a duration, and a nil step drops the strict
+                // sequence.
+                let mut wait_acts = Vec::with_capacity(steps.len());
+                for step in steps {
+                    wait_acts.push(match &step.wait {
+                        Some(duration) => Some(Act::Wait {
+                            duration: Rc::new(compile_duration_value(Some(duration), lookup)?),
+                            until: 0,
+                        }),
+                        None => None,
+                    });
                 }
                 let mut spells = Vec::with_capacity(casts.len());
                 let mut targets = Vec::with_capacity(casts.len());
@@ -1270,11 +1293,21 @@ impl<A: Agent> Fight<A> {
                         }
                     });
                 }
+                let waits = wait_acts
+                    .into_iter()
+                    .map(|act| {
+                        act.map(|act| {
+                            inner.push(Item::new(None, act));
+                            inner.len() - 1
+                        })
+                    })
+                    .collect();
                 Act::StrictSequence {
                     spells,
                     targets,
                     changes,
                     conditions,
+                    waits,
                     next: 0,
                 }
             }
@@ -2178,18 +2211,23 @@ impl<A: Agent> Fight<A> {
             ref spells,
             ref changes,
             ref conditions,
+            ref waits,
             ..
         } = self.rotation[item].action
         else {
             unreachable!("item is a strict sequence");
         };
-        let (first, change, condition) = (spells[0], changes[0], conditions[0].clone());
+        let (first, change, condition, wait) =
+            (spells[0], changes[0], conditions[0].clone(), waits[0]);
         // Go checks the GCD only for a sequence that casts.
-        let casts = changes.iter().any(Option::is_none);
+        let casts = changes
+            .iter()
+            .zip(waits)
+            .any(|(change, wait)| change.is_none() && wait.is_none());
         self.apl.in_sequence = true;
         if casts && self.gcd_time_to_ready() > MAX_SPELL_QUEUE_WINDOW
             || !self.step_condition_holds(condition.as_deref())
-            || !self.step_ready(first, change)
+            || !self.step_ready(first, change, wait)
         {
             self.apl.in_sequence = false;
             return false;
@@ -2198,8 +2236,22 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `APLAction.IsReady` of a strict sequence's step without its condition: a change of
-    /// target runs once a timestep, a cast when it can be cast or queued.
-    fn step_ready(&mut self, spell: SpellId, change: Option<(usize, i64)>) -> bool {
+    /// target runs once a timestep, a wait while its duration is above zero, a cast when it can
+    /// be cast or queued.
+    fn step_ready(
+        &mut self,
+        spell: SpellId,
+        change: Option<(usize, i64)>,
+        wait: Option<usize>,
+    ) -> bool {
+        if let Some(wait) = wait {
+            // Go `APLActionWait.IsReady`.
+            let Act::Wait { ref duration, .. } = self.rotation[wait].action else {
+                unreachable!("a strict sequence's wait step is a wait");
+            };
+            let duration = Rc::clone(duration);
+            return self.get_duration(&duration) > 0;
+        }
         match change {
             Some((_, last)) => last != self.now,
             None => self.cast_ready(spell),
@@ -2881,7 +2933,9 @@ impl<A: Agent> Fight<A> {
                 // Go `APLActionWait.GetNextAction`: once the wait is over the list runs again.
                 Act::Wait { until, .. } => {
                     if self.now >= until {
-                        self.apl.controlling = None;
+                        // Go `popControllingAction`: a strict sequence under the wait has
+                        // control again.
+                        self.apl.controlling = self.apl.suspended.take();
                         self.next_action()
                     } else {
                         None
@@ -2967,12 +3021,13 @@ impl<A: Agent> Fight<A> {
     /// Go `APLActionStrictSequence.GetNextAction`, of a strict sequence or of the one a strict
     /// multidot runs.
     fn sequence_next_action(&mut self, item: usize) -> Option<Ready> {
-        let (step, spell, target, change, condition) = match self.rotation[item].action {
+        let (step, spell, target, change, condition, wait) = match self.rotation[item].action {
             Act::StrictSequence {
                 ref spells,
                 ref targets,
                 ref changes,
                 ref conditions,
+                ref waits,
                 next,
             } => (
                 next,
@@ -2980,17 +3035,24 @@ impl<A: Agent> Fight<A> {
                 targets[next],
                 changes[next],
                 conditions[next].clone(),
+                waits[next],
             ),
             Act::StrictMultidot {
                 spell,
                 ref ready,
                 next,
                 ..
-            } => (next, spell, ready[next], None, None),
+            } => (next, spell, ready[next], None, None, None),
             _ => unreachable!("only strict sequences and waits control the rotation"),
         };
         // Go `APLAction.IsReady` of the step: its condition, then its cast.
-        if self.step_condition_holds(condition.as_deref()) && self.step_ready(spell, change) {
+        if self.step_condition_holds(condition.as_deref()) && self.step_ready(spell, change, wait) {
+            // Go advances past a wait step at once, on the GCD or off it, and the wait then
+            // takes control on top of the sequence.
+            if let Some(wait) = wait {
+                self.advance_sequence(item);
+                return Some(Ready::Wait(wait));
+            }
             // Off the GCD the step advances now; otherwise the cast queues and the step
             // stays until it fires. A change of target off the GCD runs again later.
             if self.gcd_ready() {
@@ -3244,7 +3306,15 @@ impl<A: Agent> Fight<A> {
     /// again now, has passed. `item` is an `Act::Wait`: a priority list line or a sequence's
     /// wait step.
     fn start_wait(&mut self, item: usize) {
-        assert!(self.apl.controlling.is_none(), "nested controlling actions");
+        // A strict sequence's wait step goes on top of the sequence (Go's controlling stack).
+        if let Some(below) = self.apl.controlling {
+            assert!(
+                matches!(self.rotation[below].action, Act::StrictSequence { .. })
+                    && self.apl.suspended.is_none(),
+                "nested controlling actions"
+            );
+            self.apl.suspended = Some(below);
+        }
         self.apl.controlling = Some(item);
         let Act::Wait { ref duration, .. } = self.rotation[item].action else {
             unreachable!("item is a wait");
@@ -3415,16 +3485,21 @@ impl<A: Agent> Fight<A> {
                 ref spells,
                 ref changes,
                 ref conditions,
+                ref waits,
                 next,
                 ..
             } = self.rotation[item].action
             else {
                 return false;
             };
+            // A wait step casts nothing.
+            if waits[next].is_some() {
+                return false;
+            }
             let (spell, change, condition) =
                 (spells[next], changes[next], conditions[next].clone());
             return self.step_condition_holds(condition.as_deref())
-                && self.step_ready(spell, change)
+                && self.step_ready(spell, change, None)
                 && change.is_none()
                 && self.casts_channel(spell, channeled);
         }
@@ -3615,7 +3690,14 @@ impl<A: Agent> Fight<A> {
         self.update_position(Side::Player, false);
         let mut executed = 0;
         while let Some(action) = self.next_action() {
-            assert!(executed <= 1000, "infinite rotation loop");
+            if executed > 1000 {
+                // Go's `[USER_ERROR] Infinite loop detected`, naming what kept running.
+                let what = match action {
+                    Ready::Cast(spell, _) => format!("a cast of {:?}", self.spells[spell].id),
+                    _ => "a rotation action".to_string(),
+                };
+                panic!("infinite rotation loop: {what} is ready again after every run");
+            }
             self.execute(action);
             executed += 1;
         }
@@ -3642,6 +3724,7 @@ impl<A: Agent> Fight<A> {
             self.change_rotation_copy(0);
             self.in_rotation = false;
             self.apl.controlling = None;
+            self.apl.suspended = None;
             self.apl.move_held_for_queue = false;
             self.apl.interrupt_channel_if = None;
             self.apl.allow_channel_recast = false;

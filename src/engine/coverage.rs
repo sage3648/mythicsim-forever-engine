@@ -2464,6 +2464,10 @@ pub(crate) fn prepared_coverage(
             "several_targets_unsupported",
             change_target_limits(prepared, rotation),
         ));
+        reasons.extend(coded(
+            "rotation_unsupported",
+            passive_casts(prepared, &read),
+        ));
         if player.class != "ClassShaman" {
             for item in &read.priority_list {
                 let mut totems = false;
@@ -2594,7 +2598,7 @@ pub(crate) fn prepared_coverage(
                 Action::StrictSequence(steps) => {
                     let spells: Vec<_> = steps
                         .iter()
-                        .filter(|step| !step.change_target)
+                        .filter(|step| step.casts())
                         .map(|step| {
                             step.target
                                 .resolve(targets)
@@ -2607,14 +2611,15 @@ pub(crate) fn prepared_coverage(
                         prepull_sequences += 1;
                         let unsupported = steps.iter().any(|step| {
                             step.change_target
+                                || step.wait.is_some()
                                 || step.target.resolve(targets) != Some(Unit::Target(0))
                         });
                         if unsupported || prepull_sequences > 1 {
                             reasons.push(Refusal::new(
                                 "prepull_unsupported",
                                 format!(
-                                    "prepull action {}: a strictSequence at another unit or \
-                                     after another is unsupported",
+                                    "prepull action {}: a strictSequence at another unit, \
+                                     with a wait step or after another is unsupported",
                                     prepull.position
                                 ),
                             ));
@@ -3527,6 +3532,34 @@ pub(crate) fn assigned_curse(prepared: &PreparedV2) -> Option<(String, ActionId)
         .action_id
         .clone()?;
     Some((option, id))
+}
+
+/// A cast of a passive proc spell, such as Seal of Righteousness's hit (25736): Go's cast
+/// action falls back to a spell the rotation cannot press, which costs nothing and starts no
+/// GCD, so once its condition holds the rotation casts it without end and the 1,000 action
+/// guard stops the fight ("infinite rotation loop"; a Paladin's Droptimizer of 24 November
+/// 2026). The game cannot cast it either, so the sim is refused by name.
+fn passive_casts(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let mut reasons = Vec::new();
+    for item in rotation
+        .priority_list
+        .iter()
+        .chain(rotation.groups.iter().flat_map(|group| group.items.iter()))
+    {
+        for id in item.action.scheduled().spells() {
+            let Some(spell) = rotation_cast_spell(prepared, id) else {
+                continue;
+            };
+            if spell.has_flag("SpellFlagPassiveSpell") && !spell.has_flag("SpellFlagAPL") {
+                reasons.push(format!(
+                    "rotation item {}: spell {} is a passive effect that cannot be cast; cast \
+                     the spell that applies it instead",
+                    item.position, id.spell_id
+                ));
+            }
+        }
+    }
+    reasons
 }
 
 /// Go `APLActionChangeTarget` moves the player's current target. The runtime follows a change
