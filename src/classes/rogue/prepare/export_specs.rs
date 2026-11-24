@@ -403,6 +403,7 @@ impl Rogue {
                 "attack_power_per_point": rework::DEATH_MARK_ATTACK_POWER_PER_POINT,
                 "coup_de_grace": coup,
                 "doubled_class_spells": mask_names(masks::GARROTE | masks::RUPTURE),
+                "stored_class_spells": mask_names(masks::DEATH_MARK_STORED),
             }));
         }
         if let Some(aura) = self.auras.poised {

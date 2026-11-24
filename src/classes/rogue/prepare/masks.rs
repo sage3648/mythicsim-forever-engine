@@ -63,6 +63,22 @@ pub(crate) const ENERGY_ABILITIES: i64 = AMBUSH
     | SINISTER_STRIKE
     | SLICE_AND_DICE
     | VENOM;
+/// The rogue's own physical strikes whose damage Death Mark stores (Garrote and Rupture are
+/// stored too, at twice the rate). Counted on Warcraft Logs (in-app report of 24 November 2026,
+/// report DZCc2gtwhW3FBKyx): white swings, Ambush, Eviscerate, Ghostly Strike and Hemorrhage
+/// store the tooltip's share and the bleeds twice it; poisons, Windfury, Shank, racials and auras
+/// store nothing. Sinister Strike, Backstab, Gouge, Mutilate and Riposte are not in that log and
+/// are taken as the strikes they are.
+pub(crate) const DEATH_MARK_STORED: i64 = AMBUSH
+    | BACKSTAB
+    | EVISCERATE
+    | GHOSTLY_STRIKE
+    | GOUGE
+    | HEMORRHAGE
+    | MUTILATE
+    | MUTILATE_HIT
+    | RIPOSTE
+    | SINISTER_STRIKE;
 /// Quietus names only these three in its tooltip.
 pub(crate) const QUIETUS: i64 = SINISTER_STRIKE | GHOSTLY_STRIKE | HEMORRHAGE;
 /// Cold Blood's class mask (14177): Mutilate's two hits, not the parent cast.

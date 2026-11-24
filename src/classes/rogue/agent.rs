@@ -643,6 +643,7 @@ impl RogueAgent {
                     attack_power_per_point,
                     coup_de_grace,
                     doubled_class_spells,
+                    stored_class_spells,
                     ..
                 } => {
                     let spell = class_spell(&fight, RogueSpell::DeathMark)
@@ -657,6 +658,7 @@ impl RogueAgent {
                         *attack_power_per_point,
                         *coup_de_grace,
                         doubled_class_spells,
+                        stored_class_spells,
                     )?;
                     fight.agent.death_mark = Some(Rc::new(bound));
                 }

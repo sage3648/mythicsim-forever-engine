@@ -5180,9 +5180,10 @@ pub enum Effect {
         boot_knife_action: Option<ActionId>,
     },
     /// Death Mark, Forever's rules only: a finisher that marks the target for the aura's
-    /// duration. The share of the damage the rogue deals to it, `stored_per_point` for each Combo
-    /// Point spent (twice that for the `doubled_class_spells`) and multiplied by
-    /// `coup_de_grace`, is stored, and released when the aura ends up to the cap of
+    /// duration. The share of the damage the rogue's white swings and `stored_class_spells` deal
+    /// to it, `stored_per_point` for each Combo Point spent (twice that for the
+    /// `doubled_class_spells`) and multiplied by `coup_de_grace`, is stored (nothing from any
+    /// other spell: poisons, Windfury, Shank, item procs), and released when the aura ends up to the cap of
     /// `(cap_base + points * (cap_per_point + attack_power_per_point * attack power))`
     /// times the crit factor and `coup_de_grace`.
     DeathMark {
@@ -5194,6 +5195,8 @@ pub enum Effect {
         attack_power_per_point: f64,
         coup_de_grace: f64,
         doubled_class_spells: Vec<String>,
+        #[serde(default)]
+        stored_class_spells: Vec<String>,
     },
     /// Poised, Forever's rules only (a Rogue, or a Druid starting in Cat Form): an aura the fight
     /// starts with, which the first Energy ability spends, taking `cost_reduction` Energy off its
