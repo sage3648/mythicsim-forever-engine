@@ -1110,7 +1110,7 @@ fn group_casts(
                 .iter()
                 .map(|step| {
                     step.target.resolve(targets).and_then(|_| {
-                        if step.change_target {
+                        if !step.casts() {
                             Some(None)
                         } else {
                             apl_cast_spell(env, &step.spell).map(Some)

@@ -696,6 +696,23 @@ impl Sim {
             .then_some(item)
     }
 
+    /// Under Forever's rules, whether a Hunter holds a thrown weapon in the ranged slot. The
+    /// class can train Thrown (skill line 176, class mask 4 in the live client's
+    /// SkillRaceClassInfo), but Auto Shot, the shots, the stings and Volley require a bow, gun or
+    /// crossbow (their SpellEquippedItems subclass mask 262156), so none of them can be pressed.
+    /// The weapon's own stats still count.
+    pub(crate) fn hunter_holds_thrown(&self, unit: UnitId) -> bool {
+        self.rules == Rules::Forever
+            && self
+                .unit(unit)
+                .character
+                .as_deref()
+                .is_some_and(|character| character.class == "ClassHunter")
+            && self
+                .ranged_weapon(unit)
+                .is_some_and(|item| item.ranged_weapon_type == "RangedWeaponTypeThrown")
+    }
+
     pub(crate) fn ranged_weapon(&self, unit: UnitId) -> Option<&items::Item> {
         let item = &self.character(unit).equipment[items::slot::RANGED];
         (!item.is_empty()

@@ -418,6 +418,7 @@ pub(crate) fn new_hunter(
         }
     }
 
+    let holds_thrown = sim.hunter_holds_thrown(unit);
     let ranged_item_id = sim.ranged_weapon(unit).map(|item| item.id);
     hunter.apply_ammo_dps();
     hunter.apply_quiver_bonus(sim, ranged_item_id);
@@ -438,7 +439,8 @@ pub(crate) fn new_hunter(
             off_hand,
             ranged: ranged_weapon,
             auto_swing_melee: true,
-            auto_swing_ranged: true,
+            // Auto Shot needs a bow, gun or crossbow (Sim::hunter_holds_thrown).
+            auto_swing_ranged: !holds_thrown,
             replace_mh_swing: true,
             ..AutoAttackOptions::default()
         },
