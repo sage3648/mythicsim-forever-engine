@@ -550,6 +550,30 @@ fn death_mark_is_prepared_from_its_talent() {
         .map(|class| class.as_str().unwrap())
         .collect();
     assert_eq!(classes, ["garrote", "rupture"]);
+    let stored: Vec<&str> = effect["stored_class_spells"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|class| class.as_str().unwrap())
+        .collect();
+    for strike in [
+        "ambush",
+        "eviscerate",
+        "ghostly_strike",
+        "hemorrhage",
+        "sinister_strike",
+    ] {
+        assert!(stored.contains(&strike), "{strike} not stored: {stored:?}");
+    }
+    for ignored in [
+        "shank",
+        "instant_poison",
+        "deadly_poison",
+        "garrote",
+        "rupture",
+    ] {
+        assert!(!stored.contains(&ignored), "{ignored} stored: {stored:?}");
+    }
     // Coup de Grace (the first Combat talent) multiplies the share and the cap.
     let request = with_talents(
         request,
@@ -835,5 +859,90 @@ fn shank_procs_weapon_effects() {
         poisoned > 0,
         "no poison heard any of {} lone Shanks",
         lone.len()
+    );
+}
+
+/// Death Mark stores only the rogue's white swings and its physical strikes (Warcraft Logs,
+/// in-app report of 24 November 2026): Windfury's extra attacks, poisons and item procs landing
+/// on the marked target store nothing. The fixture carries Instant Poison, Windfury Totem and a
+/// fire proc, so every mark of the first fight releases 12% a point of the white swings and
+/// Hemorrhages alone.
+#[test]
+fn death_mark_stores_only_white_swings_and_strikes() {
+    let request = with_rotation(
+        subtlety(&[
+            (2, at::SUBTLETY_DEATH_MARK, 1),
+            (2, at::SUBTLETY_HEMORRHAGE, 1),
+        ]),
+        &[(DEATH_MARK, None), (16511, None)],
+    );
+    let log = first_fight_log(&request, Rules::Forever);
+    let damage = |line: &str| -> f64 {
+        let at = line.find(" for ").unwrap() + 5;
+        line[at..line[at..].find(' ').unwrap() + at]
+            .parse()
+            .unwrap()
+    };
+    let lines: Vec<&str> = log.lines().collect();
+    let (mut marks, mut ignored) = (0, 0.0);
+    let mut index = 0;
+    while let Some(start) = lines[index..]
+        .iter()
+        .position(|line| line.contains(&format!("combo points from {{SpellID: {DEATH_MARK}}}")))
+    {
+        let start = index + start;
+        let spent = lines[start];
+        let points: f64 = spent[spent.find("Spent ").unwrap() + 6..spent.find(" combo").unwrap()]
+            .parse()
+            .unwrap();
+        let Some(fade) = lines[start..]
+            .iter()
+            .position(|line| line.contains(&format!("Aura faded: {{SpellID: {DEATH_MARK}}}")))
+        else {
+            break;
+        };
+        let fade = start + fade;
+        let window = &lines[start..fade];
+        let hits = |needles: &[&str]| -> f64 {
+            window
+                .iter()
+                .filter(|line| line.contains("[Target 1]") && line.contains(" damage "))
+                .filter(|line| needles.iter().any(|needle| line.contains(needle)))
+                .map(|line| damage(line))
+                .sum()
+        };
+        let stored = hits(&[
+            "{OtherID: 3, Tag: 1}",
+            "{OtherID: 3, Tag: 2}",
+            "{SpellID: 16511}",
+        ]);
+        ignored += hits(&[
+            "{OtherID: 3, Tag: 25584}",
+            "{SpellID: 11340}",
+            "{SpellID: 15851}",
+        ]);
+        let Some(release) = lines[fade..fade + 4].iter().find(|line| {
+            line.contains(&format!("{{SpellID: {DEATH_MARK}, Tag: ")) && line.contains(" damage ")
+        }) else {
+            index = fade;
+            continue;
+        };
+        // A mark may reach its cap, never more than the share of what was stored.
+        let expected = 0.12 * points * stored;
+        assert!(
+            damage(release) < expected + 0.01,
+            "mark at {}: released {} for {expected} stored",
+            time_of(spent),
+            damage(release)
+        );
+        if (damage(release) - expected).abs() < 0.01 {
+            marks += 1;
+        }
+        index = fade;
+    }
+    assert!(marks >= 3, "{marks} marks released their whole store");
+    assert!(
+        ignored > 0.0,
+        "no poison, Windfury or proc damage landed inside a mark"
     );
 }

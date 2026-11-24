@@ -676,10 +676,14 @@ the Go goldens and exporter uses. The departures:
   states the rest: 12% a Combo Point of the damage the rogue deals the target for 6 sec is
   stored (twice that for Garrote and Rupture), then dealt up to a cap of (156 + 245 a point +
   0.04 attack power a point) times (1 + melee crit chance), and Coup de Grace's 7/13/20%
-  multiplies both the share and the cap. Approximate: the tooltip does not say which damage
-  counts or how the release rolls, so every hit and tick of the rogue's other spells counts (the
-  damage after armor), a miss stores nothing, the release is a hit that cannot miss or crit and
-  takes no armor or multiplier again, and a mark still up when the fight ends releases nothing.
+  multiplies both the share and the cap. Which damage counts is from Warcraft Logs (in-app report
+  of 24 November 2026, report DZCc2gtwhW3FBKyx, 9 of 12 five-point marks within 0.07%): the
+  rogue's white swings and physical strikes (Ambush, Eviscerate, Ghostly Strike and Hemorrhage
+  seen; Sinister Strike, Backstab, Gouge, Mutilate and Riposte taken alike) at the damage after
+  armor, Garrote and Rupture twice; poisons, Windfury's extra attacks, Shank, racials, item procs
+  and auras store nothing (`rogue::masks::DEATH_MARK_STORED`). A miss stores nothing, and the
+  release is a hit that cannot miss or crit and takes no armor or multiplier again. Approximate:
+  a mark still up when the fight ends releases nothing.
   Not modelled: Quick Getaway, and the stat parts of Camouflage and Setup.
   `tools/dev_notes_check.py` checks every row and curve above.
 - Riptide and the Druid's Poised, the last numbers of the same notes the client does not state yet
