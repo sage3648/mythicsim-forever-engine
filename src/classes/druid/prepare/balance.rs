@@ -30,6 +30,8 @@ const MOONFIRE_RANKS: [i32; 10] = [8921, 8924, 8925, 8926, 8927, 8928, 8929, 983
 const INSECT_SWARM_RANKS: [i32; 5] = [5570, 24974, 24975, 24976, 24977];
 const HURRICANE_RANKS: [i32; 3] = [16914, 17401, 17402];
 const HURRICANE_TRIGGERED: [i32; 3] = [1278965, 1278968, 1278759];
+/// Eclipse's Wrath critical strike chance by rank since 25 November 2026.
+const ECLIPSE_WRATH_CRIT: [f64; 3] = [7.0, 13.0, 20.0];
 
 fn ms(value: f64) -> i64 {
     // time.Millisecond * time.Duration(value)
@@ -524,16 +526,23 @@ impl Druid {
         );
     }
 
-    /// Improved Wrath, new in Forever: 0.1 sec off the cast and 10% off the cost a rank.
+    /// Improved Wrath, new in Forever: 0.1 sec off the cast and 10% off the cost a rank. Since
+    /// 25 November 2026 it is Starlight Wrath, whose cast time effect also names Starfire (the
+    /// blue post "Balance Druid Adjustments - November 25"; Wowhead's Forever row of 16814 lists
+    /// Starfire beside Wrath, -100 to -500 ms by rank).
     fn apply_improved_wrath(&mut self, sim: &mut Sim) {
         if self.tal.improved_wrath == 0 {
             return;
         }
         let ladder = Ladder::talent(16814, 5);
+        let cast_time_mask = match sim.rules {
+            Rules::Forever => masks::WRATH | masks::STARFIRE,
+            Rules::GoReference => masks::WRATH,
+        };
         sim.add_static_mod(
             self.unit,
             SpellModConfig {
-                class_mask: masks::WRATH,
+                class_mask: cast_time_mask,
                 kind: SpellModType::CastTimeFlat,
                 time_value: ms(ladder
                     .effect(A_ADD_FLAT_MODIFIER, SPELLMOD_CASTING_TIME)
@@ -626,9 +635,12 @@ impl Druid {
         );
     }
 
-    /// Improved Starfire, new in Forever: 0.1 sec off the cast a rank.
+    /// Improved Starfire, new in Forever: 0.1 sec off the cast a rank. Since 25 November 2026
+    /// Forever's version has 2 ranks and only an 8 or 15% chance to stun the target (a dummy
+    /// where the cast time effect was), which the sim does not model: the cast time moved to
+    /// Starlight Wrath.
     fn apply_improved_starfire(&mut self, sim: &mut Sim) {
-        if self.tal.improved_starfire == 0 {
+        if self.tal.improved_starfire == 0 || sim.rules == Rules::Forever {
             return;
         }
         sim.add_static_mod(
@@ -658,6 +670,20 @@ impl Druid {
             .effect_at(2)
             .value_at(self.tal.eclipse));
 
+        // Since 25 November 2026 Eclipse also adds 7, 13 or 20% to Wrath's critical strike
+        // chance at all times (the blue post; Wowhead's Forever row of 408248 has the fifth
+        // effect at 20).
+        if sim.rules == Rules::Forever {
+            sim.add_static_mod(
+                unit,
+                SpellModConfig {
+                    class_mask: masks::WRATH,
+                    kind: SpellModType::BonusCritPercent,
+                    float_value: ECLIPSE_WRATH_CRIT[(self.tal.eclipse - 1) as usize],
+                    ..SpellModConfig::default()
+                },
+            );
+        }
         let aura = sim.register_aura(
             unit,
             AuraConfig {

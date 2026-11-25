@@ -7,16 +7,17 @@ use std::rc::Rc;
 use crate::classes::druid::forms::{ANY, BEAR, CAT, HUMANOID, MOONKIN};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
+use crate::prepare::aura_helpers::PseudoStatField;
 use crate::prepare::character::constants::{DEFAULT_ATTACK_POWER_PER_DPS, MAX_MELEE_RANGE};
 use crate::prepare::levels::character_level;
 use crate::prepare::sim::{
-    AuraConfig, AuraId, BuildPhase, PowerBar, Sim, SpellId, StateSlot, TimeSlot, UnitId,
+    AuraConfig, AuraId, BuildPhase, PowerBar, Rules, Sim, SpellId, StateSlot, TimeSlot, UnitId,
     MILLISECOND, NEVER_EXPIRES,
 };
 use crate::prepare::spell::{Cast, CastConfig, CostOptions, SpellConfig, SpellFlag, GCD_DEFAULT};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::Ladder;
-use crate::prepare::stats::{Stat, Stats};
+use crate::prepare::stats::{SchoolIndex, Stat, Stats};
 
 use super::{masks, Druid};
 
@@ -88,6 +89,8 @@ pub(crate) fn bear_form_threat_multiplier(rules: crate::prepare::sim::Rules) -> 
 pub(crate) const CAT_FORM_THREAT_MULTIPLIER: f64 = 0.71;
 /// Go `MoonkinFormArmorMultiplier`.
 pub(crate) const MOONKIN_FORM_ARMOR_MULTIPLIER: f64 = 4.6;
+/// Moonkin Form's Arcane and Nature damage bonus under Forever's rules since 25 November 2026.
+const MOONKIN_FORM_DAMAGE: f64 = 0.10;
 
 /// The druid state Go keeps on the `Druid` and its callbacks read and write, shared with them.
 pub(crate) struct State {
@@ -607,6 +610,19 @@ impl Druid {
                 ..AuraConfig::default()
             },
         );
+        // Since 25 November 2026 Moonkin Form adds 10% to Arcane and Nature damage done while
+        // the druid is in it, the bonus Moonfury gave before it was removed (the blue post
+        // "Balance Druid Adjustments - November 25" and the live tooltip). The fight reads the
+        // form's effects from the form the druid starts in, as it does the form's armor, so a
+        // druid who starts the fight in Moonkin Form deals the 10% throughout, as a school
+        // multiplier like Moonfury's.
+        if sim.rules == Rules::Forever && st.starting_form & MOONKIN != 0 {
+            let pseudo = &mut sim.unit_mut(unit).pseudo_stats;
+            for school in [SchoolIndex::Arcane, SchoolIndex::Nature] {
+                *PseudoStatField::SchoolDamageDealtMultiplier(school).get_mut(pseudo) *=
+                    1.0 + MOONKIN_FORM_DAMAGE;
+            }
+        }
         self.st.moonkin_form_aura.set(Some(aura));
         self.moonkin_form_aura = Some(aura);
     }
