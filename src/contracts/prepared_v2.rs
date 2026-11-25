@@ -171,6 +171,10 @@ fn is_zero_f64(value: &f64) -> bool {
     *value == 0.0
 }
 
+fn is_zero_i64(value: &i64) -> bool {
+    *value == 0
+}
+
 impl ActionId {
     pub fn spell(spell_id: i32) -> Self {
         Self {
@@ -2372,6 +2376,13 @@ pub enum Effect {
         energy_label: String,
         energy: f64,
         energy_spells: Vec<usize>,
+        /// Under Forever's rules the energy comes as a periodic energize (27784): `energy` every
+        /// `energy_period_ns` for `energy_ticks` ticks, a new proc restarting it. Zero ticks
+        /// gives `energy` at once.
+        #[serde(default, skip_serializing_if = "is_zero")]
+        energy_ticks: i32,
+        #[serde(default, skip_serializing_if = "is_zero_i64")]
+        energy_period_ns: i64,
         rage_label: String,
         rage: f64,
         metrics_action_id: ActionId,
