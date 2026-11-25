@@ -260,8 +260,24 @@ impl<A: Agent> Fight<A> {
         results
     }
 
-    /// The spell's `ApplyEffects`.
+    /// The spell's `ApplyEffects`. Under Forever's rules a Fatal Wound deals its row's percent
+    /// more while the target is below the row's health, which the execute phases track: its
+    /// damage multiplier for this cast, as items_weapons.go sets Pendulum of Doom's.
     pub(crate) fn apply_proc_damage(&mut self, spell: SpellId, target: Side, params: ProcDamage) {
+        let execute = self.spells[spell]
+            .execute_damage_bonus
+            .filter(|[health, _]| f64::from(self.execute_phase) <= *health);
+        let Some([_, multiplier]) = execute else {
+            self.apply_proc_damage_effects(spell, target, params);
+            return;
+        };
+        let plain = self.spells[spell].damage_multiplier;
+        self.spells[spell].damage_multiplier = plain * multiplier;
+        self.apply_proc_damage_effects(spell, target, params);
+        self.spells[spell].damage_multiplier = plain;
+    }
+
+    fn apply_proc_damage_effects(&mut self, spell: SpellId, target: Side, params: ProcDamage) {
         let flies = self.spells[spell].missile_speed > 0.0;
         let dot = params
             .periodic

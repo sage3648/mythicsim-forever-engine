@@ -344,6 +344,9 @@ pub(crate) fn export_spell_of(
     if let Some(coefficient) = spell.physical_school_coefficient {
         out.insert("physical_school_coefficient".into(), json!(coefficient));
     }
+    if let Some(bonus) = spell.execute_damage_bonus {
+        out.insert("execute_damage_bonus".into(), json!(bonus));
+    }
     out.insert("threat_multiplier".into(), json!(spell.threat_multiplier));
     out.insert("flat_threat_bonus".into(), json!(spell.flat_threat_bonus));
     out.insert("pushback_resist".into(), json!(spell.pushback_resist));

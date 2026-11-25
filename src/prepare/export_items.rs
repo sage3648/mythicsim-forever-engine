@@ -2534,17 +2534,33 @@ fn chance_on_hit_item_effects(env: &Environment, unrepresented: &mut Vec<String>
                         scratch.sim.set_stacks(debuff, stacks);
                         armor.push(scratch.sim.stat(target, Stat::Armor) - base);
                     }
-                    effects.push(json!({
+                    let mut effect = json!({
                         "kind": "armor_debuff_proc", "trigger_aura": trigger.label,
                         "rng_label": trigger.label, "chances": chances, "aura": label,
                         "armor_by_stacks": armor, "immediate": true,
-                    }));
+                    });
+                    if let Some(strike) = debuff_strike_position(env, row) {
+                        effect["strike_spell"] = json!(strike);
+                    }
+                    effects.push(effect);
                 }
                 _ => unrepresented.push(format!("{}'s chance on hit is not described", cfg.name)),
             }
         }
     }
     effects
+}
+
+/// The spellbook position of the strike a weapon's debuff row casts, where the row is one
+/// (`shared_items::proc_debuff_strike_spell`).
+fn debuff_strike_position(env: &Environment, row: &Spell) -> Option<usize> {
+    if !matches!(
+        row.defense_type_core(),
+        DefenseType::Melee | DefenseType::Ranged
+    ) {
+        return None;
+    }
+    spell_position(env, &ActionId::spell(row.id))
 }
 
 /// weapon_procs.go `weaponDamageProcEffects`: the spell shared_utils.go
@@ -3168,6 +3184,16 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
         });
         if immediate {
             effect["immediate"] = json!(true);
+        }
+        if let Some(strike) = scratch
+            .sim
+            .aura(debuff)
+            .action_id
+            .as_ref()
+            .and_then(|action| crate::data::spells::find(action.spell_id))
+            .and_then(|row| debuff_strike_position(env, row))
+        {
+            effect["strike_spell"] = json!(strike);
         }
         effects.push(effect);
     }

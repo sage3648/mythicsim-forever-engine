@@ -521,6 +521,9 @@ pub(crate) struct Spell {
     /// which scales the caster's flat physical damage bonus (`prepare::physical_damage`). None
     /// for any other spell, which takes the bonus whole, and under the Go reference.
     pub physical_school_coefficient: Option<f64>,
+    /// Forever's rules: `[health percent, multiplier]`, a chance on hit's damage that the
+    /// multiplier scales against a target below that health (Fatal Wound).
+    pub execute_damage_bonus: Option<[f64; 2]>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     /// Per target unit index, the dot on that unit.
@@ -656,6 +659,7 @@ impl Sim {
                 })
                 .flatten()
                 .map(|effect| effect.coeff()),
+            execute_damage_bonus: None,
             threat_multiplier: config.threat_multiplier,
             flat_threat_bonus: config.flat_threat_bonus,
             dots: Vec::new(),

@@ -42,6 +42,8 @@ pub(crate) struct ArmorDebuffProc {
     armor_by_stacks: Vec<f64>,
     /// Go `TriggerImmediately`: the handler runs on the hit, not a batch window later.
     immediate: bool,
+    /// The strike the debuff row casts, which rolls its hit table before the debuff lands.
+    strike: Option<SpellId>,
 }
 
 /// The behavior of a player or target aura these procs own.
@@ -145,6 +147,7 @@ impl<A: Agent> Fight<A> {
                     aura,
                     armor_by_stacks,
                     immediate,
+                    strike_spell,
                     ..
                 } => {
                     let index = self.trackers[Side::Target.index()]
@@ -159,6 +162,7 @@ impl<A: Agent> Fight<A> {
                         },
                         armor_by_stacks: armor_by_stacks.clone(),
                         immediate: *immediate,
+                        strike: *strike_spell,
                     });
                 }
                 _ => {}
@@ -260,8 +264,18 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// The handler: activate the hit target's aura and add a stack.
+    /// The handler: activate the hit target's aura and add a stack. Under Forever's rules a
+    /// debuff row of the melee or ranged defense type is a strike: it rolls the special hit
+    /// table with no crit first, and a miss, dodge or parry puts nothing on the target.
     pub(crate) fn armor_debuff_proc_handler(&mut self, proc: usize, target: Side) {
+        if let Some(strike) = self.armor_debuff_procs[proc].strike {
+            let outcome = super::Outcome::Table(super::melee::PhysicalOutcome::MeleeSpecialHit {
+                count: true,
+            });
+            if !self.calc_outcome(strike, target, outcome).landed() {
+                return;
+            }
+        }
         let aura = self.aura_on(self.armor_debuff_procs[proc].aura, target);
         self.activate_aura(aura);
         self.add_stack(aura);

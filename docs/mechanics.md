@@ -1475,6 +1475,23 @@ the Go goldens and exporter uses. The departures:
     times as much damage to Dragonkin." is the row's second effect, a dummy of 2 (SpellEffect
     1324263, client 1.60.1.70938), applied as Lightcrest Hammer's against Undead is
     (`CREATURE_TYPE_DAMAGE_ITEMS`).
+- Forever's rules of 20 November 2026 (`tests/forever_rules_20261120.rs`):
+  - A weapon's debuff row of the melee or ranged defense type is a strike: it rolls that hit
+    table with no crit, and the debuff lands only where the strike does. Puncture Armor (17315,
+    Bashguuder and Rivenspike, defense type melee in the client's SpellCategories) logs a missed,
+    dodged, parried or immune attempt as a damage event of no amount: 19 public Forever dungeon
+    reports of 18 to 20 November 2026 (client 1.60.1.70959) hold 2,873 attempts (1,602
+    applications, 896 stacks, 260 refreshes with no stack beside them, 115 failures), of which 2
+    missed, 76 were dodged, 34 parried and 3 met an immune target, 4.0%. Armor Shatter (16928) is
+    a magic row and lands with the proc (`shared_items::proc_debuff_strike_spell`).
+  - Pendulum of Doom (10373), Diabolic Skiver (18206) and Gut Ripper (18107) deal 50%, 50% and
+    100% more below 25% health: their rows' second and third dummies (client 1.60.1.70959) and
+    their Wowhead Forever tooltips ("Deals 100% increased damage to targets below 25% health").
+    The fight's execute phases stand for the target's health (`EXECUTE_DAMAGE_ITEMS`).
+  - Flame Wrath (11809) procs 1.5 times a minute of its 3.3 s speed: 88 procs in 1,089 isolated
+    landed main hand white swings of 6 paladins and 2 warriors in 8 reports of 18 to 20 November
+    2026 (fights whose gear snapshot holds it in the main hand), 8.1% (6.5% to 9.7%) a swing, in
+    place of the reference's 1.0.
 - Heroic Strike, Cleave and Slam add whole numbers of flat threat, from Forever combat logs on
   client 1.60.1.70862 (8 November 2026). Heroic Strike ranks 1 to 4 add 17, 28, 40 and 60 (Rank
   4 measured at 60.08 over 104 clean readings, Rank 3 at 39.99) and ranks 5 and up 2.5 a spell

@@ -860,6 +860,10 @@ pub struct Spell {
     /// takes the bonus whole, as a weapon strike does.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub physical_school_coefficient: Option<f64>,
+    /// Forever's rules: `[health percent, multiplier]`, a damage multiplier against a target
+    /// below that health, as a Fatal Wound's chance on hit states it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub execute_damage_bonus: Option<[f64; 2]>,
     pub threat_multiplier: f64,
     pub flat_threat_bonus: f64,
     pub pushback_resist: f64,
@@ -3108,6 +3112,11 @@ pub enum Effect {
         /// window later.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         immediate: bool,
+        /// Forever's rules: the spellbook position of the strike the debuff row casts, where
+        /// its defense type is melee or ranged. The strike rolls that hit table with no crit,
+        /// and the debuff lands only where it lands.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        strike_spell: Option<usize>,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {

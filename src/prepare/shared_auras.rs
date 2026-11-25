@@ -253,6 +253,12 @@ pub(crate) fn apply_spell_data_debuff_proc(env: &mut Environment, cfg: &SpellDat
         }
     }
 
+    // Forever's rules: a weapon's debuff row of the melee or ranged defense type is a strike
+    // that rolls its hit table (`proc_debuff_strike_spell`).
+    if cfg.is_weapon_proc {
+        super::shared_items::proc_debuff_strike_spell(env, debuff);
+    }
+
     let mut config = spell_data_proc_listener(&env.sim, unit, cfg, source, trigger, None);
     config.trigger_immediately = true;
     source.register_trigger(env, &config);
