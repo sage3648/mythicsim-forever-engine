@@ -4,6 +4,10 @@
 //! player's spell crit, under its own label, and a spell batch window later activates the
 //! class's buff. The buff adds its crit to the spells its mask names; the next cast of one that is
 //! no channel or proc spends it, and the end of a channel it names ends it.
+//!
+//! Under Forever's rules since the hotfixes of 25 November 2026 (`per_wave`), the hits one spell
+//! deals at one moment (an area spell's wave, every target it strikes) roll once, and a channel
+//! it names spends the buff on its next tick instead of keeping it to the channel's end.
 
 use crate::contracts::prepared_v2::Effect;
 
@@ -24,6 +28,17 @@ pub(crate) struct Revelation {
     crit_mod: ModId,
     chance_at_no_crit: f64,
     delay: i64,
+    /// Forever's rules: one roll a wave, and a channel's tick spends the buff.
+    per_wave: bool,
+    /// The trigger, spell and time of the last roll, so a wave's other hits roll no more.
+    last_roll: Option<(AuraRef, SpellId, i64)>,
+}
+
+impl Revelation {
+    /// A new fight: no wave has rolled.
+    pub(crate) fn reset(&mut self) {
+        self.last_roll = None;
+    }
 }
 
 impl<A: Agent> Fight<A> {
@@ -40,6 +55,7 @@ impl<A: Agent> Fight<A> {
             bonus_crit_percent,
             chance_at_no_crit,
             delay_ns,
+            per_wave,
             ..
         } = effect
         else {
@@ -73,6 +89,8 @@ impl<A: Agent> Fight<A> {
             crit_mod,
             chance_at_no_crit: *chance_at_no_crit,
             delay: *delay_ns,
+            per_wave: *per_wave,
+            last_roll: None,
         });
         Ok(())
     }
@@ -99,10 +117,22 @@ impl<A: Agent> Fight<A> {
         {
             return;
         }
+        // Under Forever's rules a wave rolls once: the other targets the same spell strikes at
+        // the same moment roll nothing.
+        let wave = (aura, spell, self.now);
+        if revelation.per_wave && revelation.last_roll == Some(wave) {
+            return;
+        }
         // Go `RevelationChance`: the fit times one less the crit, clamped to 0..1.
         let crit = (self.player.powers.spell_crit_percent / 100.0).clamp(0.0, 1.0);
         let chance = revelation.chance_at_no_crit * (1.0 - crit);
         let delay = revelation.delay;
+        if revelation.per_wave {
+            self.revelation
+                .as_mut()
+                .expect("Revelation is bound")
+                .last_roll = Some(wave);
+        }
         if chance >= 1.0 || self.random_for_aura(aura) <= chance {
             self.schedule_delayed_proc_at(self.now + delay, aura, spell, *result);
         }
@@ -138,12 +168,39 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Under Forever's rules, whether the buff is up as a tick of a channel it names comes: that
+    /// tick takes its crit and spends it ([`Fight::revelation_channel_ticked`]).
+    pub(crate) fn revelation_spent_by_tick(&self, dot: DotId) -> bool {
+        let Some(revelation) = self.revelation.as_ref() else {
+            return false;
+        };
+        revelation.per_wave
+            && revelation
+                .channels
+                .get(self.dots[dot].spell)
+                .copied()
+                .unwrap_or(false)
+            && self.aura(revelation.buff).active
+    }
+
+    /// The channel's tick has taken the buff's crit: it is spent.
+    pub(crate) fn revelation_channel_ticked(&mut self) {
+        let buff = self.revelation.as_ref().expect("Revelation is bound").buff;
+        if self.aura(buff).active {
+            self.deactivate_aura(buff);
+        }
+    }
+
     /// The `OnExpire` revelation.go adds to every dot of a channel the buff names: the channel's
-    /// end ends the buff.
+    /// end ends the buff. Under Forever's rules a tick spends it instead, so a buff gained on the
+    /// channel's last tick waits for the next cast.
     pub(crate) fn revelation_dot_expired(&mut self, dot: DotId) {
         let Some(revelation) = self.revelation.as_ref() else {
             return;
         };
+        if revelation.per_wave {
+            return;
+        }
         if revelation
             .channels
             .get(self.dots[dot].spell)

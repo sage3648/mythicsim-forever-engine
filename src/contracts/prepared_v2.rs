@@ -4523,6 +4523,11 @@ pub enum Effect {
         bonus_crit_percent: f64,
         chance_at_no_crit: f64,
         delay_ns: i64,
+        /// Forever's rules since the hotfixes of 25 November 2026: a wave of hits of one spell
+        /// (every target an area spell strikes at once) rolls once, and a channel's tick spends
+        /// the buff where its end used to.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        per_wave: bool,
     },
     /// consumes_forever_potions.go Dragonfire Potion: the cast casts `spell`, a magic hit and
     /// crit of the literal on every target, and on each it lands on the spell's dot, which ticks

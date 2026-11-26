@@ -5969,6 +5969,9 @@ impl<A: Agent> Fight<A> {
         for batch in &mut self.travel_batches {
             batch.clear();
         }
+        if let Some(revelation) = &mut self.revelation {
+            revelation.reset();
+        }
         self.execute_phase = 0;
         self.next_execute_phase();
         self.end_of_combat = self.duration;
