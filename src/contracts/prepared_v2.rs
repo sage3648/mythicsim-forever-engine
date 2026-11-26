@@ -1273,6 +1273,9 @@ pub struct HawkGuardian {
     /// The owner's crit offset the hawk shares: the higher of the Auto Shot's ranged-only crit
     /// and the main-hand swing's melee-only crit, as the tamed pet inherits it.
     pub crit_offset: f64,
+    /// Crit chance in percent a hawk has beside its share of the owner's.
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub crit_bonus: f64,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]

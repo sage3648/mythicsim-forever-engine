@@ -20,10 +20,11 @@ use super::pet::{creature_auto_attack_dps, pet_crit_offset_now};
 use super::spell_data::spell_data;
 use super::spells::{
     arcane_shot_rap_coefficient, serpent_sting_rap_per_tick, volley_rap_per_tick,
-    EXPLOSIVE_TRAP_RANGE, HAWK_CRIT_SHARE, HAWK_DAMAGE_PER_RANGED_ATTACK_POWER,
-    HAWK_LOGGED_UNLEASHED_FURY_RANK, HAWK_MELEE_HOTFIX_20261110, HAWK_SWING_SECONDS,
-    HAWK_SWING_SHARE_OF_CREATURE_DPS, HAWK_SWING_SPREAD, SUMMON_HAWK_RAP_SHARE,
-    SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE, VOLLEY_TICK_DAMAGE,
+    EXPLOSIVE_TRAP_RANGE, HAWK_CRIT_HOTFIX_20261125, HAWK_CRIT_SHARE,
+    HAWK_DAMAGE_PER_RANGED_ATTACK_POWER, HAWK_LOGGED_UNLEASHED_FURY_RANK,
+    HAWK_MELEE_HOTFIX_20261110, HAWK_SWING_SECONDS, HAWK_SWING_SHARE_OF_CREATURE_DPS,
+    HAWK_SWING_SPREAD, SUMMON_HAWK_RAP_SHARE, SUMMON_HAWK_SWING_SHARE, TRAP_ATTACK_POWER_SHARE,
+    VOLLEY_TICK_DAMAGE,
 };
 use super::{masks, Hunter};
 
@@ -48,6 +49,7 @@ fn hawk_guardian(sim: &Sim, unit: UnitId) -> Value {
         "swing_spread": HAWK_SWING_SPREAD,
         "attack_power_coefficient": HAWK_DAMAGE_PER_RANGED_ATTACK_POWER / logged,
         "crit_share": HAWK_CRIT_SHARE,
+        "crit_bonus": HAWK_CRIT_HOTFIX_20261125,
         "crit_offset": pet_crit_offset_now(sim, unit),
     })
 }
