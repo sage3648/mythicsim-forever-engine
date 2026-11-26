@@ -923,6 +923,9 @@ pub(crate) struct Spell<S> {
     pub(crate) casts: u32,
     /// Go `Unit.SpellsInFlight` of the spell: its travel callbacks still pending.
     pub(crate) in_flight: u32,
+    /// Under Forever's `resist_waits_for_reaction`, the time before which the rotation may not
+    /// cast or queue the spell again: a reaction time after its last cast failed to land.
+    pub(crate) recast_after: i64,
 }
 
 /// Go `Hardcast`.
@@ -2108,6 +2111,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autocast_skips_unready_cooldowns: bool,
     /// Forever's rule that a damage bonus applied after the calculation raises threat too.
     pub(crate) threat_follows_damage_bonus: bool,
+    /// Forever's rule that a dot spell's failed cast waits a reaction time before a recast.
+    pub(crate) resist_waits_for_reaction: bool,
     /// Forever's rule that a physical school damage roll lands on a whole number.
     pub(crate) physical_rolls_are_whole: bool,
     /// A healer sim's burst healing window under Forever's rules (see [`burst`]).
@@ -3298,6 +3303,7 @@ impl<A: Agent> Fight<A> {
                 split: 0,
                 casts: 0,
                 in_flight: 0,
+                recast_after: i64::MIN,
                 id,
             });
         }
@@ -4402,6 +4408,7 @@ impl<A: Agent> Fight<A> {
             off_hand_waits_from_attack_start: player.off_hand_waits_from_attack_start,
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,
             threat_follows_damage_bonus: player.threat_follows_damage_bonus,
+            resist_waits_for_reaction: player.resist_waits_for_reaction,
             physical_rolls_are_whole: player.physical_rolls_are_whole,
             burst: player.burst_window.map(burst::BurstWindow::new),
             aura_refresh: Vec::new(),
@@ -6134,6 +6141,7 @@ impl<A: Agent> Fight<A> {
                 // Go `Spell.reset` and the reset's clear of `SpellsInFlight`.
                 spell.casts = 0;
                 spell.in_flight = 0;
+                spell.recast_after = i64::MIN;
                 spell.metrics[..units].fill(SpellMetrics::default());
                 for split in &mut spell.split_metrics {
                     split[..units].fill(SpellMetrics::default());

@@ -1223,6 +1223,9 @@ pub(crate) fn export_state(
         // A damage bonus applied after the calculation is damage the target takes, so threat
         // (docs/mechanics.md); the reference kept the threat of the damage before it.
         prepared["player"]["threat_follows_damage_bonus"] = json!(true);
+        // A failed cast of a dot spell is seen a reaction time after it lands, so the rotation
+        // waits that long to recast it (docs/mechanics.md); the reference recasts at once.
+        prepared["player"]["resist_waits_for_reaction"] = json!(true);
         // A physical hit's roll lands on a whole number (docs/mechanics.md); the
         // reference rolls the span without rounding.
         prepared["player"]["physical_rolls_are_whole"] = json!(true);

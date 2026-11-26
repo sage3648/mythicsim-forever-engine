@@ -998,6 +998,13 @@ pub struct Player {
     /// which kept the threat of the damage before the bonus.
     #[serde(default, skip_serializing_if = "is_false")]
     pub threat_follows_damage_bonus: bool,
+    /// Forever's rule: when the player's cast of a spell that keeps a dot on its target misses,
+    /// is fully resisted, dodged or parried, the rotation cannot cast or queue that spell again
+    /// until the player's reaction time has passed since the result landed (after any travel),
+    /// as a player only sees the dot fail to appear then. False is the Go reference, whose
+    /// rotation recasts it the instant the result lands.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub resist_waits_for_reaction: bool,
     /// Forever's rule: a physical hit that deals school damage rolls its client row's base
     /// points a half Variance either side and lands on a whole number, so Revenge rank 1 (22,
     /// Variance 0.154) rolls 20 to 24 with the two ends rarer than the three between. False is
