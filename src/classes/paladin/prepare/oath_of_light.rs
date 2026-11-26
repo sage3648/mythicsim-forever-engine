@@ -5,8 +5,9 @@
 //! your Holy Light on them by up to 400, your Flash of Light by up to 115, and your Holy Shock by
 //! up to 229. Only one Oath of Light may be sworn by the Paladin at any one time." Upstream
 //! wowsims/forever's `oath_of_light.go` is the shape followed here: a castable helpful spell that
-//! puts a 5 minute aura on the ally, and the three heals add the flat bonus to the heal's base
-//! amount, before spell power, when the ally they heal carries it. Boundless Light's Holy Shock
+//! puts an aura on the ally (5 minutes, 60 since the hotfixes of 25 November 2026), and the three
+//! heals add the flat bonus to the heal's base amount, before spell power, when the ally they heal
+//! carries it. Boundless Light's Holy Shock
 //! crit holds only on an ally without the Oath.
 //!
 //! MythicSim's healer model heals the player itself as a stand-in for a player who needs it, so
