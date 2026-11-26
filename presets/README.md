@@ -6,7 +6,7 @@ spec, and the other playstyles Advanced settings offers. Each file is the
 (`type`, `prepullActions`, `priorityList`).
 
 These files are a generated mirror of the presets in the MythicSim
-application (`api/data/forever_rotations.json` at commit `1519e59d3c`), refreshed
+application (`api/data/forever_rotations.json` at commit `5631ca9a6a`), refreshed
 whenever a preset changes. [`catalog.json`](catalog.json) lists each
 spec's choices, its default and the stats its stat weights run weighs.
 
@@ -63,6 +63,7 @@ that are not part of your change.
 | Demonology Warlock | Affliction |  | [`warlock/dps/affliction.apl.json`](warlock/dps/affliction.apl.json) |
 | Demonology Warlock | DS/Ruin |  | [`warlock/dps/ds_ruin.apl.json`](warlock/dps/ds_ruin.apl.json) |
 | Demonology Warlock | Shadow and Flame |  | [`warlock/dps/destruction_conflag.apl.json`](warlock/dps/destruction_conflag.apl.json) |
+| Demonology Warlock | Fire Demonology (Imp) |  | [`warlock/dps/demonic_pact_fire.apl.json`](warlock/dps/demonic_pact_fire.apl.json) |
 | Destruction Warlock | Shadow and Flame | default | [`warlock/dps/destruction_conflag.apl.json`](warlock/dps/destruction_conflag.apl.json) |
 | Destruction Warlock | DS/Ruin |  | [`warlock/dps/ds_ruin.apl.json`](warlock/dps/ds_ruin.apl.json) |
 | Destruction Warlock | Affliction |  | [`warlock/dps/affliction.apl.json`](warlock/dps/affliction.apl.json) |
