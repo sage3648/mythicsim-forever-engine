@@ -572,8 +572,16 @@ impl Druid {
         // Client 1223081's mask includes the bleeds (Rake, Rip, Lacerate) and not Lifebloom.
         // Its first effect also names Wild Growth, and its second, a direct healing mod, names
         // Swiftmend, which MythicSim's healer sim casts: the Restoration druid's alone.
-        let healer = self.spec == Spec::Restoration && sim.rules == Rules::Forever;
+        let forever = sim.rules == Rules::Forever;
+        let healer = self.spec == Spec::Restoration && forever;
         let wild_growth = if healer { masks::WILD_GROWTH } else { 0 };
+        // Hotfixes of 25 November 2026: "Fixed a bug where Genesis was not increasing the damage
+        // of Hurricane or the healing of Tranquility." Tranquility heals over time on the
+        // channel's party aura; the reference leaves both out.
+        let tranquility = if forever { masks::TRANQUILITY } else { 0 };
+        let periodic = super::talents::genesis(sim.rules)
+            .effect(A_ADD_PCT_MODIFIER, SPELLMOD_DOT)
+            .fraction_at(self.tal.genesis);
         sim.add_static_mod(
             self.unit,
             SpellModConfig {
@@ -583,14 +591,27 @@ impl Druid {
                     | masks::LACERATE
                     | masks::REJUVENATION
                     | masks::REGROWTH
-                    | wild_growth,
+                    | wild_growth
+                    | tranquility,
                 kind: SpellModType::DotDamageDonePct,
-                float_value: super::talents::genesis(sim.rules)
-                    .effect(A_ADD_PCT_MODIFIER, SPELLMOD_DOT)
-                    .fraction_at(self.tal.genesis),
+                float_value: periodic,
                 ..SpellModConfig::default()
             },
         );
+        // Hurricane's damage is the tick spell the channel casts each period, a hit of its own
+        // rather than a periodic tick, so its share is a damage percent on that spell, Genesis's
+        // periodic value. The channel itself deals nothing.
+        if forever {
+            sim.add_static_mod(
+                self.unit,
+                SpellModConfig {
+                    class_mask: masks::HURRICANE,
+                    kind: SpellModType::DamageDonePct,
+                    float_value: periodic,
+                    ..SpellModConfig::default()
+                },
+            );
+        }
         if healer {
             sim.add_static_mod(
                 self.unit,
