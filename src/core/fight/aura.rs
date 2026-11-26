@@ -1392,6 +1392,12 @@ impl<A: Agent> Fight<A> {
 
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
+        let source = self.hit_source.replace(spell);
+        self.on_spell_hit_listeners(spell, result);
+        self.hit_source = source;
+    }
+
+    fn on_spell_hit_listeners(&mut self, spell: SpellId, result: &SpellResult) {
         let caster = self.spells[spell].caster;
         for (side, list) in [
             (caster, List::SpellHitDealt),

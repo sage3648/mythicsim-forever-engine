@@ -1954,6 +1954,12 @@ pub(crate) struct Fight<A: Agent> {
     /// The logged fight's cooldowns as casts started them, for the application's replay: when,
     /// the unit, the spell and the cooldown's length. A spell with no cooldown lists nothing.
     pub(crate) cast_cooldowns: Vec<serde_json::Value>,
+    /// The player's spell whose hit the hit listeners are hearing, while they run: a damage
+    /// proc dealt inside them was triggered by it.
+    pub(crate) hit_source: Option<SpellId>,
+    /// Over every fight, each proc spell's direct results dealt while the listeners of one of
+    /// the player's hits ran, by (proc, trigger): the results, and their damage.
+    pub(crate) proc_triggers: BTreeMap<(SpellId, SpellId), (u64, f64)>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -4364,6 +4370,8 @@ impl<A: Agent> Fight<A> {
             presentation: None,
             extra_attack_strikes: Vec::new(),
             cast_cooldowns: Vec::new(),
+            hit_source: None,
+            proc_triggers: BTreeMap::new(),
             heartbeat_offset: 0,
             totals: metrics::Totals {
                 target_dtps: vec![
@@ -6359,7 +6367,10 @@ impl<A: Agent> Fight<A> {
                 result,
                 token,
             } => {
+                // A delayed proc was still triggered by the hit it heard.
+                let source = self.hit_source.replace(spell);
                 self.delayed_proc(aura, spell, result);
+                self.hit_source = source;
                 if let Some(token) = token {
                     A::dispose_clone(self, token);
                 }

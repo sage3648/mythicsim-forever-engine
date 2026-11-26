@@ -1195,10 +1195,32 @@ impl<A: Agent> Fight<A> {
         );
     }
 
+    /// A proc's direct result dealt while the listeners of one of the player's hits ran, kept
+    /// under that hit's spell for the application's ability table: which abilities triggered
+    /// Windfury Totem's strikes, Flametongue's hits and the like. It changes nothing simulated.
+    fn note_proc_trigger(&mut self, spell: SpellId, result: &SpellResult) {
+        let Some(trigger) = self.hit_source else {
+            return;
+        };
+        if trigger == spell
+            || self.spells[spell].caster != Side::Player
+            || self.spells[trigger].caster != Side::Player
+            || !result.target.is_target()
+        {
+            return;
+        }
+        let entry = self.proc_triggers.entry((spell, trigger)).or_default();
+        entry.0 += 1;
+        entry.1 += result.damage;
+    }
+
     /// Go `dealDamageInternal`.
     pub(crate) fn deal_damage(&mut self, spell: SpellId, result: SpellResult, periodic: bool) {
         let partial = result.outcome & OUTCOME_PARTIAL != 0;
         if self.now >= 0 {
+            if !periodic {
+                self.note_proc_trigger(spell, &result);
+            }
             let metrics = &mut self.spells[spell].metrics[result.target.index()];
             metrics.total_damage += result.damage;
             if partial {
