@@ -71,7 +71,10 @@ pub(crate) fn apply_debuff_effects(
             target,
             &super::buffs::paladin::judgement_of_the_crusader_max_rank(),
         );
-        env.sim.make_permanent(aura);
+        // A raid's paladin who judges it keeps it up instead (`RaidLive`).
+        if !live.judgement_of_the_crusader {
+            env.sim.make_permanent(aura);
+        }
     }
     Ok(())
 }

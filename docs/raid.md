@@ -43,26 +43,34 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
    target; a debuff nobody casts stays as the request's toggle says (an assumption from outside
    the raid).
    - **Live** (`SHARED_DEBUFFS`): Sunder Armor, Expose Armor, Faerie Fire, Curse of the
-     Elements, Curse of Recklessness, Judgement of Wisdom and Judgement of Light, when a member's
-     rotation casts the spell or keeps the seal up. The raid's copy is registered but no longer
-     up from the pull, and its changes are not in the target's prepared values (`RaidLive`).
-     Sunder Armor has no ramp, and both major armor debuffs bid in a target major armor category
-     (`raid_armor_category`) with the target's armor at each stack. Faerie Fire and the curses
-     export each target category their raid copy bids in (`raid_debuff_category`) with every
-     member's change while it holds the category: armor for the per-stat Minor Armor Reduction
-     category Faerie Fire and Curse of Recklessness share, resistances and school damage taken
-     for Curse of the Elements. Each member's change is read off a separate reset simulation, the
-     class's own copies included, and the fight applies the holder's change as the holder changes
-     (Go's effects' `OnGain` and `OnExpire`), so a Faerie Fire beside a Curse of Recklessness
-     lowers the armor once. When a member's fight changes the debuff (gain, refresh, stacks,
+     Elements, Curse of Recklessness, Judgement of Wisdom, Judgement of Light and Judgement of the
+     Crusader, when a member's rotation casts the spell or keeps the seal up. The raid's copy is
+     registered but no longer up from the pull, and its changes are not in the target's prepared
+     values (`RaidLive`). Sunder Armor has no ramp, and both major armor debuffs bid in a target
+     major armor category (`raid_armor_category`) with the target's armor at each stack. Faerie
+     Fire, the curses and Judgement of the Crusader export each target category their raid copy
+     bids in (`raid_debuff_category`) with every member's change while it holds the category:
+     armor for the per-stat Minor Armor Reduction category Faerie Fire and Curse of Recklessness
+     share, resistances and school damage taken for Curse of the Elements, and the flat Holy
+     damage Judgement of the Crusader adds against the target (`school_bonus_damage`; a
+     paladin's own judgement ranks then leave their bonus to the fight). Each member's change is
+     read off a separate reset simulation, the class's own copies included, and the fight
+     applies the holder's change as the holder changes (Go's effects' `OnGain` and `OnExpire`),
+     so a Faerie Fire beside a Curse of Recklessness lowers the armor once. When a member's fight changes the debuff (gain, refresh, stacks,
      fade), the runner hands the new state to every other fight at that moment, which takes it on
      through its own copy (`Fight::apply_shared`): the member's own when its class has the
-     debuff, otherwise the raid's copy. A caster of Faerie Fire or a curse has no raid copy in its
-     fight, so a raid of one is its Quick Sim with the toggle off. A fight never sends back a state
-     it was given. A stronger armor debuff the request assumes from the pull, such as the raid's
+     debuff, otherwise the raid's copy. A caster of Faerie Fire, a curse or Judgement of the
+     Crusader has no raid copy in its fight, so a raid of one is its Quick Sim with the toggle
+     off. A fight never sends back a state it was given. A stronger armor debuff the request assumes from the pull, such as the raid's
      Expose Armor beside members' Sunder Armor, keeps the members' stacks out, as in a Quick Sim.
      Forever has no Faerie Fire (Feral): a feral druid casts the Balance spell, and two druids
      keep one Faerie Fire up between them, as two warlocks keep one Curse of the Elements.
+     Forever has no Curse of Shadow either: client 1.60.1.71139 has no spell row for its ranks
+     (17862, 17937; their trainer rows remain), and its Curse of the Elements (1311680, misc
+     value 126) lowers every magic school's resistance by 75 and raises its damage taken by
+     10%, Shadow and Arcane included. No Curse of Shadow event shows in 384 recent
+     forever.warcraftlogs.com dungeon reports, where Curse of the Elements was cast 3,561 times
+     in 140 of them.
    - **Assumed** (`CAST_DEBUFFS`): the tank debuffs, Insect Swarm and Scorpid Sting, when a
      member's rotation casts its own copy ("<name> (Player)"). Every other member's fight has the
      raid's copy from the pull; the caster's fight has only its own casts. Their effects are part
@@ -161,6 +169,10 @@ for a raid index with no player holds the target for its windows and nobody take
   follow the caster's uptime, and the receiver's damage gain over a raid without them is about
   that share of what the debuff assumed from the pull gives. A caster whose rotation never casts
   it leaves the receiver as alone without it, whatever the raid's toggle.
+- Judgement of the Crusader on a receiving member's target follows a paladin who judges it, for a
+  paladin receiver (whose own ranks share the judgement's category) and a Smite priest alike: the
+  receiver's damage lies between none and the toggle's from the pull, and a paladin who keeps the
+  seal up without judging leaves the receiver as alone without it, whatever the raid's toggle.
 - Two warlocks keep one Curse of the Elements up, and two druids one Faerie Fire: each casts it
   less than alone. Faerie Fire beside Curse of Recklessness lowers armor less than both assumed.
 - An assigned Innervate and Power Infusion land on the target exactly when the caster casts

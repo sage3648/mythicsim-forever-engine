@@ -329,12 +329,14 @@ pub(crate) struct RaidDebuffCategory {
     members: Vec<(usize, RaidDebuffChange)>,
 }
 
-/// Armor added, resistances added and school damage taken multiplied, by Go school index.
+/// Armor added, resistances added, school damage taken multiplied and a school's flat spell
+/// damage added, by Go school index.
 #[derive(Clone, Debug, Default)]
 struct RaidDebuffChange {
     armor: f64,
     resistance: Vec<(usize, f64)>,
     damage_taken: Vec<(usize, f64)>,
+    bonus_damage: Vec<(usize, f64)>,
 }
 
 /// Go school names, by school index.
@@ -380,6 +382,7 @@ impl<A: Agent> Fight<A> {
                         armor: member.armor,
                         resistance: by_school(&member.resistance)?,
                         damage_taken: by_school(&member.school_damage_taken_multiplier)?,
+                        bonus_damage: by_school(&member.school_bonus_damage)?,
                     },
                 ));
             }
@@ -435,6 +438,9 @@ impl<A: Agent> Fight<A> {
             for &(school, factor) in &change.damage_taken {
                 let factor = if gain { factor } else { 1.0 / factor };
                 self.multiply_target_school_damage_taken(aura.side, school, factor);
+            }
+            for &(school, delta) in &change.bonus_damage {
+                self.add_target_school_bonus_spell_damage(aura.side, school, sign * delta);
             }
         }
     }

@@ -416,12 +416,18 @@ impl PaladinAgent {
     }
 
     /// The class auras on the target, by label: the members of the "Judgement of the
-    /// Crusader" category.
+    /// Crusader" category. In a raid whose paladin judges it, the fight applies the holder's
+    /// Holy bonus instead (`Effect::RaidDebuffCategory`), this paladin's own ranks included.
     fn target_auras(prepared: &PreparedV2) -> Vec<(String, PaladinAura)> {
-        let crusader = prepared
-            .effects
-            .iter()
-            .any(|effect| matches!(effect, Effect::SealOfTheCrusader { .. }));
+        let raid = prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::RaidDebuffCategory { category, .. }
+                if category == "Judgement of the Crusader")
+        });
+        let crusader = !raid
+            && prepared
+                .effects
+                .iter()
+                .any(|effect| matches!(effect, Effect::SealOfTheCrusader { .. }));
         prepared
             .effects
             .iter()

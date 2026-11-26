@@ -80,6 +80,18 @@ fn a_raid_of_one_is_its_quick_sim() {
             "{field}"
         );
     }
+    // A paladin who judges the Crusader: its own judgement's Holy bonus, as alone.
+    let input = reference_party(
+        vec![crusader_paladin(true)],
+        &[("judgementOfTheCrusader", false)],
+    );
+    let report = run(&input);
+    let alone = solo(&input["request"]);
+    assert_eq!(
+        players(&report)[0],
+        alone["raidMetrics"]["parties"][0]["players"][0]
+    );
+    assert!(target_uptime(&report, 20303) > 0.0);
 }
 
 #[test]
@@ -559,6 +571,99 @@ fn curse_of_the_elements_follows_the_warlocks_casts() {
         "curse_of_elements",
         1311680,
     );
+}
+
+/// The reference raid's Retribution paladin keeping Seal of the Crusader (20308) up, judging it
+/// whenever Judgement is ready when `judges`.
+fn crusader_paladin(judges: bool) -> Value {
+    let mut paladin = reference_player(1, 3);
+    paladin["name"] = json!("crusader-paladin");
+    let seal = json!({ "spellId": 20308 });
+    let judgement = json!({ "spellId": 20271 });
+    let mut priority = vec![json!({ "action": {
+        "castSpell": { "spellId": seal },
+        "condition": { "not": { "val": { "auraIsActive": { "auraId": seal } } } },
+    } })];
+    if judges {
+        priority.insert(
+            0,
+            json!({ "action": {
+            "castSpell": { "spellId": judgement },
+            "condition": { "and": { "vals": [
+                { "auraIsActive": { "auraId": seal } },
+                { "spellCanCast": { "spellId": judgement } },
+            ] } },
+        } }),
+        );
+    }
+    paladin["rotation"] = json!({
+        "type": "TypeAPL",
+        "prepullActions": [{ "action": { "castSpell": { "spellId": seal } },
+                             "doAtValue": { "const": { "val": "-1.5s" } } }],
+        "priorityList": priority,
+    });
+    paladin
+}
+
+/// The reference raid's priest casting Smite (10934) and nothing else: Holy damage from a
+/// member with no judgement of its own.
+fn smite_priest() -> Value {
+    let mut priest = reference_player(3, 0);
+    priest["name"] = json!("smite-priest");
+    priest["rotation"] = json!({
+        "type": "TypeAPL",
+        "priorityList": [{ "action": { "castSpell": { "spellId": { "spellId": 10934 } } } }],
+    });
+    priest
+}
+
+/// Judgement of the Crusader (20303, +161 Holy damage taken for 40 sec in client 71139) on a
+/// receiver's target follows a paladin who judges it: nothing until the judgement lands, the
+/// Holy bonus only while it is up, and nothing from a paladin who keeps the seal up without
+/// judging, whatever the raid's toggle. The receivers are a paladin, whose own ranks share the
+/// judgement's category, and a priest, who has none.
+#[test]
+fn judgement_of_the_crusader_follows_the_paladins_judgements() {
+    for receiver in [reference_player(1, 3), smite_priest()] {
+        let name = receiver["name"].clone();
+        let toggle = |on: bool| [("judgementOfTheCrusader", on)];
+        let alone = |on: bool| run(&reference_party(vec![receiver.clone()], &toggle(on)));
+        let (bare, assumed) = (alone(false), alone(true));
+        let live = run(&reference_party(
+            vec![receiver.clone(), crusader_paladin(true)],
+            &toggle(false),
+        ));
+        let debuff = shared(&live, "judgement_of_the_crusader");
+        assert_eq!(debuff["casters"], json!([1]), "{name}");
+        assert_eq!(debuff["live"], json!(true), "{name}");
+        // The paladin judges at the pull, so the debuff is up all but the first moments.
+        let uptime = target_uptime(&live, 20303);
+        assert!(
+            uptime > 0.9 * duration(&live) && uptime <= duration(&live),
+            "{name}: up {uptime} s of {}",
+            duration(&live)
+        );
+        assert_eq!(target_uptime(&bare, 20303), 0.0, "{name}");
+        let (bare_dps, live_dps, assumed_dps) =
+            (first_dps(&bare), first_dps(&live), first_dps(&assumed));
+        // Judged at the pull, the live debuff gives what the toggle does, or a hair less when
+        // the receiver's first Holy hit lands before the judgement.
+        assert!(
+            bare_dps < live_dps && live_dps <= assumed_dps,
+            "{name}: {bare_dps} {live_dps} {assumed_dps}"
+        );
+        let idle = run(&reference_party(
+            vec![receiver.clone(), crusader_paladin(false)],
+            &toggle(true),
+        ));
+        assert_eq!(
+            shared(&idle, "judgement_of_the_crusader")["live"],
+            json!(true),
+            "{name}"
+        );
+        assert_eq!(target_uptime(&idle, 20303), 0.0, "{name}");
+        assert_eq!(first_dps(&idle), bare_dps, "{name}");
+    }
 }
 
 /// Casts of the spell a fight by the named member.
