@@ -48,14 +48,15 @@ Innervates or Power Infusions. `simOptions.randomSeed` is required.
      registered but no longer up from the pull, and its changes are not in the target's prepared
      values (`RaidLive`). Sunder Armor has no ramp, and both major armor debuffs bid in a target
      major armor category (`raid_armor_category`) with the target's armor at each stack. Faerie
-     Fire, the curses and Judgement of the Crusader export each target category their raid copy bids in (`raid_debuff_category`) with every
-     member's change while it holds the category: armor for the per-stat Minor Armor Reduction
-     category Faerie Fire and Curse of Recklessness share, resistances and school damage taken
-     for Curse of the Elements, and the flat Holy damage Judgement of the Crusader adds against
-     the target (a paladin's own judgement ranks then leave their bonus to the fight). Each
-     member's change is read off a separate reset simulation, the class's own copies included, and the fight applies the holder's change as the holder changes
-     (Go's effects' `OnGain` and `OnExpire`), so a Faerie Fire beside a Curse of Recklessness
-     lowers the armor once. When a member's fight changes the debuff (gain, refresh, stacks,
+     Fire, the curses and Judgement of the Crusader export each target category their raid copy
+     bids in (`raid_debuff_category`) with every member's change while it holds the category:
+     armor for the per-stat Minor Armor Reduction category Faerie Fire and Curse of Recklessness
+     share, resistances and school damage taken for Curse of the Elements, and the flat Holy
+     damage Judgement of the Crusader adds against the target (`school_bonus_damage`; a
+     paladin's own judgement ranks then leave their bonus to the fight). Each member's change is
+     read off a separate reset simulation, the class's own copies included, and the fight
+     applies the holder's change as the holder changes (Go's effects' `OnGain` and `OnExpire`),
+     so a Faerie Fire beside a Curse of Recklessness lowers the armor once. When a member's fight changes the debuff (gain, refresh, stacks,
      fade), the runner hands the new state to every other fight at that moment, which takes it on
      through its own copy (`Fight::apply_shared`): the member's own when its class has the
      debuff, otherwise the raid's copy. A caster of Faerie Fire, a curse or Judgement of the
