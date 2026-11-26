@@ -10,11 +10,18 @@ use std::{fs, path::Path};
 /// Judgement of Command, ranks 1 to 5.
 const JUDGEMENT_OF_COMMAND: [i64; 5] = [20425, 20962, 20961, 20967, 20968];
 
-/// The Retribution production request with the libram in its libram slot, or none.
+/// The live Retribution reference's talents of 26 November 2026, which only Forever's rules take.
+const RETRIBUTION: &str = "050050002-503-05233301001301351";
+
+/// The Retribution production request with the libram in its libram slot, or none, on the live
+/// tree under Forever's rules.
 fn prepared(libram: Option<i64>, rules: Rules) -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/mage/prepared-v2/production-retribution-paladin.request.json");
     let mut request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    if rules == Rules::Forever {
+        request["raid"]["parties"][0]["players"][0]["talentsString"] = json!(RETRIBUTION);
+    }
     let items = request["raid"]["parties"][0]["players"][0]["equipment"]["items"]
         .as_array_mut()
         .unwrap();
