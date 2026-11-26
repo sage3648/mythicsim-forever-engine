@@ -171,6 +171,10 @@ fn is_zero_f64(value: &f64) -> bool {
     *value == 0.0
 }
 
+fn is_zero_i64(value: &i64) -> bool {
+    *value == 0
+}
+
 impl ActionId {
     pub fn spell(spell_id: i32) -> Self {
         Self {
@@ -994,6 +998,13 @@ pub struct Player {
     /// which kept the threat of the damage before the bonus.
     #[serde(default, skip_serializing_if = "is_false")]
     pub threat_follows_damage_bonus: bool,
+    /// Forever's rule: when the player's cast of a spell that keeps a dot on its target misses,
+    /// is fully resisted, dodged or parried, the rotation cannot cast or queue that spell again
+    /// until the player's reaction time has passed since the result landed (after any travel),
+    /// as a player only sees the dot fail to appear then. False is the Go reference, whose
+    /// rotation recasts it the instant the result lands.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub resist_waits_for_reaction: bool,
     /// Forever's rule: a physical hit that deals school damage rolls its client row's base
     /// points a half Variance either side and lands on a whole number, so Revenge rank 1 (22,
     /// Variance 0.154) rolls 20 to 24 with the two ends rarer than the three between. False is
@@ -1273,6 +1284,9 @@ pub struct HawkGuardian {
     /// The owner's crit offset the hawk shares: the higher of the Auto Shot's ranged-only crit
     /// and the main-hand swing's melee-only crit, as the tamed pet inherits it.
     pub crit_offset: f64,
+    /// Crit chance in percent a hawk has beside its share of the owner's.
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub crit_bonus: f64,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -2372,6 +2386,13 @@ pub enum Effect {
         energy_label: String,
         energy: f64,
         energy_spells: Vec<usize>,
+        /// Under Forever's rules the energy comes as a periodic energize (27784): `energy` every
+        /// `energy_period_ns` for `energy_ticks` ticks, a new proc restarting it. Zero ticks
+        /// gives `energy` at once.
+        #[serde(default, skip_serializing_if = "is_zero")]
+        energy_ticks: i32,
+        #[serde(default, skip_serializing_if = "is_zero_i64")]
+        energy_period_ns: i64,
         rage_label: String,
         rage: f64,
         metrics_action_id: ActionId,
@@ -3108,6 +3129,10 @@ pub enum Effect {
         /// window later.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         immediate: bool,
+        /// Forever's rules: the target's auras the debuff never lands beside, and whose landing
+        /// takes it off (Faerie Fire and Curse of Recklessness).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        blocked_by: Vec<String>,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {
@@ -4516,6 +4541,11 @@ pub enum Effect {
         bonus_crit_percent: f64,
         chance_at_no_crit: f64,
         delay_ns: i64,
+        /// Forever's rules since the hotfixes of 25 November 2026: a wave of hits of one spell
+        /// (every target an area spell strikes at once) rolls once, and a channel's tick spends
+        /// the buff where its end used to.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        per_wave: bool,
     },
     /// consumes_forever_potions.go Dragonfire Potion: the cast casts `spell`, a magic hit and
     /// crit of the literal on every target, and on each it lands on the spell's dot, which ticks

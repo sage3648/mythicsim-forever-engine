@@ -254,10 +254,10 @@ fn a_hawk_swing_is_a_roll_plus_a_share_of_ranged_attack_power() {
     );
 }
 
-/// A hawk's crit chance is Ferocity's flat crit (10 at 5/5, on the spell) plus `crit_share` of
-/// its owner's crit and offset, less the target's crit suppression: the rate over every hawk
-/// swing of 300 fights is 5.2% with no share, near 17.9% at half and 30.6% at the owner's whole
-/// crit. The reference's hawk never crits.
+/// A hawk's crit chance is Ferocity's flat crit (10 at 5/5, on the spell) plus `crit_bonus` (the
+/// 5% the hotfixes of 25 November 2026 restored) plus `crit_share` of its owner's crit and
+/// offset, less the target's crit suppression, checked over every hawk swing of 300 fights with
+/// no share, half and the owner's whole crit. The reference's hawk never crits.
 #[test]
 fn a_hawk_crits_at_ferocity_plus_half_its_owners_crit() {
     let base = prepared(Rules::Forever, 300, false);
@@ -273,6 +273,10 @@ fn a_hawk_crits_at_ferocity_plus_half_its_owners_crit() {
         .as_f64()
         .unwrap();
     let suppression = base["melee"]["melee_crit_suppression"].as_f64().unwrap();
+    let bonus = hawk_effect(&mut base.clone())["guardian"]["crit_bonus"]
+        .as_f64()
+        .unwrap();
+    assert_eq!(bonus, 5.0);
 
     let rate = |share: f64| -> f64 {
         let mut value = base.clone();
@@ -294,7 +298,7 @@ fn a_hawk_crits_at_ferocity_plus_half_its_owners_crit() {
         crits / (hits + crits)
     };
     for share in [0.0, 0.5, 1.0] {
-        let expected = (ferocity + share * owner_crit) / 100.0 - suppression;
+        let expected = (ferocity + bonus + share * owner_crit) / 100.0 - suppression;
         let got = rate(share);
         assert!(
             (got - expected).abs() < 0.025,

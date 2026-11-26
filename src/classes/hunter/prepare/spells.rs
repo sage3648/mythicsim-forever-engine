@@ -151,6 +151,10 @@ pub(super) const HAWK_DAMAGE_PER_RANGED_ATTACK_POWER: f64 = 0.0179;
 /// 4,340 swings against targets 2 levels below to 3 above, and two logs without Ferocity read
 /// half the tamed pet's.
 pub(super) const HAWK_CRIT_SHARE: f64 = 0.5;
+/// Crit a hawk gains beside that share since Blizzard's hotfixes of 25 November 2026: "Fixed an
+/// issue where Summoned Hawks had ~5% less critical strike chance than intended." The share above
+/// was read from logs taken before it, so the post's 5% goes on top.
+pub(super) const HAWK_CRIT_HOTFIX_20261125: f64 = 5.0;
 /// The Unleashed Fury rank every one of those logs had. It reaches the hawks as it does the pet,
 /// so the swing above is stated before it.
 pub(super) const HAWK_LOGGED_UNLEASHED_FURY_RANK: i32 = 5;

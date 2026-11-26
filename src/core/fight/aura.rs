@@ -825,6 +825,9 @@ impl<A: Agent> Fight<A> {
 
     fn on_gain(&mut self, aura: AuraRef) {
         self.multiply_damage_taken_for(aura, false);
+        if aura.side.is_target() && !self.armor_debuff_procs.is_empty() {
+            self.armor_debuff_blocker_gained(aura);
+        }
         if aura.side == Side::Player && !self.fixed_uptime.is_empty() {
             self.fixed_shout_chain_gain(aura);
         }

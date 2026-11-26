@@ -1214,8 +1214,39 @@ impl<A: Agent> Fight<A> {
         entry.1 += result.damage;
     }
 
+    /// Whether a spell keeps a dot on its targets, its own or its related dot spell's: one
+    /// whose failed cast the player only sees as a dot that does not appear.
+    fn keeps_target_dot(&self, spell: SpellId) -> bool {
+        let on_target = |spell: SpellId| {
+            self.spells
+                .get(spell)
+                .and_then(|state| state.dot)
+                .is_some_and(|dot| self.dots[dot].side.is_target())
+        };
+        let state = &self.spells[spell];
+        !state.flags.helpful && (on_target(spell) || state.related_dot_spell.is_some_and(on_target))
+    }
+
+    /// Forever's `resist_waits_for_reaction`: the player's cast of a dot spell that missed, was
+    /// fully resisted, dodged or parried may not be cast or queued again until a reaction time
+    /// after the result lands. Ticks and the casts of pets do not count.
+    fn note_failed_dot_cast(&mut self, spell: SpellId, result: &SpellResult, periodic: bool) {
+        if periodic
+            || result.outcome & (OUTCOME_MISS | OUTCOME_DODGE | OUTCOME_PARRY) == 0
+            || self.spells[spell].caster != Side::Player
+            || !self.keeps_target_dot(spell)
+        {
+            return;
+        }
+        self.spells[spell].recast_after = self.now + self.config.reaction;
+        self.changed(super::reads::TIMERS);
+    }
+
     /// Go `dealDamageInternal`.
     pub(crate) fn deal_damage(&mut self, spell: SpellId, result: SpellResult, periodic: bool) {
+        if self.resist_waits_for_reaction {
+            self.note_failed_dot_cast(spell, &result, periodic);
+        }
         let partial = result.outcome & OUTCOME_PARTIAL != 0;
         if self.now >= 0 {
             if !periodic {

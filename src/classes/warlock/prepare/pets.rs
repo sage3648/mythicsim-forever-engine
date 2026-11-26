@@ -37,6 +37,12 @@ pub(super) enum Summon {
     Felhunter,
 }
 
+/// The crit the Succubus loses under Forever's rules since the hotfixes of 25 November 2026:
+/// "Fixed an issue where Succubus and Incubus had 5% higher critical strike chance than
+/// intended." Her 6.2% of her own was measured from Lash of Pain while that was live (community
+/// #790), so 1.2% is left. The Go reference keeps 6.2%.
+const SUCCUBUS_CRIT_HOTFIX: f64 = 5.0;
+
 impl Summon {
     /// `proto.WarlockOptions_Summon_name`.
     fn name(self) -> &'static str {
@@ -68,7 +74,8 @@ impl Summon {
                 (Stat::Mana, 1066.0),
             ]),
             // The Succubus' Lash of Pain crits about 6% whatever its master's crit: demons carry
-            // their own base crit (community #790).
+            // their own base crit (community #790), measured while she had 5% too much
+            // ([`SUCCUBUS_CRIT_HOTFIX`]).
             Summon::Succubus => Stats::from_pairs(&[
                 (Stat::Strength, 129.0),
                 (Stat::Agility, 85.0),
@@ -96,8 +103,11 @@ impl Summon {
     /// Intellect, Spirit, Stamina and base crit stay the level 60 ones: levelling Imps on public
     /// logs cast Firebolt every 2.44 sec in runs of 13 to 19 at levels 12 to 18, where a pool
     /// scaled with the level would run dry after 5 (the demon regenerates no mana while casting).
-    fn base_stats_at(self, share: Option<f64>) -> Stats {
+    fn base_stats_at(self, share: Option<f64>, rules: Rules) -> Stats {
         let mut stats = self.base_stats();
+        if self == Summon::Succubus && rules == Rules::Forever {
+            stats[Stat::SpellCritPercent] -= SUCCUBUS_CRIT_HOTFIX;
+        }
         if let Some(share) = share {
             stats[Stat::Strength] *= share;
             stats[Stat::Agility] *= share;
@@ -306,7 +316,7 @@ impl Warlock {
         let pet = sim.new_pet(PetConfig {
             name: summon.name().to_string(),
             owner,
-            base_stats: summon.base_stats_at(share),
+            base_stats: summon.base_stats_at(share, sim.rules),
             stat_inheritance: Rc::new(pet_stat_inheritance),
             enabled_on_start,
             is_guardian: false,
@@ -478,6 +488,25 @@ impl Warlock {
         );
         if let Some(state) = self.pets.state_mut(pet) {
             state.auto_cast_abilities.push(spell);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Under Forever's rules the Succubus keeps 1.2% crit of her own, 5% less than the 6.2% read
+    /// while the bug the hotfixes of 25 November 2026 fixed was live; the reference keeps 6.2%.
+    /// No other demon carries crit of its own.
+    #[test]
+    fn the_succubus_loses_five_percent_crit_under_forevers_rules() {
+        let crit =
+            |summon: Summon, rules| summon.base_stats_at(None, rules)[Stat::SpellCritPercent];
+        assert!((crit(Summon::Succubus, Rules::Forever) - 1.2).abs() < 1e-12);
+        assert_eq!(crit(Summon::Succubus, Rules::GoReference), 6.2);
+        for summon in [Summon::Imp, Summon::Voidwalker, Summon::Felhunter] {
+            assert_eq!(crit(summon, Rules::Forever), 0.0);
         }
     }
 }

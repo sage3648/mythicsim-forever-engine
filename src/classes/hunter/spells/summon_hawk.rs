@@ -156,9 +156,10 @@ impl HawkGuardian {
     }
 
     /// What a hawk's crit chance differs from its owner's by, in percent: `crit_share` of the
-    /// owner's crit and offset, less the owner's crit the spell reads.
+    /// owner's crit and offset and `crit_bonus`, less the owner's crit the spell reads.
     pub(crate) fn crit_adjustment(&self, owner_crit_percent: f64) -> f64 {
-        self.crit_share * (owner_crit_percent + self.crit_offset) - owner_crit_percent
+        self.crit_share * (owner_crit_percent + self.crit_offset) + self.crit_bonus
+            - owner_crit_percent
     }
 }
 
@@ -173,6 +174,7 @@ mod tests {
             attack_power_coefficient: 0.015,
             crit_share: 0.5,
             crit_offset: 2.0,
+            crit_bonus: 0.0,
         }
     }
 
@@ -191,5 +193,15 @@ mod tests {
         assert!((20.0 + adjustment - 0.5 * (20.0 + 2.0)).abs() < 1e-12);
         // Without an owner crit it keeps half the offset.
         assert!((guardian().crit_adjustment(0.0) - 1.0).abs() < 1e-12);
+    }
+
+    /// The hotfixes of 25 November 2026 give a hawk 5% more crit beside its share: 11 becomes 16.
+    #[test]
+    fn a_hawks_crit_bonus_adds_to_its_share() {
+        let hawk = HawkGuardian {
+            crit_bonus: 5.0,
+            ..guardian()
+        };
+        assert!((20.0 + hawk.crit_adjustment(20.0) - 16.0).abs() < 1e-12);
     }
 }

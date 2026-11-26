@@ -2326,7 +2326,8 @@ impl<A: Agent> Fight<A> {
 
     /// Whether a cast is ruled out by what blocks it whatever its condition says: one queued
     /// spell per timestep, the GCD or a channel beyond the queue window, its own cooldowns
-    /// beyond it, or a major cooldown waiting for the GCD.
+    /// beyond it, a recast waiting a reaction time after a failed dot cast, or a major cooldown
+    /// waiting for the GCD.
     fn timers_rule_out(&self, spell: SpellId) -> bool {
         let state = &self.spells[spell];
         let unit = &self.player;
@@ -2334,6 +2335,7 @@ impl<A: Agent> Fight<A> {
             || (state.flags.channeled && unit.hardcast.expires > self.now + MAX_SPELL_QUEUE_WINDOW)
             || (state.default_cast.gcd > 0 && (unit.gcd - self.now).max(0) > MAX_SPELL_QUEUE_WINDOW)
             || self.spell_time_to_ready(spell) > MAX_SPELL_QUEUE_WINDOW
+            || self.recast_waits(spell)
             || (state.flags.mcd
                 && !state.flags.reactive
                 && !self.gcd_ready()
@@ -2491,6 +2493,9 @@ impl<A: Agent> Fight<A> {
         if ready - self.now > window {
             at = at.max(ready - window);
         }
+        if self.recast_waits(spell) {
+            at = at.max(self.spells[spell].recast_after);
+        }
         if at > self.now {
             return at;
         }
@@ -2521,6 +2526,9 @@ impl<A: Agent> Fight<A> {
         let ready = self.spell_ready_at(spell);
         if ready - self.now > window {
             at = at.max(ready - window);
+        }
+        if self.recast_waits(spell) {
+            at = at.max(self.spells[spell].recast_after);
         }
         if state.flags.mcd && !state.flags.reactive && unit.gcd > self.now && !self.apl.in_sequence
         {

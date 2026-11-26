@@ -11,6 +11,7 @@ use crate::{
         raid::Gift,
         Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult,
     },
+    core::queue::Handle,
 };
 
 use super::{
@@ -197,6 +198,9 @@ pub(crate) struct DruidAgent {
     thorns: Option<AuraRef>,
     frenzied_regeneration_spell: Option<FrenziedRegeneration>,
     natures_bounty: Option<Rc<NaturesBounty>>,
+    /// Nature's Bounty's periodic energize: its pending tick and the ticks left.
+    pub(crate) bounty_energy_tick: Option<Handle>,
+    pub(crate) bounty_energy_left: i32,
     unending_life: Option<Rc<UnendingLifeRefund>>,
 }
 
@@ -247,6 +251,8 @@ impl Default for DruidAgent {
             thorns: None,
             frenzied_regeneration_spell: None,
             natures_bounty: None,
+            bounty_energy_tick: None,
+            bounty_energy_left: 0,
             unending_life: None,
         }
     }
@@ -947,6 +953,8 @@ impl DruidAgent {
                     energy_label,
                     energy,
                     energy_spells,
+                    energy_ticks,
+                    energy_period_ns,
                     rage_label,
                     rage,
                     metrics_action_id,
@@ -960,6 +968,8 @@ impl DruidAgent {
                             amounts: [*mana, *energy, *rage],
                             mana_spells,
                             energy_spells,
+                            energy_ticks: *energy_ticks,
+                            energy_period: *energy_period_ns,
                             metrics_action_id,
                         },
                     )?;
@@ -1380,6 +1390,21 @@ impl Agent for DruidAgent {
         }
         // Maul's queue aura OnReset.
         fight.agent.maul_queued = false;
+        fight.agent.bounty_energy_tick = None;
+        fight.agent.bounty_energy_left = 0;
+    }
+
+    /// Nature's Bounty's periodic energize tick, the only class action a druid schedules.
+    fn on_class_action(fight: &mut Fight<Self>, tag: u32) {
+        if tag == items::BOUNTY_ENERGY_TAG {
+            let bounty = fight.agent.natures_bounty.clone().expect("bound");
+            bounty.energy_tick(fight);
+        }
+    }
+
+    /// A new proc restarts the energize, so only the latest pending tick runs.
+    fn class_action_valid(fight: &Fight<Self>, tag: u32, handle: Handle) -> bool {
+        tag != items::BOUNTY_ENERGY_TAG || fight.agent.bounty_energy_tick == Some(handle)
     }
 
     /// Go `Druid.Reset`, and the feral cat's: back to the starting form, then out of it and
