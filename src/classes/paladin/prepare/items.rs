@@ -7,7 +7,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::env::Environment;
-use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, MILLISECOND, SECOND};
+use crate::prepare::sim::{AuraConfig, Cooldown, Rules, Sim, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::{Cast, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 
@@ -51,16 +51,28 @@ pub(crate) fn apply_agentless_libram_effect(sim: &mut Sim, unit: UnitId, item: i
                 ..SpellModConfig::default()
             },
         ),
-        // Libram of Law: increases the damage of your Judgement ability by 4%.
-        272435 => sim.add_static_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::JUDGEMENT_OF_RIGHTEOUSNESS | masks::JUDGEMENT_OF_FURY,
-                kind: SpellModType::DamageDonePct,
-                float_value: 0.04,
-                ..SpellModConfig::default()
-            },
-        ),
+        // Libram of Law: increases the damage of your Judgement ability by 4%. Under Forever's
+        // rules Judgement of Command too since the hotfixes of 25 November 2026: "Fixed a bug
+        // causing Libram of Law to not affect Judgement of Command." The Go reference keeps
+        // Righteousness and Fury alone.
+        272435 => {
+            let command = if sim.rules == Rules::Forever {
+                masks::JUDGEMENT_OF_COMMAND
+            } else {
+                0
+            };
+            sim.add_static_mod(
+                unit,
+                SpellModConfig {
+                    class_mask: masks::JUDGEMENT_OF_RIGHTEOUSNESS
+                        | masks::JUDGEMENT_OF_FURY
+                        | command,
+                    kind: SpellModType::DamageDonePct,
+                    float_value: 0.04,
+                    ..SpellModConfig::default()
+                },
+            )
+        }
         // Libram of Economy: reduces the Mana cost of your Holy Light ability by 5%.
         272436 => sim.add_static_mod(
             unit,
