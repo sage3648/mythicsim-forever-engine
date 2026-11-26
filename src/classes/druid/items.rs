@@ -4,7 +4,7 @@
 
 use crate::{
     contracts::prepared_v2::ActionId,
-    core::fight::{AuraRef, Fight, ResourceKind, SpellId, SpellResult},
+    core::fight::{AuraRef, Fight, ResourceKind, SpellId, SpellResult, PRIORITY_REGEN},
 };
 
 use super::agent::DruidAgent;
@@ -37,8 +37,14 @@ pub(crate) struct NaturesBounty {
     amounts: [f64; 3],
     mana_spells: Vec<bool>,
     energy_spells: Vec<bool>,
+    /// The energy's periodic energize ticks and their period; no ticks gives it at once.
+    energy_ticks: i32,
+    energy_period: i64,
     metrics: [usize; 3],
 }
+
+/// The class action tag of Nature's Bounty's energize tick.
+pub(crate) const BOUNTY_ENERGY_TAG: u32 = 1;
 
 /// The exported parameters.
 pub(crate) struct BountyParams<'a> {
@@ -48,6 +54,8 @@ pub(crate) struct BountyParams<'a> {
     pub(crate) amounts: [f64; 3],
     pub(crate) mana_spells: &'a [usize],
     pub(crate) energy_spells: &'a [usize],
+    pub(crate) energy_ticks: i32,
+    pub(crate) energy_period: i64,
     pub(crate) metrics_action_id: &'a ActionId,
 }
 
@@ -69,6 +77,8 @@ pub(crate) fn bind_bounty(
         amounts: params.amounts,
         mana_spells: mask(len, params.mana_spells),
         energy_spells: mask(len, params.energy_spells),
+        energy_ticks: params.energy_ticks,
+        energy_period: params.energy_period,
         metrics: [mana, energy, rage],
     })
 }
@@ -126,11 +136,41 @@ impl NaturesBounty {
                 fight.add_rage(self.amounts[2], self.metrics[2]);
             }
         } else if self.energy_spells[spell] {
-            if fight.energy.is_some() {
+            if self.energy_ticks > 0 {
+                self.start_energize(fight);
+            } else if fight.energy.is_some() {
                 fight.add_energy(self.amounts[1], self.metrics[1]);
             }
         } else if fight.has_mana_bar() {
             fight.add_mana(self.amounts[0], self.metrics[0]);
+        }
+    }
+}
+
+impl NaturesBounty {
+    /// The periodic energize (re)starts: every tick left again, the first a period from now.
+    /// The aura (27784) does not stack, so a proc while it ticks replaces it.
+    fn start_energize(&self, fight: &mut Fight<DruidAgent>) {
+        if let Some(pending) = fight.agent.bounty_energy_tick.take() {
+            fight.queue.cancel(pending);
+        }
+        fight.agent.bounty_energy_left = self.energy_ticks;
+        let at = fight.now + self.energy_period;
+        fight.agent.bounty_energy_tick =
+            Some(fight.schedule_class_action(at, PRIORITY_REGEN, BOUNTY_ENERGY_TAG));
+    }
+
+    /// One tick of the energize: its energy for a druid with an energy bar, then the next.
+    pub(crate) fn energy_tick(&self, fight: &mut Fight<DruidAgent>) {
+        fight.agent.bounty_energy_tick = None;
+        if fight.energy.is_some() {
+            fight.add_energy(self.amounts[1], self.metrics[1]);
+        }
+        fight.agent.bounty_energy_left -= 1;
+        if fight.agent.bounty_energy_left > 0 {
+            let at = fight.now + self.energy_period;
+            fight.agent.bounty_energy_tick =
+                Some(fight.schedule_class_action(at, PRIORITY_REGEN, BOUNTY_ENERGY_TAG));
         }
     }
 }

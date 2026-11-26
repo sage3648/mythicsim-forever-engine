@@ -844,15 +844,27 @@ impl Druid {
                 proc_mask: crate::prepare::spell::ProcMask::MELEE_WHITE_HIT,
                 ..ProcTrigger::default()
             };
-            effects.push(json!({
+            // Under Forever's rules the energy is the periodic energize 27784, 4 Energy each
+            // second for 5 seconds: client 1.60.1.71139 rows (SpellEffect 704635's power type
+            // moved from mana to energy since 71037; SpellDuration 28 = 5000 ms) and the
+            // 23 November hotfix notes ("now correctly grants 4 Energy regeneration every 1
+            // second for 5 seconds"). The Go reference gives 20 Energy at once.
+            let forever = sim.rules == crate::prepare::sim::Rules::Forever;
+            let energy_amount = if forever { 4.0 } else { 20.0 };
+            let mut bounty = json!({
                 "kind": "natures_bounty", "aura": sim.aura(aura).label, "proc_chance": 0.02,
                 "mana_label": "Nature's Bounty (Mana)", "mana": 200.0,
                 "mana_spells": proc_trigger_spells(sim, unit, &mana),
-                "energy_label": "Nature's Bounty (Energy)", "energy": 20.0,
+                "energy_label": "Nature's Bounty (Energy)", "energy": energy_amount,
                 "energy_spells": proc_trigger_spells(sim, unit, &energy),
                 "rage_label": "Nature's Bounty (Rage)", "rage": 10.0,
                 "metrics_action_id": action_id(Some(&ActionId::spell(450608))),
-            }));
+            });
+            if forever {
+                bounty["energy_ticks"] = json!(5);
+                bounty["energy_period_ns"] = json!(nanos(SECOND));
+            }
+            effects.push(bounty);
         }
         // Wildheart Raiment's Nature's Bounty hears only melee hits the player takes.
         if let Some(aura) = sim.get_aura(unit, "Wildheart Raiment 5P") {
