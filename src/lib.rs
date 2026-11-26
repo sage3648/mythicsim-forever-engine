@@ -32,7 +32,8 @@ pub use engine::raid::{
 };
 pub use engine::simulate;
 pub use prepare::{
-    prepare, prepare_json, prepare_json_with, PrepareError, Refusal as PrepareRefusal, Rules,
+    prepare, prepare_json, prepare_json_with, prepare_json_with_sheet, PrepareError,
+    Refusal as PrepareRefusal, Rules,
 };
 
 /// The target levels a Forever sim can fight: the lowest level, and how many levels above the
