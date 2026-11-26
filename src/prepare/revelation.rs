@@ -197,6 +197,11 @@ pub(crate) fn revelation_effect(
         "consuming_spells": consuming, "channel_spells": channels, "bonus_crit_percent": 100.0,
         "chance_at_no_crit": CHANCE_AT_NO_CRIT,
         "delay_ns": super::common_effects::SPELL_BATCH_WINDOW,
+        // Blizzard's hotfixes of 25 November 2026: "The Revelation weapon enchant no longer rolls
+        // its proc chance for every target struck by an area of effect spell. It now rolls once
+        // per wave." and "The Revelation enchant no longer affects the entire duration of
+        // channeled spells." The Go reference keeps both.
+        "per_wave": env.sim.rules == Rules::Forever,
     }))
 }
 

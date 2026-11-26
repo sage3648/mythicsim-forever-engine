@@ -418,7 +418,11 @@ impl<A: Agent> Fight<A> {
         }
         self.dots[dot].remaining_ticks -= 1;
         self.dots[dot].ticks_done += 1;
+        let spends_revelation = self.dots[dot].channeled && self.revelation_spent_by_tick(dot);
         self.tick_once(dot);
+        if spends_revelation {
+            self.revelation_channel_ticked();
+        }
         if self.dots[dot].channeled {
             if self.dots[dot].remaining_ticks == 0 && self.gcd_ready() {
                 let delay = self.config.channel_clip_delay;
