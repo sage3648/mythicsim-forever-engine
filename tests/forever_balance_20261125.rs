@@ -5,6 +5,7 @@
 //! - Improved Wrath is Starlight Wrath: its cast time effect (16814, -100 ms a rank) names Starfire
 //!   beside Wrath.
 //! - Improved Starfire has 2 ranks and only a stun chance: the cast time effect is a dummy now.
+//!   The engine reads any rank of it as that stun; the application holds builds to 2 ranks.
 //! - Eclipse adds 7, 13 or 20% critical strike chance to Wrath at all times (408248's fifth effect).
 //! - Moonfury is gone (Dreamstate takes its square) and Moonkin Form deals 10% more Arcane and
 //!   Nature damage while the druid is in it.
@@ -91,24 +92,15 @@ fn moonkin_form_deals_ten_percent_more_arcane_and_nature_damage() {
 }
 
 #[test]
-fn improved_starfire_has_two_ranks() {
-    let refused = prepare_json_with(
-        request("5532220115501351--055").to_string().as_bytes(),
-        "rust",
-        Rules::Forever,
-    );
-    let err = format!(
-        "{:?}",
-        refused.expect_err("five points in Improved Starfire")
-    );
-    assert!(err.contains("Improved Starfire has 2 ranks"), "{err}");
-    // Its two ranks are a stun chance the sim does not model: no cast time.
-    let one = prepare("5532220115101351--0553", Rules::Forever);
+fn improved_starfire_adds_no_cast_time() {
+    // Its ranks are a stun chance the sim does not model. Five points, from a request built
+    // before the change, prepare and read the same as two.
+    let five = prepare("5532220115501351--0553", Rules::Forever);
     let two = prepare(NEW_TREE, Rules::Forever);
     let cast = |p: &Value| {
         spell(p, STARFIRE)["default_cast"]["cast_time_ns"]
             .as_i64()
             .unwrap()
     };
-    assert_eq!(cast(&one), cast(&two));
+    assert_eq!(cast(&five), cast(&two));
 }

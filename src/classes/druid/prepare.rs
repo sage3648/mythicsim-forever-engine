@@ -43,7 +43,9 @@ const TALENT_TREE_SIZES: [usize; 3] = [16, 20, 16];
 /// Balance keeps the Go reference's order, with the 25 November 2026 changes (blue post "Balance
 /// Druid Adjustments - November 25"): Improved Wrath is Starlight Wrath and Improved Moonfire is
 /// Moon and Stars, Improved Starfire has 2 ranks (was 5), and Dreamstate (408258) takes
-/// Moonfury's square.
+/// Moonfury's square. Improved Starfire keeps 5 ranks here: under Forever's rules any rank is the
+/// stun chance the sim does not model, so a request from before the change still prepares, and
+/// the application holds a new build to the client's 2 ranks.
 const FOREVER_BALANCE: &[LayoutTalent] = &[
     talent("improved_wrath", "Starlight Wrath", 5),
     talent("genesis", "Genesis", 5),
@@ -55,7 +57,7 @@ const FOREVER_BALANCE: &[LayoutTalent] = &[
     talent("natures_splendor", "Nature's Splendor", 1),
     talent("insect_swarm", "Insect Swarm", 1),
     talent("vengeance", "Vengeance", 5),
-    talent("improved_starfire", "Improved Starfire", 2),
+    talent("improved_starfire", "Improved Starfire", 5),
     talent("overgrowth", "Overgrowth", 2),
     talent("natures_grace", "Nature's Grace", 1),
     talent("eclipse", "Eclipse", 3),
