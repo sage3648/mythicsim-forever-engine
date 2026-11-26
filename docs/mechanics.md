@@ -816,6 +816,17 @@ the Go goldens and exporter uses. The departures:
   Incinerate on an Immolated target raise a hit's damage after its threat is worked out; the
   reference keeps the threat of the damage before the bonus, so Mind Flay made about 0.82
   threat per damage with no threat talents.
+- A failed dot cast waits a reaction time before its recast (`resist_waits_for_reaction`,
+  Forever preparation), from MythicSim's Discord (20 November 2026, WizardXeze: a resisted
+  spell was cast again back to back). When the player's cast of a spell that keeps a dot on
+  its target (Immolate, Corruption, Shadow Word: Pain, Mind Flay, Serpent Sting, Rend and the
+  like) misses, is fully resisted, dodged or parried, the rotation cannot cast or queue that
+  spell again until the player's reaction time has passed since the result landed, after any
+  travel: the player sees the failure only as a dot that does not appear. A spell with no dot is
+  left alone, since its next cast was already queued before the miss could be seen (a Smite or
+  Searing Pain spammer keeps casting). The lock is the spell's, not the target's, and ticks and
+  pets' casts never set it. The reference recasts the instant the result lands, so a missed
+  Immolate began again with no gap.
 - A precast lands on the pull (`prepull_casts_finish_on_pull`, Forever preparation), from
   SimulationCraft, which executes its one harmful precombat action at 0:00 with its cast time
   skipped (docs/prepull-damage.md). A cast begun before the pull that haste or an early press

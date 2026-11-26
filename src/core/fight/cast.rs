@@ -76,6 +76,12 @@ impl<A: Agent> Fight<A> {
         ready
     }
 
+    /// Forever's `resist_waits_for_reaction`: the spell's last cast failed to land less than a
+    /// reaction time ago, so the rotation may not cast or queue it yet.
+    pub(crate) fn recast_waits(&self, spell: SpellId) -> bool {
+        self.spells[spell].recast_after > self.now
+    }
+
     /// Go `MaxTimeToReady`.
     pub(crate) fn spell_time_to_ready(&self, spell: SpellId) -> i64 {
         let remaining = |timer: Option<(usize, i64)>| {
@@ -310,7 +316,7 @@ impl<A: Agent> Fight<A> {
         if needs_gcd && !self.gcd_ready_of(side) {
             return false;
         }
-        self.spell_ready(spell)
+        self.spell_ready(spell) && !self.recast_waits(spell)
     }
 
     /// Go `Rotation.inSequence`.
@@ -334,7 +340,8 @@ impl<A: Agent> Fight<A> {
         if state.default_cast.gcd > 0 && (unit.gcd - self.now).max(0) > MAX_SPELL_QUEUE_WINDOW {
             return false;
         }
-        self.spell_time_to_ready(spell) <= MAX_SPELL_QUEUE_WINDOW
+        // A recast waiting for the player to see a failed cast is not queued ahead of it.
+        self.spell_time_to_ready(spell) <= MAX_SPELL_QUEUE_WINDOW && !self.recast_waits(spell)
     }
 
     /// Go `Unit.CanQueueSpell` and `Spell.CanQueue`.
