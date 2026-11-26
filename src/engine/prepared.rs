@@ -311,6 +311,10 @@ pub struct PreparedReport {
     /// [`PreparedReport::add_rotation_stats`] adds them.
     #[serde(skip)]
     cast_cooldowns: Vec<serde_json::Value>,
+    /// Each proc's results by the spell whose hit triggered them, kept out of the result unless
+    /// [`PreparedReport::add_rotation_stats`] adds them.
+    #[serde(skip)]
+    proc_triggers: Vec<serde_json::Value>,
 }
 
 impl PreparedReport {
@@ -338,6 +342,13 @@ impl PreparedReport {
         player.insert(
             "castCooldowns".into(),
             serde_json::Value::Array(self.cast_cooldowns.clone()),
+        );
+        // Each proc's results by the ability whose hit triggered it, over every fight, so the
+        // ability table can break Windfury Totem's strikes and Flametongue's hits down by the
+        // ability that fired them (MythicSim Discord #paladin, 13 November 2026, WizardXeze).
+        player.insert(
+            "procTriggers".into(),
+            serde_json::Value::Array(self.proc_triggers.clone()),
         );
         true
     }
@@ -387,6 +398,7 @@ impl PreparedReport {
         let presentation = report.presentation.clone();
         let extra_attack_strikes = report.extra_attack_strikes.clone();
         let cast_cooldowns = report.cast_cooldowns.clone();
+        let proc_triggers = report.proc_triggers.clone();
         Ok(PreparedReport {
             engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
             schema_version: SCHEMA_VERSION,
@@ -400,6 +412,7 @@ impl PreparedReport {
             presentation,
             extra_attack_strikes,
             cast_cooldowns,
+            proc_triggers,
         })
     }
 }

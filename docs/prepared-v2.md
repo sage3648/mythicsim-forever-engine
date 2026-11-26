@@ -463,6 +463,14 @@ value UUID, which no line shows. Go's plain CLI, whose results the goldens are, 
 these fields, so they are left out without the flag. `tools/route.py` asks for them;
 [fixtures/rotation-stats](../fixtures/rotation-stats/README.md) holds the Go goldens.
 
+The same flag adds MythicSim's own fields, which have no Go counterpart: `extraAttackStrikes`
+and `castCooldowns` from the logged fight, and `procTriggers`, summed over every fight. Each
+`procTriggers` entry pairs a proc (`id`, an action ID) with the player's spell whose hit fired
+it (`trigger`): `results` counts the proc's direct results, misses included, dealt while that
+hit's listeners ran, or when a delayed proc it heard fired, and `damage` is their damage to the
+targets. A Windfury Totem strike or a Flametongue hit always has a trigger, so its entries add
+up to its own action row. Tracking it changes nothing simulated.
+
 A code names the kind of refusal and stays the same however the input varies, so a
 worker can count fallbacks by it; the text says what this input lacks. An invalid input
 is an error, never a refusal. `REFUSAL_CODES` in

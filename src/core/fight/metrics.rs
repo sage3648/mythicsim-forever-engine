@@ -511,6 +511,10 @@ pub(crate) struct FightReport {
     /// to the player's metrics.
     #[serde(skip)]
     pub(crate) cast_cooldowns: Vec<serde_json::Value>,
+    /// Over every fight, each proc's direct results by the player's spell whose hit triggered
+    /// them, which `sim --rotation-stats` adds to the player's metrics.
+    #[serde(skip)]
+    pub(crate) proc_triggers: Vec<serde_json::Value>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -998,6 +1002,23 @@ impl<A: Agent> Fight<A> {
             presentation: self.presentation.clone(),
             extra_attack_strikes: self.extra_attack_strikes.clone(),
             cast_cooldowns: self.cast_cooldowns.clone(),
+            proc_triggers: self.proc_trigger_reports(),
         }
+    }
+
+    /// Each proc spell's results by the spell whose hit triggered them, summed over every
+    /// fight: the proc's action ID, the trigger's, the results (misses included) and damage.
+    fn proc_trigger_reports(&self) -> Vec<serde_json::Value> {
+        self.proc_triggers
+            .iter()
+            .map(|(&(proc, trigger), &(results, damage))| {
+                serde_json::json!({
+                    "id": ActionIdReport::from(&self.spells[proc].id),
+                    "trigger": ActionIdReport::from(&self.spells[trigger].id),
+                    "results": results,
+                    "damage": damage,
+                })
+            })
+            .collect()
     }
 }
