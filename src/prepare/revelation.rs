@@ -190,19 +190,22 @@ pub(crate) fn revelation_effect(
             .filter(|&position| can_trigger_from(env.sim.spell(spellbook[position]), periodic))
             .collect()
     };
-    Some(json!({
+    let mut effect = json!({
         "kind": "revelation", "trigger_aura": env.sim.aura(trigger).label,
         "ticks_trigger_aura": env.sim.aura(ticks).label, "aura": env.sim.aura(buff).label,
         "hit_spells": eligible(false), "tick_spells": eligible(true), "affected_spells": affected,
         "consuming_spells": consuming, "channel_spells": channels, "bonus_crit_percent": 100.0,
         "chance_at_no_crit": CHANCE_AT_NO_CRIT,
         "delay_ns": super::common_effects::SPELL_BATCH_WINDOW,
-        // Blizzard's hotfixes of 25 November 2026: "The Revelation weapon enchant no longer rolls
-        // its proc chance for every target struck by an area of effect spell. It now rolls once
-        // per wave." and "The Revelation enchant no longer affects the entire duration of
-        // channeled spells." The Go reference keeps both.
-        "per_wave": env.sim.rules == Rules::Forever,
-    }))
+    });
+    // Blizzard's hotfixes of 25 November 2026: "The Revelation weapon enchant no longer rolls its
+    // proc chance for every target struck by an area of effect spell. It now rolls once per
+    // wave." and "The Revelation enchant no longer affects the entire duration of channeled
+    // spells." The Go reference keeps both.
+    if env.sim.rules == Rules::Forever {
+        effect["per_wave"] = json!(true);
+    }
+    Some(effect)
 }
 
 #[cfg(test)]
