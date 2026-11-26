@@ -203,7 +203,8 @@ pub(crate) const VENGEANCE_MAX_STACKS: i32 = 5;
 /// upstream wowsims/forever #772's, from the DBCache. An instant 8% base mana cast on the global
 /// cooldown (category 133), 40 yards, 5 minutes, holy. Its three effects state the bonus to Holy
 /// Light, Flash of Light and Holy Shock as points per level (6.67, 1.92 and 3.83), which read at
-/// level 60 give the tooltip's 400, 115 and 229.
+/// level 60 give the tooltip's 400, 115 and 229. Blizzard's hotfixes of 25 November 2026: "Oath
+/// of Light duration increased to 60 minutes."
 pub(crate) const OATH_OF_LIGHT: i32 = 1_328_548;
 
 /// The Oath of Light row.
@@ -225,7 +226,7 @@ pub(crate) fn oath_of_light() -> &'static Spell {
             id: OATH_OF_LIGHT,
             name: "Oath of Light".to_string(),
             school: 2,
-            duration_ms: 300_000,
+            duration_ms: 3_600_000,
             max_range: 40.0,
             gcd_ms: 1500,
             start_recovery_category: 133,
@@ -376,7 +377,8 @@ mod tests {
         // "up to 400 ... up to 115 ... up to 229" (Holy Light, Flash of Light, Holy Shock).
         assert_eq!([bonus(1), bonus(2), bonus(3)], [400.0, 115.0, 229.0]);
         assert_eq!(row.mana_cost().base_cost_percent, 8.0);
-        assert_eq!(row.duration(), 300 * SECOND);
+        // 60 minutes since the hotfixes of 25 November 2026 (was 5).
+        assert_eq!(row.duration(), 3600 * SECOND);
         assert_eq!(row.gcd(), 1500 * MILLISECOND);
         assert_eq!(row.cast_time(), 0);
     }
