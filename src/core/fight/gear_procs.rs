@@ -42,6 +42,9 @@ pub(crate) struct ArmorDebuffProc {
     armor_by_stacks: Vec<f64>,
     /// Go `TriggerImmediately`: the handler runs on the hit, not a batch window later.
     immediate: bool,
+    /// Forever's rules: the target auras, by tracker index, the debuff never lands beside and
+    /// whose landing takes it off.
+    blocked_by: Vec<usize>,
 }
 
 /// The behavior of a player or target aura these procs own.
@@ -145,11 +148,17 @@ impl<A: Agent> Fight<A> {
                     aura,
                     armor_by_stacks,
                     immediate,
+                    blocked_by,
                     ..
                 } => {
                     let index = self.trackers[Side::Target.index()]
                         .find(aura)
                         .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+                    // An aura the target never carries blocks nothing.
+                    let blocked_by = blocked_by
+                        .iter()
+                        .filter_map(|label| self.trackers[Side::Target.index()].find(label))
+                        .collect();
                     self.armor_debuff_procs.push(ArmorDebuffProc {
                         chances: by_spell(chances, self.spells.len()),
                         rng_label: rng_label.clone(),
@@ -159,6 +168,7 @@ impl<A: Agent> Fight<A> {
                         },
                         armor_by_stacks: armor_by_stacks.clone(),
                         immediate: *immediate,
+                        blocked_by,
                     });
                 }
                 _ => {}
@@ -260,11 +270,45 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// The handler: activate the hit target's aura and add a stack.
+    /// The handler: activate the hit target's aura and add a stack. Under Forever's rules the
+    /// debuff does not land on a target that carries one of the auras blocking it.
     pub(crate) fn armor_debuff_proc_handler(&mut self, proc: usize, target: Side) {
         let aura = self.aura_on(self.armor_debuff_procs[proc].aura, target);
+        let blocked = self.armor_debuff_procs[proc]
+            .blocked_by
+            .iter()
+            .any(|&index| {
+                self.aura(AuraRef {
+                    side: aura.side,
+                    index,
+                })
+                .active
+            });
+        if blocked {
+            return;
+        }
         self.activate_aura(aura);
         self.add_stack(aura);
+    }
+
+    /// A target aura was gained: one that blocks an armor debuff weapon proc takes that debuff
+    /// off its target.
+    pub(crate) fn armor_debuff_blocker_gained(&mut self, gained: AuraRef) {
+        for proc in 0..self.armor_debuff_procs.len() {
+            if !self.armor_debuff_procs[proc]
+                .blocked_by
+                .contains(&gained.index)
+            {
+                continue;
+            }
+            let debuff = AuraRef {
+                side: gained.side,
+                index: self.armor_debuff_procs[proc].aura.index,
+            };
+            if self.aura(debuff).active {
+                self.deactivate_aura(debuff);
+            }
+        }
     }
 
     /// The aura's `OnStacksChange`: Go `AddStatDynamic` on its target's armor by the change.

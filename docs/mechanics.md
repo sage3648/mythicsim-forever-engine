@@ -119,6 +119,23 @@ the Go goldens and exporter uses. The departures:
   6,750 armor-seconds of its 2,250 armor unapplied as Sunder Armor's ramp: the Marksmanship
   production request sims 609.87 against 609.86. With both, Expose Armor stays up from the pull.
   Forever preparation writes `external_expose_armor`.
+- The armor debuff weapon procs share the target's minor armor reduction with Faerie Fire and
+  Curse of Recklessness: Puncture Armor (Bashguuder and Rivenspike, 17315; Digmaster 5000 and
+  Vibroblade, 1293005) and Annihilator's Armor Shatter (16928) never land on a target under either,
+  and either one landing takes them off. Sunder Armor stays beside them. From public Forever logs
+  on forever.warcraftlogs.com: 12 wearers in 8 reports of 11 to 17 November 2026 applied Puncture
+  Armor 0 times in 14,568 landed melee hits on targets under either debuff, against 1,523 in
+  72,420 hits on targets under neither (2.1% a hit, with or without Sunder Armor); Faerie Fire or
+  Curse of Recklessness landed on a target carrying it 40 times and 37 of those took it off
+  within 2 ms. About 1,400 zone 3000 reports read on 26 November 2026 agree: Faerie Fire landing
+  took Puncture Armor off at the same timestamp 22 times in 6 reports (Zt4Rqa6zLWXbFB2m,
+  rjMPpLXcgH31NCWa, BmrqNDA7T6nXftap among them), the two were never on a target together, 2,193
+  wielder hits into Faerie Fire targets applied it 0 times (about 110 expected), and Sunder Armor
+  and Puncture Armor were on a target together 40 times. Two Annihilator wearers
+  (aANdrQRjKP7MJnCY) applied Armor Shatter 0 times in 2,635 hits under either debuff against 53 in
+  4,311 without, and all 12 landings on a target carrying it took it off. Forever preparation
+  writes the target's blocking auras as the `armor_debuff_proc`'s `blocked_by`; the reference
+  stacks the debuff beside both.
 - Flurry's charges, from three level 30 Warrior logs on build 1.60.1.70450 (magey/forever-warrior
   discussion 30, counted in wowsims/forever PR 745): with Flurry up, every white swing spends a
   charge whatever its outcome (misses 180 of 180, dodges 75 of 75, parries 72 of 72), and a

@@ -3108,6 +3108,10 @@ pub enum Effect {
         /// window later.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         immediate: bool,
+        /// Forever's rules: the target's auras the debuff never lands beside, and whose landing
+        /// takes it off (Faerie Fire and Curse of Recklessness).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        blocked_by: Vec<String>,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {
