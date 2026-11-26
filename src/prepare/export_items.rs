@@ -2534,17 +2534,48 @@ fn chance_on_hit_item_effects(env: &Environment, unrepresented: &mut Vec<String>
                         scratch.sim.set_stacks(debuff, stacks);
                         armor.push(scratch.sim.stat(target, Stat::Armor) - base);
                     }
-                    effects.push(json!({
+                    let mut effect = json!({
                         "kind": "armor_debuff_proc", "trigger_aura": trigger.label,
                         "rng_label": trigger.label, "chances": chances, "aura": label,
                         "armor_by_stacks": armor, "immediate": true,
-                    }));
+                    });
+                    let blockers = armor_debuff_blockers(&scratch, &label, target);
+                    if !blockers.is_empty() {
+                        effect["blocked_by"] = json!(blockers);
+                    }
+                    effects.push(effect);
                 }
                 _ => unrepresented.push(format!("{}'s chance on hit is not described", cfg.name)),
             }
         }
     }
     effects
+}
+
+/// Forever's rules: the target auras an armor debuff weapon proc never lands beside, and whose
+/// landing takes it off (`armor_debuff_proc`'s `blocked_by`). Puncture Armor (Bashguuder and
+/// Rivenspike's 17315, Digmaster 5000 and Vibroblade's 1293005) and Annihilator's Armor Shatter
+/// (16928) share the target's minor armor reduction with Faerie Fire and Curse of Recklessness
+/// in Forever's logs, and Sunder Armor beside them (docs/mechanics.md). Empty for any other
+/// debuff, for the reference and for a target under neither.
+fn armor_debuff_blockers(env: &Environment, debuff: &str, target: UnitId) -> Vec<String> {
+    const SHARES_MINOR_ARMOR: [&str; 3] = [
+        "Puncture Armor",
+        "Puncture Armor 1293005",
+        "Armor Shatter 16928",
+    ];
+    if env.sim.rules != super::sim::Rules::Forever || !SHARES_MINOR_ARMOR.contains(&debuff) {
+        return Vec::new();
+    }
+    env.sim
+        .unit(target)
+        .auras
+        .iter()
+        .map(|aura| env.sim.aura(*aura).label.clone())
+        .filter(|label| {
+            label.starts_with("Faerie Fire") || label.starts_with("Curse of Recklessness")
+        })
+        .collect()
 }
 
 /// weapon_procs.go `weaponDamageProcEffects`: the spell shared_utils.go
@@ -3168,6 +3199,10 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
         });
         if immediate {
             effect["immediate"] = json!(true);
+        }
+        let blockers = armor_debuff_blockers(&scratch, debuff_label, target);
+        if !blockers.is_empty() {
+            effect["blocked_by"] = json!(blockers);
         }
         effects.push(effect);
     }
