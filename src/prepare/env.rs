@@ -45,6 +45,7 @@ pub(crate) struct RaidLive {
     pub(crate) faerie_fire: bool,
     pub(crate) curse_of_elements: bool,
     pub(crate) curse_of_recklessness: bool,
+    pub(crate) judgement_of_the_crusader: bool,
     pub(crate) innervate: bool,
     pub(crate) power_infusion: bool,
 }
@@ -64,6 +65,7 @@ impl RaidLive {
                 self.curse_of_recklessness,
                 "Curse of Recklessness (External)",
             ),
+            (self.judgement_of_the_crusader, "Judgement of the Crusader"),
         ]
         .into_iter()
         .filter(|(live, _)| *live)

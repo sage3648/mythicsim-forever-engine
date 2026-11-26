@@ -499,6 +499,7 @@ fn share_debuffs(members: &mut [Member]) {
         member.raid_live.faerie_fire = live("faerie_fire");
         member.raid_live.curse_of_elements = live("curse_of_elements");
         member.raid_live.curse_of_recklessness = live("curse_of_recklessness");
+        member.raid_live.judgement_of_the_crusader = live("judgement_of_the_crusader");
     }
 }
 
@@ -714,6 +715,16 @@ pub(crate) const SHARED_DEBUFFS: &[SharedDebuff] = &[
         own_prefix: "Judgement of Light Rank ",
         spells: &[20165, 20347, 20348, 20349],
         caster_copy: true,
+    },
+    // The Crusader's judgement is its seal's, as the others are. Its raid copy carries no
+    // "(External)": its label is the one a Quick Sim's toggle has always had.
+    SharedDebuff {
+        name: "judgement_of_the_crusader",
+        field: "judgementOfTheCrusader",
+        external: "Judgement of the Crusader",
+        own_prefix: "Judgement of the Crusader Rank ",
+        spells: &[21082, 20162, 20305, 20306, 20307, 20308],
+        caster_copy: false,
     },
 ];
 

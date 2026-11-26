@@ -1846,8 +1846,8 @@ pub struct ExclusiveMember {
 }
 
 /// A target aura's change while its exclusive effect holds a category the raid shares
-/// (`RaidDebuffCategory`): armor added, resistances added and school damage taken multiplied,
-/// by Go school name.
+/// (`RaidDebuffCategory`): armor added, resistances added, school damage taken multiplied and the
+/// flat damage a school's spells add against the target, by Go school name.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RaidDebuffMember {
@@ -1858,6 +1858,8 @@ pub struct RaidDebuffMember {
     pub resistance: BTreeMap<String, f64>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub school_damage_taken_multiplier: BTreeMap<String, f64>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub school_bonus_damage: BTreeMap<String, f64>,
 }
 
 /// An aura, the pseudo stat it multiplies, `damage_taken` or `threat`, and the multiplier.

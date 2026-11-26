@@ -1,5 +1,6 @@
 //! The raid's target debuffs a member casts whose changes the fight applies as they come and go
-//! (`RaidLive::applied_labels`): Faerie Fire, Curse of the Elements and Curse of Recklessness.
+//! (`RaidLive::applied_labels`): Faerie Fire, Curse of the Elements, Curse of Recklessness and
+//! Judgement of the Crusader.
 //! The raid's copy is registered but not up from the pull, so the prepared target holds none of
 //! its changes. Each exclusive category it bids in is exported with every member's change while
 //! its effect holds the category, the class's own copies included, and the fight applies the
@@ -27,8 +28,9 @@ const RESISTANCES: [(Stat, usize); 5] = [
 
 /// The target's categories that hold a raid debuff whose changes the fight applies, each with
 /// every member's change, in the order of the debuffs and their effects. A category none of
-/// whose members changes armor, a resistance or a school's damage taken, such as one of attack
-/// power, which the target swing's export reads, is left out.
+/// whose members changes armor, a resistance, a school's damage taken or the flat damage a school
+/// adds against the target, such as one of attack power, which the target swing's export reads,
+/// is left out.
 pub(crate) fn raid_debuff_categories(
     env: &Environment,
     unrepresented: &mut Vec<String>,
@@ -95,8 +97,9 @@ fn category_on_target(env: &Environment, name: &str) -> Option<CategoryId> {
 
 /// One member's change while its effect alone holds the category, from a separate reset
 /// simulation: the effect holding it at the reset gives it up first, as Go's `OnExpire` does,
-/// then the member's `OnGain` runs. Armor, resistances and school damage taken are exported;
-/// attack power is the target swing's (`enemy`); anything else is unrepresented.
+/// then the member's `OnGain` runs. Armor, resistances, school damage taken and the flat damage a
+/// school adds (Judgement of the Crusader's Holy) are exported; attack power is the target
+/// swing's (`enemy`); anything else is unrepresented.
 fn member_change(
     env: &Environment,
     category: &str,
@@ -158,6 +161,17 @@ fn member_change(
             Value::Object(multipliers),
         );
     }
+    let mut bonus = Map::new();
+    for (school, name) in SCHOOL_NAMES.iter().enumerate() {
+        let delta = after_pseudo.school_bonus_spell_damage[school]
+            - before_pseudo.school_bonus_spell_damage[school];
+        if delta != 0.0 {
+            bonus.insert((*name).into(), json!(delta));
+        }
+    }
+    if !bonus.is_empty() {
+        member.insert("school_bonus_damage".into(), Value::Object(bonus));
+    }
     for stat in Stat::ALL {
         let known = stat == Stat::Armor
             || stat == Stat::AttackPower
@@ -169,6 +183,7 @@ fn member_change(
         }
     }
     after_pseudo.school_damage_taken_multiplier = before_pseudo.school_damage_taken_multiplier;
+    after_pseudo.school_bonus_spell_damage = before_pseudo.school_bonus_spell_damage;
     if after_pseudo != before_pseudo {
         unrepresented.push(format!("{label} changes target pseudo stats in a raid"));
     }
