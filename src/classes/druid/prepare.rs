@@ -40,12 +40,17 @@ const TALENT_TREE_SIZES: [usize; 3] = [16, 20, 16];
 
 /// Hotfix push 113531's Druid tree, which only Forever's rules read: each tree's talents in the
 /// client's order (row, then column), with upstream's proto field names (wowsims/forever #769).
-/// Balance keeps the Go reference's order.
+/// Balance keeps the Go reference's order, with the 25 November 2026 changes (blue post "Balance
+/// Druid Adjustments - November 25"): Improved Wrath is Starlight Wrath and Improved Moonfire is
+/// Moon and Stars, Improved Starfire has 2 ranks (was 5), and Dreamstate (408258) takes
+/// Moonfury's square. Improved Starfire keeps 5 ranks here: under Forever's rules any rank is the
+/// stun chance the sim does not model, so a request from before the change still prepares, and
+/// the application holds a new build to the client's 2 ranks.
 const FOREVER_BALANCE: &[LayoutTalent] = &[
-    talent("improved_wrath", "Improved Wrath", 5),
+    talent("improved_wrath", "Starlight Wrath", 5),
     talent("genesis", "Genesis", 5),
     talent("moonglow", "Moonglow", 3),
-    talent("improved_moonfire", "Improved Moonfire", 2),
+    talent("improved_moonfire", "Moon and Stars", 2),
     talent("natures_majesty", "Nature's Majesty", 2),
     talent("natures_reach", "Nature's Reach", 2),
     talent("improved_entangling_roots", "Improved Entangling Roots", 3),
@@ -56,7 +61,7 @@ const FOREVER_BALANCE: &[LayoutTalent] = &[
     talent("overgrowth", "Overgrowth", 2),
     talent("natures_grace", "Nature's Grace", 1),
     talent("eclipse", "Eclipse", 3),
-    talent("moonfury", "Moonfury", 5),
+    new_talent("dreamstate", "Dreamstate", 5),
     talent("moonkin_form", "Moonkin Form", 1),
 ];
 

@@ -860,8 +860,9 @@ fn a_druids_own_thorns_strikes_back() {
     // moved the rolls after a missed spell. 1647 since the 11 November live rows of Ban'thok Sash,
     // Hands of Power, Robe of Everlasting Night and Burial Shawl, and Star of Mystaria's hit
     // counted once (1.3%, not 1.3% and 1% spell hit). 1651 since Blessed Band of Light gives no
-    // hit (hotfixes of 13 November 2026), which moved the rolls after a missed spell.
-    assert_eq!(action(&player, 9910, 0).0, 1651.0);
+    // hit (hotfixes of 13 November 2026), which moved the rolls after a missed spell. 1655 since
+    // the 25 November Balance changes (Starlight Wrath's faster Starfire, Eclipse's Wrath crit).
+    assert_eq!(action(&player, 9910, 0).0, 1655.0);
     assert_eq!(action(&player, 9910, 2).1, 0.0);
 }
 
