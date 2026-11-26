@@ -62,6 +62,11 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
                 for expanded in expand_variants(*cfg, variants) {
                     if expanded.item_id == item && shared_items::registers(*kind, &expanded) {
                         shared_items::apply(env, *kind, &expanded);
+                        if env.sim.rules == super::sim::Rules::Forever {
+                            // A reference chance on hit whose Forever tooltip adds a creature
+                            // type (Eater of the Dead, X'caliboar).
+                            super::forever_effect_items::apply_creature_type_damage(env, item);
+                        }
                         return Ok(true);
                     }
                 }

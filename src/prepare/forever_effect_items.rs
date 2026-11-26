@@ -359,7 +359,7 @@ pub(crate) struct CreatureTypeDamageItem {
 }
 
 /// The chance on hit items that deal more to some creature types.
-pub(crate) const CREATURE_TYPE_DAMAGE_ITEMS: [CreatureTypeDamageItem; 2] = [
+pub(crate) const CREATURE_TYPE_DAMAGE_ITEMS: [CreatureTypeDamageItem; 4] = [
     CreatureTypeDamageItem {
         // Lightcrest Hammer's Smite (1299631): "Deals 2 times as much damage to Undead." The 2 is
         // the row's second effect (SpellEffect 1323966, a dummy with base points 2), which the
@@ -379,6 +379,26 @@ pub(crate) const CREATURE_TYPE_DAMAGE_ITEMS: [CreatureTypeDamageItem; 2] = [
         spell_id: 14118,
         creature_types: &["MobTypeDragonkin"],
         multiplier: 2.0,
+    },
+    CreatureTypeDamageItem {
+        // Eater of the Dead's Corpse Eater (1299869): "Deals 3 times as much damage to Undead."
+        // (Wowhead's Forever tooltip, 27 November 2026). The 3 is the row's second effect
+        // (SpellEffect 1324280, a dummy with base points 3, client 1.60.1.71139). The reference
+        // registers the chance on hit itself (`forever_items_generated::ITEMS`).
+        item_id: 10805,
+        spell_id: 1299869,
+        creature_types: &["MobTypeUndead"],
+        multiplier: 3.0,
+    },
+    CreatureTypeDamageItem {
+        // X'caliboar's Holy Cleaver (1293787): "Deals 3 times as much damage to Undead and
+        // Swine." The 3 is the row's second effect (SpellEffect 1314769, a dummy with base points
+        // 3, client 1.60.1.71139). The client has no Swine creature type and a request can name
+        // none, so only Undead is read.
+        item_id: 10758,
+        spell_id: 1293787,
+        creature_types: &["MobTypeUndead"],
+        multiplier: 3.0,
     },
 ];
 
