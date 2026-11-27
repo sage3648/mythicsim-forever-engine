@@ -800,6 +800,13 @@ fn apply_spell_data_proc(env: &mut Environment, cfg: &SpellDataProc) {
 
     let mut listener =
         spell_data_proc_listener(&env.sim, unit, cfg, source, trigger, effect.message("proc"));
+    // Under Forever's rules an item's proc rolls the chance the live game states where the
+    // pinned row's is another (Darkmoon Card: Blue Dragon).
+    if env.sim.rules == super::sim::Rules::Forever && !source.is_enchant {
+        if let Some(chance) = super::forever_effect_items::live_stat_proc_chance(source.id) {
+            listener.proc_chance = chance;
+        }
+    }
 
     // The same fallback the database layer applies: Bulwark of Azzinoth's armor buff sits in a
     // spell category with a 60s recovery while its trigger states nothing. Only a buff that is

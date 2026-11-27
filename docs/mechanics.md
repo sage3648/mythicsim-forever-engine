@@ -1832,7 +1832,33 @@ the Go goldens and exporter uses. The departures:
     then the row is taken from the tooltip with the use left out (`tools/rust_client_items.py`,
     UNPRESSED_USE), so the pouch is worn with its stats and the whelp is never summoned
     (`tests/forever_client_items_20261113_pouch.rs`).
+    What the whelp does is in public combat logs, measured on 28 November 2026 for a later
+    model (55 summons in 25 forever.warcraftlogs.com dungeon reports, among them
+    nqpF932JYhTLatr6, P2r6JnBhkmdZfL4z and ktQb4zJmVBTn8XFM): it stays 15 sec (the last cast
+    begins by 14.9 sec) and chain casts Fireball (9053), a 3.0 sec cast begun again 0.27 sec
+    after the last ends, so four land on a target that is there throughout. A full hit deals
+    206 to 294 Fire before the target's modifiers, 241 on average (80 hits), and none of 97
+    landed Fireballs was a crit. It swings in melee only when it cannot cast (45 swings, 68 to
+    87 before glancing, 29 of them glancing). Its level is not stated anywhere: 48 of 146
+    Fireballs missed, 17 of 36 on the level 62 bosses of Upper Blackrock Spire and none of 8 on
+    Princess Theradras (51), which a caster of level 55 to 57 gives, so against a level 63
+    target between half and three quarters would miss. More logs are needed to settle the
+    level before the use is modelled.
   The reference's rules still refuse every one of these items as unknown.
+- Darkmoon Card: Blue Dragon (19288) rolls 3% under Forever's rules, as the live game states it:
+  "Equip: 3% chance on successful spellcast to increase your Spirit by 150 for 15 sec. (Proc
+  chance: 3%)" (Wowhead's Forever tooltip of the item and of its equip spell, Aura of the Blue
+  Dragon 23688, 27 November 2026). The pinned client's row of 23688 rolls 2%, and so does the row
+  wago.tools serves for `product=wowf` (SpellAuraOptions 132982), so the 3% is a hotfix the
+  build's table does not carry; the reference's rules keep 2%
+  (`forever_effect_items::live_stat_proc_chance`, `tests/forever_blue_dragon_20261128.rs`). The
+  buff is the reference's: 150 Spirit for 15 sec.
+- Diamond Flask (20130) needs no rule of its own: the reference's model is Forever's use (a 5 sec
+  channel, CHUG! CHUG! CHUG! CHUG! 363881, whose last tick grants Diamond Flask 1318070, 20
+  Strength for 1 min, as SpellEffect 1351360 states), which the engine never presses, since the
+  channel costs more in a fight than the Strength returns. A rotation casts it before the pull.
+  The Arms preset did not until 28 November 2026 (app #1177), so an Arms Warrior got nothing
+  from the flask while Fury, Protection and Fury-Protection gained 0.6% to 0.8%.
 - Items that refused players' Quick Sims on 12 November 2026
   (`tests/forever_client_items_20261113.rs`), from Wowhead's Forever tooltips and the client rows
   wago.tools serves (`product=wowf`, client 1.60.1.70888) on 13 November 2026. None of their spell
