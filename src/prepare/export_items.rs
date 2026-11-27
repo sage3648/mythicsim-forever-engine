@@ -997,7 +997,7 @@ pub(crate) fn spell_data_stat_proc_effects(
         }
         effects.push(effect);
         // The buff's flat spell damage against creature types, which the stat aura leaves out.
-        if let Some(damage) = spell_damage_versus_targets(env, &buff) {
+        if let Some(damage) = spell_damage_versus_targets(env, buff) {
             effects.push(json!({
                 "kind": "mob_type_bonus", "aura": env.sim.aura(proc_aura).label,
                 "attack_power": 0.0, "ranged_attack_power": 0.0,
