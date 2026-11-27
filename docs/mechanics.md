@@ -844,6 +844,18 @@ the Go goldens and exporter uses. The departures:
   Searing Pain spammer keeps casting). The lock is the spell's, not the target's, and ticks and
   pets' casts never set it. The reference recasts the instant the result lands, so a missed
   Immolate began again with no gap.
+- An auto attack keeps its swing time when the list of attacks is reordered under the pass
+  that swings them (`moved_swings_stay_due`, Forever preparation), from a production Best Gear
+  run that stopped with "cannot wait negative time" (27 November 2026, a Subtlety Rogue with
+  Dragon's Call and Distracting Dagger). The simulation swings every due attack in one pass
+  over a list, and taking an attack off the list moves the last one into its place. When the
+  player's rotation runs under a swing and stops then restarts the player's own attacks (a
+  Rogue's Vanish, then the Hemorrhage that breaks Stealth), the attack that was last, a pet's
+  or the target's, lands in a place the pass has gone by. The reference never asks it for its
+  time in that pass and forgets it until another attack is next due, so its swing lands late,
+  with the player's next one. Dragon's Call's Emerald Dragon Whelp waits for its own swing,
+  finds it in the past and stops the run. Under the rule every attack still on the list keeps
+  its own time after such a pass, and one already due swings at once.
 - A precast lands on the pull (`prepull_casts_finish_on_pull`, Forever preparation), from
   SimulationCraft, which executes its one harmful precombat action at 0:00 with its cast time
   skipped (docs/prepull-damage.md). A cast begun before the pull that haste or an early press

@@ -1005,6 +1005,15 @@ pub struct Player {
     /// rotation recasts it the instant the result lands.
     #[serde(default, skip_serializing_if = "is_false")]
     pub resist_waits_for_reaction: bool,
+    /// Forever's rule: an auto attack keeps its swing time when the simulation's list of
+    /// attacks is reordered while the pass that swings them runs, as it is when the player's
+    /// rotation runs under a swing and stops then restarts the player's own attacks (a Rogue's
+    /// Vanish and the strike that breaks Stealth). False is the Go reference, whose pass skips
+    /// the attack that moved into an earlier place and forgets its time until another attack is
+    /// next due: a pet's or the target's swing then lands late, and Dragon's Call's whelp,
+    /// which waits for its own swing, stops the run with "cannot wait negative time".
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub moved_swings_stay_due: bool,
     /// Forever's rule: a physical hit that deals school damage rolls its client row's base
     /// points a half Variance either side and lands on a whole number, so Revenge rank 1 (22,
     /// Variance 0.154) rolls 20 to 24 with the two ends rarer than the three between. False is
