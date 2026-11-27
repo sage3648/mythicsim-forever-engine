@@ -159,6 +159,9 @@ impl AutoAttacks {
 pub(crate) struct WeaponAttackList {
     backing: Vec<(Side, Hand)>,
     len: usize,
+    /// How many times an entry has joined or left the list, so a pass over it can tell that
+    /// its entries moved under it.
+    changes: u64,
 }
 
 impl WeaponAttackList {
@@ -168,6 +171,7 @@ impl WeaponAttackList {
 
     /// Go `append`, which writes into the backing array while it has room.
     fn push(&mut self, entry: (Side, Hand)) {
+        self.changes += 1;
         if self.len < self.backing.len() {
             self.backing[self.len] = entry;
         } else {
@@ -181,6 +185,7 @@ impl WeaponAttackList {
         if let Some(index) = self.backing[..self.len].iter().position(|&e| e == entry) {
             self.backing[index] = self.backing[self.len - 1];
             self.len -= 1;
+            self.changes += 1;
         }
     }
 
@@ -692,10 +697,28 @@ impl<A: Agent> Fight<A> {
             self.advance_to(time);
         }
         self.autos.min_time = NEVER_EXPIRES;
+        let changes = self.autos.attacks.changes;
         for position in 0..self.autos.attacks.len() {
             let (side, hand) = self.autos.attacks[position];
             let next = self.try_swing(side, hand);
             self.autos.min_time = self.autos.min_time.min(next);
+        }
+        // Forever's rule (docs/mechanics.md): a swing whose rotation stops and restarts the
+        // player's attacks, as Vanish and the strike that breaks Stealth do, reorders the list
+        // under the pass. Removal swaps the last entry into the gap, so that attack (a pet's or
+        // the target's) lands in a place the pass has gone by, is not asked for its time, and
+        // would be forgotten until another attack is next due. Every attack still listed keeps
+        // its own time; one that is already due swings in the pass that follows at once.
+        if self.moved_swings_stay_due && self.autos.attacks.changes != changes {
+            for position in 0..self.autos.attacks.len() {
+                let (side, hand) = self.autos.attacks[position];
+                let swing_at = if hand == Hand::Enemy {
+                    self.autos.enemy_attack(side).swing_at
+                } else {
+                    self.autos_of_mut(side).attack(hand).swing_at
+                };
+                self.autos.min_time = self.autos.min_time.min(swing_at);
+            }
         }
     }
 

@@ -2119,6 +2119,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) threat_follows_damage_bonus: bool,
     /// Forever's rule that a dot spell's failed cast waits a reaction time before a recast.
     pub(crate) resist_waits_for_reaction: bool,
+    /// Forever's rule that an attack the swing pass skipped keeps its swing time.
+    pub(crate) moved_swings_stay_due: bool,
     /// Forever's rule that a physical school damage roll lands on a whole number.
     pub(crate) physical_rolls_are_whole: bool,
     /// A healer sim's burst healing window under Forever's rules (see [`burst`]).
@@ -4417,6 +4419,7 @@ impl<A: Agent> Fight<A> {
             autocast_skips_unready_cooldowns: player.autocast_skips_unready_cooldowns,
             threat_follows_damage_bonus: player.threat_follows_damage_bonus,
             resist_waits_for_reaction: player.resist_waits_for_reaction,
+            moved_swings_stay_due: player.moved_swings_stay_due,
             physical_rolls_are_whole: player.physical_rolls_are_whole,
             burst: player.burst_window.map(burst::BurstWindow::new),
             aura_refresh: Vec::new(),

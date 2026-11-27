@@ -1226,6 +1226,9 @@ pub(crate) fn export_state(
         // A failed cast of a dot spell is seen a reaction time after it lands, so the rotation
         // waits that long to recast it (docs/mechanics.md); the reference recasts at once.
         prepared["player"]["resist_waits_for_reaction"] = json!(true);
+        // An attack that moves in the list while the swing pass runs keeps its swing time
+        // (docs/mechanics.md); the reference's pass skips it and forgets when it is due.
+        prepared["player"]["moved_swings_stay_due"] = json!(true);
         // A physical hit's roll lands on a whole number (docs/mechanics.md); the
         // reference rolls the span without rounding.
         prepared["player"]["physical_rolls_are_whole"] = json!(true);
