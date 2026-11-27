@@ -900,7 +900,14 @@ pub(crate) fn spell_data_stat_proc_effects(
                 entry = None;
             }
         }
-        let listener = trigger_for(env, trigger, true);
+        let mut listener = trigger_for(env, trigger, true);
+        // Under Forever's rules the chance the live game states, where it is not the pinned
+        // row's (`apply_spell_data_proc` registers the same one).
+        if env.sim.rules == super::sim::Rules::Forever && proc.item != 0 {
+            if let Some(chance) = super::forever_effect_items::live_stat_proc_chance(proc.item) {
+                listener.proc_chance = chance;
+            }
+        }
         let mut names = callback_names(listener.callback);
         // A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper
         // Charge's hit on its thrower when its mask and flags match that spell. Under Forever's

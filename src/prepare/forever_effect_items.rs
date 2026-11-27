@@ -580,3 +580,21 @@ pub(crate) const ON_USE_STAT_ITEMS: &[i32] = &[274615, 280060, 280071];
 pub(crate) fn on_use_stat_item(item: i32) -> bool {
     ON_USE_STAT_ITEMS.contains(&item)
 }
+
+/// Stat procs whose chance the live game states and the pinned client's row does not, by item.
+///
+/// Darkmoon Card: Blue Dragon (19288): "Equip: 3% chance on successful spellcast to increase your
+/// Spirit by 150 for 15 sec. (Proc chance: 3%)" (Wowhead's Forever tooltip of the item and of its
+/// equip spell, Aura of the Blue Dragon 23688, 27 November 2026). The pinned client's row of 23688
+/// rolls 2%, and so does the row wago.tools serves for `product=wowf` that day (SpellAuraOptions
+/// 132982): the 3% is a hotfix the build's own table does not carry. The buff, Aura of the Blue
+/// Dragon (23684), is the reference's: 150 Spirit for 15 sec.
+const LIVE_STAT_PROC_CHANCES: &[(i32, f64)] = &[(19288, 0.03)];
+
+/// The chance the live game states for the item's stat proc, where it is not the pinned row's.
+pub(crate) fn live_stat_proc_chance(item: i32) -> Option<f64> {
+    LIVE_STAT_PROC_CHANCES
+        .iter()
+        .find(|(id, _)| *id == item)
+        .map(|(_, chance)| *chance)
+}
