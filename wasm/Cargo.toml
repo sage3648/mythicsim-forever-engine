@@ -1,0 +1,25 @@
+[package]
+name = "forever-engine-wasm"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Browser build of the Forever engine: a C ABI that runs one application request"
+publish = false
+
+# Its own workspace, so `cargo test` at the root never builds a cdylib.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+forever-engine = { path = ".." }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+strip = true
