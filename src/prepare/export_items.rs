@@ -1050,11 +1050,18 @@ fn lion_horn_proc(env: &Environment, trigger: AuraId) -> Option<Value> {
     {
         return None;
     }
-    let chance = if proc.f64("proc_chance") == 0.0 {
+    let mut chance = if proc.f64("proc_chance") == 0.0 {
         1.0
     } else {
         proc.f64("proc_chance")
     };
+    // Forever's rules: the row's chance (20847, SpellAuraOptions 132262, ProcChance 10) is the
+    // chance in Strongholds and Cities. The live tooltip reads "When struck in combat has a 5%
+    // chance of increasing all party member's armor by 725 for 30 sec. This chance is doubled in
+    // Strongholds and Cities.", and no fight here is in one.
+    if env.sim.rules == super::sim::Rules::Forever {
+        chance /= 2.0;
+    }
     let bonus = effect_stats(&entry);
     let id = env
         .sim

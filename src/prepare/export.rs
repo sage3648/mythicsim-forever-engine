@@ -191,6 +191,30 @@ pub(crate) fn export_auras(sim: &Sim, unit: UnitId, timers: &mut TimerNames) -> 
     Value::Array(out)
 }
 
+/// Class spells whose hits and ticks take none of the caster's Spell Piercing bonus under
+/// Forever's rules (docs/mechanics.md): Magma Totem's and Searing Totem's attacks are the
+/// totem's, and the shaman's piercing does not reach them; Hurricane's and Rain of Fire's waves,
+/// which the engine deals as hits of their tick spells, meet a tenth of the share as ticks do.
+/// Every other spell's direct hit, binary or not, rolls the bonus since the 19 November 2026
+/// hotfix.
+const PIERCING_BONUS_NONE: [&str; 4] =
+    ["magma_totem", "searing_totem", "hurricane", "rain_of_fire"];
+
+/// Class spells whose ticks meet the target's full resistance and so roll the Spell Piercing
+/// bonus as direct hits do (docs/mechanics.md): Devouring Plague, Hellfire, Mind Flay,
+/// Starshards, Insect Swarm, Pyroblast's and Frostfire Bolt's damage over time. Every other
+/// tick meets a tenth of the share and takes none (Shadow Word: Pain 0 of 1,315, Curse of
+/// Agony 0 of 658, Corruption 0 of 454, Fireball 0 of 227, Flame Shock 0 of 179).
+const PIERCING_BONUS_TICKS: [&str; 7] = [
+    "devouring_plague",
+    "hellfire",
+    "mind_flay",
+    "starshards",
+    "insect_swarm",
+    "pyroblast_dot",
+    "frostfire_bolt",
+];
+
 /// Go `exportSpell`.
 pub(crate) fn export_spell_of(
     env: &Environment,
@@ -264,6 +288,16 @@ pub(crate) fn export_spell_of(
     if needs_bow || super::levels::is_unlearned_with_aliases(spell.action_id.spell_id, &aliases) {
         flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
         flags.push("SpellFlagUnlearned".to_string());
+    }
+    // Forever's rules on Spell Piercing (docs/mechanics.md): a totem's attack takes no bonus,
+    // and a tick only where it meets the full resistance.
+    if env.rules == Rules::Forever {
+        if PIERCING_BONUS_NONE.contains(&class_spell.as_str()) {
+            flags.push("SpellFlagNoPiercingBonus".to_string());
+        }
+        if PIERCING_BONUS_TICKS.contains(&class_spell.as_str()) {
+            flags.push("SpellFlagPiercingTicks".to_string());
+        }
     }
     out.insert("flags".into(), json!(flags));
     if !class_spell.is_empty() {
@@ -1198,6 +1232,9 @@ pub(crate) fn export_state(
         {
             prepared["target"]["level_gap_tables"] = json!(true);
         }
+        // Spell Piercing past the target's resistance is rolled a hit (docs/mechanics.md); the
+        // reference adds it to every hit and tick.
+        prepared["target"]["spell_piercing_rolls"] = json!(true);
         // The client's mana regeneration interrupt aura acts at once (docs/mechanics.md);
         // the reference's cached tick waits for another refresh.
         prepared["player"]["casting_regen_at_once"] = json!(true);

@@ -68,7 +68,10 @@ fn log(rules: Rules, rotation: Vec<Value>, seconds: f64) -> (Value, Vec<String>)
     // Cone of Cold is a point blank spell.
     player["distanceFromTarget"] = 5.into();
     let prepared = prepare_json_with(request.to_string().as_bytes(), "rust", rules).unwrap();
-    let typed: PreparedV2 = serde_json::from_value(prepared.clone()).unwrap();
+    let mut typed: PreparedV2 = serde_json::from_value(prepared.clone()).unwrap();
+    // Forever's Spell Piercing roll draws on every Frostbolt that lands; the reference's flat
+    // bonus draws nothing, so the comparison keeps the flat bonus to stay roll for roll.
+    typed.target.spell_piercing_rolls = false;
     let report = simulate_prepared(&typed).unwrap();
     let logs = report.result["logs"].as_str().unwrap().to_string();
     (prepared, logs.lines().map(str::to_string).collect())

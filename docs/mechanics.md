@@ -111,6 +111,38 @@ the Go goldens and exporter uses. The departures:
   the crushing blow past 3 above and the 1.8% of crit the boss column carries are
   approximations. A level the columns cover reads the same numbers as before. The prepared
   target carries `level_gap_tables` when its level is outside the reference's 0 to 3 above.
+- Spell Piercing is rolled a hit, from public Forever logs on forever.warcraftlogs.com. Piercing
+  past the target's resistance is the partial resist roll turned over: a hit gains a tenth or two
+  tenths of its damage around an average of piercing / (piercing + 8 x caster level + 19), and
+  nothing while that share is under 1% (at level 60, 5 piercing pays nothing and 6 does). The
+  reference's piercing / (5 x target level) on every hit and tick pays far more.
+  - The roll, 45 dungeon reports of 14 to 18 November 2026 (clients 1.60.1.70938 and 70959, 18
+    casters, on mobs that never resisted the school): 1,114 non-crit hits gained a tenth, 590
+    two tenths and 27 three. A shaman with 8 Spell Piercing on gear gained on 71 of 518 direct
+    hits, 1.8% on average (8 / 507 is 1.6%), and a warlock with 6 on 29 of 381, 1.0% (6 / 505
+    is 1.2%); the reference gives them 2.5% and 1.9%.
+  - Which hits gain, 297 dungeon reports of 28 November 2026 (172 casters whose plain nukes
+    gained, each spell's count set against the caster's own rate on those nukes, E): a landed
+    binary spell gains at the caster's rate (Frostbolt 2,467 of 9,787, E 2,532; Cone of Cold
+    2,155 of 8,195, E 2,187; Frost Nova 1,268 of 5,028, E 1,242; Arcane Wrath 1,027 of 3,285, E
+    995; Ice Lance 509 of 1,965, E 516). Logs of 14 to 18 November showed none on binary spells
+    (Frostbolt 0 of 412, Mind Flay 0 of 915 ticks): the game changed on 19 November.
+  - A damage over time tick gains nothing (Bane of Agony 0 of 11,402, E 1,204; Corruption 0 of
+    6,749; Siphon Life 0 of 4,615; Wrack 0 of 4,329; Shadow Word: Pain 0 of 2,356; Moonfire 0 of
+    2,316; Flame Shock 0 of 1,891; Immolate 0 of 1,146), save the ticks of the spells that meet
+    the full resistance (`SpellFlagPiercingTicks`): Insect Swarm 318 of 3,245 (E 317),
+    Pyroblast 868 of 2,372 (E 836), Mind Flay 215 of 1,574 (E 255), Devouring Plague 94 of 789
+    (E 122), Frostfire Bolt 52 of 219 (E 59), and Hellfire's pulses 762 of 8,144 (E 785).
+    Starshards' ticks (2 of 24, too few to read) are flagged with them. A tick's expected damage takes the
+    roll's average.
+  - No bonus (`SpellFlagNoPiercingBonus`): Magma Totem 0 of 7,398 and Searing Totem's attack 0
+    of 1,005 (the totem's, not the shaman's), Hurricane's waves 0 of 10,951 and Rain of Fire's
+    0 of 1,424 (hits of their tick spells here).
+  - Not counted here, taken from shared community counts: the 1% cut (a combat log test, 0 of
+    265 hits gaining at 5 piercing and 17 of 231 at 6), and a
+    spell of two schools meeting the lower resistance (Frostfire Bolt, which this engine
+    already reads so) with Holy meeting none.
+  The prepared target carries `spell_piercing_rolls`.
 - The raid's Expose Armor, from MythicSim's Discord (28 October 2026, Bae and Vrelk): a player
   who picks the raid's Expose Armor instead of its Sunder Armor should not gain from the pick, but
   the reference applies Expose Armor at full from the pull while Sunder Armor ramps a stack every
@@ -1511,6 +1543,10 @@ the Go goldens and exporter uses. The departures:
     (99 in 3,101), Stoneslayer 1.95 (537 in 4,200), The Black Knight 0.6 (47 in 2,490) and
     Heartseeking Crossbow 2.7 (105 in 747 ranged shots). The other rateless chance on hit items
     keep the assumed 1.08.
+  - Waveslicer (18324) rolls 1.95 times a minute: 910 procs in 9,170 landed physical hits of 4
+    shamans and a paladin on its 3.1 s speed, 1.92, every wearer 1.81 to 2.06 (reports
+    AyTmpNtxB9jbnJ2H, q23Tz8hnZGkvbLx6, NrpM7DJQBKWqbzVF, DpVmH4WRxL72nGwd, H2Zg1jRm93PpTqK4 of
+    13 to 17 November 2026).
   - Drakefang Butcher's Rend (14118) deals twice its damage to Dragonkin: the tooltip's "Deals 2
     times as much damage to Dragonkin." is the row's second effect, a dummy of 2 (SpellEffect
     1324263, client 1.60.1.70938), applied as Lightcrest Hammer's against Undead is

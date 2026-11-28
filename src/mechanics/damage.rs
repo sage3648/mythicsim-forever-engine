@@ -88,6 +88,57 @@ pub(crate) fn partial_resist_thresholds(coefficient: f64) -> (f64, f64, f64) {
     }
 }
 
+/// The Spell Piercing bonus of one hit under Forever's rules, in tenths of its damage: the
+/// partial resist roll turned over, around the average share `average`. Up to an average of 10%
+/// a hit gains nothing, a tenth or two tenths at 1 - 7.5 x average, 5 x average and
+/// 2.5 x average; from 90% the same mirrored from ten tenths; in between each tenth within 20%
+/// of the average at 0.5 - 2.5 x its distance. `roll` is a uniform draw.
+///
+/// Public Forever logs of 14 to 18 November 2026 (forever.warcraftlogs.com, client
+/// 1.60.1.70938 and 70959, 18 casters in 45 dungeon reports, on mobs that never resisted the
+/// school): 2,476 direct hits gained damage, 1,114 of the non-crits by a tenth, 590 by two
+/// tenths and 27 by three. A shaman with 8 Spell Piercing on gear gained on 71 of 518 direct
+/// hits (1.8% on average; 8 / 507 is 1.6%) and a warlock with 6 on 29 of 381 (1.0%; 6 / 505 is
+/// 1.2%).
+pub(crate) fn spell_piercing_tenths(average: f64, roll: f64) -> u32 {
+    if average <= 0.0 {
+        return 0;
+    }
+    if average <= 0.1 {
+        return if roll < 1.0 - 7.5 * average {
+            0
+        } else if roll < 1.0 - 2.5 * average {
+            1
+        } else {
+            2
+        };
+    }
+    if average >= 0.9 {
+        let rest = 1.0 - average;
+        return if roll < 1.0 - 7.5 * rest {
+            10
+        } else if roll < 1.0 - 2.5 * rest {
+            9
+        } else {
+            8
+        };
+    }
+    let mut cumulative = 0.0;
+    let mut last = 0;
+    for tenths in 0..=10u32 {
+        let chance = 0.5 - 2.5 * (f64::from(tenths) / 10.0 - average).abs();
+        if chance <= 0.0 {
+            continue;
+        }
+        cumulative += chance;
+        last = tenths;
+        if roll < cumulative {
+            return tenths;
+        }
+    }
+    last
+}
+
 /// Go `SpellChanceToMiss`.
 pub(crate) fn spell_chance_to_miss(
     base_spell_miss_chance: f64,
@@ -137,6 +188,37 @@ mod tests {
     fn partial_resist_thresholds_fuse_each_step() {
         let (none, _, _) = partial_resist_thresholds(0.3384242699249872);
         assert_eq!(none, 0.7636654743459907);
+    }
+
+    #[test]
+    fn spell_piercing_tenths_average_the_share() {
+        // 15 Spell Piercing at level 60: 15 / 514.
+        let average = 15.0 / 514.0;
+        assert_eq!(spell_piercing_tenths(average, 0.0), 0);
+        assert_eq!(
+            spell_piercing_tenths(average, 1.0 - 7.5 * average - 1e-9),
+            0
+        );
+        assert_eq!(
+            spell_piercing_tenths(average, 1.0 - 7.5 * average + 1e-9),
+            1
+        );
+        assert_eq!(
+            spell_piercing_tenths(average, 1.0 - 2.5 * average + 1e-9),
+            2
+        );
+        assert_eq!(spell_piercing_tenths(0.0, 0.999), 0);
+        for average in [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95] {
+            let steps = 200_000;
+            let mean = (0..steps)
+                .map(|i| {
+                    let roll = (f64::from(i) + 0.5) / f64::from(steps);
+                    0.1 * f64::from(spell_piercing_tenths(average, roll))
+                })
+                .sum::<f64>()
+                / f64::from(steps);
+            assert!((mean - average).abs() < 1e-3, "{average}: {mean}");
+        }
     }
 
     #[test]

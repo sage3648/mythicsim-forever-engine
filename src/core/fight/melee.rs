@@ -1538,8 +1538,10 @@ impl<A: Agent> Fight<A> {
         let after_attacker = result.damage;
         result.armor_multiplier = 1.0;
         if !self.spells[spell].flags.ignore_resists {
-            // Spell Vulnerability multiplies the partial resist, and a binary spell's whole hit.
-            let vulnerability = self.spell_vulnerability(spell, target);
+            // Spell Piercing multiplies the partial resist, and under the reference a binary
+            // spell's whole hit.
+            let vulnerability =
+                self.spell_piercing_multiplier(spell, target, super::damage::PiercingHit::Direct);
             let (multiplier, partial) = if self.spells[spell].flags.binary {
                 (vulnerability, 0)
             } else {

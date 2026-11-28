@@ -625,6 +625,10 @@ pub(crate) struct Flags {
     pub(crate) unlearned: bool,
     /// Forever's damage shields: none of the target's flat school damage bonus.
     pub(crate) ignore_target_school_bonus: bool,
+    /// Forever's rules: the spell's hits and ticks take no Spell Piercing bonus.
+    pub(crate) no_piercing_bonus: bool,
+    /// Forever's rules: the spell's ticks roll the Spell Piercing bonus as its hits do.
+    pub(crate) piercing_ticks: bool,
 }
 
 impl Flags {
@@ -656,6 +660,8 @@ impl Flags {
                 "SpellFlagPushback" => flags.pushback = true,
                 "SpellFlagUnlearned" => flags.unlearned = true,
                 "SpellFlagIgnoreTargetSchoolBonus" => flags.ignore_target_school_bonus = true,
+                "SpellFlagNoPiercingBonus" => flags.no_piercing_bonus = true,
+                "SpellFlagPiercingTicks" => flags.piercing_ticks = true,
                 _ => {}
             }
         }
@@ -1336,6 +1342,9 @@ pub(crate) struct Config {
     /// Whether the target's level above the caster's adds partial resists (the Go reference) or
     /// not (Forever).
     pub(crate) level_partial_resist: bool,
+    /// Whether Spell Piercing past the target's resistance is rolled a hit (Forever) or added to
+    /// every hit and tick (the Go reference).
+    pub(crate) spell_piercing_rolls: bool,
     pub(crate) reaction: i64,
     pub(crate) channel_clip_delay: i64,
     pub(crate) distance: f64,
@@ -2397,6 +2406,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         player_level: unit.level,
         target_level: target.level,
         level_partial_resist: !target.no_level_partial_resist,
+        spell_piercing_rolls: target.spell_piercing_rolls,
         reaction: unit.reaction_ns,
         channel_clip_delay: unit.channel_clip_delay_ns,
         distance: unit.distance,
