@@ -6381,8 +6381,11 @@ impl<A: Agent> Fight<A> {
                 result,
                 token,
             } => {
-                // A delayed proc was still triggered by the hit it heard.
-                let source = self.hit_source.replace(spell);
+                // A delayed proc was still triggered by the hit it heard. A handler that heard
+                // a swing taken (Nature's Bounty passes a sentinel past the spell table) was
+                // triggered by no spell of the player's, so nothing is credited.
+                let credited = (spell < self.spells.len()).then_some(spell);
+                let source = std::mem::replace(&mut self.hit_source, credited);
                 self.delayed_proc(aura, spell, result);
                 self.hit_source = source;
                 if let Some(token) = token {
