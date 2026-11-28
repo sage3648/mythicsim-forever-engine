@@ -369,9 +369,11 @@ impl<A: Agent> Fight<A> {
     ///
     /// Under Forever's rules it is the partial resist roll turned over
     /// ([`spell_piercing_tenths`]): a direct hit rolls 10% or 20% more damage around an average
-    /// of piercing / (piercing + 8 x caster level + 19). A binary spell takes none, and neither
-    /// does a damage over time tick, save the ticks of the spells flagged for it. An expected
-    /// tick takes the roll's average and draws nothing. The reference adds
+    /// of piercing / (piercing + 8 x caster level + 19), and nothing while that share is under
+    /// 1%. A landed binary spell rolls it too (since the 19 November 2026 hotfix). A damage over
+    /// time tick takes none, save the ticks of the spells flagged for it, which meet the full
+    /// resistance, and a totem's attack takes none. An expected tick takes the roll's average
+    /// and draws nothing. The reference adds
     /// [`Self::spell_vulnerability`] to everything.
     pub(crate) fn spell_piercing_multiplier(
         &mut self,
@@ -384,7 +386,7 @@ impl<A: Agent> Fight<A> {
             return self.spell_vulnerability(spell, target);
         }
         let flags = self.spells[spell].flags;
-        if flags.binary || flags.no_piercing_bonus {
+        if flags.no_piercing_bonus {
             return 1.0;
         }
         if hit != PiercingHit::Direct && !flags.piercing_ticks {
@@ -396,6 +398,10 @@ impl<A: Agent> Fight<A> {
         }
         let level = f64::from(self.unit_config(caster).player_level);
         let average = beyond / (beyond + 8.0 * level + 19.0);
+        // A share under 1% pays nothing: 5 piercing at level 60 gives no bonus, 6 does.
+        if average < 0.01 {
+            return 1.0;
+        }
         if hit == PiercingHit::ExpectedTick {
             return 1.0 + average;
         }

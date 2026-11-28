@@ -191,19 +191,29 @@ pub(crate) fn export_auras(sim: &Sim, unit: UnitId, timers: &mut TimerNames) -> 
     Value::Array(out)
 }
 
-/// Class spells the engine does not flag binary whose hits gain nothing from Spell Piercing in
-/// Forever's logs, beside the casters' other spells of the school gaining on a quarter to a
-/// third of theirs (forever.warcraftlogs.com, 14 to 18 November 2026): Arcane Wrath 0 of 87
-/// hits of 4 mages, Shadow Word: Death 0 of 68 and Flamestrike 0 of 168 of 3 mages. Each row
-/// carries a dummy, script or area trigger effect beside its damage, as the binary spells'
-/// rows carry an aura or an interrupt.
-const PIERCING_BONUS_NONE: [&str; 3] = ["arcane_wrath", "shadow_word_death", "flamestrike"];
+/// Class spells whose hits and ticks take none of the caster's Spell Piercing bonus under
+/// Forever's rules (docs/mechanics.md): Magma Totem's and Searing Totem's attacks are the
+/// totem's, and the shaman's piercing does not reach them; Hurricane's and Rain of Fire's waves,
+/// which the engine deals as hits of their tick spells, meet a tenth of the share as ticks do.
+/// Every other spell's direct hit, binary or not, rolls the bonus since the 19 November 2026
+/// hotfix.
+const PIERCING_BONUS_NONE: [&str; 4] =
+    ["magma_totem", "searing_totem", "hurricane", "rain_of_fire"];
 
-/// Class spells whose ticks gain from Spell Piercing as direct hits do, in the same logs:
-/// Devouring Plague on 59 of 461 ticks of 3 priests and Hellfire's on 179 of 415 of 3
-/// warlocks, where Shadow Word: Pain (0 of 1,315), Curse of Agony (0 of 658), Corruption (0 of
-/// 454), Fireball (0 of 227) and Flame Shock (0 of 179) ticks gain nothing.
-const PIERCING_BONUS_TICKS: [&str; 2] = ["devouring_plague", "hellfire"];
+/// Class spells whose ticks meet the target's full resistance and so roll the Spell Piercing
+/// bonus as direct hits do (docs/mechanics.md): Devouring Plague, Hellfire, Mind Flay,
+/// Starshards, Insect Swarm, Pyroblast's and Frostfire Bolt's damage over time. Every other
+/// tick meets a tenth of the share and takes none (Shadow Word: Pain 0 of 1,315, Curse of
+/// Agony 0 of 658, Corruption 0 of 454, Fireball 0 of 227, Flame Shock 0 of 179).
+const PIERCING_BONUS_TICKS: [&str; 7] = [
+    "devouring_plague",
+    "hellfire",
+    "mind_flay",
+    "starshards",
+    "insect_swarm",
+    "pyroblast_dot",
+    "frostfire_bolt",
+];
 
 /// Go `exportSpell`.
 pub(crate) fn export_spell_of(
@@ -279,12 +289,10 @@ pub(crate) fn export_spell_of(
         flags.retain(|flag| flag != "SpellFlagAPL" && flag != "SpellFlagMCD");
         flags.push("SpellFlagUnlearned".to_string());
     }
-    // Forever's rules on Spell Piercing (docs/mechanics.md): a binary spell takes no bonus, and
-    // a tick only where logs show one.
+    // Forever's rules on Spell Piercing (docs/mechanics.md): a totem's attack takes no bonus,
+    // and a tick only where it meets the full resistance.
     if env.rules == Rules::Forever {
-        if spell.flags.matches(SpellFlag::BINARY)
-            || PIERCING_BONUS_NONE.contains(&class_spell.as_str())
-        {
+        if PIERCING_BONUS_NONE.contains(&class_spell.as_str()) {
             flags.push("SpellFlagNoPiercingBonus".to_string());
         }
         if PIERCING_BONUS_TICKS.contains(&class_spell.as_str()) {

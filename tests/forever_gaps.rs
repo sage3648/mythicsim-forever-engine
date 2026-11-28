@@ -755,9 +755,8 @@ fn hammer_of_the_righteous_cleaves() {
     // 960 since Ironfoe's Fury of Forgewright rolls 3% under Forever's rules (13 November 2026).
     // 967 since every ability's main hand strike rolls Windfury Totem, Holy Strike and Hammer of
     // the Righteous among them (hotfixes of 13 November 2026). 949 since the totem's proc is a
-    // weapon strike (Forever's rules of 15 November 2026). 948 since Spell Piercing is rolled a
-    // hit (19 November 2026), which moved the rolls.
-    assert_eq!(casts, 948.0);
+    // weapon strike (Forever's rules of 15 November 2026).
+    assert_eq!(casts, 949.0);
     assert!(damage > 0.0);
 }
 
@@ -782,18 +781,16 @@ fn seal_of_justice_judges_justice() {
     // 3258 since the 11 November live rows of Truestrike Shoulders and Battleborn Armbraces.
     // 3256 since judgements are ranged attacks (hotfixes of 11 November 2026). 3273 since every
     // ability's main hand strike rolls Windfury Totem (hotfixes of 13 November 2026). 3282 since
-    // the totem's proc is a weapon strike (15 November 2026). 3274 since Spell Piercing is
-    // rolled a hit (19 November 2026), which moved the rolls.
-    assert_eq!(action(&player, 20164, 0).0, 3274.0);
+    // the totem's proc is a weapon strike (15 November 2026).
+    assert_eq!(action(&player, 20164, 0).0, 3282.0);
     // 756 since the 9 November live rows of Bloodmail Gauntlets, Bloodmail Boots and Songstone of
     // Ironforge (754 before). 759 since Windfury Totem's Forever rules. 751 since Judgement of
     // Wisdom pays only on landed hits. 748 since the 11 November live rows of Truestrike
     // Shoulders and Battleborn Armbraces. 749 since judgements are ranged attacks (hotfixes of
     // 11 November 2026). 754 since every ability's main hand strike rolls Windfury Totem
     // (hotfixes of 13 November 2026). 748 since the totem's proc is a weapon strike (15
-    // November 2026). 760 since Spell Piercing is rolled a hit (19 November 2026), which moved
-    // the rolls.
-    assert_eq!(action(&player, 20184, 0).0, 760.0);
+    // November 2026).
+    assert_eq!(action(&player, 20184, 0).0, 748.0);
 }
 
 /// Shield Bash, Mocking Blow, Disarm, Intercept, Revenge off the target's threat and Freezing

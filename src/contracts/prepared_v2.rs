@@ -327,9 +327,10 @@ pub struct Target {
     pub level_gap_tables: bool,
     /// Forever's rule: Spell Piercing past the target's resistance is the partial resist roll
     /// turned over. A direct hit rolls 10% or 20% more damage around an average of
-    /// piercing / (piercing + 8 x caster level + 19); a binary spell and a damage over time tick
-    /// take none. False is the Go reference, which adds piercing / (5 x target level) to every
-    /// hit and tick.
+    /// piercing / (piercing + 8 x caster level + 19), none under a 1% share; a damage over time
+    /// tick takes none unless its spell meets the full resistance, and a totem's attack none.
+    /// False is the Go reference, which adds piercing / (5 x target level) to every hit and
+    /// tick.
     #[serde(default, skip_serializing_if = "is_false")]
     pub spell_piercing_rolls: bool,
 }

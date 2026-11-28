@@ -3,13 +3,14 @@
 //!
 //! - Spell Piercing past the target's resistance is rolled a hit, as the partial resist roll
 //!   turned over: a direct hit gains a tenth or two tenths of its damage around an average of
-//!   piercing / (piercing + 8 x caster level + 19). 18 casters in 45 dungeon reports: 1,114
-//!   non-crit hits gained a tenth, 590 two tenths and 27 three. A binary spell gains nothing
-//!   (Frostbolt 0 of 412, Cone of Cold 0 of 505, Frost Nova 0 of 463, Earth Shock 0 of 256, Mind
-//!   Flay 0 of 915 ticks), nor do Arcane Wrath (0 of 87), Shadow Word: Death (0 of 68) and
-//!   Flamestrike (0 of 168), nor a damage over time tick (Shadow Word: Pain 0 of 1,315, Curse of
-//!   Agony 0 of 658, Corruption 0 of 454), save Devouring Plague's (59 of 461) and Hellfire's
-//!   (179 of 415).
+//!   piercing / (piercing + 8 x caster level + 19), and nothing while that share is under 1%.
+//!   18 casters in 45 dungeon reports of 14 to 18 November: 1,114 non-crit hits gained a tenth,
+//!   590 two tenths and 27 three. A damage over time tick gains nothing (Shadow Word: Pain 0 of
+//!   1,315, Curse of Agony 0 of 658, Corruption 0 of 454) save those of the spells meeting the
+//!   full resistance (Devouring Plague 59 of 461, Hellfire 179 of 415, Mind Flay and Insect
+//!   Swarm after 19 November). Landed binary spells gained nothing before the 19 November
+//!   hotfix and gain since (docs/forever-spell-piercing-2026-11-28.md). Totems' attacks gain
+//!   nothing.
 //! - Puncture Armor (Bashguuder, Rivenspike) and Armor Shatter (Annihilator) never land beside
 //!   Faerie Fire or Curse of Recklessness: 0 applications in 14,568 hits of 12 wearers on targets
 //!   under either, against 1,523 in 72,420 on targets under neither.
@@ -109,64 +110,70 @@ fn puncture_armor_uptime(result: &Value) -> f64 {
 // Spell Piercing.
 // ---------------------------------------------------------------------------------------------
 
-/// The prepared target rolls Spell Piercing under Forever's rules; the binary spells, Arcane
-/// Wrath and Shadow Word: Death are flagged to gain nothing, and Devouring Plague's ticks to
-/// gain as hits do.
+/// The prepared target rolls Spell Piercing under Forever's rules; binary spells take no flag,
+/// and Devouring Plague's and Mind Flay's ticks are flagged to gain as hits do.
 #[test]
 fn piercing_flags_follow_the_logs() {
     let mage = prepared(&board("arcane-mage", 1), Rules::Forever);
     assert_eq!(mage["target"]["spell_piercing_rolls"], true);
     let none = "SpellFlagNoPiercingBonus".to_string();
     let ticks = "SpellFlagPiercingTicks".to_string();
-    // Frostbolt rank 11, binary.
-    assert!(flags(&mage, 25304).contains(&none));
-    assert!(flags(&mage, ARCANE_WRATH).contains(&none));
-    assert!(!flags(&mage, ARCANE_BLAST).contains(&none));
-    // Arcane Explosion and Fire Blast.
-    assert!(!flags(&mage, 10202).contains(&none));
-    assert!(!flags(&mage, 10199).contains(&none));
+    // Frostbolt rank 11, binary, Arcane Wrath, Arcane Blast, Arcane Explosion and Fire Blast.
+    for spell in [25304, ARCANE_WRATH, ARCANE_BLAST, 10202, 10199] {
+        assert!(!flags(&mage, spell).contains(&none), "{spell}");
+    }
 
     let priest = prepared(&board("shadow-priest", 1), Rules::Forever);
-    assert!(flags(&priest, MIND_FLAY).contains(&none));
     // Shadow Word: Death rank 4.
-    assert!(flags(&priest, 1309636).contains(&none));
+    assert!(!flags(&priest, 1309636).contains(&none));
+    assert!(flags(&priest, MIND_FLAY).contains(&ticks));
     assert!(flags(&priest, DEVOURING_PLAGUE).contains(&ticks));
     assert!(!flags(&priest, SHADOW_WORD_PAIN).contains(&ticks));
     assert!(!flags(&priest, SHADOW_WORD_PAIN).contains(&none));
 }
 
 /// With 60 Spell Piercing a direct hit averages 60 / 559 more damage, 10.7%, well under the
-/// reference's 60 / 315; Arcane Wrath gains nothing.
+/// reference's 60 / 315; a landed Arcane Wrath, binary, gains the same.
 #[test]
-fn a_direct_hit_rolls_piercing_and_arcane_wrath_gains_nothing() {
+fn a_direct_hit_rolls_piercing_binary_or_not() {
     let prepared = prepared(&board("arcane-mage", 1500), Rules::Forever);
     let without = run(&with_piercing(&prepared, 0.0));
     let with = run(&with_piercing(&prepared, 60.0));
-    let blast = damage(&with, ARCANE_BLAST) / damage(&without, ARCANE_BLAST);
     let expected = 1.0 + 60.0 / (60.0 + 8.0 * 60.0 + 19.0);
+    let blast = damage(&with, ARCANE_BLAST) / damage(&without, ARCANE_BLAST);
     assert!((blast - expected).abs() < 0.025, "Arcane Blast: {blast}");
     let wrath = damage(&with, ARCANE_WRATH) / damage(&without, ARCANE_WRATH);
-    assert!((wrath - 1.0).abs() < 0.025, "Arcane Wrath: {wrath}");
+    assert!((wrath - expected).abs() < 0.03, "Arcane Wrath: {wrath}");
 }
 
-/// Mind Flay and Shadow Word: Pain's ticks gain nothing from 60 Spell Piercing; Devouring
-/// Plague's ticks gain the 10.7%.
+/// Shadow Word: Pain's ticks gain nothing from 60 Spell Piercing; Mind Flay's and Devouring
+/// Plague's ticks meet the full resistance and gain the 10.7%.
 #[test]
-fn ticks_gain_nothing_but_devouring_plagues() {
+fn ticks_gain_only_at_the_full_resistance() {
     let prepared = prepared(&board("shadow-priest", 1500), Rules::Forever);
     let without = run(&with_piercing(&prepared, 0.0));
     let with = run(&with_piercing(&prepared, 60.0));
     let ratio = |spell| damage(&with, spell) / damage(&without, spell);
-    let flay = ratio(MIND_FLAY);
-    assert!((flay - 1.0).abs() < 0.02, "Mind Flay: {flay}");
+    let expected = 1.0 + 60.0 / (60.0 + 8.0 * 60.0 + 19.0);
     let pain = ratio(SHADOW_WORD_PAIN);
     assert!((pain - 1.0).abs() < 0.02, "Shadow Word: Pain: {pain}");
+    let flay = ratio(MIND_FLAY);
+    assert!((flay - expected).abs() < 0.03, "Mind Flay: {flay}");
     let plague = ratio(DEVOURING_PLAGUE);
-    let expected = 1.0 + 60.0 / (60.0 + 8.0 * 60.0 + 19.0);
     assert!(
         (plague - expected).abs() < 0.03,
         "Devouring Plague: {plague}"
     );
+}
+
+/// 5 Spell Piercing at level 60 is a share of 5 / 504, under 1%, and draws nothing: the fight
+/// reads as it does with none. 6 (6 / 505) rolls.
+#[test]
+fn a_share_under_one_percent_pays_nothing() {
+    let prepared = prepared(&board("arcane-mage", 20), Rules::Forever);
+    let none = run(&with_piercing(&prepared, 0.0));
+    assert_eq!(none, run(&with_piercing(&prepared, 5.0)));
+    assert_ne!(none, run(&with_piercing(&prepared, 6.0)));
 }
 
 /// A fight with no Spell Piercing draws no piercing roll: it reads the same whichever way
@@ -288,4 +295,42 @@ fn the_reference_keeps_the_lion_horns_row() {
         .join("fixtures/mage/prepared-v2/production-protection-warrior-3-targets.request.json");
     let request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     assert_eq!(lion_horn_chance(request, Rules::GoReference), 0.1);
+}
+
+/// A request fixture prepared under Forever's rules.
+fn fixture(path: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(path);
+    let request: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    prepared(&request, Rules::Forever)
+}
+
+/// Whether every registered spell of this class spell carries the flag, and there is one.
+fn class_spell_flagged(prepared: &Value, class_spell: &str, flag: &str) -> bool {
+    let spells: Vec<&Value> = prepared["player"]["spells"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|spell| spell["class_spell"] == class_spell)
+        .collect();
+    !spells.is_empty()
+        && spells
+            .iter()
+            .all(|spell| spell["flags"].as_array().unwrap().iter().any(|f| f == flag))
+}
+
+/// Hurricane's waves and the totems' attacks take no bonus; Insect Swarm's ticks meet the full
+/// resistance (WCL count of 28 November 2026: Hurricane 0 of 10,951 hits, Searing Totem's
+/// attack 0 of 1,005, Magma Totem 0 of 7,398, Insect Swarm's ticks 318 of 3,245 against 317
+/// expected).
+#[test]
+fn hurricane_and_totems_take_none_insect_swarm_ticks_do() {
+    let none = "SpellFlagNoPiercingBonus";
+    let ticks = "SpellFlagPiercingTicks";
+    let druid = fixture("fixtures/mage/prepared-v2/balance-druid-multidot-3-targets.request.json");
+    assert!(class_spell_flagged(&druid, "hurricane", none));
+    assert!(class_spell_flagged(&druid, "insect_swarm", ticks));
+    assert!(!class_spell_flagged(&druid, "moonfire", ticks));
+    let shaman = fixture("fixtures/mage/prepared-v2/production-elemental-shaman.request.json");
+    assert!(class_spell_flagged(&shaman, "searing_totem", none));
+    assert!(!class_spell_flagged(&shaman, "lightning_bolt", none));
 }
