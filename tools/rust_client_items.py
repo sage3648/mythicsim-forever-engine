@@ -153,9 +153,11 @@ REFERENCE_SETS = {"The Gladiator": 1, "Soulforge Armor": 1673}
 # live client that agrees with the tooltip, and a Forever character wearing it. The note is left
 # out for these alone; any other item with it stays left out. Soulforge Boots 226999: ItemSparse
 # 1.60.1.71037 (ItemSet 1673, item level 60, Paladin), worn with five Soulforge Armor pieces in two
-# refused Retribution Paladin sims on 21 November 2026 (addon exports of client 71037).
+# refused Retribution Paladin sims on 21 November 2026 (addon exports of client 71037). The other
+# seven reissued pieces, 226993 to 226998 and 227000, read the same way in ItemSparse
+# 1.60.1.71139, and a Retribution Paladin wore all eight in a sim refused on 28 November 2026.
 SEASON_OF_DISCOVERY_NOTE = "Added in Season of Discovery. May not be in WoW: Forever."
-WORN_SEASON_OF_DISCOVERY_ITEMS = {226999}
+WORN_SEASON_OF_DISCOVERY_ITEMS = {226993, 226994, 226995, 226996, 226997, 226998, 226999, 227000}
 
 ITEM_TYPE = {
     1: "ItemTypeHead",

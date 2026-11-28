@@ -876,9 +876,12 @@ class ParseTests(unittest.TestCase):
             '"scaling_options":{"0":{"stats":{"0":12,"2":13,"3":12,"4":12,"5":12,"16":10,"30":470,'
             '"34":4},"ilvl":60}},"class_allowlist":["ClassPaladin"]}',
         )
-        # Any other item with the note stays left out.
+        # Any item with the note that is not listed stays left out.
         with self.assertRaisesRegex(tool.Unreadable, "Season of Discovery"):
-            tool.row_for(226998, boots, feet, SOULFORGE_BOOTS)
+            tool.row_for(226901, boots, feet, SOULFORGE_BOOTS)
+        self.assertEqual(
+            tool.WORN_SEASON_OF_DISCOVERY_ITEMS, {226993, 226994, 226995, 226996, 226997, 226998, 226999, 227000}
+        )
 
     def test_a_listed_fractional_crit_line_is_read_for_its_item_alone(self):
         dagger = {**item(2, 15), "InventoryType": "13"}
@@ -1021,7 +1024,11 @@ class CommittedFileTests(unittest.TestCase):
         # Savage Gladiator Shoulders join the reference set The Gladiator.
         self.assertEqual(rows[277117]["set_name"], "The Gladiator")
         self.assertEqual(rows[277117]["set_id"], tool.REFERENCE_SETS["The Gladiator"])
-        self.assertEqual(sum("set_name" in row for row in rows.values()), 12)
+        # The eight Soulforge Armor pieces of client 1.60.1.71139 join the reference set.
+        for item_id in range(226993, 227001):
+            self.assertEqual(rows[item_id]["set_name"], "Soulforge Armor")
+            self.assertEqual(rows[item_id]["set_id"], tool.REFERENCE_SETS["Soulforge Armor"])
+        self.assertEqual(sum("set_name" in row for row in rows.values()), 19)
 
     def test_a_real_item_with_a_development_name_is_taken(self):
         self.assertTrue(tool.JUNK_NAME.search("Old Leather Jacket"))
