@@ -996,6 +996,14 @@ pub(crate) fn spell_data_stat_proc_effects(
             ));
         }
         effects.push(effect);
+        // The buff's flat spell damage against creature types, which the stat aura leaves out.
+        if let Some(damage) = spell_damage_versus_targets(env, buff) {
+            effects.push(json!({
+                "kind": "mob_type_bonus", "aura": env.sim.aura(proc_aura).label,
+                "attack_power": 0.0, "ranged_attack_power": 0.0,
+                "spell_damage": damage, "melee_attack_power": 0.0,
+            }));
+        }
     }
     effects
 }
@@ -2414,17 +2422,35 @@ const CREATURE_TYPES: [(i32, &str); 9] = [
 /// out: Quel'Serrar's Sanctuary grants 36 against Dragonkin (22850, mask 2). It holds when every
 /// target is of a type the mask names, as a fight's targets are of one type.
 fn melee_power_versus_targets(env: &Environment, row: &Spell) -> Option<f64> {
+    value_versus_targets(env, row, dbcenums::A_MOD_MELEE_ATTACK_POWER_VERSUS)
+}
+
+/// A buff's flat spell damage against creature types (`A_MOD_FLAT_SPELL_DAMAGE_VERSUS`, its mask
+/// in the misc value), which the parsed aura leaves out: Draconic Infused Emblem's buff grants 35
+/// more against Dragonkin ("This spell damage increase is doubled against Dragonkin", row
+/// 1318930, mask 2). It holds when every target is of a type the mask names.
+fn spell_damage_versus_targets(env: &Environment, row: &Spell) -> Option<f64> {
+    value_versus_targets(env, row, dbcenums::A_MOD_FLAT_SPELL_DAMAGE_VERSUS)
+}
+
+/// The summed value of a row's effects of one "versus creature type" aura that hold against every
+/// target of the fight.
+fn value_versus_targets(
+    env: &Environment,
+    row: &Spell,
+    aura: dbcenums::EffectAuraType,
+) -> Option<f64> {
     let named = |mask: i32, target: UnitId| {
         let mob_type = env.sim.unit(target).mob_type.as_str();
         CREATURE_TYPES
             .iter()
             .any(|(id, name)| mask & (1 << (id - 1)) != 0 && *name == mob_type)
     };
-    let power: f64 = row
+    let value: f64 = row
         .effects
         .iter()
         .filter(|effect| {
-            effect.aura == dbcenums::A_MOD_MELEE_ATTACK_POWER_VERSUS
+            effect.aura == aura
                 && env
                     .encounter
                     .targets
@@ -2433,7 +2459,7 @@ fn melee_power_versus_targets(env: &Environment, row: &Spell) -> Option<f64> {
         })
         .map(|effect| effect.average(env.sim.unit(env.player).level))
         .sum();
-    (power != 0.0).then_some(power)
+    (value != 0.0).then_some(value)
 }
 
 /// Under Forever's rules: the chance on hit items `CHANCE_ON_HIT_ITEMS` registers
